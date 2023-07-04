@@ -119,9 +119,19 @@ methods
         tf = is_symbolic(obj.coeffs);
     end
 
+    function tf = is_symexpr(obj)
+        % Check if polynomial contains symbolic expressions.
+        tf = ~isconstant(obj.coeffs);
+    end
+
+    function tf = is_zerodegree(obj)
+        % Check if polynomial is of degree zero.
+        tf = (obj.maxdeg == 0);
+    end
+
     function tf = is_constant(obj)
         % Check if polynomial is constant.
-        tf = (is_constant(obj.coeffs) && obj.maxdeg == 0);
+        tf = (is_zerodegree(obj) && ~is_symexpr(obj));
     end
 
     function tf = is_monom(obj)
@@ -176,6 +186,28 @@ methods
     function c = minus(a,b)
         % Substract two polynomials.
         c = plus(a, uminus(b));
+    end
+end
+
+methods
+    %% Conversion
+    function d = casadi.SX(p)
+        % Convert degree-zero polynomial to casadi.SX type.
+        assert(is_zerodegree(p), 'Can only convert polynomial of degree zero.')
+
+        d = reshape(p.coeffs,p.matdim);
+    end
+
+    function d = casadi.DM(p)
+        % Convert constant polynomial to casadi.DM type.
+        assert(is_constant(p), 'Can only convert constant polynomial.')
+
+        d = casadi.DM(casadi.SX(p));
+    end
+
+    function d = double(p)
+        % Convert constant polynomial to double data type.
+        d = full(casadi.DM(p));
     end
 end
 
