@@ -43,7 +43,7 @@ function [coeffs,degmat] = removeCoeffs(coeffs,degmat)
     coeffs = casadi.SX(S,coeffs(idx));
 
     % remove corresponding degree matrix entries
-    degmat = degmat(in,:);
+    degmat = degmat(nr,:);
 end
 
 function [degmat,indets] = removeDegVar(degmat,indets)
