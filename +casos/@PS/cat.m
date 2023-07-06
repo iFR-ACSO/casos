@@ -49,8 +49,8 @@ sz(dim) = sum(sizes(:,dim)); sz(3-dim) = sizes(1,3-dim);
 [coeffs,degmat,indets] = removeZero(coeffs,degmat,indets);
 
 % new polynomial
-p.coeffs = flipud(coeffs);
-p.degmat = flipud(degmat);
+p.coeffs = coeffs;
+p.degmat = degmat;
 p.indets = indets;
 p.matdim = sz;
 

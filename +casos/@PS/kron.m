@@ -58,8 +58,8 @@ summat = sparse(ic,1:(nta*ntb),1,length(id),nta*ntb);
 coeffs = summat*coeffs;
 
 % new polynomial
-c.coeffs = flipud(coeffs);
-c.degmat = flipud(degmat);
+c.coeffs = coeffs;
+c.degmat = degmat;
 c.indets = indets;
 c.matdim = sz;
 

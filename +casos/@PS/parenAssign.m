@@ -49,9 +49,6 @@ coeffs(1:nta,find(I)) = 0;
 [coeffs,degmat] = uniqueDeg(coeffs, [dga;dgb]);
 
 % remove zero terms
-[coeffs,degmat,obj.indets] = removeZero(coeffs,degmat,indets);
-
-obj.coeffs = flipud(coeffs);
-obj.degmat = flipud(degmat);
+[obj.coeffs,obj.degmat,obj.indets] = removeZero(coeffs,degmat,indets);
 
 end

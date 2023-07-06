@@ -8,6 +8,7 @@ indets = p.indets;
 if nargin == 1
     % Return vector of monomials in polynomial.
 
+    % TODO: can we assume that degrees are already sorted?
     % from multipoly:
     % Flipping/sorting to return output in lexicographic order
     % (sorted by degree then by alphabetical order)

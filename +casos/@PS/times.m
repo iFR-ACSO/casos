@@ -59,8 +59,8 @@ degmat = kron(dga,ones(ntb,1)) +  kron(ones(nta,1),dgb);
 [coeffs,degmat,indets] = removeZero(coeffs,degmat,indets);
 
 % new polynomial
-c.coeffs = flipud(coeffs);
-c.degmat = flipud(degmat);
+c.coeffs = coeffs;
+c.degmat = degmat;
 c.indets = indets;
 c.matdim = sz;
 

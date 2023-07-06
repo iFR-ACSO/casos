@@ -98,8 +98,8 @@ end
 [coeffs,degmat,indets] = removeZero(coeffs,degmat,a.indets);
 
 % new polynomial
-b.coeffs = flipud(coeffs);
-b.degmat = flipud(degmat);
+b.coeffs = coeffs;
+b.degmat = degmat;
 b.indets = indets;
 b.matdim = sz;
 

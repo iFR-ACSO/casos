@@ -53,8 +53,8 @@ cfb = reshape(repmat(b.coeffs,sz./szb),ntb,prod(sz));
 [coeffs,degmat,indets] = removeZero(coeffs,degmat,indets);
 
 % new polynomial
-c.coeffs = flipud(coeffs);
-c.degmat = flipud(degmat);
+c.coeffs = coeffs;
+c.degmat = degmat;
 c.indets = indets;
 c.matdim = sz;
 
