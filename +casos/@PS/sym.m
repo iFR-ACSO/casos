@@ -37,10 +37,7 @@ switch type
         Q = casadi.SX.sym(dstr,nt^2,ne);  % Gram matrices, TODO: symmetric?
         D = kron(w.degmat,ones(nt,1)) + kron(ones(nt,1),w.degmat);
         % make degree matrix unique
-        [p.degmat,ia,ic] = unique(D,'rows','stable');
-        % sum repeated coefficients
-        summat = sparse(ic,1:(nt^2),1,length(ia),nt^2);
-        p.coeffs = summat*Q;
+        [p.coeffs,p.degmat] = uniqueDeg(Q,D,'stable');
 
     otherwise
         % create using coefficient vector form
