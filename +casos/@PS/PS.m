@@ -1,4 +1,4 @@
-classdef (InferiorClasses = {?casadi.SX, ?casadi.DM}) PS
+classdef (InferiorClasses = {?casadi.SX, ?casadi.DM}) PS < matlab.mixin.indexing.RedefinesParen
 % Polynomials with symbolic coefficients.
 
 properties (SetAccess=private)
@@ -81,37 +81,27 @@ methods
 
     function varargout = size(obj,varargin)
         % Return size of polynomial.
-        [varargout{1:nargout}] = size(zeros(obj.matdim),varargin{:});
-    end
-
-    function n = numel(obj)
-        % Return number of elements.
-        n = size(obj.coeffs,2); %prod(obj.matdim);
-    end
-
-    function tf = isempty(obj)
-        % Check if polynomial is empty.
-        tf = any(obj.matdim == 0);
+        [varargout{1:nargout}] = size(sparse(obj.matdim(1),obj.matdim(2)),varargin{:});
     end
 
     function tf = isrow(obj)
         % Check if polynomial is a row vector.
-        tf = (obj.matdim(1) == 1);
+        tf = (size(obj,1) == 1);
     end
 
     function tf = iscolumn(obj)
         % Check if polynomial is a column vector.
-        tf = (obj.matdim(2) == 1);
+        tf = (size(obj,2) == 1);
     end
 
     function tf = isvector(obj)
         % Check if polynomial is a vector.
-        tf = any(obj.matdim == 1);
+        tf = any(size(obj) == 1);
     end
 
     function tf = isscalar(obj)
         % Check if polyonomial is a scalar.
-        tf = all(obj.matdim == 1);
+        tf = all(size(obj) == 1);
     end
 
     function tf = is_symbolic(obj)
@@ -155,6 +145,11 @@ methods (Static)
     %% Static constructors
     p = sym(dstr,w,sz,type); % symbolic constructor
 
+    function p = empty()
+        % Create empty polynomial matrix.
+        p = casos.PS;
+    end
+
     function p = zeros(varargin)
         % Create zero polynomial.
         p = casos.PS(casadi.SX.zeros(varargin{:}));
@@ -172,6 +167,17 @@ methods (Static)
 end
 
 methods
+    % public RedefinesParen interface
+    p = cat(dim,varargin);
+
+    function obj = reshape(obj,varargin)
+        % Reshape polynomial matrix.
+        assert(length(varargin{1}) <= 2, 'Size vector must not exceed two elements.')
+        assert(length(varargin) <= 2, 'Size arguments must not exceed two scalars.')
+
+        obj.matdim = size(reshape(sparse(size(obj,1),size(obj,2)),varargin{:}));
+    end
+
     %% Unary operators
     function p = uplus(p)
         % Unary plus.
@@ -187,9 +193,7 @@ methods
         % Substract two polynomials.
         c = plus(a, uminus(b));
     end
-end
 
-methods
     %% Conversion
     function d = casadi.SX(p)
         % Convert degree-zero polynomial to casadi.SX type.
@@ -209,6 +213,14 @@ methods
         % Convert constant polynomial to double data type.
         d = full(casadi.DM(p));
     end
+end
+
+methods (Access=protected)
+    % protected RedefinesParen interface
+    obj = parenAssign(obj,idx,varargin);
+    obj = parenDelete(obj,idx);
+    n = parenListLength(obj,idx,context);
+    varargout = parenReference(obj,index);
 end
 
 end
