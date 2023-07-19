@@ -37,8 +37,8 @@ function [coeffs,degmat] = removeCoeffs(coeffs,degmat)
     % length corresponds to number of nonzero rows
     I = 1:length(nr);
     
-    % sparsity pattern without all-zero rows
-    S = sparsity(casadi.SX(sparse(I(ir),jn,1)));
+    % sparsity pattern without all-zero rows (note: 0-based index)
+    S = casadi.Sparsity.triplet(length(nr),size(coeffs,2),I(ir)-1,jn-1);
     % assign nonzero coefficients to sparsity pattern
     coeffs = casadi.SX(S,coeffs(idx));
 
