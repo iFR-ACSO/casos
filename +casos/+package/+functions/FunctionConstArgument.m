@@ -41,8 +41,6 @@ methods
 
     function sym = get_symbolic(obj)
         % Return formal parameter.
-        assert(is_symbolic(obj),'Argument (%s) not symbolic.',obj.name)
-
         sym = obj.expr;
     end
 end
