@@ -1,7 +1,7 @@
 classdef (Abstract) FunctionInterface
 % Interface for callable functions.
 
-properties (Abstract)
+properties (Abstract,SetAccess=protected)
     class_name;
 end
 

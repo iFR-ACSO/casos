@@ -1,10 +1,11 @@
 classdef CasadiFunction < casos.package.functions.FunctionInterface
+% Casadi function interface.
 
 properties (Access=private)
     func;
 end
 
-properties (Dependent)
+properties (Dependent,SetAccess=protected)
     class_name;
 end
 
