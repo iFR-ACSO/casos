@@ -73,7 +73,19 @@ methods
         end
 
         % else:
-        fn_i = fieldnames(obj.arg_i);
+        if ischar(L.subs{1})
+            % name-value pairs
+            namevalue = true;
+
+            fn_i = L.subs(1:2:end);
+            L.subs(1:2:end) = [];
+
+            assert(length(fn_i) == length(L.subs), 'Name-value syntax requires same number of names and values.')
+        else
+            namevalue = false;
+
+            fn_i = fieldnames(obj.arg_i);
+        end
         fn_o = fieldnames(obj.arg_o);
 
         % assign inputs
@@ -82,8 +94,12 @@ methods
         % call function
         out = call(obj,args);
 
-        % return first output
-        varargout = {out.(fn_o{1})};
+        if namevalue
+            varargout = {out};
+        else
+            % return first output
+            varargout = {out.(fn_o{1})};
+        end
     end
 end
 
