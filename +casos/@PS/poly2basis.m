@@ -18,12 +18,20 @@ idx = 1:p.nterm;
 
 % select coefficients
 q = casadi.SX(numel(z),numel(p));
+
+if all(~tf)
+    % zero projection
+    e = p;
+    return
+end
+
+% else
 q(I(tf),:) = p.coeffs(idx(tf),:);
 % reorder to match monomials
 q = z.coeffs * q;
 
 % build projection error
-if all(tf)
+if all(tf) || nargout < 3
     % no error
     e = casos.PS(0);
     return
