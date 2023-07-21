@@ -71,12 +71,12 @@ methods
 
     function d = get.mindeg(obj)
         % Minimum degree of polynomial.
-        d = min(sum(obj.degmat,2));
+        d = full(min(sum(obj.degmat,2)));
     end
 
     function d = get.maxdeg(obj)
         % Maximum degree of polynomial.
-        d = max(sum(obj.degmat,2));
+        d = full(max(sum(obj.degmat,2)));
     end
 
     function varargout = size(obj,varargin)
