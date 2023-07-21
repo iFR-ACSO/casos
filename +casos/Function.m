@@ -28,12 +28,12 @@ methods
             wrap = PSFunction(name,args_i,args_o,varargin{:});
 
         else
-            error('No matching function for inputs %s.', types);
+            str = compose('%s',types); str(2,1:end-1) = {', '};
+            error('No matching function for inputs (%s).', [str{:}]);
         end
 
         f@casos.package.functions.FunctionWrapper(wrap,args_i,args_o,name_i,name_o);
     end
-
 end
 
 end
