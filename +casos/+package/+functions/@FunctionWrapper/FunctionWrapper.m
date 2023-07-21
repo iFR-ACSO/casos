@@ -1,6 +1,11 @@
 classdef (Abstract) FunctionWrapper
 % Wrap a function interface.
     
+properties (Dependent)
+    class_name;
+    name;
+end
+
 properties (SetAccess = private)
     arg_i;
     arg_o;
@@ -22,6 +27,16 @@ methods
         % input/output arguments
         f.arg_i = cell2struct(arg_i,name_i);
         f.arg_o = cell2struct(arg_o,name_o);
+    end
+
+    function cls = get.class_name(obj)
+        % Return function class.
+        cls = obj.wrap.class_name;
+    end
+
+    function nm = get.name(obj)
+        % Return function name.
+        nm = obj.wrap.name;
     end
 
     function out = call(obj,args)
@@ -52,7 +67,7 @@ methods
         % Subscripted reference.
         if length(L) > 1 || ~strcmp(L.type,'()')
             % fall back to builtin function
-            [varargout{1:nargout}] = builtin('subsref',L);
+            [varargout{1:nargout}] = builtin('subsref',obj,L);
 
             return
         end
