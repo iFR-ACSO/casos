@@ -9,6 +9,10 @@ properties (SetAccess=protected)
     class_name = 'PSFunction';
 end
 
+properties (Dependent)
+    name;
+end
+
 methods
     function obj = PSFunction(name, args_i, args_o, varargin)
         % Create new casadi function object.
@@ -16,6 +20,11 @@ methods
         [sym_o,n_o] = cellfun(@(arg) deal(get_symbolic(arg),arg.name), args_o, 'UniformOutput', false);
 
         obj.func = casadi.Function(name, sym_i, sym_o, n_i, n_o, varargin{:});
+    end
+
+    function nm = get.name(obj)
+        % Return function name.
+        nm = obj.func.name;
     end
 
     function argout = call(obj, argin, argout)

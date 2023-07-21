@@ -5,8 +5,9 @@ properties (Access=private)
     func;
 end
 
-properties (Dependent,SetAccess=protected)
+properties (Dependent)
     class_name;
+    name;
 end
 
 methods
@@ -21,6 +22,11 @@ methods
     function cls = get.class_name(obj)
         % Return function class name.
         cls = obj.func.class_name;
+    end
+
+    function nm = get.name(obj)
+        % Return function name.
+        nm = obj.func.name;
     end
 
     function argout = call(obj, argin, argout)
