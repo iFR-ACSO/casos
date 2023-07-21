@@ -60,4 +60,31 @@ methods
     end
 end
 
+methods (Access=protected)
+    %% Protected interface.
+    function dim = get_dimensions(obj)
+        % Return extended dimensions.
+        d1 = obj.expr.mindeg;
+        d2 = obj.expr.maxdeg;
+
+        % basic dimensions
+        dim = get_dimensions@casos.package.functions.FunctionArgument(obj);
+
+        if d2 == 0
+            % nothing to do
+            return
+        elseif ~isempty(dim)
+            dim{end+1} = ',';
+        end
+
+        if d1 == d2
+            % show single degree
+            dim{end+1} = sprintf('d=%d',d1);
+        else
+            % show degree range
+            dim{end+1} = sprintf('d=%d:%d',d1,d2);
+        end
+    end
+end
+
 end

@@ -10,10 +10,6 @@ properties (SetAccess=private)
     name;
 end
 
-properties (Dependent)
-    signature;
-end
-
 methods (Abstract)
     tf = has_value(obj);
     tf = is_symbolic(obj);
@@ -34,9 +30,36 @@ methods
         arg.name = name;
     end
 
-    function sg = get.signature(obj)
+    function sg = get_signature(obj)
         % Return signature.
-        sg = sprintf('%s:%s', obj.name, obj.type);
+        dim = get_dimensions(obj);
+
+        if ~isempty(dim)
+            dim = {sprintf('[%s]',[dim{:}])};
+        end
+
+        sg = sprintf('%s', obj.name, [dim{:}]);
+    end
+end
+
+methods (Access=protected)
+    function dim = get_dimensions(obj)
+        % Return dimensions of argument.
+        [n,m] = size(obj.expr);
+
+        if n == 1 && m == 1
+            % don't show dimensions
+            dim = {};
+        elseif m == 1
+            % show number of rows
+            dim = compose('%d',n);
+        elseif n > 0 || m > 0
+            % show size
+            dim = compose('%dx%d',n,m);
+        else
+            % show empty dimensions
+            dim = {''};
+        end
     end
 end
 
