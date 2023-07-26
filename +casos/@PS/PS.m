@@ -1,7 +1,7 @@
 classdef (InferiorClasses = {?casadi.SX, ?casadi.DM}) PS < matlab.mixin.indexing.RedefinesParen
 % Polynomials with symbolic coefficients.
 
-properties (SetAccess=private)
+properties (GetAccess=protected, SetAccess=private)
     % polynomials are stored in multi-index fashion, that is,
     %
     %   p = sum_a c_a*x^a
@@ -34,13 +34,20 @@ methods
             obj = varargin{1};
 
         elseif isa(varargin{1},'char')
-            % indeterminate (mpvar syntax)
+            % indeterminate (pvar / mpvar syntax)
             var = varargin{1};
+            arg = varargin(2:end);
             if nargin == 1
+                % syntax PS('x')
                 n = 1; m = 1;
                 obj.indets = {var};
+            elseif ischar([arg{:}])
+                % syntax PS('x','y',...)
+                n = length(varargin); m = 1;
+                obj.indets = varargin;
             else
-                [n,m] = size(zeros(varargin{2:end}));
+                % syntax PS('x',m,n)
+                [n,m] = size(zeros(arg{:}));
                 obj.indets = compose('%s_%d',var,1:(n*m));
             end
 
@@ -82,6 +89,11 @@ methods
     function varargout = size(obj,varargin)
         % Return size of polynomial.
         [varargout{1:nargout}] = size(sparse(obj.matdim(1),obj.matdim(2)),varargin{:});
+    end
+
+    function x = indeterminates(obj)
+        % Return indeterminate variables of polynomial.
+        x = casos.PS(obj.indets{:});
     end
 
     function tf = isrow(obj)

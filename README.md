@@ -1,4 +1,69 @@
-# CaΣoS: Sum-of-squares optimization powered by CasADi[^1]
+# CaΣoS: CasADi-based sum-of-squares optimization suite[^1]
+
+## Polynomial expressions
+
+The class `casos.PS` implements polynomials of which the coefficients can be symbolic expressions.
+
+#### Polynomials of degree zero
+
+```
+casos.PS(M)
+```
+creates a zero-degree polynomial which corresponds to the double, `casadi.DM`, or `casadi.SX` matrix `M`.
+
+```
+casos.PS(m,n)
+casos.PS.zeros(m,n)
+casos.PS.zeros(n)
+```
+creates a zero-degree polynomial which corresponds to a `m`x`n` matrix (resp., a square matrix with length `n`) of zeros.
+
+```
+casos.PS.ones(m,n)
+casos.PS.ones(n)
+```
+creates a zero-degree polynomial which corresponds to a `m`x`n` matrix (resp., a square matrix with length `n`) of ones.
+
+```
+casos.PS.eye(n)
+```
+creates a zero-degree polynomial which corresponds to the `n`x`n` identity matrix.
+
+#### Indeterminate variables & monomials
+
+```
+casos.PS('x','y',...)
+```
+creates a `n`x1 vector of indeterminate variables, where `n` corresponds to the number of arguments.
+
+```
+casos.PS('x',m,n)
+casos.PS('x',n)
+```
+creates a `m`x`n` matrix (resp., a square matrix) of indeterminate variables.
+
+```
+monomials(x,deg)
+```
+creates a `l`x1 vector of all monomials in `x` with degree in `deg`, where `x` must be a vector of indeterminate variables and `deg` is vector of nonnegative integers; where `l` is the total number of such monomials.
+
+```
+monomials(p)
+```
+creates a `l`x1 vector of all monomials in the polynomial `p`; where `l` is the total number of monomials in `p`.
+
+#### Polynomials with symbolic coefficients
+
+```
+casos.PS.sym('c',w)
+```
+creates a scalar polynomial with symbolic coefficients and monomials in `w`, where `w` must be a vector of monomials.
+
+```
+casos.PS.sym('c',w,[m n])
+casos.PS.sym('c',w,n)
+```
+creates a `m`x`n` matrix (resp., a square matrix with length `n`) of polynomials with symbolic coefficients and monomials in `w`, where `w` must be a vector of monomials.
 
 -----
 [^1]: CaΣoS has been neither supported nor endorsed by CasADi or any of its affilitiates.
