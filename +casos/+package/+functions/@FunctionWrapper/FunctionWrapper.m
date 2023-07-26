@@ -86,8 +86,7 @@ methods
 
             fn_i = fieldnames(obj.arg_i);
         end
-        fn_o = fieldnames(obj.arg_o);
-
+        
         % assign inputs
         args = cell2struct(L.subs,fn_i(1:length(L.subs)));
 
@@ -98,7 +97,7 @@ methods
             varargout = {out};
         else
             % return first output
-            varargout = {out.(fn_o{1})};
+            varargout = struct2cell(out);
         end
     end
 end
