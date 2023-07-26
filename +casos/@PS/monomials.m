@@ -27,7 +27,7 @@ else
 
     % enumerate monomials up to max(deg)
     r = nchoosek(p.nvars+max(deg),p.nvars); % total number of monomials
-    M = zeros(r,p.nvars);
+    M = nan(r,p.nvars);
     % iterate over degrees
     l = 1;
     for i = deg
