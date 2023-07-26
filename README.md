@@ -65,5 +65,35 @@ casos.PS.sym('c',w,n)
 ```
 creates a `m`x`n` matrix (resp., a square matrix with length `n`) of polynomials with symbolic coefficients and monomials in `w`, where `w` must be a vector of monomials.
 
------
+## Functions between polynomials
+
+The class `casos.Function` provides functions of which the input and/or output are polynomial expressions.
+
+```
+casos.Function('f',{p1 ... pN},{q1 ... qM})
+```
+creates a function named `'f'` mapping the `M` outputs to `N` inputs. Outputs may be any expressions of types `casadi.DM`, `casadi.SX`, or `casos.PS` whereas inputs must be *symbolic* expressions of types `casadi.SX` or `casos.PS`.
+
+```
+casos.Function('f',{p1 ... pN},{q1 ... qM},{'a1' ... 'aN'},{'b1' ... 'bM'})
+```
+creates a function named `'f'` as described above but also assigns names to input and outputs.
+
+#### Calling functions
+
+Suppose `f` is a `casos.Function` object.
+
+```
+[s1,...,sM] = f(r1,...,rN)
+```
+calls the function `f` with arguments `r1` through `rN` assigned to its inputs and returns the output values `s1` through `sM`. 
+
+If the function `f` has named inputs and outputs, the following call syntax is also possible.
+
+```
+out = f('a1',r1,...,'aN',rN)
+```
+calls the function `f` with arguments `r1` through `rN` assigned to inputs with names `'a1'` through `'aN'`, respectively. In this case, the functionn call returns a structure with fields `out.b1` through `out.bM` with corresponding output values.
+
+
 [^1]: CaΣoS has been neither supported nor endorsed by CasADi or any of its affilitiates.
