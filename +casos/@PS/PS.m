@@ -91,6 +91,11 @@ methods
         [varargout{1:nargout}] = size(sparse(obj.matdim(1),obj.matdim(2)),varargin{:});
     end
 
+    function x = indeterminates(obj)
+        % Return indeterminate variables of polynomial.
+        x = casos.PS(obj.indets{:});
+    end
+
     function tf = isrow(obj)
         % Check if polynomial is a row vector.
         tf = (size(obj,1) == 1);
