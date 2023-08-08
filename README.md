@@ -1,10 +1,13 @@
-# CaΣoS: CasADi-based sum-of-squares optimization suite[^1]
+# CaΣoS: _CasADi-based sum-of-squares optimization suite_[^1]
+
+CaΣoS provides a symbolic framework for convex and nonconvex sum-of-squares problems, making use of the [CasADi](https://web.casadi.org) software for symbolic expressions, automatic differentiation, and numerical optimization.
 
 ## Polynomial expressions
 
 The class `casos.PS` implements polynomials of which the coefficients can be symbolic expressions.
 
 #### Polynomials of degree zero
+Polynomials of degree zero correspond to constant or symbolic expressions without indeterminate variables.
 
 ```
 casos.PS(M)
@@ -16,43 +19,45 @@ casos.PS(m,n)
 casos.PS.zeros(m,n)
 casos.PS.zeros(n)
 ```
-creates a zero-degree polynomial which corresponds to a `m`x`n` matrix (resp., a square matrix with length `n`) of zeros.
+creates a zero-degree polynomial which corresponds to a `m × n` matrix (resp., a square matrix with length `n`) of zeros.
 
 ```
 casos.PS.ones(m,n)
 casos.PS.ones(n)
 ```
-creates a zero-degree polynomial which corresponds to a `m`x`n` matrix (resp., a square matrix with length `n`) of ones.
+creates a zero-degree polynomial which corresponds to a `m × n` matrix (resp., a square matrix with length `n`) of ones.
 
 ```
 casos.PS.eye(n)
 ```
-creates a zero-degree polynomial which corresponds to the `n`x`n` identity matrix.
+creates a zero-degree polynomial which corresponds to the `n × n` identity matrix.
 
 #### Indeterminate variables & monomials
+CaΣoS distinguishes between *indeterminate* variables (symbols in a polynomial sense) and *symbolic* variables (variables in an optimization sense). The following syntax creates polynomials that correspond to (vectors of) indeterminate degrees and monomial expressions.
 
 ```
 casos.PS('x','y',...)
 ```
-creates a `n`x1 vector of indeterminate variables, where `n` corresponds to the number of arguments.
+creates a `n × 1` vector of indeterminate variables, where `n` corresponds to the number of arguments.
 
 ```
 casos.PS('x',m,n)
 casos.PS('x',n)
 ```
-creates a `m`x`n` matrix (resp., a square matrix) of indeterminate variables.
+creates a `m × n` matrix (resp., a square matrix) of indeterminate variables.
 
 ```
 monomials(x,deg)
 ```
-creates a `l`x1 vector of all monomials in `x` with degree in `deg`, where `x` must be a vector of indeterminate variables and `deg` is vector of nonnegative integers; where `l` is the total number of such monomials.
+creates a `l × 1` vector of all monomials in `x` with degree(s) in `deg`, where `x` must be a vector of indeterminate variables and `deg` is vector of nonnegative integers; where `l` is the total number of such monomials.
 
 ```
 monomials(p)
 ```
-creates a `l`x1 vector of all monomials in the polynomial `p`; where `l` is the total number of monomials in `p`.
+creates a `l × 1` vector of all monomials in the polynomial `p`; where `l` is the total number of monomials in `p`.
 
 #### Polynomials with symbolic coefficients
+Unlike indeterminate variables, symbolic variables can be decision variables of an optimization problem. The following syntax creates polynomials which have symbolic variables and as coefficients.
 
 ```
 casos.PS.sym('c',w)
@@ -63,7 +68,7 @@ creates a scalar polynomial with symbolic coefficients and monomials in `w`, whe
 casos.PS.sym('c',w,[m n])
 casos.PS.sym('c',w,n)
 ```
-creates a `m`x`n` matrix (resp., a square matrix with length `n`) of polynomials with symbolic coefficients and monomials in `w`, where `w` must be a vector of monomials.
+creates a `m × n` matrix (resp., a square matrix with length `n`) of polynomials with symbolic coefficients and monomials in `w`, where `w` must be a vector of monomials.
 
 ## Functions between polynomials
 
