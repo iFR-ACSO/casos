@@ -25,8 +25,14 @@ methods
         f.wrap = wrap;
         
         % input/output arguments
-        f.arg_i = cell2struct(arg_i,name_i);
-        f.arg_o = cell2struct(arg_o,name_o);
+        if nargin < 4
+            assert(istruct(arg_i) && istruct(arg_o), 'Arguments must be structures.')
+            f.arg_i = arg_i;
+            f.arg_o = arg_o;
+        else
+            f.arg_i = cell2struct(arg_i,name_i);
+            f.arg_o = cell2struct(arg_o,name_o);
+        end
     end
 
     function cls = get.class_name(obj)
