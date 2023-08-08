@@ -16,7 +16,7 @@ properties (Access = private)
 end
 
 methods (Access=protected,Static)
-    [type,args] = parse_argument(expr,name);
+    [type,args] = parse_argument(name,expr);
 end
 
 methods

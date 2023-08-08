@@ -13,8 +13,8 @@ methods
         import casos.package.functions.*
 
         % parse inputs and outputs
-        [type_i,args_i] = cellfun(@FunctionWrapper.parse_argument, ex_i, name_i, 'UniformOutput', false);
-        [type_o,args_o] = cellfun(@FunctionWrapper.parse_argument, ex_o, name_o, 'UniformOutput', false);
+        [type_i,args_i] = cellfun(@FunctionWrapper.parse_argument, name_i, ex_i, 'UniformOutput', false);
+        [type_o,args_o] = cellfun(@FunctionWrapper.parse_argument, name_o, ex_o, 'UniformOutput', false);
 
         types = [type_i{:} type_o{:}];
 

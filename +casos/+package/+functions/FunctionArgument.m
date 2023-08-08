@@ -24,10 +24,10 @@ methods (Abstract)
 end
 
 methods
-    function arg = FunctionArgument(expr,name)
+    function arg = FunctionArgument(name,expr)
         % Superclass constructor.
-        arg.expr = expr;
         arg.name = name;
+        arg.expr = expr;
     end
 
     function sg = get_signature(obj)
