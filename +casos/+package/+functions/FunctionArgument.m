@@ -24,10 +24,15 @@ methods (Abstract)
 end
 
 methods
-    function arg = FunctionArgument(name,expr)
+    function arg = FunctionArgument(name,expr,value)
         % Superclass constructor.
         arg.name = name;
         arg.expr = expr;
+
+        if nargin > 2
+            % set default value
+            set_value(arg, value);
+        end
     end
 
     function sg = get_signature(obj)
