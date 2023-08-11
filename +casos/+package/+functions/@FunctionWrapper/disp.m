@@ -1,8 +1,8 @@
 function disp(obj)
 % Display function signature.
 
-args_i = cellfun(@get_signature, struct2cell(obj.arg_i), 'UniformOutput', false);
-args_o = cellfun(@get_signature, struct2cell(obj.arg_o), 'UniformOutput', false);
+args_i = cellfun(@get_signature, struct2cell(obj.wrap.arg_i), 'UniformOutput', false);
+args_o = cellfun(@get_signature, struct2cell(obj.wrap.arg_o), 'UniformOutput', false);
 
 % separate arguments by comma
 args_i(2,1:end-1) = {','};

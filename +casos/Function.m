@@ -4,13 +4,19 @@ classdef Function < casos.package.functions.FunctionWrapper
 methods
     function f = Function(name, ex_i, ex_o, name_i, name_o, varargin)
         % Create a new function.
+        import casos.package.functions.*
+
+        if isa(name,'casos.package.functions.FunctionWrapper')
+            % copy constructor
+            wrap = name.wrap;
+
+        else
+        
         if nargin < 5
             % default input/output names
             name_i = compose('i%d',1:length(ex_i));
             name_o = compose('o%d',1:length(ex_o));
         end
-
-        import casos.package.functions.*
 
         % parse inputs and outputs
         [type_i,args_i] = cellfun(@FunctionWrapper.parse_argument, name_i, ex_i, 'UniformOutput', false);
@@ -32,7 +38,9 @@ methods
             error('No matching function for inputs (%s).', [str{:}]);
         end
 
-        f@casos.package.functions.FunctionWrapper(wrap,args_i,args_o,name_i,name_o);
+        end
+
+        f@casos.package.functions.FunctionWrapper(wrap);
     end
 end
 

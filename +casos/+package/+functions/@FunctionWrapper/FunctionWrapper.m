@@ -6,11 +6,6 @@ properties (Dependent)
     name;
 end
 
-properties (SetAccess = private)
-    arg_i;
-    arg_o;
-end
-
 properties (Access = private)
     wrap;
 end
@@ -20,19 +15,9 @@ methods (Access=protected,Static)
 end
 
 methods
-    function f = FunctionWrapper(wrap,arg_i,arg_o,name_i,name_o)
+    function f = FunctionWrapper(wrap)
         % Superclass constructor.
         f.wrap = wrap;
-        
-        % input/output arguments
-        if nargin < 4
-            assert(istruct(arg_i) && istruct(arg_o), 'Arguments must be structures.')
-            f.arg_i = arg_i;
-            f.arg_o = arg_o;
-        else
-            f.arg_i = cell2struct(arg_i,name_i);
-            f.arg_o = cell2struct(arg_o,name_o);
-        end
     end
 
     function cls = get.class_name(obj)
@@ -50,23 +35,13 @@ methods
         assert(isstruct(args),'Arguments must be given as struct.')
         
         % parse inputs by name
-        argin = obj.arg_i;
-        for fn = fieldnames(args)
-            assert(ismember(fn,fieldnames(argin)), 'Unexpected input (%s)', fn{:})
-
-            argin.(fn{:}) = set_value(argin.(fn{:}), args.(fn{:}));
-        end
+        argin = set_value_in(obj.wrap,args);
 
         % call wrapped function
-        argout = call(obj.wrap,argin,obj.arg_o);
+        argout = call(obj.wrap,argin);
 
         % parse outputs
-        out = [];
-        for fn = fieldnames(argout)
-            assert(has_value(argout.(fn{:})), 'Output (%s) not assigned after function call.', fn{:})
-
-            out.(fn{:}) = get_value(argout.(fn{:}));
-        end
+        out = get_value_out(obj.wrap,argout);
     end
 
     function varargout = subsref(obj,L)
@@ -90,7 +65,7 @@ methods
         else
             namevalue = false;
 
-            fn_i = fieldnames(obj.arg_i);
+            fn_i = get_name_in(obj.wrap);
         end
         
         % assign inputs

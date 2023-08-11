@@ -9,7 +9,7 @@ properties (SetAccess=protected)
     class_name = 'PSFunction';
 end
 
-properties (Dependent)
+properties (Dependent,SetAccess=protected)
     name;
 end
 
@@ -19,6 +19,8 @@ methods
         [sym_i,n_i] = cellfun(@(arg) deal(get_symbolic(arg),arg.name), args_i, 'UniformOutput', false);
         [sym_o,n_o] = cellfun(@(arg) deal(get_symbolic(arg),arg.name), args_o, 'UniformOutput', false);
 
+        obj@casos.package.functions.FunctionInterface(args_i,args_o,n_i,n_o);
+
         obj.func = casadi.Function(name, sym_i, sym_o, n_i, n_o, varargin{:});
     end
 
@@ -27,7 +29,7 @@ methods
         nm = obj.func.name;
     end
 
-    function argout = call(obj, argin, argout)
+    function argout = call(obj, argin)
         % Evaluate casadi function object.
         in = structfun(@get_param, argin, 'UniformOutput', false);
 
@@ -35,6 +37,7 @@ methods
         out = call(obj.func, in);
 
         % return result
+        argout = obj.arg_o;
         for fn = fieldnames(out)
             argout.(fn{:}) = set_param(argout.(fn{:}), out.(fn{:}));
         end
