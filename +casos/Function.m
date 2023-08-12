@@ -25,7 +25,7 @@ methods
         types = [type_i{:} type_o{:}];
 
         % select appropriate Function class
-        if all(ismember(types,["DM" "SX" "DM"]))
+        if all(ismember(types,["DM" "SX" "MX"]))
             % fall back to casadi Function class
             wrap = CasadiFunction(name,args_i,args_o,varargin{:});
 
