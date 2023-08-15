@@ -77,10 +77,10 @@ c = [g; zeros(m+Na.l+n+Nx.l,1)];
 
 % set cone for SeDuMi
 K.f = n;
-K.l = 2*(Nx.l + Na.l);
-K.q = [Nx.q Na.q];
-K.r = [Nx.r Na.r];
-K.s = [Nx.s Na.s];
+K.l = 2*(Na.l + Nx.l);
+K.q = [Na.q Nx.q];
+K.r = [Na.r Nx.r];
+K.s = [Na.s Nx.s];
 
 obj.cone = K;
 
