@@ -55,14 +55,6 @@ methods
         z = obj.monom_i{idx+1};
     end
 
-    function val = get_default_in(obj,idx)
-        % Default inputs.
-        z = get_monomials_in(idx);
-        sz = get_size_in(idx);
-        % build default polynomial
-        val = reshape(default_in(obj.func,idx)*z,sz);
-    end
-
     function sz = get_size_in(obj,idx)
         % Size of inputs.
         sz = obj.size_i{idx+1};

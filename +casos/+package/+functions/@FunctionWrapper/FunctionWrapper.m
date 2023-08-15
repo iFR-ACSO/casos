@@ -101,21 +101,31 @@ methods
         % else
         assert(isstruct(args),'Arguments must be given as struct.')
 
-        % default values
-        argin = cell2struct(obj.name_in,obj.default_in);
+        % name of inputs
+        fn_in = num2cell(obj.name_in,2);
 
-        % parse inputs by name
+        % parse arguments by name
         fn = fieldnames(args);
-        for i = 1:length(fn)
-            assert(isfield(argin,fn{i}), 'Could not find entry "%s".', fn{i});
-            argin.(fn{i}) = args.(fn{i});
-        end
+        
+        % find arguments
+        [I,L] = ismember(fn,fn_in);
+
+        assert(all(I), 'Could not find entry "%s".', fn{find(I,1)})
+
+        % default values
+        argin = arrayfun(@(i) obj.default_in(i), 0:obj.n_in-1, 'UniformOutput', false);
+
+        % assign arguments
+        argin(L) = struct2cell(args);
         
         % call function with cell
-        argout = call(obj,struct2cell(argin));
+        argout = call(obj,argin);
+
+        % name of outputs
+        fn_out = num2cell(obj.name_out,2);
 
         % parse outputs
-        out = cell2struct(obj.name_out,argout);
+        out = cell2struct(argout,fn_out);
     end
 
     function varargout = subsref(obj,L)
@@ -128,7 +138,11 @@ methods
         end
 
         % else:
-        if ischar(L.subs) || ischar(L.subs{1})
+        if isempty(L.subs)
+            % empty function call
+            args = struct;
+            
+        elseif ischar(L.subs{1})
             % name-value pairs
             fn_i = L.subs(1:2:end);
             L.subs(1:2:end) = [];

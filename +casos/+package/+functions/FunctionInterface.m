@@ -33,7 +33,7 @@ methods
 
     function val = get_default_in(obj,i)
         % Return default values of input arguments.
-        val = zeros(get_size_in(obj,i));
+        val = 0;
     end
 end
 
