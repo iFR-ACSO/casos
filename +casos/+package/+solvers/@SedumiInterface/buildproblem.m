@@ -66,14 +66,15 @@ Na.s = (obj.getdimc(Ka,'s'));
 Nx_c = n - Nx.l;
 Na_c = m - Na.l;
 
-A = [
-    a(1:Na.l,:)    +eye(Na.l) zeros(Na.l,m) zeros(Na.l,n+Nx.l)
-    a           zeros(m,Na.l)       -eye(m) zeros(m,   n+Nx.l)
-    eye(Nx.l,n) zeros(Nx.l,m+Na.l)           +eye(Nx.l) zeros(Nx.l,n)
-    eye(n)      zeros(n,   m+Na.l)        zeros(n,Nx.l)       -eye(n)
+A = [ [
+        a(1:Na.l,:)
+        a
+        speye(Nx.l,n)
+        speye(n)
+    ] blkdiag(+speye(Na.l), -speye(m), +speye(Nx.l), -speye(n))
 ];
 b = [uba(1:Na.l); lba; ubx(1:Nx.l); lbx];
-c = [g; zeros(m+Na.l+n+Nx.l,1)];
+c = [g; sparse(m+Na.l+n+Nx.l,1)];
 
 % set cone for SeDuMi
 K.f = n;
