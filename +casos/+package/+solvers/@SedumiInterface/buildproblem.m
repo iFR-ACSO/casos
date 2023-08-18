@@ -5,20 +5,31 @@ function buildproblem(obj)
 %
 %   min c'*x st. A*x = b and x in K
 %
+% with dual variables satisfying 
+%
+%   c - A'*y in K*
+%
 % where K is a cone composed of free variables (f), nonnegative orthant
 % (l), Lorentz cone (q), rotated Lorentz cone (r), and cone of positive
-% semidefinite matrices (s).
+% semidefinite matrices (s); and K* is the dual cone of K.
 %
 % The generic conic problem in casos has the form
 %
 %   min 1/2*x'*h*x + g'*x
 %   st. a*x in Ka, x in Kx,
 %
+% with Lagrange multipliers satisfying
+%
+%   h*x + g + a'*lam_a + lam_x = 0
+%   lam_a in -Ka*, lam_x in -Kx*
+%
 % where Ka and Kx are cones composed of
 %   - box constraints [lb ub] (l)
 %   - Lorentz (quadratic) cone (q)
 %   - rotated Lorentz cone (r)
 %   - cone of PSD matrices (s)
+%
+% and Ka* and Kx* are the dual cones of Ka and Kx, respectively.
 %
 % Lorentz cone, rotated Lorentz cone, and PSD cone can be shifted by a
 % lower bound (cb).
@@ -97,15 +108,16 @@ obj.fhan = casadi.Function('f',struct2cell(obj.args_in),{A(:,idx) b c(idx)},fiel
 % parse SeDuMi solution (X,Y) into (x,cost,lam_a,lam_x)
 X = casadi.MX.sym('x',size(c));
 Y = casadi.MX.sym('y',size(b));
+S = c - A'*Y;
 
 % dual variables corresponding to constraints and variables
-Yc = mat2cell(Y,[Na.l Na.l Na_c Nx.l Nx.l Nx_c],1);
+Sc = mat2cell(S(n+1:end),[Na.l Na.l Nx.l Nx.l Na_c Nx_c],1);
 % multipliers for interval constraints
-lam_a_l = Yc{1} - Yc{2};
-lam_x_l = Yc{4} - Yc{5};
+lam_a_l = Sc{1} - Sc{2};
+lam_x_l = Sc{3} - Sc{4};
 % multipliers for cone constraints
-lam_a_c = Yc{3};
-lam_x_c = Yc{6};
+lam_a_c = -Sc{5};
+lam_x_c = -Sc{6};
 
 obj.ghan = casadi.Function('g',[struct2cell(obj.args_in)' {X Y}],{X(1:n) (c'*X) [lam_a_l; lam_a_c] [lam_x_l; lam_x_c]},[fieldnames(obj.args_in)' {'X' 'Y'}],obj.names_out);
 
