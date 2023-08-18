@@ -123,7 +123,7 @@ methods
 
     function tf = is_symexpr(obj)
         % Check if polynomial contains symbolic expressions.
-        tf = ~isconstant(obj.coeffs);
+        tf = ~is_constant(obj.coeffs);
     end
 
     function tf = is_zerodegree(obj)
