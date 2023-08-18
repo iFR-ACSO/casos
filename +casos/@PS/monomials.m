@@ -52,15 +52,16 @@ Z.matdim = [nt 1];
 
 end
 
-function [M,l] = degreemat(M, l, m, d)
+function [M,l] = degreemat(M, l0, m, d)
 % Build degree matrix for m variables and degree d.
 
     switch m
-        case 1, M(l,end) = d; l = l+1;
+        case 1, M(l0,end) = d; l = l0+1;
         otherwise
             for j = 0:d
-                M(l,end-m+1) = d - j;
-                [M,l] = degreemat(M,l,m-1,j);
+                [M,l] = degreemat(M,l0,m-1,j);
+                M(l0:l-1,end-m+1) = d - j;
+                l0 = l;
             end
     end
 end
