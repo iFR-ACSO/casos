@@ -33,7 +33,7 @@ casos.PS.eye(n)
 creates a zero-degree polynomial which corresponds to the `n × n` identity matrix.
 
 #### Indeterminate variables & monomials
-CaΣoS distinguishes between *indeterminate* variables (symbols in a polynomial sense) and *symbolic* variables (variables in an optimization sense). The following syntax creates polynomials that correspond to (vectors of) indeterminate degrees and monomial expressions.
+CaΣoS distinguishes between *indeterminate* variables (symbols in a polynomial sense) and *symbolic* variables (variables in an optimization sense). The following syntax creates polynomials that correspond to (vectors of) indeterminate variables and monomial expressions.
 
 ```
 casos.PS('x','y',...)
@@ -100,5 +100,34 @@ out = f('a1',r1,...,'aN',rN)
 ```
 calls the function `f` with arguments `r1` through `rN` assigned to inputs with names `'a1'` through `'aN'`, respectively. In this case, the functionn call returns a structure with fields `out.b1` through `out.bM` with corresponding output values.
 
+## Convex optimization
+
+To solve polynomial sum-of-squares optimization problems via semidefinite programming, CaΣoS provides both a high-level and low-level interface for convex optimization. These interfaces extend CasADi's [`qpsol`](https://web.casadi.org/docs/#high-level-interface) and [`conic`](https://web.casadi.org/docs/#low-level-interface) syntax. Currently, the convex solvers SeDuMi and SCS are supported (but, unlike CasADi, the solvers must be installed separately and be accessible through MATLAB). Note that SeDuMi does not support quadratic cost functions.
+
+#### High-level interface
+
+The high-level interface solves convex problems of the form
+
+```math
+\begin{array}{l c r}
+  \min & f(x,p), & x = (x_\mathrm{l}, x_\mathrm{c}) \\
+  \text{s.t.} & g_\mathrm{lb} \leq g_\mathrm{l}(x,p) \leq g_\mathrm{ub}, & g_\mathrm{c}(x,p) \succeq_{\mathcal{K}_A} g_\mathrm{cb} \\
+  \text{and} & x_\mathrm{lb} \leq x_\mathrm{l} \leq x_\mathrm{ub}, & x_\mathrm{c} \succeq_{\mathcal{K}_x} x_\mathrm{cb}
+\end{array}
+```
+where $f$ is a convex quadratic function in $x$, the constraints $g_\mathrm{l}$ and $g_\mathrm{c}$ are affine in $x$, and $\succeq_\mathcal{K}$ denotes the order induced by the convex cone $\mathcal K$. In the following, the pairs $(g_\mathrm{lb}, g_\mathrm{cb})$ and $(x_\mathrm{lb}, x_\mathrm{cb})$ are referred to as *lower bounds*, whereas $(g_\mathrm{ub}, \infty)$ and $(x_\mathrm{ub}, \infty)$ denote the *upper bounds* (note that the second compoments, corresponding to the convex cone constraints, can be arbitrary).
+
+#### Low-level interface
+
+The low-level interface solves conic problems of the form
+
+```math
+\begin{array}{l c r}
+  \min & \frac{1}{2} x^\top H x + g^\top x, & x = (x_\mathrm{l}, x_\mathrm{c}) \\
+  \text{s.t.} & a_\mathrm{lb} \leq A_\mathrm{l} \, x \leq a_\mathrm{ub}, & A_\mathrm{c} \, x \succeq_{\mathcal{K}_A} a_\mathrm{cb} \\
+  \text{and} & x_\mathrm{lb} \leq x_\mathrm{l} \leq x_\mathrm{ub}, & x_\mathrm{c} \succeq_{\mathcal{K}_x} x_\mathrm{cb}
+\end{array}
+```
+where $\succeq_\mathcal{K}$ denotes the order induced by the convex cone $\mathcal K$. In the following, the pairs $(a_\mathrm{lb}, a_\mathrm{cb})$ and $(x_\mathrm{lb}, x_\mathrm{cb})$ are referred to as *lower bounds*, whereas $(a_\mathrm{ub}, \infty)$ and $(x_\mathrm{ub}, \infty)$ denote the *upper bounds* (note that the second compoments, corresponding to the convex cone constraints, can be arbitrary).
 
 [^1]: CaΣoS has been neither supported nor endorsed by CasADi or any of its affilitiates.
