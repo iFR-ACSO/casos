@@ -73,7 +73,7 @@ methods
 
     function n = get.nterm(obj)
         % Number of monomials.
-        n = size(obj.coeffs,1);
+        n = size(obj.degmat,1);
     end
 
     function d = get.mindeg(obj)
@@ -233,6 +233,11 @@ methods (Access=protected)
     obj = parenDelete(obj,idx);
     n = parenListLength(obj,idx,context);
     varargout = parenReference(obj,index);
+
+    % protected interface for subsref getters
+    [monoms,L] = get_monoms(p,I);
+    [degree,L] = get_degree(p,I);
+    [indets,L] = get_indets(p,I);
 end
 
 end

@@ -8,6 +8,37 @@ idx = indexOp(1);
 I = sparse(size(obj,1),size(obj,2));
 I.(idx) = 1;
 
+if length(indexOp) > 1 && indexOp(2).Type == "Dot"
+    % handle getters on referenced polynomial
+    switch (indexOp(2).Name)
+        case 'mindeg'
+            res = min(get_degree(obj,find(I)));
+        case 'maxdeg'
+            res = max(get_degree(obj,find(I)));
+        case 'nvars'
+            res = length(get_indets(obj,find(I)));
+        case 'nterm'
+            res = size(get_degmat(obj,find(I)),1);
+        case 'indeterminates'
+            res = get_indets(obj,find(I));
+        case 'monomials'
+            res = get_monoms(obj,find(I));
+        otherwise
+            % getter not supported
+            res = [];
+    end
+
+    if isempty(res)
+        % continue
+    elseif length(indexOp) > 2
+        [varargout{1:nargout}] = res.(indexOp(3:end));
+        return
+    else
+        varargout = {res};
+        return
+    end
+end
+
 % reference coefficients
 coeffs = obj.coeffs(:,find(I));
 

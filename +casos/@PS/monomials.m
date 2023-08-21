@@ -40,15 +40,8 @@ else
     degmat = M(I,:);
 end
 
-% number of monomials
-nt = size(degmat,1);
-
 % set output
-Z = casos.PS;
-Z.coeffs = casadi.SX.eye(nt);
-Z.degmat = sparse(degmat);
-Z.indets = indets;
-Z.matdim = [nt 1];
+Z = build_monomials(degmat,indets);
 
 end
 
