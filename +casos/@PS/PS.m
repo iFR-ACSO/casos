@@ -131,6 +131,11 @@ methods
         tf = (obj.maxdeg == 0);
     end
 
+    function tf = is_zero(obj)
+        % Check if polynomial is equal to zero.
+        tf = (is_zerodegree(obj) && is_zero(obj.coeffs));
+    end
+
     function tf = is_constant(obj)
         % Check if polynomial is constant.
         tf = (is_zerodegree(obj) && ~is_symexpr(obj));
