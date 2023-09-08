@@ -1,5 +1,5 @@
 function c = kron(a,b)
-% Kronecker product of two polynomial matrices.
+% Compute Kronecker product of two polynomial matrices.
 
 a = casos.PS(a);
 b = casos.PS(b);
