@@ -26,7 +26,7 @@ degrees = full(unique(degsum'));
 [~,Ldegmat] = get_degmat(p);
 
 % map degrees to entries
-L = Ldegmat*(degsum == degrees);
+L = logical(Ldegmat*(degsum == degrees));
 
 if nargin > 1
     % find degrees that appear in subsref

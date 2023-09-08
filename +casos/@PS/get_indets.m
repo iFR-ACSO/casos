@@ -23,7 +23,7 @@ indets = p.indets;
 [degmat,Ldegmat] = get_degmat(p);
 
 % map variable appearance to entries
-L = Ldegmat*(degmat > 0);
+L = logical(Ldegmat*(degmat > 0));
 
 if nargin > 1
     % find variables that appear in subsref
