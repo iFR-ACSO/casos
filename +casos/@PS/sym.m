@@ -8,12 +8,16 @@ end
 if nargin < 3
     % default size: scalar
     sz = [1 1];
-elseif isscalar(sz)
-    sz = [sz sz];
-elseif ~isrow(sz) || ~numel(sz) == 2
-    error('Third input must be scalar or 1x2 vector of dimensions.')
+elseif ischar(sz)
+    type = sz;
+    % default size: scalar
+    sz = [1 1];
 end
 if nargin < 2
+    % default monomials: 1
+    w = casos.PS(1);
+elseif isnumeric(w) && nargin < 3
+    sz = w;
     % default monomials: 1
     w = casos.PS(1);
 else
@@ -22,6 +26,11 @@ else
 end
 if nargin < 1
     error('Undefined inputs.');
+end
+if isscalar(sz)
+    sz = [sz sz];
+elseif ~isrow(sz) || ~numel(sz) == 2
+    error('Third input must be scalar or 1x2 vector of dimensions.')
 end
 
 p = casos.PS;
