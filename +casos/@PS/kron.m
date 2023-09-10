@@ -52,10 +52,7 @@ degmat = dga(Ia(:),:) + dgb(Ib(:),:);
 coeffs = cfa(Ia(:),ja(:)).*cfb(Ib(:),jb(:));
 
 % make degree matrix unique
-[degmat,id,ic] = unique(degmat,'rows','sorted');
-% sum repeated coefficients
-summat = sparse(ic,1:(nta*ntb),1,length(id),nta*ntb);
-coeffs = summat*coeffs;
+[coeffs,degmat] = uniqueDeg(coeffs,degmat);
 
 % new polynomial
 c.coeffs = coeffs;
