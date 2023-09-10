@@ -130,6 +130,11 @@ methods
         tf = ~is_constant(obj.coeffs);
     end
 
+    function tf = is_symgram(obj)
+        % Check if polynomial is in symbolic Gram form.
+        tf = ~isempty(grammatrix(obj));
+    end
+
     function tf = is_zerodegree(obj)
         % Check if polynomial is of degree zero.
         tf = (obj.maxdeg == 0);
