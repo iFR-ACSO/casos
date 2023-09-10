@@ -41,17 +41,21 @@ methods
                 % syntax PS('x')
                 n = 1; m = 1;
                 obj.indets = {var};
+                iv = 1;
             elseif ischar([arg{:}])
                 % syntax PS('x','y',...)
                 n = length(varargin); m = 1;
-                obj.indets = varargin;
+                % sort variables alphabetically
+                [obj.indets,iv] = unique(varargin);
             else
                 % syntax PS('x',m,n)
                 [n,m] = size(zeros(arg{:}));
                 obj.indets = compose('%s_%d',var,1:(n*m));
+                iv = 1:(n*m);
             end
 
-            obj.coeffs = casadi.SX.eye(n*m);
+            % return variables in requested order
+            obj.coeffs = casadi.SX.triplet(iv-1,0:(n*m-1),ones(1,n*m),n*m,n*m);
             obj.degmat = speye(n*m);
             obj.matdim = [n m];
 

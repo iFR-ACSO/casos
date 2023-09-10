@@ -37,12 +37,13 @@ switch type
         Q = casadi.SX.sym(dstr,nt^2,ne);  % Gram matrices, TODO: symmetric?
         D = kron(w.degmat,ones(nt,1)) + kron(ones(nt,1),w.degmat);
         % make degree matrix unique
-        [p.coeffs,p.degmat] = uniqueDeg(Q,D,'stable');
+        [p.coeffs,p.degmat] = uniqueDeg(Q,D);
 
     otherwise
         % create using coefficient vector form
         p.coeffs = casadi.SX.sym(dstr,nt,ne);
-        p.degmat = w.degmat; % TODO: match ordering in w
+        % degree matrix is already sorted canonically
+        p.degmat = w.degmat;
 end
 
 % set indeterminates + dimensions

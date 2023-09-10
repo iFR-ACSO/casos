@@ -25,7 +25,7 @@ indets = p.indets;
 % select variables in subsref
 Ivar = any(degmat > 0);
 
-% TODO: sort?
+% monomials are already sorted canonically
 z = build_monomials(degmat(:,Ivar),indets(Ivar));
 
 end
