@@ -68,8 +68,8 @@ methods
         end
 
         % check cone dimensions
-        assert(sum(struct2array(obj.sdpopt.Kx)) == n, 'Dimension of Kx must equal to number of variables (%d).', n)
-        assert(sum(struct2array(obj.sdpopt.Ka)) == m, 'Dimension of Ka must equal to number of constraints (%d).', m)
+        assert(sum(cellfun(@(fn) obj.getnumc(obj.sdpopt.Kx,fn), fieldnames(obj.sdpopt.Kx))) == n, 'Dimension of Kx must equal to number of variables (%d).', n)
+        assert(sum(cellfun(@(fn) obj.getnumc(obj.sdpopt.Ka,fn), fieldnames(obj.sdpopt.Ka))) == m, 'Dimension of Ka must equal to number of constraints (%d).', m)
 
         % build conic problem
         buildproblem(obj);
@@ -120,6 +120,21 @@ methods (Static, Access=protected)
             N = 0;
         else
             N = [];
+        end
+    end
+
+    function n = getnumc(K,type)
+        % Return number of variables in cone.
+        if ~isfield(K,type)
+            n = 0;
+            return
+        end
+
+        % else
+        switch (type)
+            case 'l', n = K.(type);
+            case 's', n = sum(K.(type).^2);
+            otherwise, n = sum(K.(type));
         end
     end
 end

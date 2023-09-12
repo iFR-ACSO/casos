@@ -92,8 +92,8 @@ K.s = [Na.s Nx.s];
 obj.cone = casadi.Function('K',struct2cell(obj.args_in),struct2cell(K),fieldnames(obj.args_in),fieldnames(K));
 
 % reorder slack variables to (b,q,s)
-Ia = [ones(1,Na.l) 2*ones(1,sum(Na.q)) 3*ones(1,sum(Na.s))];
-Ix = [ones(1,Nx.l) 2*ones(1,sum(Nx.q)) 3*ones(1,sum(Nx.s))];
+Ia = [ones(1,Na.l) 2*ones(1,sum(Na.q)) 3*ones(1,sum(Na.s.^2))];
+Ix = [ones(1,Nx.l) 2*ones(1,sum(Nx.q)) 3*ones(1,sum(Nx.s.^2))];
 
 [~,idx] = sort([0 Ia Ix]);
 
