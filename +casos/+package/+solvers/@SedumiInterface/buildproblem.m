@@ -40,11 +40,15 @@ opts = obj.sdpopt;
 % symbolic variables
 g = obj.args_in.g;
 a = obj.args_in.a;
+
 % symbolic bounds
 lba = obj.args_in.lba;
 uba = obj.args_in.uba;
+cba = obj.args_in.cba;
 lbx = obj.args_in.lbx;
 ubx = obj.args_in.ubx;
+cbx = obj.args_in.cbx;
+
 % problem size
 [m,n] = size(a);
 
@@ -57,6 +61,7 @@ Nx.l = (obj.getdimc(Kx,'l'));
 Nx.q = (obj.getdimc(Kx,'q'));
 Nx.r = (obj.getdimc(Kx,'r'));
 Nx.s = (obj.getdimc(Kx,'s'));
+
 % number of constraints per cone type
 Na.l = (obj.getdimc(Ka,'l'));
 Na.q = (obj.getdimc(Ka,'q'));
@@ -84,7 +89,7 @@ A = [ [
         speye(n)
     ] blkdiag(+speye(Na.l), -speye(m), +speye(Nx.l), -speye(n))
 ];
-b = [uba(1:Na.l); lba; ubx(1:Nx.l); lbx];
+b = [uba; lba; cba; ubx; lbx; cbx];
 c = [g; sparse(m+Na.l+n+Nx.l,1)];
 
 % set cone for SeDuMi

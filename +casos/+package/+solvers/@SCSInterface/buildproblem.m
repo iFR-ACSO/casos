@@ -40,11 +40,15 @@ opts = obj.sdpopt;
 h = obj.args_in.h;
 g = obj.args_in.g;
 a = obj.args_in.a;
+
 % symbolic bounds
 lba = obj.args_in.lba;
 uba = obj.args_in.uba;
+cba = obj.args_in.cba;
 lbx = obj.args_in.lbx;
 ubx = obj.args_in.ubx;
+cbx = obj.args_in.cbx;
+
 % problem size
 [m,n] = size(a);
 
@@ -56,6 +60,7 @@ Ka = opts.Ka;
 Nx.l = (obj.getdimc(Kx,'l'));
 Nx.q = (obj.getdimc(Kx,'q'));
 Nx.s = (obj.getdimc(Kx,'s'));
+
 % number of constraints per cone type
 Na.l = (obj.getdimc(Ka,'l'));
 Na.q = (obj.getdimc(Ka,'q'));
@@ -79,13 +84,13 @@ Nx_c = n - Nx.l;
 Na_c = m - Na.l;
 
 A = [sparse(1,n); -a; -speye(n)];
-b = [1; sparse(Na.l,1); -lba(Na.l+1:end); sparse(Nx.l,1); -lbx(Nx.l+1:end)];
+b = [1; sparse(Na.l,1); -cba; sparse(Nx.l,1); -cbx];
 c = g;
 P = h;
 
 % set cone for SCS
-K.bl = [lba(1:Na.l); lbx(1:Nx.l)];
-K.bu = [uba(1:Na.l); ubx(1:Nx.l)];
+K.bl = [lba; lbx];
+K.bu = [uba; ubx];
 K.q = [Na.q Nx.q];
 K.s = [Na.s Nx.s];
 

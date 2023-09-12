@@ -39,18 +39,6 @@ methods
         % problem size
         [m,n] = size(as);
 
-        % symbolic inputs
-        obj.args_in.h      = casadi.MX.sym('h',hs);
-        obj.args_in.g      = casadi.MX.sym('g',n);
-        obj.args_in.a      = casadi.MX.sym('a',as);
-        obj.args_in.lba    = casadi.MX.sym('lba',m);
-        obj.args_in.uba    = casadi.MX.sym('uba',m);
-        obj.args_in.lbx    = casadi.MX.sym('lbx',n);
-        obj.args_in.ubx    = casadi.MX.sym('ubx',n);
-        obj.args_in.x0     = casadi.MX.sym('x0',n);
-        obj.args_in.lam_x0 = casadi.MX.sym('lam_x0',n);
-        obj.args_in.lam_a0 = casadi.MX.sym('lam_a0',m);
-
         % default options
         obj.sdpopt.Kx = struct('l',n);
         obj.sdpopt.Ka = struct('l',m);
@@ -70,6 +58,24 @@ methods
         % check cone dimensions
         assert(sum(cellfun(@(fn) obj.getnumc(obj.sdpopt.Kx,fn), fieldnames(obj.sdpopt.Kx))) == n, 'Dimension of Kx must equal to number of variables (%d).', n)
         assert(sum(cellfun(@(fn) obj.getnumc(obj.sdpopt.Ka,fn), fieldnames(obj.sdpopt.Ka))) == m, 'Dimension of Ka must equal to number of constraints (%d).', m)
+
+        % dimensions of linear variables and constraints
+        Nl = casos.package.solvers.ConicSolver.getdimc(obj.sdpopt.Kx,'l');
+        Ml = casos.package.solvers.ConicSolver.getdimc(obj.sdpopt.Ka,'l');
+
+        % symbolic inputs
+        obj.args_in.h      = casadi.MX.sym('h',hs);
+        obj.args_in.g      = casadi.MX.sym('g',n);
+        obj.args_in.a      = casadi.MX.sym('a',as);
+        obj.args_in.lba    = casadi.MX.sym('lba',Ml);
+        obj.args_in.uba    = casadi.MX.sym('uba',Ml);
+        obj.args_in.cba    = casadi.MX.sym('cba',m-Ml);
+        obj.args_in.lbx    = casadi.MX.sym('lbx',Nl);
+        obj.args_in.ubx    = casadi.MX.sym('ubx',Nl);
+        obj.args_in.cbx    = casadi.MX.sym('cbx',n-Nl);
+        obj.args_in.x0     = casadi.MX.sym('x0',n);
+        obj.args_in.lam_x0 = casadi.MX.sym('lam_x0',n);
+        obj.args_in.lam_a0 = casadi.MX.sym('lam_a0',m);
 
         % build conic problem
         buildproblem(obj);
