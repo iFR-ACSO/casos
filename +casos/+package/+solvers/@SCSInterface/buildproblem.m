@@ -112,8 +112,8 @@ obj.fhan = casadi.Function('f',struct2cell(obj.args_in),{P Ascs bscs c},fieldnam
 
 % parse SCS solution (X,Y,S) into (x,cost,lam_a,lam_x)
 X = casadi.MX.sym('x',size(c));
-Y = casadi.MX.sym('y',size(b));
-S = casadi.MX.sym('s',size(b));
+Y = casadi.MX.sym('y',size(bscs));
+S = casadi.MX.sym('s',size(bscs));
 
 % dual variables corresponding to constraints and variables
 Yc = mat2cell(Y,[1 Na.l Nx.l sum(Na.q) sum(Nx.q) sum(Na.s.*(Na.s+1)/2) sum(Nx.s.*(Nx.s+1)/2)],1);
