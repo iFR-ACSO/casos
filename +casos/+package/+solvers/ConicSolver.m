@@ -54,7 +54,7 @@ methods
         if nargin < 3
             opts = struct;
         end
-        for fn=intersect(fieldnames(obj.sdpopt),fieldnames(opts))
+        for fn=intersect(fieldnames(obj.sdpopt),fieldnames(opts))'
             if isempty(fn), continue; end
             obj.sdpopt.(fn{:}) = opts.(fn{:});
             opts = rmfield(opts,fn);
