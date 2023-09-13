@@ -35,9 +35,14 @@ methods
 
         % sparsity patterns
         as = conic.a;
-        hs = conic.h;
         % problem size
         [m,n] = size(as);
+
+        if isfield(conic,'h')
+            hs = conic.h;
+        else
+            hs = casadi.Sparsity(n,n);
+        end
 
         % default options
         obj.sdpopt.Kx = struct('l',n);
