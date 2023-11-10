@@ -34,7 +34,7 @@ K = obj.cone;
 opts = obj.sdpopt.solveroptions;
 
 % reorder decision variables
-idx = [If setdiff(1:length(c),If)];
+idx = [If' setdiff(1:length(c),If)];
 
 % remove trivial constraints
 I = false(size(b));
@@ -45,7 +45,7 @@ Ila = find(lba == uba);
 % remove lower bound constraints
 I(Ila) = true;
 % remove slack variables (sua,sla)
-J(nl+[Ila ml+Ila]) = true;
+J(nl+[Ila; ml+Ila]) = true;
 
 % detect constant variables
 Ilx = find(lbx == ubx);
@@ -60,7 +60,7 @@ Ibx = find(isinf(ubx));
 I(Iba) = true;
 I(2*ml+mc+Ibx) = true;
 % remove slack variables (sua,sla,sux)
-J(nl+[Iba 2*ml+Ibx]) = true;
+J(nl+[Iba; 2*ml+Ibx]) = true;
 
 % purge constraints
 A(I,:) = [];
