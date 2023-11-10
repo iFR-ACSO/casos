@@ -37,15 +37,17 @@ methods
         else
             p = [];
         end
+        % constraint function (vectorized)
+        sdp_g = sdp.g(:);
 
         % quadratic cost
         H = hessian(sdp.f, x);
         % linear cost
         g = jacobian(simplify(sdp.f - x'*(H/2)*x), x);
         % linear constraint
-        A = jacobian(sdp.g, x);
+        A = jacobian(sdp_g, x);
         % constant constraint
-        b = simplify(A*x - sdp.g);
+        b = simplify(A*x - sdp_g);
         
         % get sparsity
         conic.h = sparsity(H);
@@ -58,7 +60,7 @@ methods
         data = casadi.Function('P',{p},{H g A b});
 
         % SDP problem as function of p and x
-        prob = casadi.Function('S',{x p},{sdp.f sdp.g});
+        prob = casadi.Function('S',{x p},{sdp.f sdp_g});
 
         % build SDP problem
         buildproblem(obj,prob,data);
