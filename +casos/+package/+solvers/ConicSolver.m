@@ -1,4 +1,4 @@
-classdef (Abstract) ConicSolver < casadi.Callback
+classdef (Abstract) ConicSolver < casos.package.solvers.SolverCallback
 % Base class for low-level conic (SDP) solvers.
 %
 % The generic conic problem has the form
@@ -30,8 +30,8 @@ methods (Abstract, Access=protected)
 end
 
 methods
-    function obj = ConicSolver(name,conic,opts)
-        obj@casadi.Callback;
+    function obj = ConicSolver(name,conic,varargin)
+        obj@casos.package.solvers.SolverCallback;
 
         % sparsity patterns
         as = conic.a;
@@ -51,14 +51,7 @@ methods
         obj.sdpopt.error_on_fail = true;
 
         % parse options
-        if nargin < 3
-            opts = struct;
-        end
-        for fn=intersect(fieldnames(obj.sdpopt),fieldnames(opts))'
-            if isempty(fn), continue; end
-            obj.sdpopt.(fn{:}) = opts.(fn{:});
-            opts = rmfield(opts,fn);
-        end
+        [obj.sdpopt,opts] = obj.parse_options(obj.sdpopt,varargin{:});
 
         % check cone dimensions
         assert(sum(cellfun(@(fn) obj.getnumc(obj.sdpopt.Kx,fn), fieldnames(obj.sdpopt.Kx))) == n, 'Dimension of Kx must equal to number of variables (%d).', n)
@@ -87,37 +80,6 @@ methods
 
         % construct CasADi callback
         construct(obj,name,opts);
-    end
-
-    %% Common Callback interface
-    function n = get_n_in(obj)
-        % Return number of inputs.
-        n = n_in(obj.fhan);
-    end
-
-    function n = get_n_out(obj)
-        % Return number of outputs.
-        n = n_out(obj.ghan);
-    end
-
-    function str = get_name_in(obj,i)
-        % Return names of input arguments.
-        str = name_in(obj.fhan,i);
-    end
-
-    function str = get_name_out(obj,i)
-        % Return names of output arguments.
-        str = name_out(obj.ghan,i);
-    end
-
-    function sp = get_sparsity_in(obj,i)
-        % Return sparsity of input arguments.
-        sp = sparsity_in(obj.fhan,i);
-    end
-
-    function sp = get_sparsity_out(obj,i)
-        % Return sparsity of output arguments.
-        sp = sparsity_out(obj.ghan,i);
     end
 end
 
