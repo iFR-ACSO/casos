@@ -11,7 +11,7 @@ properties (Access=protected)
 end
 
 methods (Access=private)
-    buildproblem(obj,prob,data);
+    buildproblem(obj,prob,data,opts);
 end
 
 methods
@@ -63,7 +63,7 @@ methods
         prob = casadi.Function('S',{x p},{sdp.f sdp_g});
 
         % build SDP problem
-        buildproblem(obj,prob,data);
+        buildproblem(obj,prob,data,opts);
 
         % construct CasADi callback
         construct(obj,name);

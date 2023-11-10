@@ -1,4 +1,4 @@
-function buildproblem(obj,prob,data)
+function buildproblem(obj,prob,data,opts)
 % Convert SDP structure into conic problem description.
 %
 % The high-level SDP interface has the form
@@ -27,16 +27,43 @@ p = casadi.MX.sym('p',sz_p);
 
 sz_g = size(gx);
 
+% ensure cone has default value
+if ~isfield(opts,'Kx')
+    opts.Kx.l = prod(sz_x);
+elseif ~isfield(opts.Kx,'l')
+    opts.Kx.l = 0; 
+end
+if ~isfield(opts,'Ka')
+    opts.Ka.l = prod(sz_g);
+elseif ~isfield(opts.Ka,'l')
+    opts.Ka.l = 0; 
+end
+
+% linear variables
+Nx_l = opts.Kx.l;
+% cone variables
+Nx_c = prod(sz_x) - Nx_l;
+
+% linear constraints
+Ng_l = opts.Ka.l;
+% cone constraints
+Ng_c = prod(sz_g) - Ng_l;
+
+% separate constraints
+Bp = mat2cell(bp,[Ng_l Ng_c],1);
+
 % embed low-level conic solver
-% (h,g,a,lba,uba,lbx,ubx,x0,lam_x0,lam_a0)->(x,cost,lam_a,lam_x)
+% (h,g,a,lba,uba,cba,lbx,ubx,cbx,x0,lam_x0,lam_a0)->(x,cost,lam_a,lam_x)
 %
 % into high-level SDP interface
-% (x0,p,lbx,ubx,lbg,ubg,lam_x0,lam_g0)->(x,f,g,lam_x,lam_g,lam_p)
+% (x0,p,lbx,ubx,cbx,lbg,ubg,cbg,lam_x0,lam_g0)->(x,f,g,lam_x,lam_g,lam_p)
 x0 = casadi.MX.sym('x0',sz_x);
-lbx = casadi.MX.sym('lbx',sz_x);
-ubx = casadi.MX.sym('ubx',sz_x);
-lbg = casadi.MX.sym('lbg',sz_g);
-ubg = casadi.MX.sym('ubg',sz_g);
+lbx = casadi.MX.sym('lbx',Nx_l,1);
+ubx = casadi.MX.sym('ubx',Nx_l,1);
+cbx = casadi.MX.sym('cbx',Nx_c,1);
+lbg = casadi.MX.sym('lbg',Ng_l,1);
+ubg = casadi.MX.sym('ubg',Ng_l,1);
+cbg = casadi.MX.sym('cbg',Ng_c,1);
 lam_x0 = casadi.MX.sym('lam_x0',sz_x);
 lam_g0 = casadi.MX.sym('lam_g0',sz_g);
 
@@ -46,10 +73,10 @@ lam_x = casadi.MX.sym('lam_x',sz_x);
 
 % input function
 obj.fhan = casadi.Function('f', ...
-            {x0 p lbx ubx lbg ubg lam_x0 lam_g0}, ...
-            {Hp gp Ap bp+lbg bp+ubg lbx ubx x0 lam_x0 lam_g0}, ...
-            {'x0' 'p' 'lbx' 'ubx' 'lbg' 'ubg' 'lam_x0' 'lam_g0'}, ...
-            {'h' 'g' 'a' 'lba' 'uba' 'lbx' 'ubx' 'x0' 'lam_x0' 'lam_a0'} ...
+            {x0 p lbx ubx cbx lbg ubg cbg lam_x0 lam_g0}, ...
+            {Hp gp Ap Bp{1}+lbg Bp{1}+ubg Bp{2}+cbg lbx ubx cbx x0 lam_x0 lam_g0}, ...
+            {'x0' 'p' 'lbx' 'ubx' 'cbx' 'lbg' 'ubg' 'cbg' 'lam_x0' 'lam_g0'}, ...
+            {'h' 'g' 'a' 'lba' 'uba' 'cba' 'lbx' 'ubx' 'cbx' 'x0' 'lam_x0' 'lam_a0'} ...
 );
 
 % output function
