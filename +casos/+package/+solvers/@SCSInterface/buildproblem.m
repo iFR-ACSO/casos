@@ -66,15 +66,20 @@ Na.l = (obj.getdimc(Ka,'l'));
 Na.q = (obj.getdimc(Ka,'q'));
 Na.s = (obj.getdimc(Ka,'s'));
 
-% rewrite linear and state constraints into
+% rewrite linear and state constraints, that is,
+% 
+%   lba <= al*x <= uba
+%   lbx <=  xl  <= ubx
+% 
+% into
 %
-%   -a*x + sba =  0
-%   -a*x + sca = -cba
-%     -x + sbx =  0
-%     -x + scx = -cbx
+%   -al*x + sba =  0
+%   -ac*x + sca = -cba
+%     -xl + sbx =  0
+%     -xc + scx = -cbx
 %
-% where sba, sbx are box constrained slack variables and sca, scx are
-% elements of Ka and Kx, respectively.
+% where sba, sbx are box constrained slack variables 
+% and sca, scx are elements of Ka and Kx, respectively.
 % To that extent we introduce a new slack variable t with constraint
 %
 %     0 + t = 1
