@@ -41,10 +41,17 @@ z = monomials(indets,mndg:mxdg);
 Lz = (Ldeg_e * Lz_deg' & ~(~Lvar * Lz_var'));
 
 % discard monomials based on simple checks
-% TODO: perform checks vector-wise
-Imx = any(  ceil(max(p.degmat,[],1)/2) < z.degmat , 2 );
-Imn = any( floor(min(p.degmat,[],1)/2) > z.degmat , 2 );
-Lz(:,Imx | Imn) = false;
+[~,Ldegmat] = get_degmat(p);
+lz = numel(z);
+% perform checks vector-wise
+MX = arrayfun(@(i) repmat(max(p.degmat(Ldegmat(i,:),:),[],1),lz,1), 1:lp, 'UniformOutput', false);
+MN = arrayfun(@(i) repmat(min(p.degmat(Ldegmat(i,:),:),[],1),lz,1), 1:lp, 'UniformOutput', false);
+% Imx = any(  ceil(max(p.degmat,[],1)/2) < z.degmat , 2 );
+% Imn = any( floor(min(p.degmat,[],1)/2) > z.degmat , 2 );
+zdm = repmat(z.degmat,lp,1);
+Irem = [ceil(vertcat(MX{:})/2) < zdm, floor(vertcat(MN{:})/2) > zdm];
+% Lz(:,Imx | Imn) = false;
+Lz(reshape(any(Irem,2),lz,lp)') = false;
 
 % remove unused monomials from base vector
 I = any(Lz,1);
