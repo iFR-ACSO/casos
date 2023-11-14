@@ -1,13 +1,26 @@
-function [Z,K,z] = grambasis(p)
+function [Z,K,z] = grambasis(p,I)
 % Return Gram basis of polynomial vector.
 
-lp = numel(p);
+if nargin < 2
+    lp = numel(p);
+    I = true(lp,1);
+    idx = 1:lp;
+else
+    lp = nnz(I);
+    idx = find(I);
+end
 
 % get logical maps for degrees and indeterminate variables
 % -> Ldeg(i,j) is true iff p(i) has terms of degree(j)
 % -> Lvar(i,j) is true iff p(i) has terms in indets(j)
-[degree,Ldeg] = get_degree(p);
-[indets,Lvar] = get_indets(p);
+[degree,Ldeg] = get_degree(p,I);
+[indets,Lvar] = get_indets(p,I);
+% remove non-indexed logicals
+Ldeg(~I,:) = []; Lvar(~I,:) = [];
+% detect degrees and variables
+Id = any(Ldeg,1); Iv = any(Lvar,1);
+% remove unused degrees or variables
+Ldeg(:,~Id) = []; Lvar(:,~Iv) = [];
 
 % min and max degree of Gram basis vector
 mndg = floor(min(degree)/2);
@@ -44,8 +57,8 @@ Lz = (Ldeg_e * Lz_deg' & ~(~Lvar * Lz_var'));
 [~,Ldegmat] = get_degmat(p);
 lz = numel(z);
 % perform checks vector-wise
-MX = arrayfun(@(i) repmat(max(p.degmat(Ldegmat(i,:),:),[],1),lz,1), 1:lp, 'UniformOutput', false);
-MN = arrayfun(@(i) repmat(min(p.degmat(Ldegmat(i,:),:),[],1),lz,1), 1:lp, 'UniformOutput', false);
+MX = arrayfun(@(i) repmat(max(p.degmat(Ldegmat(i,:),Iv),[],1),lz,1), idx, 'UniformOutput', false);
+MN = arrayfun(@(i) repmat(min(p.degmat(Ldegmat(i,:),Iv),[],1),lz,1), idx, 'UniformOutput', false);
 % Imx = any(  ceil(max(p.degmat,[],1)/2) < z.degmat , 2 );
 % Imn = any( floor(min(p.degmat,[],1)/2) > z.degmat , 2 );
 zdm = repmat(z.degmat,lp,1);
