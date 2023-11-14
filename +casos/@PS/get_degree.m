@@ -30,7 +30,7 @@ L = logical(Ldegmat*(degsum == degrees));
 
 if nargin > 1
     % find degrees that appear in subsref
-    degrees = degrees(any(L(I,:)));
+    degrees = degrees(any(L(I,:),1));
 end
 
 end

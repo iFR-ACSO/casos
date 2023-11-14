@@ -23,7 +23,7 @@ indets = p.indets;
 [degmat,L] = get_degmat(p,varargin{:});
 
 % select variables in subsref
-Ivar = any(degmat > 0);
+Ivar = any(degmat > 0,1);
 
 % monomials are already sorted canonically
 z = build_monomials(degmat(:,Ivar),indets(Ivar));

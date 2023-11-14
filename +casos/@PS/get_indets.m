@@ -27,7 +27,7 @@ L = logical(Ldegmat*(degmat > 0));
 
 if nargin > 1
     % find variables that appear in subsref
-    indets = indets(any(L(I,:)));
+    indets = indets(any(L(I,:),1));
 end
 
 x = casos.PS(indets{:});
