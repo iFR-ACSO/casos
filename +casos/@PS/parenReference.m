@@ -5,8 +5,8 @@ function varargout = parenReference(obj,indexOp)
 idx = indexOp(1);
 
 % select referenced elements
-I = sparse(size(obj,1),size(obj,2));
-I.(idx) = 1;
+I = logical(sparse(size(obj,1),size(obj,2)));
+I.(idx) = true;
 
 if length(indexOp) > 1 && indexOp(2).Type == "Dot"
     % handle getters on referenced polynomial
@@ -14,17 +14,17 @@ if length(indexOp) > 1 && indexOp(2).Type == "Dot"
 
     switch (indexOp(2).Name)
         case 'mindeg'
-            res = min(get_degree(obj,find(I)))';
+            res = min(get_degree(obj,I))';
         case 'maxdeg'
-            res = max(get_degree(obj,find(I)))';
+            res = max(get_degree(obj,I))';
         case 'nvars'
-            res = length(get_indets(obj,find(I)));
+            res = length(get_indets(obj,I));
         case 'nterm'
-            res = size(get_degmat(obj,find(I)),1);
+            res = size(get_degmat(obj,I),1);
         case 'indeterminates'
-            res = get_indets(obj,find(I));
+            res = get_indets(obj,I);
         case 'monomials'
-            res = get_monoms(obj,find(I));
+            res = get_monoms(obj,I);
         otherwise
             % getter not supported
             done = false;
