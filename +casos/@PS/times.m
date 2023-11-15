@@ -19,7 +19,7 @@ I0 = (sza == 0) | (szb == 0);
 I1 = (sza == 1) | (szb == 1);
 
 % dimensions are compatible if equal or one factor is row/column
-assert(all(I | I1), errsz, sza, szb)
+assert(all(I | I1), errsz, size2str(sza), size2str(szb))
 
 % dimensions of element-wise product
 sz = max(sza,szb);

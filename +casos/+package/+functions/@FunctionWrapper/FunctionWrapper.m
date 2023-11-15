@@ -3,12 +3,21 @@ classdef (Abstract) FunctionWrapper
     
 properties (Dependent)
     class_name;
-    name;
-end
 
-properties (SetAccess = private)
-    arg_i;
-    arg_o;
+    name;
+
+    % input arguments
+    n_in;
+%     name_in;
+%     monomials_in;
+%     default_in;
+%     size_in;
+
+    % output arguments
+    n_out;
+%     name_out;
+%     monomials_out;
+%     size_out;
 end
 
 properties (Access = private)
@@ -16,23 +25,13 @@ properties (Access = private)
 end
 
 methods (Access=protected,Static)
-    [type,args] = parse_argument(name,expr);
+    type = parse_argument(expr);
 end
 
 methods
-    function f = FunctionWrapper(wrap,arg_i,arg_o,name_i,name_o)
+    function f = FunctionWrapper(wrap)
         % Superclass constructor.
         f.wrap = wrap;
-        
-        % input/output arguments
-        if nargin < 4
-            assert(istruct(arg_i) && istruct(arg_o), 'Arguments must be structures.')
-            f.arg_i = arg_i;
-            f.arg_o = arg_o;
-        else
-            f.arg_i = cell2struct(arg_i,name_i);
-            f.arg_o = cell2struct(arg_o,name_o);
-        end
     end
 
     function cls = get.class_name(obj)
@@ -45,28 +44,88 @@ methods
         nm = obj.wrap.name;
     end
 
+    function n = get.n_in(obj)
+        % Return number of inputs.
+        n = get_n_in(obj.wrap);
+    end
+
+    function nm = name_in(obj,varargin)
+        % Return name of inputs.
+        nm = get_name_in(obj.wrap,varargin{:});
+    end
+
+    function z = monomials_in(obj,i)
+        % Return monomials of inputs.
+        z = get_monomials_in(obj.wrap,i);
+    end
+
+    function val = default_in(obj,i)
+        % Return default values for inputs.
+        val = get_default_in(obj.wrap,i);
+    end
+
+    function sz = size_in(obj,i)
+        % Return size of inputs.
+        sz = get_size_in(obj.wrap,i);
+    end
+
+    function n = get.n_out(obj)
+        % Return number of outputs.
+        n = get_n_out(obj.wrap);
+    end
+
+    function nm = name_out(obj,varargin)
+        % Return name of outputs.
+        nm = get_name_out(obj.wrap,varargin{:});
+    end
+
+    function z = monomials_out(obj,i)
+        % Return monomials of outputs.
+        z = get_monomials_out(obj.wrap,i);
+    end
+
+    function sz = size_out(obj,i)
+        % Return size of outputs.
+        sz = get_size_out(obj.wrap,i);
+    end
+
     function out = call(obj,args)
         % Evaluate function for given arguments.
-        assert(isstruct(args),'Arguments must be given as struct.')
-        
-        % parse inputs by name
-        argin = obj.arg_i;
-        for fn = fieldnames(args)
-            assert(ismember(fn,fieldnames(argin)), 'Unexpected input (%s)', fn{:})
+        if iscell(args)
+            assert(length(args) == obj.n_in, 'Incorrect number of inputs: Expected %d, got %d.', obj.n_in, length(args));
 
-            argin.(fn{:}) = set_value(argin.(fn{:}), args.(fn{:}));
+            out = call(obj.wrap,args);
+            return
         end
 
-        % call wrapped function
-        argout = call(obj.wrap,argin,obj.arg_o);
+        % else
+        assert(isstruct(args),'Arguments must be given as struct.')
+
+        % name of inputs
+        fn_in = num2cell(obj.name_in,2);
+
+        % parse arguments by name
+        fn = fieldnames(args);
+        
+        % find arguments
+        [I,L] = ismember(fn,fn_in);
+
+        assert(all(I), 'Could not find entry "%s".', fn{find(I,1)})
+
+        % default values
+        argin = arrayfun(@(i) obj.default_in(i), 0:obj.n_in-1, 'UniformOutput', false);
+
+        % assign arguments
+        argin(L) = struct2cell(args);
+        
+        % call function with cell
+        argout = call(obj,argin);
+
+        % name of outputs
+        fn_out = num2cell(obj.name_out,2);
 
         % parse outputs
-        out = [];
-        for fn = fieldnames(argout)
-            assert(has_value(argout.(fn{:})), 'Output (%s) not assigned after function call.', fn{:})
-
-            out.(fn{:}) = get_value(argout.(fn{:}));
-        end
+        out = cell2struct(argout,fn_out);
     end
 
     function varargout = subsref(obj,L)
@@ -79,31 +138,32 @@ methods
         end
 
         % else:
-        if ischar(L.subs{1})
+        if isempty(L.subs)
+            % empty function call
+            args = struct;
+            
+        elseif ischar(L.subs{1})
             % name-value pairs
-            namevalue = true;
-
             fn_i = L.subs(1:2:end);
             L.subs(1:2:end) = [];
 
             assert(length(fn_i) == length(L.subs), 'Name-value syntax requires same number of names and values.')
-        else
-            namevalue = false;
 
-            fn_i = fieldnames(obj.arg_i);
+            % assign inputs
+            args = cell2struct(L.subs,fn_i(1:length(L.subs)));
+        else
+            % multiple inputs
+            args = L.subs;
         end
-        
-        % assign inputs
-        args = cell2struct(L.subs,fn_i(1:length(L.subs)));
 
         % call function
         out = call(obj,args);
 
-        if namevalue
+        if isstruct(out)
             varargout = {out};
         else
-            % return first output
-            varargout = struct2cell(out);
+            % return multiple outputs
+            varargout = out;
         end
     end
 end

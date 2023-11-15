@@ -41,17 +41,21 @@ methods
                 % syntax PS('x')
                 n = 1; m = 1;
                 obj.indets = {var};
+                iv = 1;
             elseif ischar([arg{:}])
                 % syntax PS('x','y',...)
                 n = length(varargin); m = 1;
-                obj.indets = varargin;
+                % sort variables alphabetically
+                [obj.indets,iv] = unique(varargin);
             else
                 % syntax PS('x',m,n)
                 [n,m] = size(zeros(arg{:}));
                 obj.indets = compose('%s_%d',var,1:(n*m));
+                iv = 1:(n*m);
             end
 
-            obj.coeffs = casadi.SX.eye(n*m);
+            % return variables in requested order
+            obj.coeffs = casadi.SX.triplet(iv-1,0:(n*m-1),ones(1,n*m),n*m,n*m);
             obj.degmat = speye(n*m);
             obj.matdim = [n m];
 
@@ -73,7 +77,7 @@ methods
 
     function n = get.nterm(obj)
         % Number of monomials.
-        n = size(obj.coeffs,1);
+        n = size(obj.degmat,1);
     end
 
     function d = get.mindeg(obj)
@@ -123,12 +127,22 @@ methods
 
     function tf = is_symexpr(obj)
         % Check if polynomial contains symbolic expressions.
-        tf = ~isconstant(obj.coeffs);
+        tf = ~is_constant(obj.coeffs);
+    end
+
+    function tf = is_symgram(obj)
+        % Check if polynomial is in symbolic Gram form.
+        tf = ~isempty(grammatrix(obj));
     end
 
     function tf = is_zerodegree(obj)
         % Check if polynomial is of degree zero.
         tf = (obj.maxdeg == 0);
+    end
+
+    function tf = is_zero(obj)
+        % Check if polynomial is equal to zero.
+        tf = (is_zerodegree(obj) && is_zero(obj.coeffs));
     end
 
     function tf = is_constant(obj)
@@ -233,6 +247,11 @@ methods (Access=protected)
     obj = parenDelete(obj,idx);
     n = parenListLength(obj,idx,context);
     varargout = parenReference(obj,index);
+
+    % protected interface for subsref getters
+    [monoms,L] = get_monoms(p,I);
+    [degree,L] = get_degree(p,I);
+    [indets,L] = get_indets(p,I);
 end
 
 end

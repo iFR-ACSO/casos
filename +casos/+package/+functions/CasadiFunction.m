@@ -5,18 +5,16 @@ properties (Access=private)
     func;
 end
 
-properties (Dependent)
+properties (Dependent,SetAccess=protected)
     class_name;
-    name;
 end
 
 methods
-    function obj = CasadiFunction(name, args_i, args_o, varargin)
+    function obj = CasadiFunction(name, ex_i, ex_o, name_i, name_o, varargin)
         % Create new casadi function object.
-        [ex_i,n_i] = cellfun(@(arg) deal(arg.expr,arg.name), args_i, 'UniformOutput', false);
-        [ex_o,n_o] = cellfun(@(arg) deal(arg.expr,arg.name), args_o, 'UniformOutput', false);
+        obj@casos.package.functions.FunctionInterface(name);
 
-        obj.func = casadi.Function(name, ex_i, ex_o, n_i, n_o, varargin{:});
+        obj.func = casadi.Function(name, ex_i, ex_o, name_i, name_o, varargin{:});
     end
 
     function cls = get.class_name(obj)
@@ -24,22 +22,55 @@ methods
         cls = obj.func.class_name;
     end
 
-    function nm = get.name(obj)
-        % Return function name.
-        nm = obj.func.name;
+    %% Implement FunctionInterface
+    function n = get_n_in(obj)
+        % Number of inputs.
+        n = n_in(obj.func);
     end
 
-    function argout = call(obj, argin, argout)
+    function str = get_name_in(obj,varargin)
+        % Name of inputs.
+        str = name_in(obj.func,varargin{:});
+    end
+
+    function z = get_monomials_in(~,~)
+        % All inputs are of degree zero.
+        z = monomials(casos.PS,0);
+    end
+
+    function val = get_default_in(obj,i)
+        % Default inputs.
+        val = default_in(obj.func,i);
+    end
+
+    function sz = get_size_in(obj,i)
+        % Size of inputs.
+        sz = size_in(obj.func,i);
+    end
+
+    function n = get_n_out(obj)
+        % Number of outputs.
+        n = n_out(obj.func);
+    end
+
+    function str = get_name_out(obj,varargin)
+        % Name of outputs.
+        str = name_out(obj.func,varargin);
+    end
+
+    function z = get_monomials_out(~,~)
+        % All outputs are of degree zero.
+        z = monomials(casos.PS,0);
+    end
+
+    function sz = get_size_out(obj,i)
+        % Size of outputs.
+        sz = size_out(obj.func,i);
+    end
+
+    function argout = call(obj, argin)
         % Evaluate casadi function object.
-        in = structfun(@get_param, argin, 'UniformOutput', false);
-
-        % call casadi function
-        out = call(obj.func, in);
-
-        % return result
-        for fn = fieldnames(out)
-            argout.(fn{:}) = set_param(argout.(fn{:}), out.(fn{:}));
-        end
+        argout = call(obj.func, argin);
     end
 end
 

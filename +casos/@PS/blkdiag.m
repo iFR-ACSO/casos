@@ -17,7 +17,7 @@ case 2
     b = casos.PS(varargin{2});
 
     % size of block diagional
-    sz = siza(a) + size(b);
+    sz = size(a) + size(b);
 
     % combine variables
     [indets,dga,dgb] = combineVar(a.indets,b.indets,a.degmat,b.degmat);
