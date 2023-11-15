@@ -18,7 +18,7 @@ szb = size(b);
 errsz = 'Polynomials have incompatible sizes for this operation ([%s] vs. [%s]).';
 
 % dimensions are compatible if inner dimensions agree
-assert(sza(2) == szb(1), errsz, sza, szb)
+assert(sza(2) == szb(1), errsz, size2str(sza), size2str(szb))
 
 % TODO: handle or escape for other simple cases, e.g., scalar, constant
 % matrix, single term etc.?

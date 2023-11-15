@@ -19,13 +19,13 @@ casos.PS(m,n)
 casos.PS.zeros(m,n)
 casos.PS.zeros(n)
 ```
-creates a zero-degree polynomial which corresponds to a `m × n` matrix (resp., a square matrix with length `n`) of zeros.
+creates a zero-degree polynomial which corresponds to a `m × n` matrix (resp., a column vector with length `n`) of zeros.
 
 ```
 casos.PS.ones(m,n)
 casos.PS.ones(n)
 ```
-creates a zero-degree polynomial which corresponds to a `m × n` matrix (resp., a square matrix with length `n`) of ones.
+creates a zero-degree polynomial which corresponds to a `m × n` matrix (resp., a column vector with length `n`) of ones.
 
 ```
 casos.PS.eye(n)
@@ -57,7 +57,7 @@ monomials(p)
 creates a `l × 1` vector of all monomials in the polynomial `p`; where `l` is the total number of monomials in `p`.
 
 #### Polynomials with symbolic coefficients
-Unlike indeterminate variables, symbolic variables can be decision variables of an optimization problem. The following syntax creates polynomials which have symbolic variables and as coefficients.
+Unlike indeterminate variables, symbolic variables can be decision variables of an optimization problem. The following syntax creates polynomials which have symbolic variables as coefficients. In all of the following syntaxes, the first argument corresponds to the display name (resp., prefix) for the symbolic coeffcients. See [Casadi's `SX` symbolics](https://web.casadi.org/docs/#the-sx-symbolics) for details.
 
 ```
 casos.PS.sym('c',w)
@@ -69,6 +69,30 @@ casos.PS.sym('c',w,[m n])
 casos.PS.sym('c',w,n)
 ```
 creates a `m × n` matrix (resp., a square matrix with length `n`) of polynomials with symbolic coefficients and monomials in `w`, where `w` must be a vector of monomials.
+
+```
+casos.PS.sym('c',[m n])
+casos.PS.sym('c',n)
+```
+creates a `m × n` matrix (resp., a square matrix with length `n`) of polynomials of degree zero; essentially, this is a symbolic matrix similar to `casadi.SX`.
+
+```
+casos.PS.sym(...,'gram')
+```
+where `...` denotes any of the syntaxes above, creates a scalar or matrix polynomial in Gram form, that is, with entries `p = z'*Q*z`, where `z` is the vector of monomials in `w` and `Q` is a quadratic symbolic matrix.
+
+**Note 1:** The syntax `casos.PS.sym('c',w,...)` creates polynomials with monomials *in* `w` and is therefore equivalent to `casos.PS.sym('c',monomials(w),...)`. In consequence, all of the following syntaxes yield the same result:
+```
+casos.PS.sym('c',[1;w])
+casos.PS.sym('c',[w;1])
+casos.PS.sym('c',[1;w;w])
+```
+
+**Note 2:** We say that a polynomial is *symbolic* if and only if all of its (nonzero) coefficients are symbols in the sense of Casadi. Except for the Gram form, all polynomials created with the syntaxes above are symbolic but the result of the notation 
+```
+casos.PS.sym('c',[1 2])*[x;x]
+```
+with `x = casos.PS('x')` would only be a symbolic *expression*. The same is true for the Gram form syntax because of the symmetries in the Gram matrix expression. The queries `is_symbolic`, `is_symexpr`, and `is_symgram` check whether a polynomial is a symbolic polynomial, a symbolic expression, or a symbolic Gram form, respectively.
 
 ## Functions between polynomials
 

@@ -76,7 +76,7 @@ function [cf,dg] = extendDC(i,q,dim,sizes,sz,nvi,ic)
     [ii,ji,di] = find(q.degmat);
 
     % extend degree matrix
-    dg = sparse(ii,ic(sum([nvi{1:i-1}])+ji),di,q.nterm,max(ic));
+    dg = sparse(ii,ic(sum([nvi{1:i-1}])+ji),di,q.nterm,max([0 ic]));
 
     % extend coefficient matrix
     % let a1,...,aL, b1,...,bM, c1,...,cN be the columns of A, B, C

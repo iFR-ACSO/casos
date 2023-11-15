@@ -1,23 +1,19 @@
-function [coeffs,degmat] = uniqueDeg(coeffs,degmat,setOrder)
+function [coeffs,degmat] = uniqueDeg(coeffs,degmat)
 % Make degree matrix unique and return corresponding coefficients.
-
-if nargin < 3
-    setOrder = 'sorted';
-end
+%
+% This function ensures that the monomials are in graded REVERSE
+% lexicographic order.
 
 nt = size(coeffs,1);
 
 % make degree matrix unique
-[degmat,id,ic] = unique(degmat,'rows',setOrder);
+[degmat2,id,ic] = unique(fliplr(degmat),'rows','sorted');
 
 % sum repeated coefficients
 summat = sparse(ic,1:nt,1,length(id),nt);
 coeffs = sparsify(summat*coeffs);
 
-% reverse order of degrees if sorted by unique
-if isequal(setOrder,'sorted')
-    coeffs = flipud(coeffs);
-    degmat = flipud(degmat);
-end
+% reverse order of degrees
+degmat = fliplr(degmat2);
 
 end
