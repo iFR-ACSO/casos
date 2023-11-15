@@ -8,12 +8,16 @@ end
 if nargin < 3
     % default size: scalar
     sz = [1 1];
-elseif isscalar(sz)
-    sz = [sz sz];
-elseif ~isrow(sz) || ~numel(sz) == 2
-    error('Third input must be scalar or 1x2 vector of dimensions.')
+elseif ischar(sz)
+    type = sz;
+    % default size: scalar
+    sz = [1 1];
 end
 if nargin < 2
+    % default monomials: 1
+    w = casos.PS(1);
+elseif isnumeric(w) && nargin < 3
+    sz = w;
     % default monomials: 1
     w = casos.PS(1);
 else
@@ -22,6 +26,11 @@ else
 end
 if nargin < 1
     error('Undefined inputs.');
+end
+if isscalar(sz)
+    sz = [sz sz];
+elseif ~isrow(sz) || ~numel(sz) == 2
+    error('Third input must be scalar or 1x2 vector of dimensions.')
 end
 
 p = casos.PS;
@@ -37,12 +46,13 @@ switch type
         Q = casadi.SX.sym(dstr,nt^2,ne);  % Gram matrices, TODO: symmetric?
         D = kron(w.degmat,ones(nt,1)) + kron(ones(nt,1),w.degmat);
         % make degree matrix unique
-        [p.coeffs,p.degmat] = uniqueDeg(Q,D,'stable');
+        [p.coeffs,p.degmat] = uniqueDeg(Q,D);
 
     otherwise
         % create using coefficient vector form
         p.coeffs = casadi.SX.sym(dstr,nt,ne);
-        p.degmat = w.degmat; % TODO: match ordering in w
+        % degree matrix is already sorted canonically
+        p.degmat = w.degmat;
 end
 
 % set indeterminates + dimensions

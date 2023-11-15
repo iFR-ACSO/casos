@@ -1,5 +1,5 @@
 function disp(obj)
-% Display polynomial.
+% Print polynomial to command line (display).
 
 % Mostly taken from multipoly, version history:
 % 6/7/2002: PJS  Initial Coding
