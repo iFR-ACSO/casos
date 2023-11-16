@@ -111,5 +111,7 @@ coeffs = casadi.SX.triplet(i-1, (j-1)'.*lZ+(1:lZ)-1, ones(lZ,1), nT, lp*lZ);
 % set output
 Z = casos.PS;
 [Z.coeffs,Z.degmat] = uniqueDeg(coeffs,D);
-Z.indets = p.indets;
+Z.indets = z.indets;
 Z.matdim = [lZ lp];
+
+end
