@@ -51,7 +51,7 @@ methods
         obj.sdpopt.error_on_fail = true;
 
         % parse options
-        [obj.sdpopt,opts] = obj.parse_options(obj.sdpopt,varargin{:});
+        [obj.sdpopt,opts] = casos.package.solvers.parse_options(obj.sdpopt,varargin{:});
 
         % check cone dimensions
         assert(sum(cellfun(@(fn) obj.getnumc(obj.sdpopt.Kx,fn), fieldnames(obj.sdpopt.Kx))) == n, 'Dimension of Kx must equal to number of variables (%d).', n)
