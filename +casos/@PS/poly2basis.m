@@ -1,20 +1,26 @@
-function [q,z,e] = poly2basis(p,z)
+function [q,z,e] = poly2basis(p,z,I)
 % Project polynnomial p onto the span of monomials contained in z.
 
 p = casos.PS(p);
 
 if nargin < 2
     z = basis(p);
+    I = true(size(p));
+elseif islogical(z)
+    I = z;
+    z = basis(p,I);
+elseif nargin < 3
+    I = true(size(p));
 end
 
 % combine variables
 [~,dgp,dgz] = combineVar(p.indets,z.indets,p.degmat,z.degmat);
 
 % find degrees of z in p
-[tf,I] = ismember(dgp,dgz,'rows');
+[tf,ii] = ismember(dgp,dgz,'rows');
 idx = 1:p.nterm;
 
-if iscolumn(z)
+if iscolumn(z) && all(I)
     % legacy code: project onto monomial vector
     assert(is_monom(z),'Second argument must be vector of monomials.')
 
@@ -28,7 +34,7 @@ if iscolumn(z)
     end
 
     % else
-    q(I(tf),:) = p.coeffs(idx(tf),:);
+    q(ii(tf),:) = p.coeffs(idx(tf),:);
     % reorder to match monomials
     q = z.coeffs * q;
 
@@ -39,10 +45,12 @@ else
 
     if isscalar(p)
         cfp = repmat(p.coeffs,1,lp);
-    else
-        assert(numel(p) == lp,'Second argument must be basis matrix.')
+    elseif lp > 0
+        assert(nnz(I) == lp,'Second argument must be basis matrix.')
 
-        cfp = p.coeffs;
+        cfp = p.coeffs(:,find(I));
+    else
+        cfp = [];
     end
 
     if all(~tf)
@@ -55,7 +63,7 @@ else
     % else:
     % select coefficients
     Q = casadi.SX(z.nterm,lp);
-    Q(I(tf),:) = cfp(idx(tf),:);
+    Q(ii(tf),:) = cfp(idx(tf),:);
 
     % construct template
     S = z'*ones(lZ,1);

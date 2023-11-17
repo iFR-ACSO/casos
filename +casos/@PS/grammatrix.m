@@ -4,6 +4,13 @@ function [Q,Z,K,z] = grammatrix(p,I)
 if nargin < 2
     I = true(size(p));
 end
+if ~any(I)
+    % empty polynomial
+    Q = casadi.SX;
+    [Z,K,z] = grambasis(casos.PS);
+
+    return
+end
 
 % compute Gram basis vector
 [Z,K,z] = grambasis(p,I);
