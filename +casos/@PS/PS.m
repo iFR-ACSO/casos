@@ -29,9 +29,23 @@ methods
         if nargin == 0
             % nothing to do
 
-        elseif isa(varargin{1},'casos.PS')
+        elseif isa(varargin{1},'casos.PS') && nargin < 2
             % keep polynomial
             obj = varargin{1};
+
+        elseif isa(varargin{1},'casos.PS')
+            % basis notation: Z'*q
+            Z = varargin{1};
+            q = varargin{2};
+            assert(size(Z,1) == size(q,1), 'Incompatible size (Expected %d, got %d).', size(Z,2), size(q,1))
+
+            % TODO: perform operation internally
+            obj = Z'*q;
+
+            if nargin > 2
+                % reshape to given size
+                obj.matdim = varargin{3};
+            end
 
         elseif isa(varargin{1},'char')
             % indeterminate (pvar / mpvar syntax)

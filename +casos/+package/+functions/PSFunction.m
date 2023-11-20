@@ -37,7 +37,7 @@ methods
         out = call(obj.func, in);
 
         % return result
-        argout = cellfun(@(c,z,sz) reshape(c'*z,sz), out, obj.monom_o, obj.size_o, 'UniformOutput', false);
+        argout = cellfun(@(c,z,sz) casos.PS(z,c,sz), out, obj.monom_o, obj.size_o, 'UniformOutput', false);
     end
 
     function n = get_n_in(obj)
