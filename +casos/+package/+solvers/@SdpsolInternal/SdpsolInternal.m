@@ -68,6 +68,11 @@ methods
         % construct CasADi callback
         construct(obj,name);
     end
+
+    function s = stats(obj)
+        % Return stats.
+        s = obj.solver.stats;
+    end
 end
 
 end

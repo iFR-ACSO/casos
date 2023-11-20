@@ -77,7 +77,7 @@ K.f = length(If);
 K.l = K.l - nnz(J) - length(If);
 
 % call SeDuMi
-[x_,y_,info] = sedumi(A,b,full(c),K,opts);
+[x_,y_,obj.info] = sedumi(A,b,full(c),K,opts);
 
 % assign full solution
 x = sparse(idx,1,x_,length(J),1);
@@ -85,13 +85,13 @@ y = sparse(find(~I),1,y_,length(I),1);
 
 if ~obj.sdpopt.error_on_fail
     % continue regardless of feasibility
-elseif info.pinf
+elseif obj.info.pinf
     % primal infeasible
     error('Conic problem is primal infeasible.')
-elseif info.dinf
+elseif obj.info.dinf
     % dual infeasible
     error('Conic problem is dual infeasible.')
-elseif info.numerr
+elseif obj.info.numerr
     % numerical errors
     error('Optimizer run into numerical error (numerr=%d, feasratio=%g)',info.numerr,info.feasratio)
 end

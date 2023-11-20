@@ -154,6 +154,11 @@ methods
 
         assert(tf, 'Could not find entry "%s".', str);
     end
+
+    function s = get_stats(obj)
+        % Return stats.
+        s = obj.sdpsolver.stats;
+    end
 end
 
 end

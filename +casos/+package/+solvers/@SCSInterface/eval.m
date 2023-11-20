@@ -77,26 +77,27 @@ data.A = data.A(idx,:);
 data.b = data.b(idx);
 
 % call SCS
-[x,y_,s_,info] = scs(data,K,opts);
+[x,y_,s_,obj.info] = scs(data,K,opts);
 
 % assign solution
 y = sparse(idx,1,y_,m,1);
 s = sparse(idx,1,s_,m,1);
 
+status_val = obj.info.status_val;
 if ~obj.sdpopt.error_on_fail
     % continue regardless of feasibility
-elseif info.status_val == -1
+elseif status_val == -1
     % primal unbounded / dual infeasible
     error('Conic problem is dual infeasible.')
-elseif info.status_val == -2
+elseif status_val == -2
     % primal infeasible / dual unbounded
     error('Conic problem is primal infeasible.')
-elseif ismember(info.status_val, [2 -6 -7])
+elseif ismember(status_val, [2 -6 -7])
     % inaccurate solution
-    error('Optimizer did not reach desired accuracy (Status: %s).', info.status)
-elseif info.status_val < -2
+    error('Optimizer did not reach desired accuracy (Status: %s).', obj.info.status)
+elseif status_val < -2
     % failure
-    error('Optimizer failed (Status: %s).', info.status)
+    error('Optimizer failed (Status: %s).', obj.info.status)
 end
 
 % parse solution
