@@ -37,6 +37,11 @@ methods
         % Return default values of input arguments.
         val = 0;
     end
+
+    function s = get_stats(~)
+        % Return empty stats.
+        s = struct;
+    end
 end
 
 end

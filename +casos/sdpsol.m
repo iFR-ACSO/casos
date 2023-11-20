@@ -3,6 +3,6 @@ function f = sdpsol(varargin)
         
 sol = casos.package.solvers.SdpsolInternal(varargin{:});
 
-f = casadi.Function(sol);
+f = casos.Function(sol);
 
 end

@@ -18,6 +18,7 @@ properties (Dependent)
 %     name_out;
 %     monomials_out;
 %     size_out;
+    stats;
 end
 
 properties (Access = private)
@@ -97,6 +98,11 @@ methods
     function i = index_out(obj,str)
         % Return index of outputs.
         i = get_index_out(obj.wrap,str);
+    end
+
+    function s = get.stats(obj)
+        % Return stats.
+        s = get_stats(obj.wrap);
     end
 
     function out = call(obj,args)
