@@ -48,6 +48,11 @@ methods
         sz = size_in(obj.func,i);
     end
 
+    function i = get_index_in(obj,str)
+        % Index of inputs.
+        i = index_in(obj.func,str);
+    end
+
     function n = get_n_out(obj)
         % Number of outputs.
         n = n_out(obj.func);
@@ -55,7 +60,7 @@ methods
 
     function str = get_name_out(obj,varargin)
         % Name of outputs.
-        str = name_out(obj.func,varargin);
+        str = name_out(obj.func,varargin{:});
     end
 
     function z = get_monomials_out(~,~)
@@ -66,6 +71,11 @@ methods
     function sz = get_size_out(obj,i)
         % Size of outputs.
         sz = size_out(obj.func,i);
+    end
+
+    function i = get_index_out(obj,str)
+        % Index of outputs.
+        i = index_out(obj.func,str);
     end
 
     function argout = call(obj, argin)

@@ -18,11 +18,13 @@ methods (Abstract)
     z = get_monomials_in(obj,i);
 %     v = get_default_in(obj,i);
     s = get_size_in(obj,i);
+    i = get_index_in(obj,str);
     % outputs
     n = get_n_out(obj);
     s = get_name_out(obj,i);
     z = get_monomials_out(obj,i);
     s = get_size_out(obj,i);
+    i = get_index_out(obj,str);
 end
 
 methods
