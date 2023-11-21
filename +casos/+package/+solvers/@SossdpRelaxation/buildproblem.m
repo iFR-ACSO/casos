@@ -48,8 +48,8 @@ sdp.g = Qdiff_g;
 sdp.p = Qlin_p;
 % SDP options
 sdpopt = obj.sosopt.sdpoptions;
-sdpopt.Kx = struct('l', length(Qlin_x), 's', [Ksdp_x_s Ksdp_g_s]);
-sdpopt.Kg = struct('l', length(Qdiff_g));
+sdpopt.Kx = struct('l', numel(Qlin_x), 's', [Ksdp_x_s; Ksdp_g_s]);
+sdpopt.Kg = struct('l', numel(Qdiff_g));
 
 % initialize SDP solver
 obj.sdpsolver = casos.sdpsol('SDP',solver,sdp,sdpopt);
