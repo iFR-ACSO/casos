@@ -46,7 +46,15 @@ p = casos.PS;
 
 if nnz(I) > 0
     % reference coefficients
-    coeffs = obj.coeffs(:,find(I));
+    if islogical(idx.Indices{1})
+        % logical reference
+        ii = find(I);
+    else
+        % numerical indices
+        Ind = reshape(1:numel(obj),size(obj));
+        ii = Ind.(idx);
+    end
+    coeffs = obj.coeffs(:,ii);
     
     % remove coefficients, degrees, and/or indeterminates 
     % that do not appear in the referenced polynomial
