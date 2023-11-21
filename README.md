@@ -135,11 +135,21 @@ The high-level interface solves convex problems of the form
 ```math
 \begin{array}{l c r}
   \min & f(x,p), & x = (x_\mathrm{l}, x_\mathrm{c}) \\
-  \text{s.t.} & g_\mathrm{lb} \leq g_\mathrm{l}(x,p) \leq g_\mathrm{ub}, & g_\mathrm{c}(x,p) \succeq_{\mathcal{K}_A} g_\mathrm{cb} \\
+  \text{s.t.} & g_\mathrm{lb} \leq g_\mathrm{l}(x,p) \leq g_\mathrm{ub}, & g_\mathrm{c}(x,p) \succeq_{\mathcal{K}_g} g_\mathrm{cb} \\
   \text{and} & x_\mathrm{lb} \leq x_\mathrm{l} \leq x_\mathrm{ub}, & x_\mathrm{c} \succeq_{\mathcal{K}_x} x_\mathrm{cb}
 \end{array}
 ```
-where $f$ is a convex quadratic function in $x$, the constraints $g_\mathrm{l}$ and $g_\mathrm{c}$ are affine in $x$, and $\succeq_\mathcal{K}$ denotes the order induced by the convex cone $\mathcal K$. In the following, the pairs $(g_\mathrm{lb}, g_\mathrm{cb})$ and $(x_\mathrm{lb}, x_\mathrm{cb})$ are referred to as *lower bounds*, whereas $(g_\mathrm{ub}, \infty)$ and $(x_\mathrm{ub}, \infty)$ denote the *upper bounds* (note that the second compoments, corresponding to the convex cone constraints, can be arbitrary).
+where $f$ is a convex quadratic function in $x$, the constraints $g_\mathrm{l}$ and $g_\mathrm{c}$ are affine in $x$, and $\succeq_\mathcal{K}$ denotes the order induced by the convex cone $\mathcal K$. Moreover, the pairs $(x_\mathrm{lb}, g_\mathrm{lb})$ denote *lower bounds*, $(x_\mathrm{ub}, g_\mathrm{ub})$ denote *upper bounds*, and $(x_\mathrm{cb}, g_\mathrm{cb})$ denote *conic bounds*.
+
+```
+S = casos.sdpsol('S','solver',struct('x',x,'f',f,'g',g,'p',p),opts)
+```
+initializes the SDP solver named `'S'` using the convex solver `'solver'`. Options are provided as structure `opts` including optional fields `opts.Kx` and `opts.Kg` describing, respectively, the cones $\mathcal K_x$ and $\mathcal K_g$. See [Convex cones](#convex-cones) for details.
+
+```
+sol = S('lbx',lbx,'ubx',ubx,'cbx',cbx,'lbg',lbg,'ubg',ubg,'cbg',cbg)
+```
+evaluates the SDP solver `S` providing (optional) arguments to describe $x_\mathrm{lb}$, $x_\mathrm{ub}$, $x_\mathrm{cb}$ and $g_\mathrm{lb}$, $g_\mathrm{ub}$, $g_\mathrm{cb}$.
 
 #### Low-level interface
 
@@ -152,6 +162,26 @@ The low-level interface solves conic problems of the form
   \text{and} & x_\mathrm{lb} \leq x_\mathrm{l} \leq x_\mathrm{ub}, & x_\mathrm{c} \succeq_{\mathcal{K}_x} x_\mathrm{cb}
 \end{array}
 ```
-where $\succeq_\mathcal{K}$ denotes the order induced by the convex cone $\mathcal K$. In the following, the pairs $(a_\mathrm{lb}, a_\mathrm{cb})$ and $(x_\mathrm{lb}, x_\mathrm{cb})$ are referred to as *lower bounds*, whereas $(a_\mathrm{ub}, \infty)$ and $(x_\mathrm{ub}, \infty)$ denote the *upper bounds* (note that the second compoments, corresponding to the convex cone constraints, can be arbitrary).
+where $\succeq_\mathcal{K}$ denotes the order induced by the convex cone $\mathcal K$. Moreover, the pairs $(x_\mathrm{lb}, a_\mathrm{lb})$ denote *lower bounds*, $(x_\mathrm{ub}, a_\mathrm{ub})$ denote *upper bounds*, and $(x_\mathrm{cb}, a_\mathrm{cb})$ denote *conic bounds*.
+
+```
+S = casos.conic('S','solver',struct('h',hs,'a',as),opts)
+```
+initializes the conic solver named `'S'` using the convex solver `'solver'`, where `hs` and `as` are sparsity patterns for $H$ and $A = (A_\mathrm{l}, A_{\mathrm c})$. Options are provided as structure `opts` including optional fields `opts.Kx` and `opts.Ka` describing, respectively, the cones $\mathcal K_x$ and $\mathcal K_a$. See [Convex cones](#convex-cones) for details.
+
+```
+sol = S('h',h,'g',g,'a',a,'lba',lba,'uba',uba,'cba',cba,'lbx',lbx,'ubx',ubx,'cbx',cbx)
+```
+evaluates the conic solver `S` providing (optional) arguments to describe $H$, $A$, and $g$ as well as $a_\mathrm{lb}$, $a_\mathrm{ub}$, $a_\mathrm{cb}$ and $x_\mathrm{lb}$, $x_\mathrm{ub}$, $x_\mathrm{cb}$.
+
+#### Convex cones
+
+The options `K_` define the convex cones $\mathcal K$ as well as the number of linear constraints in SDP or conic problems. Each option takes a structure `K` as value which can have the following fields:
+
+- `K.l` : number of linear constraints; corresponds to the first dimension of $A_\mathrm{l}$ or dimension of $g_\mathrm{l}$;
+- `K.s` : vector $(s_1, \ldots, s_k)$ of semidefinite cone dimensions, that is, $\mathcal K = \mathbb S^+_{s_1} \times \cdots \times \mathbb S^+_{s_k}$; the total number of SDP cone constraints is equal to $\sum_i s_i^2$;
+- further cones, e.g., the Lorentz (or second-order) cone, are supported depending on the convex solver; the total number of *all* cone constraints corresponds to the first dimension of $A_\mathrm{c}$ or dimension of $g_\mathrm{c}$;
+
+by default (if the option `K_` is omitted), only linear constraints are enforced.
 
 [^1]: CaΣoS has been neither supported nor endorsed by CasADi or any of its affilitiates.
