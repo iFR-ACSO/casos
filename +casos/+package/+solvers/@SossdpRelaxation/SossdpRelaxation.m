@@ -41,6 +41,11 @@ methods
         if ~isfield(sos,'p')
             sos.p = casos.PS;
         end
+        % objective
+        if ~isfield(sos,'f')
+            % feasibility problem
+            sos.f = casos.PS(0);
+        end
 
         % problem size
         n = length(sos.x);
