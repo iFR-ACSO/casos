@@ -124,7 +124,44 @@ out = f('a1',r1,...,'aN',rN)
 ```
 calls the function `f` with arguments `r1` through `rN` assigned to inputs with names `'a1'` through `'aN'`, respectively. In this case, the functionn call returns a structure with fields `out.b1` through `out.bM` with corresponding output values.
 
-## Convex optimization
+## Sum-of-squares optimization
+
+A polynomial sum-of-squares optimization problem takes the form
+
+```math
+\begin{array}{l c r}
+  \min & F(\xi,\pi), & \xi = (\xi_\mathrm{l}, \xi_\mathrm{c}) \\
+  \text{s.t.} & \gamma_\mathrm{lb} \unlhd G_\mathrm{l}(\xi,\pi) \unlhd \gamma_\mathrm{ub}, & G_\mathrm{c}(\xi,\pi) \in \mathcal K_\mathrm{G} \\
+  \text{and} & \xi_\mathrm{lb} \unlhd \xi_\mathrm{l} \unlhd \xi_\mathrm{ub}, & \xi_\mathrm{c} \in \mathcal K_\mathrm{X}
+\end{array}
+```
+where $F$ is a scalar-valued function, the constraints $G_\mathrm{l}$ and $G_\mathrm{c}$ take polynomial values, and $\unlhd$ denotes a coefficient-wise inequality; $\mathcal K_\mathrm{G}$ and $\mathcal K_\mathrm{X}$ are convex cones in the space of polynomials. The pairs of polynomials $(\xi_\mathrm{lb}, \gamma_\mathrm{lb})$ denote *lower bounds* and $(\xi_\mathrm{ub}, \gamma_\mathrm{ub})$ denote *upper bounds*.
+
+#### Affine interface
+
+A sum-of-squares problem is affine if $F$ is a linear (or quadratic) form in $\xi$ and $G = (G_\mathrm{l}, G_\mathrm{c})$ are affine functions in $\xi$.
+
+```
+S = casos.sossol('S','solver',struct('x',xi,'f',F,'g',G,'p',pi),opts)
+```
+initializes the SOS solver named `'S'` by relaxation to a convex optimization problem using the convex solver `'solver'`. See [Convex optimization](#convex-optimization) for supported solvers. Options are provided as structure `opts` including optional fields `opts.Kx` and `opts.Kg` describing, respectively, the cones $\mathcal K_X$ and $\mathcal K_G$. See [Polynomial cones](#polynomial-cones) for details.
+
+```
+sol = S('lbx',lbx,'ubx',ubx,'lbg',lbg,'ubg',ubg)
+```
+evaluates the SOS solver `S` providing (optional) arguments to describe $\xi_\mathrm{lb}$, $\xi_\mathrm{ub}$ and $\gamma_\mathrm{lb}$, $\gamma_\mathrm{ub}$.
+
+#### Polynomial cones
+
+The options `K_` define the (convex) polynomial cones $\mathcal K$ as well as the number of coefficient-wise constraints in the SOS problems. Each option takes a structure `K` as value which can have the following fields:
+
+- `K.l` : number of coefficient-wise constraints; corresponds to the dimension of $G_\mathrm{l}$ or $\xi_\mathrm{l} \in \mathbb R[x]^l$;
+- `K.s` : number of sum-of-squares constraints, that is, $\mathcal K = \Sigma[x]^s$; corresponds to the dimension of $g_\mathrm{c}$ or $\xi_\mathrm{c}$;
+- no further cones are currently supported;
+
+by default (if the option `K_` is omitted), only coefficient-wise constraints are enforced.
+
+### Convex optimization
 
 To solve polynomial sum-of-squares optimization problems via semidefinite programming, CaΣoS provides both a high-level and low-level interface for convex optimization. These interfaces extend CasADi's [`qpsol`](https://web.casadi.org/docs/#high-level-interface) and [`conic`](https://web.casadi.org/docs/#low-level-interface) syntax. Currently, the convex solvers SeDuMi and SCS are supported (but, unlike CasADi, the solvers must be installed separately and be accessible through MATLAB). Note that SeDuMi does not support quadratic cost functions.
 
@@ -178,9 +215,9 @@ evaluates the conic solver `S` providing (optional) arguments to describe $H$, $
 
 The options `K_` define the convex cones $\mathcal K$ as well as the number of linear constraints in SDP or conic problems. Each option takes a structure `K` as value which can have the following fields:
 
-- `K.l` : number of linear constraints; corresponds to the first dimension of $A_\mathrm{l}$ or dimension of $g_\mathrm{l}$;
-- `K.s` : vector $(s_1, \ldots, s_k)$ of semidefinite cone dimensions, that is, $\mathcal K = \mathbb S^+_{s_1} \times \cdots \times \mathbb S^+_{s_k}$; the total number of SDP cone constraints is equal to $\sum_i s_i^2$;
-- further cones, e.g., the Lorentz (or second-order) cone, are supported depending on the convex solver; the total number of *all* cone constraints corresponds to the first dimension of $A_\mathrm{c}$ or dimension of $g_\mathrm{c}$;
+- `K.l` : number of linear constraints; corresponds to the first dimension of $A_\mathrm{l}$, the dimension of $g_\mathrm{l}$, or the dimension of $x_\mathrm{l}$;
+- `K.s` : vector $(s_1, \ldots, s_k)$ of semidefinite cone dimensions, that is, $\mathcal K = \mathbb S_{s_1}^{+} \times \cdots \times \mathbb S_{s_k}^{+}$; the total number of SDP cone constraints is equal to $\sum_i s_i^2$;
+- further cones, e.g., the Lorentz (or second-order) cone, are supported depending on the convex solver; the total number of *all* cone constraints corresponds to the first dimension of $A_\mathrm{c}$, the dimension of $g_\mathrm{c}$, or the dimension of $x_\mathrm{c}$;
 
 by default (if the option `K_` is omitted), only linear constraints are enforced.
 
