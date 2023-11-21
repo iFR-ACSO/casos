@@ -46,13 +46,17 @@ p = casos.PS;
 
 if nnz(I) > 0
     % reference coefficients
-    if islogical(idx.Indices{1})
-        % logical reference
+    if ~any(cellfun(@(Ind) isnumeric(Ind), idx.Indices))
+        % logical or colon reference
         ii = find(I);
-    else
+    elseif length(idx.Indices) > 1
         % numerical indices
-        Ind = reshape(1:numel(obj),size(obj));
-        ii = Ind.(idx);
+        row = get_indices(size(obj,1),idx.Indices{1});
+        col = get_indices(size(obj,2),idx.Indices{2});
+        [R,C] = ndgrid(row,col);
+        ii = sub2ind(size(obj),R,C);
+    else
+        ii = get_indices(numel(obj),idx.Indices{1});
     end
     coeffs = obj.coeffs(:,ii);
     
@@ -71,4 +75,11 @@ else
     varargout = {p};
 end
 
+end
+
+function ind = get_indices(n,ind)
+% Return indices.
+    if isequal(ind,':')
+        ind = 1:n;
+    end
 end
