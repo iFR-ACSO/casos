@@ -135,7 +135,7 @@ methods
         argin(idx_in+1) = struct2cell(args);
         
         % call function with cell
-        argout = call(obj,argin);
+        argout = call(obj.wrap,argin);
 
         % name of outputs
         fn_out = arrayfun(@(i) obj.name_out(i), 0:obj.n_out-1, 'UniformOutput', false);
