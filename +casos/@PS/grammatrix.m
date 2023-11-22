@@ -21,12 +21,17 @@ syms = symvar(p.coeffs(:,find(I)));
 % check if dimensions are compatible
 if length(syms) == sum(K.^2)
 
+% sort to match order in basis
+[ii,~] = ind2sub(size(Z.coeffs),find(sparsity(Z.coeffs)));
+[~,idx] = sort(ii);
+
 % stack symbols horizontally
-Q = horzcat(syms{:});
+Q = casadi.SX(length(syms),1);
+Q(idx) = horzcat(syms{:});
 
 % attempt to build Gram form
 pgram = casos.PS.zeros(size(p));
-pgram(I) = (Q*Z)';
+pgram(I) = casos.PS(Z,Q);
 
 % check if Gram form is equal
 diff = (p - pgram);
