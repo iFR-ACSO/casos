@@ -5,7 +5,7 @@ function argout = call(obj,argin)
 Ix = [false(size(obj.monom_xl,1),1); true(size(obj.gram_x,1),1); false(size(obj.gram_g,1),1)];
 Ig = [false(size(obj.monom_xl,1),1); false(size(obj.gram_x,1),1); true(size(obj.gram_g,1),1)];
 % select SOS constraints
-Jg = [false(size(obj.monom_gl,1),1); true(size(obj.monom_gl,1),1)];
+Jg = [false(size(obj.monom_gl,1),1); true(size(obj.monom_gs,1),1)];
 
 % project arguments to obtain SDP inputs
 % only linear coefficients are handled (p, lbx, ubx, lbg, ubg)
@@ -31,11 +31,11 @@ sol_f  = sdpsol.f;
 sol_xl = sdpsol.x(find(~Ix & ~Ig));
 sol_xs = sdpsol.x(find(Ix));
 sol_gs = sdpsol.x(find(Ig));
-sol_gl = sdpsol.g(find(Jg));
+sol_gl = sdpsol.g(find(~Jg));
 sol_lam_xl = sdpsol.lam_x(find(~Ix & ~Ig));
 sol_lam_xs = sdpsol.lam_x(find(Ix));
 sol_lam_gs = sdpsol.lam_x(find(Ig));
-sol_lam_gl = sdpsol.lam_g(find(Jg));
+sol_lam_gl = sdpsol.lam_g(find(~Jg));
 
 % build polynomial solution
 argout{2} = casos.PS(obj.monom_f,sol_f); % f
