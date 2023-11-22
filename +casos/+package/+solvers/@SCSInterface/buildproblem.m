@@ -34,7 +34,7 @@ function buildproblem(obj)
 % Lorentz cone, rotated Lorentz cone, and PSD cone can be shifted by a
 % lower bound (cb).
 
-opts = obj.sdpopt;
+opts = obj.opts;
 
 % symbolic variables
 h = obj.args_in.h;

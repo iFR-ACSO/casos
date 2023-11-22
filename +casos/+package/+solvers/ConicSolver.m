@@ -14,14 +14,19 @@ classdef (Abstract) ConicSolver < casos.package.solvers.SolverCallback
 %
 
 properties (GetAccess=protected, SetAccess=private)
-    sdpopt;
-
     args_in = struct;
     names_out = {'x' 'cost' 'lam_a' 'lam_x'};
 end
 
 properties (Access=protected)
     status = casos.package.UnifiedReturnStatus.SOLVER_RET_UNKNOWN;
+end
+
+properties (Constant, Access=protected)
+    conic_options = [casos.package.solvers.SolverCallback.solver_options
+        {'Kx', 'Cone description for state constraints.'
+         'Ka', 'Cone description for constraint function.'}
+    ];
 end
 
 properties (Abstract, Access=protected)
@@ -33,9 +38,16 @@ methods (Abstract, Access=protected)
     buildproblem(obj);
 end
 
+methods (Static, Access=protected)
+    function options = get_options
+        % Return static options.
+        options = casos.package.solvers.ConicSolver.conic_options;
+    end
+end
+
 methods
     function obj = ConicSolver(name,conic,varargin)
-        obj@casos.package.solvers.SolverCallback;
+        obj@casos.package.solvers.SolverCallback(varargin{:});
 
         % sparsity patterns
         as = conic.a;
@@ -49,21 +61,16 @@ methods
         end
 
         % default options
-        obj.sdpopt.Kx = struct('l',n);
-        obj.sdpopt.Ka = struct('l',m);
-        obj.sdpopt.solveroptions = [];
-        obj.sdpopt.error_on_fail = true;
-
-        % parse options
-        [obj.sdpopt,opts] = casos.package.solvers.parse_options(obj.sdpopt,varargin{:});
+        if ~isfield(obj.opts,'Kx'), obj.opts.Kx = struct('l',n); end
+        if ~isfield(obj.opts,'Ka'), obj.opts.Ka = struct('l',m); end
 
         % check cone dimensions
-        assert(sum(cellfun(@(fn) obj.getnumc(obj.sdpopt.Kx,fn), fieldnames(obj.sdpopt.Kx))) == n, 'Dimension of Kx must equal to number of variables (%d).', n)
-        assert(sum(cellfun(@(fn) obj.getnumc(obj.sdpopt.Ka,fn), fieldnames(obj.sdpopt.Ka))) == m, 'Dimension of Ka must equal to number of constraints (%d).', m)
+        assert(sum(cellfun(@(fn) obj.getnumc(obj.opts.Kx,fn), fieldnames(obj.opts.Kx))) == n, 'Dimension of Kx must equal to number of variables (%d).', n)
+        assert(sum(cellfun(@(fn) obj.getnumc(obj.opts.Ka,fn), fieldnames(obj.opts.Ka))) == m, 'Dimension of Ka must equal to number of constraints (%d).', m)
 
         % dimensions of linear variables and constraints
-        Nl = casos.package.solvers.ConicSolver.getdimc(obj.sdpopt.Kx,'l');
-        Ml = casos.package.solvers.ConicSolver.getdimc(obj.sdpopt.Ka,'l');
+        Nl = casos.package.solvers.ConicSolver.getdimc(obj.opts.Kx,'l');
+        Ml = casos.package.solvers.ConicSolver.getdimc(obj.opts.Ka,'l');
 
         % symbolic inputs
         obj.args_in.h      = casadi.MX.sym('h',hs);
@@ -83,7 +90,7 @@ methods
         buildproblem(obj);
 
         % construct CasADi callback
-        construct(obj,name,opts);
+        construct(obj,name);
     end
 end
 

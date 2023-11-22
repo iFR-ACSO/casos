@@ -35,7 +35,7 @@ function buildproblem(obj)
 % lower bound (cb).
 % Unlike SeDuMi, no free (unrestricted) components are allowed.
 
-opts = obj.sdpopt;
+opts = obj.opts;
 
 % symbolic variables
 g = obj.args_in.g;

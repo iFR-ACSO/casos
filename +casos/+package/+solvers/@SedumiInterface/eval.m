@@ -31,7 +31,7 @@ c = sparse(prob{3});
 K = obj.cone;
 
 % options to SeDuMi
-opts = obj.sdpopt.solveroptions;
+opts = obj.opts.sedumi;
 % disable output by default
 if ~isfield(opts,'fid'), opts.fid = 0; end
 
@@ -88,15 +88,15 @@ y = sparse(find(~I),1,y_,length(I),1);
 if obj.info.pinf
     % primal infeasible
     obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_INFEASIBLE;
-    assert(~obj.sdpopt.error_on_fail,'Conic problem is primal infeasible.')
+    assert(~obj.opts.error_on_fail,'Conic problem is primal infeasible.')
 elseif obj.info.dinf
     % dual infeasible
     obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_INFEASIBLE;
-    assert(~obj.sdpopt.error_on_fail,'Conic problem is dual infeasible.')
+    assert(~obj.opts.error_on_fail,'Conic problem is dual infeasible.')
 elseif obj.info.numerr
     % numerical errors
     obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_NAN;
-    assert(~obj.sdpopt.error_on_fail,'Optimizer run into numerical error (numerr=%d, feasratio=%g)',info.numerr,info.feasratio)
+    assert(~obj.opts.error_on_fail,'Optimizer run into numerical error (numerr=%d, feasratio=%g)',info.numerr,info.feasratio)
 else
     % success
     obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_SUCCESS;

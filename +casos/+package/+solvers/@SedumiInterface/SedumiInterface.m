@@ -11,6 +11,19 @@ properties (Access=private)
     info = struct;
 end
 
+properties (Constant, Access=protected)
+    sedumi_options = [casos.package.solvers.ConicSolver.conic_options
+        {'sedumi', 'Options to be passed to SeDuMi.'}
+    ];
+end
+
+methods (Static, Access=protected)
+    function options = get_options
+        % Return static options.
+        options = casos.package.solvers.SedumiInterface.sedumi_options;
+    end
+end
+
 methods
 %     init(obj);
     argout = eval(obj,argin);
@@ -18,6 +31,9 @@ methods
     function obj = SedumiInterface(name,conic,varargin)
         % Construct SeDuMi interface.
         obj@casos.package.solvers.ConicSolver(name,conic,varargin{:});
+
+        % default options
+        if ~isfield(obj.opts,'sedumi'), obj.opts.sedumi = []; end
     end
 
     function s = stats(obj)
