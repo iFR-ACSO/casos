@@ -57,7 +57,7 @@ methods
         obj.solver = casos.package.solvers.conicInternal([name '_conic'],solver,conic,opts);
 
         % conic problem data as function of p
-        data = casadi.Function('P',{p},{H g A b});
+        data = casadi.Function('P',{x p},{H g A b});
 
         % SDP problem as function of p and x
         prob = casadi.Function('S',{x p},{sdp.f sdp_g});

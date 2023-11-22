@@ -10,6 +10,6 @@ data = call(obj.fhan,argin);
 sol = call(obj.solver,data);
 
 % parse solution
-argout = call(obj.ghan,sol);
+argout = call(obj.ghan,[argin(2) sol]);
 
 end
