@@ -32,6 +32,8 @@ K = obj.cone;
 
 % options to SeDuMi
 opts = obj.sdpopt.solveroptions;
+% disable output by default
+if ~isfield(opts,'fid'), opts.fid = 0; end
 
 % reorder decision variables
 idx = [If' setdiff(1:length(c),If)];
