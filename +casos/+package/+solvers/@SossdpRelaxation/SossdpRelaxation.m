@@ -119,9 +119,12 @@ methods
 
     function idx = get_index_in(obj,str)
         % Index of inputs.
-        [tf,idx] = ismember(str,obj.name_i);
+        [tf,ii] = ismember(str,obj.name_i);
 
         assert(tf, 'Could not find entry "%s".', str);
+
+        % zero-based index
+        idx = ii - 1;
     end
 
     function n = get_n_out(obj)
@@ -155,9 +158,12 @@ methods
 
     function idx = get_index_out(obj,str)
         % Index of outputs.
-        [tf,idx] = ismember(str,obj.name_o);
+        [tf,ii] = ismember(str,obj.name_o);
 
         assert(tf, 'Could not find entry "%s".', str);
+
+        % zero-based index
+        idx = ii - 1;
     end
 
     function s = get_stats(obj)
