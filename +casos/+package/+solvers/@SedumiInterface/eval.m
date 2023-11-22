@@ -83,17 +83,21 @@ K.l = K.l - nnz(J) - length(If);
 x = sparse(idx,1,x_,length(J),1);
 y = sparse(find(~I),1,y_,length(I),1);
 
-if ~obj.sdpopt.error_on_fail
-    % continue regardless of feasibility
-elseif obj.info.pinf
+if obj.info.pinf
     % primal infeasible
-    error('Conic problem is primal infeasible.')
+    obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_INFEASIBLE;
+    assert(~obj.sdpopt.error_on_fail,'Conic problem is primal infeasible.')
 elseif obj.info.dinf
     % dual infeasible
-    error('Conic problem is dual infeasible.')
+    obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_INFEASIBLE;
+    assert(~obj.sdpopt.error_on_fail,'Conic problem is dual infeasible.')
 elseif obj.info.numerr
     % numerical errors
-    error('Optimizer run into numerical error (numerr=%d, feasratio=%g)',info.numerr,info.feasratio)
+    obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_NAN;
+    assert(~obj.sdpopt.error_on_fail,'Optimizer run into numerical error (numerr=%d, feasratio=%g)',info.numerr,info.feasratio)
+else
+    % success
+    obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_SUCCESS;
 end
 
 % parse solution

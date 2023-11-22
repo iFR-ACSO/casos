@@ -23,6 +23,7 @@ methods
     function s = stats(obj)
         % Return stats.
         s = obj.info;
+        s = addfield(obj.status,s);
     end
 end
 

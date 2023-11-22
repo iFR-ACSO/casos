@@ -84,20 +84,25 @@ y = sparse(idx,1,y_,m,1);
 s = sparse(idx,1,s_,m,1);
 
 status_val = obj.info.status_val;
-if ~obj.sdpopt.error_on_fail
-    % continue regardless of feasibility
-elseif status_val == -1
+if status_val == -1
     % primal unbounded / dual infeasible
-    error('Conic problem is dual infeasible.')
+    obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_INFEASIBLE;
+    assert(~obj.sdpopt.error_on_fail,'Conic problem is dual infeasible.')
 elseif status_val == -2
     % primal infeasible / dual unbounded
-    error('Conic problem is primal infeasible.')
+    obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_INFEASIBLE;
+    assert(~obj.sdpopt.error_on_fail,'Conic problem is primal infeasible.')
 elseif ismember(status_val, [2 -6 -7])
     % inaccurate solution
-    error('Optimizer did not reach desired accuracy (Status: %s).', obj.info.status)
+    obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_NAN;
+    assert(~obj.sdpopt.error_on_fail,'Optimizer did not reach desired accuracy (Status: %s).', obj.info.status)
 elseif status_val < -2
     % failure
-    error('Optimizer failed (Status: %s).', obj.info.status)
+    obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_LIMITED;
+    assert(~obj.sdpopt.error_on_fail,'Optimizer failed (Status: %s).', obj.info.status)
+else
+    % success
+    obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_SUCCESS;
 end
 
 % parse solution

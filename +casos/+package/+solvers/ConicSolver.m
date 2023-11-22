@@ -20,6 +20,10 @@ properties (GetAccess=protected, SetAccess=private)
     names_out = {'x' 'cost' 'lam_a' 'lam_x'};
 end
 
+properties (Access=protected)
+    status = casos.package.UnifiedReturnStatus.SOLVER_RET_UNKNOWN;
+end
+
 properties (Abstract, Access=protected)
     fhan;
     ghan;
