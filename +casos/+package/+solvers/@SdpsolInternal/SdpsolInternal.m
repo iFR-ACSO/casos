@@ -23,10 +23,6 @@ methods
         % options
         if nargin < 4
             opts = struct;
-        elseif isfield(opts,'Kg')
-            % map constraint cones
-            opts.Ka = opts.Kg;
-            opts = rmfield(opts,'Kg');
         end
 
         % decision variables

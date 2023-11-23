@@ -3,13 +3,13 @@ function buildproblem(obj,prob,data,opts)
 %
 % The high-level SDP interface has the form
 %
-%   min f(x,p) s.t. g(x) in Kg, x in Kx
+%   min f(x,p) s.t. g(x) in Kc, x in Kx
 %
 % where f = 1/2 x'*H(p)*x + g(p)'*x + d(p) and g = A(p)*x + b(p).
 %
 % The low-level conic interface has the form
 %
-%   min 1/2 x'*H*x + g'*x s.t. A*x in Ka, x in Kx
+%   min 1/2 x'*H*x + g'*x s.t. A*x in Kc, x in Kx
 %
 
 sz_x = size_in(prob,0);
@@ -33,10 +33,10 @@ if ~isfield(opts,'Kx')
 elseif ~isfield(opts.Kx,'l')
     opts.Kx.l = 0; 
 end
-if ~isfield(opts,'Ka')
-    opts.Ka.l = prod(sz_g);
-elseif ~isfield(opts.Ka,'l')
-    opts.Ka.l = 0; 
+if ~isfield(opts,'Kc')
+    opts.Kc.l = prod(sz_g);
+elseif ~isfield(opts.Kc,'l')
+    opts.Kc.l = 0;
 end
 
 % linear variables
@@ -45,7 +45,7 @@ Nx_l = opts.Kx.l;
 Nx_c = prod(sz_x) - Nx_l;
 
 % linear constraints
-Ng_l = opts.Ka.l;
+Ng_l = opts.Kc.l;
 % cone constraints
 Ng_c = prod(sz_g) - Ng_l;
 

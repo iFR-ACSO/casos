@@ -131,11 +131,11 @@ A polynomial sum-of-squares optimization problem takes the form
 ```math
 \begin{array}{l c r}
   \min & F(\xi,\pi), & \xi = (\xi_\mathrm{l}, \xi_\mathrm{c}) \\
-  \text{s.t.} & \gamma_\mathrm{lb} \unlhd G_\mathrm{l}(\xi,\pi) \unlhd \gamma_\mathrm{ub}, & G_\mathrm{c}(\xi,\pi) \in \mathcal K_\mathrm{G} \\
-  \text{and} & \xi_\mathrm{lb} \unlhd \xi_\mathrm{l} \unlhd \xi_\mathrm{ub}, & \xi_\mathrm{c} \in \mathcal K_\mathrm{X}
+  \text{s.t.} & \gamma_\mathrm{lb} \unlhd G_\mathrm{l}(\xi,\pi) \unlhd \gamma_\mathrm{ub}, & G_\mathrm{c}(\xi,\pi) \in \mathcal K_c \\
+  \text{and} & \xi_\mathrm{lb} \unlhd \xi_\mathrm{l} \unlhd \xi_\mathrm{ub}, & \xi_\mathrm{c} \in \mathcal K_x
 \end{array}
 ```
-where $F$ is a scalar-valued function, the constraints $G_\mathrm{l}$ and $G_\mathrm{c}$ take polynomial values, and $\unlhd$ denotes a coefficient-wise inequality; $\mathcal K_\mathrm{G}$ and $\mathcal K_\mathrm{X}$ are convex cones in the space of polynomials. The pairs of polynomials $(\xi_\mathrm{lb}, \gamma_\mathrm{lb})$ denote *lower bounds* and $(\xi_\mathrm{ub}, \gamma_\mathrm{ub})$ denote *upper bounds*.
+where $F$ is a scalar-valued function, the constraints $G_\mathrm{l}$ and $G_\mathrm{c}$ take polynomial values, and $\unlhd$ denotes a coefficient-wise inequality; $\mathcal K_c$ and $\mathcal K_x$ are convex cones in the space of polynomials. The pairs of polynomials $(\xi_\mathrm{lb}, \gamma_\mathrm{lb})$ denote *lower bounds* and $(\xi_\mathrm{ub}, \gamma_\mathrm{ub})$ denote *upper bounds*.
 
 #### Affine interface
 
@@ -172,7 +172,7 @@ The high-level interface solves convex problems of the form
 ```math
 \begin{array}{l c r}
   \min & f(x,p), & x = (x_\mathrm{l}, x_\mathrm{c}) \\
-  \text{s.t.} & g_\mathrm{lb} \leq g_\mathrm{l}(x,p) \leq g_\mathrm{ub}, & g_\mathrm{c}(x,p) \succeq_{\mathcal{K}_g} g_\mathrm{cb} \\
+  \text{s.t.} & g_\mathrm{lb} \leq g_\mathrm{l}(x,p) \leq g_\mathrm{ub}, & g_\mathrm{c}(x,p) \succeq_{\mathcal K_g} g_\mathrm{cb} \\
   \text{and} & x_\mathrm{lb} \leq x_\mathrm{l} \leq x_\mathrm{ub}, & x_\mathrm{c} \succeq_{\mathcal{K}_x} x_\mathrm{cb}
 \end{array}
 ```
@@ -181,7 +181,7 @@ where $f$ is a convex quadratic function in $x$, the constraints $g_\mathrm{l}$ 
 ```
 S = casos.sdpsol('S','solver',struct('x',x,'f',f,'g',g,'p',p),opts)
 ```
-initializes the SDP solver named `'S'` using the convex solver `'solver'`. Options are provided as structure `opts` including optional fields `opts.Kx` and `opts.Kg` describing, respectively, the cones $\mathcal K_x$ and $\mathcal K_g$. See [Convex cones](#convex-cones) for details.
+initializes the SDP solver named `'S'` using the convex solver `'solver'`. Options are provided as structure `opts` including optional fields `opts.Kx` and `opts.Kc` describing, respectively, the cones $\mathcal K_x$ and $\mathcal K_c$. See [Convex cones](#convex-cones) for details.
 
 ```
 sol = S('lbx',lbx,'ubx',ubx,'cbx',cbx,'lbg',lbg,'ubg',ubg,'cbg',cbg)
@@ -195,7 +195,7 @@ The low-level interface solves conic problems of the form
 ```math
 \begin{array}{l c r}
   \min & \frac{1}{2} x^\top H x + g^\top x, & x = (x_\mathrm{l}, x_\mathrm{c}) \\
-  \text{s.t.} & a_\mathrm{lb} \leq A_\mathrm{l} \, x \leq a_\mathrm{ub}, & A_\mathrm{c} \, x \succeq_{\mathcal{K}_A} a_\mathrm{cb} \\
+  \text{s.t.} & a_\mathrm{lb} \leq A_\mathrm{l} \, x \leq a_\mathrm{ub}, & A_\mathrm{c} \, x \succeq_{\mathcal K_a} a_\mathrm{cb} \\
   \text{and} & x_\mathrm{lb} \leq x_\mathrm{l} \leq x_\mathrm{ub}, & x_\mathrm{c} \succeq_{\mathcal{K}_x} x_\mathrm{cb}
 \end{array}
 ```
@@ -204,7 +204,7 @@ where $\succeq_\mathcal{K}$ denotes the order induced by the convex cone $\mathc
 ```
 S = casos.conic('S','solver',struct('h',hs,'a',as),opts)
 ```
-initializes the conic solver named `'S'` using the convex solver `'solver'`, where `hs` and `as` are sparsity patterns for $H$ and $A = (A_\mathrm{l}, A_{\mathrm c})$. Options are provided as structure `opts` including optional fields `opts.Kx` and `opts.Ka` describing, respectively, the cones $\mathcal K_x$ and $\mathcal K_a$. See [Convex cones](#convex-cones) for details.
+initializes the conic solver named `'S'` using the convex solver `'solver'`, where `hs` and `as` are sparsity patterns for $H$ and $A = (A_\mathrm{l}, A_{\mathrm c})$. Options are provided as structure `opts` including optional fields `opts.Kx` and `opts.Kc` describing, respectively, the cones $\mathcal K_x$ and $\mathcal K_c$. See [Convex cones](#convex-cones) for details.
 
 ```
 sol = S('h',h,'g',g,'a',a,'lba',lba,'uba',uba,'cba',cba,'lbx',lbx,'ubx',ubx,'cbx',cbx)

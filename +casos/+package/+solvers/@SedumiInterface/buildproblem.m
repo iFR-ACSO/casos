@@ -16,20 +16,20 @@ function buildproblem(obj)
 % The generic conic problem in casos has the form
 %
 %   min 1/2*x'*h*x + g'*x
-%   st. a*x in Ka, x in Kx,
+%   st. a*x in Kc, x in Kx,
 %
 % with Lagrange multipliers satisfying
 %
 %   h*x + g + a'*lam_a + lam_x = 0
-%   lam_a in -Ka*, lam_x in -Kx*
+%   lam_a in -Kc*, lam_x in -Kx*
 %
-% where Ka and Kx are cones composed of
+% where Kc and Kx are cones composed of
 %   - box constraints [lb ub] (l)
 %   - Lorentz (quadratic) cone (q)
 %   - rotated Lorentz cone (r)
 %   - cone of PSD matrices (s)
 %
-% and Ka* and Kx* are the dual cones of Ka and Kx, respectively.
+% and Kc* and Kx* are the dual cones of Kc and Kx, respectively.
 %
 % Lorentz cone, rotated Lorentz cone, and PSD cone can be shifted by a
 % lower bound (cb).
@@ -54,7 +54,7 @@ cbx = obj.args_in.cbx;
 
 % obtain cones
 Kx = opts.Kx;
-Ka = opts.Ka;
+Kc = opts.Kc;
 
 % number of variables per cone type
 Nx.l = (obj.getdimc(Kx,'l'));
@@ -63,17 +63,17 @@ Nx.r = (obj.getdimc(Kx,'r'));
 Nx.s = (obj.getdimc(Kx,'s'));
 
 % number of constraints per cone type
-Na.l = (obj.getdimc(Ka,'l'));
-Na.q = (obj.getdimc(Ka,'q'));
-Na.r = (obj.getdimc(Ka,'r'));
-Na.s = (obj.getdimc(Ka,'s'));
+Na.l = (obj.getdimc(Kc,'l'));
+Na.q = (obj.getdimc(Kc,'q'));
+Na.r = (obj.getdimc(Kc,'r'));
+Na.s = (obj.getdimc(Kc,'s'));
 
 % define xl = zl + lbx, xc = zc + cbx, 
 % where zl is a nonnegative variable and zc is element of Kx
 zb = [lbx; cbx];
 % rewrite linear and state constraints, that is,
 %
-%   lba <= al*x <= uba, ac*x in Ka
+%   lba <= al*x <= uba, ac*x in Kc
 %   lbx <=  xl  <= ubx,  xc  in Kx
 %
 % with a = [al; ac], x = (xl, xc)
@@ -85,7 +85,7 @@ zb = [lbx; cbx];
 %     xl + sux = ubx <->   zl + sux = ubx -   lbx
 %
 % where sla, sua, and sux are nonnegative slack variables 
-% and sca is element of Ka
+% and sca is element of Kc
 Nx_c = n - Nx.l;
 Na_c = m - Na.l;
 

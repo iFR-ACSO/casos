@@ -53,7 +53,7 @@ methods
 
         % default options
         obj.sosopt.Kx = struct('l',n);
-        obj.sosopt.Kg = struct('s',m);
+        obj.sosopt.Kc = struct('s',m);
         obj.sosopt.sdpoptions = struct;
         obj.sosopt.error_on_fail = true;
 

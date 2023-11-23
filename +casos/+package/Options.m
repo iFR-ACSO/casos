@@ -36,7 +36,7 @@ methods
 
     function str = info(obj,name)
         % Return description for option
-        assert(has(obj,name), 'No such option "%s".',name);
+        assert(has(obj,name), 'Unkown option "%s".',name);
         % description
         str = obj.entries(name,:).description{:};
     end
@@ -48,6 +48,18 @@ methods
         tf = cellfun(@(fn) has(obj,fn), fn_opts);
         % throw error
         assert(all(tf), 'Unkown option "%s".', fn_opts{find(tf,1)});
+    end
+
+    function print_all(obj)
+        % Print all options.
+        disp(obj.entries)
+    end
+
+    function print_one(obj,name)
+        % Print one option.
+        assert(has(obj,name), 'Unkown option "%s".',name)
+        % disply single option
+        disp(obj.entries(name,:))
     end
 
     function disp(obj)

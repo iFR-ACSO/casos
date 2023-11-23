@@ -11,7 +11,7 @@ g = casos.PS.sym('g');
 %   min g s.t. (f + g) is SOS
 sos = struct('x',g,'f',g,'g',f+g);
 % constraint is scalar SOS cone
-opts = struct('Kg',struct('s',1));
+opts = struct('Kc',struct('s',1));
 
 % solve by relaxation to SDP
 S = casos.sossol('S','sedumi',sos,opts);

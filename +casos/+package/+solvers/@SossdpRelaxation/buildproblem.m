@@ -10,11 +10,11 @@ m = length(sos.g);
 % get cone dimensions
 if isfield(opts.Kx,'l'), Nl = opts.Kx.l; else, Nl = 0; end
 if isfield(opts.Kx,'s'), Ns = opts.Kx.s; else, Ns = 0; end
-if isfield(opts.Kg,'l'), Ml = opts.Kg.l; else, Ml = 0; end
-if isfield(opts.Kg,'s'), Ms = opts.Kg.s; else, Ms = 0; end
+if isfield(opts.Kc,'l'), Ml = opts.Kc.l; else, Ml = 0; end
+if isfield(opts.Kc,'s'), Ms = opts.Kc.s; else, Ms = 0; end
 
-assert(n == (Nl + Ns), 'Dimension of Kx must equal to number of variables (%d).', n);
-assert(m == (Ml + Ms), 'Dimension of Kg must equal to number of constraints (%d).', m)
+assert(n == (Nl + Ns), 'Dimension of Kx must be equal to number of variables (%d).', n);
+assert(m == (Ml + Ms), 'Dimension of Kc must be equal to number of constraints (%d).', m)
 
 % select sum-of-squares variables and constraints
 Is = [false(Nl,1); true(Ns,1)];
@@ -49,7 +49,7 @@ sdp.p = Qlin_p;
 % SDP options
 sdpopt = obj.sosopt.sdpoptions;
 sdpopt.Kx = struct('l', numel(Qlin_x), 's', [Ksdp_x_s; Ksdp_g_s]);
-sdpopt.Kg = struct('l', numel(Qdiff_g));
+sdpopt.Kc = struct('l', numel(Qdiff_g));
 
 % initialize SDP solver
 obj.sdpsolver = casos.sdpsol('SDP',solver,sdp,sdpopt);

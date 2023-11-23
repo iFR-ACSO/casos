@@ -18,14 +18,14 @@ function buildproblem(obj)
 % The generic conic problem in casos has the form
 %
 %   min 1/2*x'*h*x + g'*x
-%   st. a*x in Ka, x in Kx,
+%   st. a*x in Kc, x in Kx,
 %
 % with Lagrange multipliers satisfying
 %
 %   h*x + g + a'*lam_a + lam_x = 0
-%   lam_a in -Ka*, lam_x in -Kx*
+%   lam_a in -Kc*, lam_x in -Kx*
 %
-% where Ka and Kx are cones composed of
+% where Kc and Kx are cones composed of
 %   - box constraints [lb ub] (l)
 %   - Lorentz (quadratic) cone (q)
 %   - rotated Lorentz cone (r)
@@ -54,7 +54,7 @@ cbx = obj.args_in.cbx;
 
 % obtain cones
 Kx = opts.Kx;
-Ka = opts.Ka;
+Kc = opts.Kc;
 
 % number of variables per cone type
 Nx.l = (obj.getdimc(Kx,'l'));
@@ -62,9 +62,9 @@ Nx.q = (obj.getdimc(Kx,'q'));
 Nx.s = (obj.getdimc(Kx,'s'));
 
 % number of constraints per cone type
-Na.l = (obj.getdimc(Ka,'l'));
-Na.q = (obj.getdimc(Ka,'q'));
-Na.s = (obj.getdimc(Ka,'s'));
+Na.l = (obj.getdimc(Kc,'l'));
+Na.q = (obj.getdimc(Kc,'q'));
+Na.s = (obj.getdimc(Kc,'s'));
 
 % rewrite linear and state constraints, that is,
 % 
@@ -79,7 +79,7 @@ Na.s = (obj.getdimc(Ka,'s'));
 %     -xc + scx = -cbx
 %
 % where sba, sbx are box constrained slack variables 
-% and sca, scx are elements of Ka and Kx, respectively.
+% and sca, scx are elements of Kc and Kx, respectively.
 % To that extent we introduce a new slack variable t with constraint
 %
 %     0 + t = 1

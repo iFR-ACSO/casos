@@ -4,7 +4,7 @@ classdef (Abstract) ConicSolver < casos.package.solvers.SolverCallback
 % The generic conic problem has the form
 %
 %   min 1/2*x'*h*x + g'*x
-%   st. a*x in Ka, x in Kx, 
+%   st. a*x in Kc, x in Kx, 
 %
 % where Ka and Kx are cones composed of
 %   - box constraint [lb ub] (l)
@@ -25,7 +25,7 @@ end
 properties (Constant, Access=protected)
     conic_options = [casos.package.solvers.SolverCallback.solver_options
         {'Kx', 'Cone description for state constraints.'
-         'Ka', 'Cone description for constraint function.'}
+         'Kc', 'Cone description for constraint function.'}
     ];
 end
 
@@ -62,15 +62,15 @@ methods
 
         % default options
         if ~isfield(obj.opts,'Kx'), obj.opts.Kx = struct('l',n); end
-        if ~isfield(obj.opts,'Ka'), obj.opts.Ka = struct('l',m); end
+        if ~isfield(obj.opts,'Kc'), obj.opts.Kc = struct('l',m); end
 
         % check cone dimensions
         assert(sum(cellfun(@(fn) obj.getnumc(obj.opts.Kx,fn), fieldnames(obj.opts.Kx))) == n, 'Dimension of Kx must equal to number of variables (%d).', n)
-        assert(sum(cellfun(@(fn) obj.getnumc(obj.opts.Ka,fn), fieldnames(obj.opts.Ka))) == m, 'Dimension of Ka must equal to number of constraints (%d).', m)
+        assert(sum(cellfun(@(fn) obj.getnumc(obj.opts.Kc,fn), fieldnames(obj.opts.Kc))) == m, 'Dimension of Ka must equal to number of constraints (%d).', m)
 
         % dimensions of linear variables and constraints
         Nl = casos.package.solvers.ConicSolver.getdimc(obj.opts.Kx,'l');
-        Ml = casos.package.solvers.ConicSolver.getdimc(obj.opts.Ka,'l');
+        Ml = casos.package.solvers.ConicSolver.getdimc(obj.opts.Kc,'l');
 
         % symbolic inputs
         obj.args_in.h      = casadi.MX.sym('h',hs);
