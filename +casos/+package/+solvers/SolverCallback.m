@@ -1,4 +1,4 @@
-classdef SolverCallback < casadi.Callback
+classdef SolverCallback < casadi.Callback & casos.package.functions.FunctionCommon
 % Common Callback interface for custom solvers.
 
 properties (Abstract, Access=protected)
@@ -7,14 +7,10 @@ properties (Abstract, Access=protected)
 end
 
 properties (Constant, Access=protected)
-    solver_options = casos.package.Options({'error_on_fail', 'Throw exceptions when function evaluation fails (default true).'});
+    solver_options = casos.package.functions.FunctionCommon.options;
 end
 
-properties (Access=protected)
-    opts = struct;
-end
-
-methods (Static, Access=protected)
+methods (Static)
     function options = get_options
         % Return static options.
         options = casos.package.solvers.SolverCallback.solver_options;
@@ -22,19 +18,24 @@ methods (Static, Access=protected)
 end
 
 methods
-    function obj = SolverCallback(opts)
-        % Instantiate base class.
-        if nargin > 0
-            % assert that all options exist
-            check(obj.get_options, opts);
-            % store options
-            obj.opts = opts;
-        end
+    function obj = SolverCallback(varargin)
+        obj@casos.package.functions.FunctionCommon(varargin{:});
+    end
 
-        % default options
-        if ~isfield(obj.opts,'error_on_fail')
-            obj.opts.error_on_fail = true;
-        end
+    %% Common function interface
+    function print_options(obj)
+        % Print list of options.
+        print_options@casos.package.functions.FunctionCommon(obj);
+    end
+
+    function print_option(obj,name)
+        % Print information about an option.
+        print_option@casos.package.functions.FunctionCommon(obj,name);
+    end
+
+    function tf = has_option(obj,name)
+        % Check if option "name" exists.
+        tf = has_option@casos.package.functions.FunctionCommon(obj,name);
     end
 
     %% Common Callback interface

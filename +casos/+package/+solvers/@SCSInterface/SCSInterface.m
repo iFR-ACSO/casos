@@ -17,7 +17,7 @@ properties (Constant, Access=protected)
     ];
 end
 
-methods (Static, Access=protected)
+methods (Static)
     function options = get_options
         % Return static options.
         options = casos.package.solvers.SCSInterface.scs_options;

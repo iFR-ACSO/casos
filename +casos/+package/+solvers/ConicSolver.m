@@ -38,7 +38,7 @@ methods (Abstract, Access=protected)
     buildproblem(obj);
 end
 
-methods (Static, Access=protected)
+methods (Static)
     function options = get_options
         % Return static options.
         options = casos.package.solvers.ConicSolver.conic_options;

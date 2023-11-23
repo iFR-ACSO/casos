@@ -1,7 +1,7 @@
 function obj = buildproblem(obj,solver,sos)
 % Build SDP problem from SOS relaxation.
 
-opts = obj.sosopt;
+opts = obj.opts;
 
 % problem size
 n = length(sos.x);
@@ -47,7 +47,7 @@ sdp.f = Qlin_f;
 sdp.g = Qdiff_g;
 sdp.p = Qlin_p;
 % SDP options
-sdpopt = obj.sosopt.sdpoptions;
+sdpopt = opts.sdpsol_options;
 sdpopt.Kx = struct('l', numel(Qlin_x), 's', [Ksdp_x_s; Ksdp_g_s]);
 sdpopt.Kc = struct('l', numel(Qdiff_g));
 

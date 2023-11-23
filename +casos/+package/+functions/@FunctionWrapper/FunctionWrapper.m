@@ -105,6 +105,21 @@ methods
         s = get_stats(obj.wrap);
     end
 
+    function print_options(obj)
+        % Print list of options.
+        print_options(obj.wrap);
+    end
+
+    function print_option(obj,name)
+        % Print information about an option.
+        print_option(obj.wrap,name);
+    end
+
+    function tf = has_option(obj,name)
+        % Check if option "name" exists.
+        tf = has_option(obj.wrap,name);
+    end
+
     function out = call(obj,args)
         % Evaluate function for given arguments.
         if iscell(args)

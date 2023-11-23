@@ -172,7 +172,7 @@ The high-level interface solves convex problems of the form
 ```math
 \begin{array}{l c r}
   \min & f(x,p), & x = (x_\mathrm{l}, x_\mathrm{c}) \\
-  \text{s.t.} & g_\mathrm{lb} \leq g_\mathrm{l}(x,p) \leq g_\mathrm{ub}, & g_\mathrm{c}(x,p) \succeq_{\mathcal K_g} g_\mathrm{cb} \\
+  \text{s.t.} & g_\mathrm{lb} \leq g_\mathrm{l}(x,p) \leq g_\mathrm{ub}, & g_\mathrm{c}(x,p) \succeq_{\mathcal K_c} g_\mathrm{cb} \\
   \text{and} & x_\mathrm{lb} \leq x_\mathrm{l} \leq x_\mathrm{ub}, & x_\mathrm{c} \succeq_{\mathcal{K}_x} x_\mathrm{cb}
 \end{array}
 ```
@@ -195,7 +195,7 @@ The low-level interface solves conic problems of the form
 ```math
 \begin{array}{l c r}
   \min & \frac{1}{2} x^\top H x + g^\top x, & x = (x_\mathrm{l}, x_\mathrm{c}) \\
-  \text{s.t.} & a_\mathrm{lb} \leq A_\mathrm{l} \, x \leq a_\mathrm{ub}, & A_\mathrm{c} \, x \succeq_{\mathcal K_a} a_\mathrm{cb} \\
+  \text{s.t.} & a_\mathrm{lb} \leq A_\mathrm{l} \, x \leq a_\mathrm{ub}, & A_\mathrm{c} \, x \succeq_{\mathcal K_c} a_\mathrm{cb} \\
   \text{and} & x_\mathrm{lb} \leq x_\mathrm{l} \leq x_\mathrm{ub}, & x_\mathrm{c} \succeq_{\mathcal{K}_x} x_\mathrm{cb}
 \end{array}
 ```

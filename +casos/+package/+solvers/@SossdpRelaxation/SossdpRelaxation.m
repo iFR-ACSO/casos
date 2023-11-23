@@ -9,8 +9,6 @@ end
 properties (Access=private)
     sdpsolver;
 
-    sosopt;
-
     monom_xl;
     monom_xs;
     monom_p;
@@ -27,15 +25,30 @@ properties (Access=private,Dependent)
     monom_g;
 end
 
+properties (Constant,Access=protected)
+    sossdp_options = [casos.package.functions.FunctionInterface.options
+        {'Kx', 'Cone description for state constraints.'
+         'Kc', 'Cone description for constraint function.'
+         'sdpsol_options', 'Options to be passed to the SDP solver.'}
+    ];
+end
+
 properties (SetAccess=protected)
     class_name = 'SossdpRelaxation';
+end
+
+methods (Static)
+    function options = get_options
+        % Return static options.
+        options = casos.package.solvers.SossdpRelaxation.sossdp_options;
+    end
 end
 
 methods
     out = call(obj,in);
 
     function obj = SossdpRelaxation(name,solver,sos,varargin)
-        obj@casos.package.functions.FunctionInterface(name);
+        obj@casos.package.functions.FunctionInterface(name,varargin{:});
 
         % parameter
         if ~isfield(sos,'p')
@@ -52,13 +65,14 @@ methods
         m = length(sos.g);
 
         % default options
-        obj.sosopt.Kx = struct('l',n);
-        obj.sosopt.Kc = struct('s',m);
-        obj.sosopt.sdpoptions = struct;
-        obj.sosopt.error_on_fail = true;
+        if ~isfield(obj.opts,'Kx'), obj.opts.Kx = struct('l',n); end
+        if ~isfield(obj.opts,'Kc'), obj.opts.Kc = struct('l',m); end
+        if ~isfield(obj.opts,'sdpsol_options'), obj.opts.sdpsol_options = struct; end
 
-        % parse options
-        [obj.sosopt,~] = casos.package.solvers.parse_options(obj.sosopt,varargin{:});
+        % pass options to sdpsol
+        if ~isfield(obj.opts.sdpsol_options,'error_on_fail')
+            obj.opts.sdpsol_options.error_on_fail = obj.opts.error_on_fail;
+        end
 
         % build SDP problem
         obj = buildproblem(obj,solver,sos);

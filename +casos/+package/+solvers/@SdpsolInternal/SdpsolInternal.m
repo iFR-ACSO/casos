@@ -69,6 +69,21 @@ methods
         % Return stats.
         s = obj.solver.stats;
     end
+
+    function print_options(obj)
+        % Print list of options.
+        print_options(obj.solver);
+    end
+
+    function print_option(obj,name)
+        % Print information about an option.
+        print_option(obj.solver,name);
+    end
+
+    function has_option(obj,name)
+        % Check if option "name" exists.
+        has_option(obj.solver,name);
+    end
 end
 
 end

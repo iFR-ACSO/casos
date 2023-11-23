@@ -12,6 +12,7 @@ flowchart LR
     casos.sossol[sossol]
   end
   subgraph casos.package.functions
+    FunctionInterface --> FunctionCommon
     FunctionWrapper -.-> FunctionInterface
     CasadiFunction --> FunctionInterface
     PSFunction --> FunctionInterface
@@ -34,6 +35,7 @@ flowchart LR
   casos.Function -.-> PSFunction
   CasadiFunction -.-> casadi.Function
   SolverCallback --> casadi.Callback
+  SolverCallback --> FunctionCommon
   casos.conic -.-> conicInternal
   casos.sdpsol -.-> SdpsolInternal
   casos.sossol -.-> SossolInternal

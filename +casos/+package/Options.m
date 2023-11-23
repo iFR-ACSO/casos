@@ -47,7 +47,7 @@ methods
         % check if options exist
         tf = cellfun(@(fn) has(obj,fn), fn_opts);
         % throw error
-        assert(all(tf), 'Unkown option "%s".', fn_opts{find(tf,1)});
+        assert(all(tf), 'Unkown option "%s".', fn_opts{find(~tf,1)});
     end
 
     function print_all(obj)

@@ -1,4 +1,4 @@
-classdef (Abstract) FunctionInterface
+classdef (Abstract) FunctionInterface < casos.package.functions.FunctionCommon
 % Interface for callable functions.
 
 properties (Abstract,SetAccess=protected)
@@ -28,8 +28,9 @@ methods (Abstract)
 end
 
 methods
-    function obj = FunctionInterface(name)
+    function obj = FunctionInterface(name,varargin)
         % Superclass constructor.
+        obj@casos.package.functions.FunctionCommon(varargin{:});
         obj.name = name;
     end
 

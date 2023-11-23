@@ -20,7 +20,7 @@ sos = struct('x',s,'g',[V-l; s*(V-g)-Vdot-l],'p',g);
 % states + constraint are SOS cones
 opts.Kx.s = 1; opts.Kc.s = 2;
 % ignore infeasibility
-opts.sdpoptions.error_on_fail = false;
+opts.error_on_fail = false;
 
 % solve by relaxation to SDP
 S = casos.sossol('S','sedumi',sos,opts);
