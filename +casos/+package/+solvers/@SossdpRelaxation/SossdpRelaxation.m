@@ -1,5 +1,20 @@
 classdef SossdpRelaxation < casos.package.functions.FunctionInterface
 % Solve sum-of-squares problem by relaxation to SDP.
+%
+% The generic sum-of-squares problem has the form
+%
+%   min f(x,p) s.t. g(x,p) in Kc, x in Kx
+%
+% with Lagrange multipliers satisfying
+%
+%   df(x,p) + dg(x,p)[lam_g] + lam_x = 0
+%   lam_g in -Kc*, lam_x in -Kx*
+%
+% where Kc and Kx are cones composed of
+%   - coefficient-wise inequalities (l)
+%   - sum-of-squares polynomials (s)
+%
+% and Kc* and Kx* are the dual cones of Kc and Kx, respectively.
 
 properties (Access=private,Constant)
     name_i = {'x0' 'p' 'lbx' 'ubx' 'cbx' 'lbg' 'ubg' 'cbg' 'lam_x0' 'lam_g0'};

@@ -3,7 +3,7 @@ function buildproblem(obj,prob,data,opts)
 %
 % The high-level SDP interface has the form
 %
-%   min f(x,p) s.t. g(x) in Kc, x in Kx
+%   min f(x,p) s.t. g(x,p) in Kc, x in Kx
 %
 % where f = 1/2 x'*H(p)*x + g(p)'*x + d(p) and g = A(p)*x + b(p).
 %

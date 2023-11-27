@@ -6,12 +6,18 @@ classdef (Abstract) ConicSolver < casos.package.solvers.SolverCallback
 %   min 1/2*x'*h*x + g'*x
 %   st. a*x in Kc, x in Kx, 
 %
-% where Ka and Kx are cones composed of
+% with Lagrange multipliers satisfying
+%
+%   h*x + g + a'*lam_a + lam_x = 0
+%   lam_a in -Kc*, lam_x in -Kx*
+%
+% where Kc and Kx are cones composed of
 %   - box constraint [lb ub] (l)
 %   - Lorentz (quadratic) cone (q)
 %   - rotated Lorentz cone (r)
 %   - cone of PSD matrices (s)
 %
+% and Kc* and Kx* are the dual cones of Kc and Kx, respectively.
 
 properties (GetAccess=protected, SetAccess=private)
     args_in = struct;
