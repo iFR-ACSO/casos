@@ -7,7 +7,7 @@ f = [-x(2); x(1) + (x(1)^2 - 1)*x(2)];
 % Lyapunov function candidate
 V = 1.5*x(1)^2 - x(1)*x(2) + x(2)^2;
 % derivative w.r.t. time
-Vdot = jacobian(V,x)*f;
+Vdot = nabla(V,x)*f;
 % SOS multiplier
 s = casos.PS.sym('q',monomials(x,0:1),'gram');
 % enforce positivity
