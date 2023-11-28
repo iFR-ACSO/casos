@@ -35,7 +35,8 @@ pgram(I) = casos.PS(Z,Q);
 
 % check if Gram form is equal
 diff = (p - pgram);
-if is_zero(diff.coeffs(:,find(I)))
+dcfs = diff.coeffs(:,find(I));
+if is_zero(dcfs) || is_zero(simplify(dcfs))
     % return Gram matrix
     return
 end
