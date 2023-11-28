@@ -25,6 +25,8 @@ Js = [false(Ml,1); true(Ms,1)];
 % obtain Gram basis for sum-of-squares constraints
 [Zgram_g,Ksdp_g_s] = grambasis(sos.g,Js);
 
+assert(length(Qgram_x) == size(Zgram_x,1), 'Unable to find Gram matrix of decision variables.')
+
 % matrix decision variables for constraints
 Qgram_g = casadi.SX.sym('Q',sum(Ksdp_g_s.^2),1);
 
