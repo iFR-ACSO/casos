@@ -65,14 +65,32 @@ methods
     function obj = SossdpRelaxation(name,solver,sos,varargin)
         obj@casos.package.functions.FunctionInterface(name,varargin{:});
 
+        % states
+        if ~isfield(sos,'x')
+            error('No decision variables given.')
+        else
+            sos.x = casos.PS(sos.x);
+        end
         % parameter
         if ~isfield(sos,'p')
+            % not parametrized
             sos.p = casos.PS;
+        else
+            sos.p = casos.PS(sos.p);
         end
         % objective
         if ~isfield(sos,'f')
             % feasibility problem
             sos.f = casos.PS(0);
+        else
+            sos.f = casos.PS(sos.f);
+        end
+        % constraints
+        if ~isfield(sos,'g')
+            % unconstrained optimization
+            sos.g = casos.PS;
+        else
+            sos.g = casos.PS(sos.g);
         end
 
         % problem size
