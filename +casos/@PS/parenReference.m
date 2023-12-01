@@ -46,7 +46,19 @@ p = casos.PS;
 
 if nnz(I) > 0
     % reference coefficients
-    coeffs = obj.coeffs(:,find(I));
+    if ~any(cellfun(@(Ind) isnumeric(Ind), idx.Indices))
+        % logical or colon reference
+        ii = find(I);
+    elseif length(idx.Indices) > 1
+        % numerical indices
+        row = get_indices(size(obj,1),idx.Indices{1});
+        col = get_indices(size(obj,2),idx.Indices{2});
+        [R,C] = ndgrid(row,col);
+        ii = sub2ind(size(obj),R,C);
+    else
+        ii = get_indices(numel(obj),idx.Indices{1});
+    end
+    coeffs = obj.coeffs(:,ii);
     
     % remove coefficients, degrees, and/or indeterminates 
     % that do not appear in the referenced polynomial
@@ -63,4 +75,11 @@ else
     varargout = {p};
 end
 
+end
+
+function ind = get_indices(n,ind)
+% Return indices.
+    if isequal(ind,':')
+        ind = 1:n;
+    end
 end

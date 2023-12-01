@@ -50,7 +50,7 @@ function dim = get_dimensions(monom,sz)
         dim = {''};
     end
 
-    if d2 == 0
+    if all(d2 == 0)
         % nothing to do
         return
     elseif ~isempty(dim)

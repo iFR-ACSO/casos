@@ -1,0 +1,89 @@
+classdef SdpsolInternal < casos.package.solvers.SolverCallback
+% Internal interface for convex cone (SDP) solvers.
+
+properties (Access=private)
+    solver;
+end
+
+properties (Access=protected)
+    fhan;
+    ghan;
+end
+
+methods (Access=private)
+    buildproblem(obj,prob,data,opts);
+end
+
+methods
+    argout = eval(obj,argin);
+
+    function obj = SdpsolInternal(name,solver,sdp,opts)
+        obj@casos.package.solvers.SolverCallback;
+
+        % options
+        if nargin < 4
+            opts = struct;
+        end
+
+        % decision variables
+        x = sdp.x;
+        % parameter
+        if isfield(sdp,'p')
+            p = sdp.p;
+        else
+            p = [];
+        end
+        % constraint function (vectorized)
+        sdp_g = sdp.g(:);
+
+        % quadratic cost
+        H = hessian(sdp.f, x);
+        % linear cost
+        g = jacobian(simplify(sdp.f - x'*(H/2)*x), x);
+        % linear constraint
+        A = jacobian(sdp_g, x);
+        % constant constraint
+        b = simplify(A*x - sdp_g);
+        
+        % get sparsity
+        conic.h = sparsity(H);
+        conic.a = sparsity(A);
+
+        % create low-level conic solver
+        obj.solver = casos.package.solvers.conicInternal([name '_conic'],solver,conic,opts);
+
+        % conic problem data as function of p
+        data = casadi.Function('P',{x p},{H g A b});
+
+        % SDP problem as function of p and x
+        prob = casadi.Function('S',{x p},{sdp.f sdp_g});
+
+        % build SDP problem
+        buildproblem(obj,prob,data,opts);
+
+        % construct CasADi callback
+        construct(obj,name);
+    end
+
+    function s = stats(obj)
+        % Return stats.
+        s = obj.solver.stats;
+    end
+
+    function print_options(obj)
+        % Print list of options.
+        print_options(obj.solver);
+    end
+
+    function print_option(obj,name)
+        % Print information about an option.
+        print_option(obj.solver,name);
+    end
+
+    function has_option(obj,name)
+        % Check if option "name" exists.
+        has_option(obj.solver,name);
+    end
+end
+
+end

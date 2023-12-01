@@ -8,10 +8,10 @@ sza = size(a);
 szb = [sza(2) sza(1)];
 
 % indices
-[ia,ja] = ind2sub(sza,1:prod(sza));
+[ib,jb] = ind2sub(szb,1:prod(szb));
 
 % transpose
-idx = sub2ind(szb,ja,ia);
+idx = sub2ind(sza,jb,ib);
 
 b.coeffs = a.coeffs(:,idx);
 b.degmat = a.degmat;
