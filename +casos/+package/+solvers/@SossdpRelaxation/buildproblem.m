@@ -1,4 +1,4 @@
-function obj = buildproblem(obj,solver,sos)
+function buildproblem(obj,solver,sos)
 % Build SDP problem from SOS relaxation.
 
 opts = obj.opts;
