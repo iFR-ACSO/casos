@@ -151,7 +151,7 @@ sol = S('lbx',lbx,'ubx',ubx,'lbg',lbg,'ubg',ubg)
 ```
 evaluates the SOS solver `S` providing (optional) arguments to describe $\xi_\mathrm{lb}$, $\xi_\mathrm{ub}$ and $\gamma_\mathrm{lb}$, $\gamma_\mathrm{ub}$.
 
-### Quasiconvex interface
+#### Quasiconvex interface
 
 A quasiconvex sum-of-squares problems takes the form
 
@@ -239,7 +239,7 @@ The options `K_` define the convex cones $\mathcal K$ as well as the number of l
 
 by default (if the option `K_` is omitted), only linear constraints are enforced.
 
-# References
+## References
 
 [SB2010]: Seiler, P., Balas, G.J.: Quasiconvex sum-of-squares programming. *49th IEEE Conference on Decision and Control*, pp. 3337–3342, Atlanta, GA (2010). [10.1109/CDC.2010.5717672](https://doi.org/10.1109/CDC.2010.5717672).
 
