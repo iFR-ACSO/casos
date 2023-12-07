@@ -42,7 +42,7 @@ sz = size(I.(idx));
 assert(all(sz == szq | szq == 1), errsz, size2str(sz), size2str(szq));
 
 % reshape to referenced size
-cfb = reshape(repmat(q.coeffs,sz./size(q)),ntb,prod(sz));
+cfb = reshape(repmat(q.coeffs,sz./size(q)),ntb*prod(sz),1);
 
 % extend coefficient matrix
 S = sparsity(casadi.SX(repmat(I(:)',ntb,1)));
