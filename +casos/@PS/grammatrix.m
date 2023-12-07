@@ -22,8 +22,10 @@ syms = symvar(p.coeffs(:,find(I)));
 if length(syms) == sum(K.^2)
 
 % sort to match order in basis
-[ii,~] = ind2sub(size(Z.coeffs),find(sparsity(Z.coeffs)));
-[~,idx] = sort(ii);
+[ii,jj] = ind2sub(size(Z.coeffs),find(sparsity(Z.coeffs)));
+% only sort for each entry in p
+nZ = size(Z,1);
+[~,idx] = sort(ii + ceil(jj/nZ)*nZ);
 
 % stack symbols horizontally
 Q = casadi.SX(length(syms),1);
