@@ -37,7 +37,11 @@ methods
             % basis notation: Z'*q
             Z = varargin{1};
             q = varargin{2};
-            assert(size(Z,1) == size(q,1), 'Incompatible size (Expected %d, got %d).', size(Z,2), size(q,1))
+
+            % repeat scalar coefficient for all monomials
+            if isscalar(q), q = repmat(q,size(Z,1),1); end
+
+            assert(size(Z,1) == size(q,1), 'Incompatible size (Expected %d, got %d).', size(Z,1), size(q,1))
 
             % TODO: perform operation internally
             obj = Z'*q;
