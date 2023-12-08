@@ -181,7 +181,7 @@ methods
             assert(length(fn_i) == length(L.subs), 'Name-value syntax requires same number of names and values.')
 
             % assign inputs
-            args = cell2struct(L.subs,fn_i(1:length(L.subs)));
+            args = cell2struct(L.subs(:),fn_i(1:length(L.subs)));
         else
             % multiple inputs
             args = L.subs;
