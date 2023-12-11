@@ -2,7 +2,6 @@ function argout = call(obj,argin)
 % Call SDP relaxation to solve SOS problem.
 
 % select Gram decision variables
-Ix = [false(size(obj.monom_xl,1),1); true(size(obj.gram_x,1),1); false(size(obj.gram_g,1),1)];
 Ig = [false(size(obj.monom_xl,1),1); false(size(obj.gram_x,1),1); true(size(obj.gram_g,1),1)];
 % select SOS constraints
 Jg = [false(size(obj.monom_gl,1),1); true(size(obj.monom_gs,1),1)];
@@ -28,20 +27,22 @@ sdpsol = call(obj.sdpsolver, args);
 
 % select solutions
 sol_f  = sdpsol.f;
-sol_xl = sdpsol.x(find(~Ix & ~Ig));
-sol_xs = sdpsol.x(find(Ix));
-sol_gs = sdpsol.x(find(Ig));
-sol_gl = sdpsol.g(find(~Jg));
-sol_lam_xl = sdpsol.lam_x(find(~Ix & ~Ig));
-sol_lam_xs = sdpsol.lam_x(find(Ix));
-sol_lam_gs = sdpsol.lam_x(find(Ig));
-sol_lam_gl = sdpsol.lam_g(find(~Jg));
+sol_x  = sdpsol.x(find(~Ig));
+sol_g  = [
+    sdpsol.x(find(Ig))
+    sdpsol.g(find(~Jg))
+];
+sol_lam_x = sdpsol.lam_x(find(~Ig));
+sol_lam_g = [
+    sdpsol.lam_x(find(Ig))
+    sdpsol.lam_g(find(~Jg))
+];
 
 % build polynomial solution
 argout{2} = casos.PS(obj.monom_f,sol_f); % f
-argout{1} = [casos.PS(obj.monom_xl,sol_xl); casos.PS(obj.gram_x,sol_xs)]; % x
-argout{3} = [casos.PS(obj.monom_gl,sol_gl); casos.PS(obj.gram_g,sol_gs)]; % g
-argout{4} = [casos.PS(obj.monom_xl,sol_lam_xl); casos.PS(obj.gram_x,sol_lam_xs)]; % lam_x
-argout{5} = [casos.PS(obj.monom_gl,sol_lam_gl); casos.PS(obj.gram_g,sol_lam_gs)]; % lam_g
+argout{1} = casos.PS(obj.basis_x_out,sol_x); % x
+argout{3} = casos.PS(obj.basis_g_out,sol_g); % g
+argout{4} = casos.PS(obj.basis_x_out,sol_lam_x); % lam_x
+argout{5} = casos.PS(obj.basis_g_out,sol_lam_g); % lam_g
 
 end

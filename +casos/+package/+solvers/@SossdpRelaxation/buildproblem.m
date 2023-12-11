@@ -66,5 +66,8 @@ obj.monom_gs = basis(gdiff, Js);
 % gram basis
 obj.gram_x = Zgram_x;
 obj.gram_g = Zgram_g;
+% output basis
+obj.basis_x_out = blkdiag(obj.monom_xl, obj.gram_x);
+obj.basis_g_out = blkdiag(obj.monom_gl, obj.gram_g);
 
 end

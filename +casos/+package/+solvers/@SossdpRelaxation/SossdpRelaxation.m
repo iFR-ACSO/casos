@@ -6,6 +6,9 @@ properties (Access=private)
 
     gram_x;
     gram_g;
+
+    basis_x_out;
+    basis_g_out;
 end
 
 properties (Constant,Access=protected)
