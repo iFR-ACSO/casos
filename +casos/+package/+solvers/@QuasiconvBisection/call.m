@@ -5,6 +5,9 @@ import casos.package.UnifiedReturnStatus
 
 args = argin;
 
+% prepare quasiconvex parameter 
+qcpar = repmat(argin{2},get_size_in(obj,1));
+
 % initialize confidence intervals
 interval = obj.qc_sign*obj.opts.conf_interval;
 
@@ -19,7 +22,7 @@ for i=1:length(info)
     ttry = mean(interval);
 
     % set parameter to convex problem
-    args{2} = [argin{2}; ttry];
+    args{2} = [qcpar; ttry];
 
     % evaluate convex SOS problem
     sol = call(obj.sossolver, args);
