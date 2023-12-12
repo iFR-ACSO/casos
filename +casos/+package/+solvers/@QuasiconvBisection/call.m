@@ -6,7 +6,11 @@ import casos.package.UnifiedReturnStatus
 args = argin;
 
 % prepare quasiconvex parameter 
-qcpar = repmat(argin{2},get_size_in(obj,1));
+if isscalar(argin{2})
+    qcpar = repmat(argin{2},get_size_in(obj,1));
+else
+    qcpar = argin{2};
+end
 
 % initialize confidence intervals
 interval = obj.qc_sign*obj.opts.conf_interval;
