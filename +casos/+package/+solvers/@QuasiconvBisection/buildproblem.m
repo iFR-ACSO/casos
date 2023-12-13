@@ -46,7 +46,7 @@ sosopt.Kc = struct('l',Ml,'s',Ms);
 sosopt.error_on_fail = false;
 
 % initialize convex SOS solver
-obj.sossolver = casos.sossol('SOS',opts.sossol,sos,sosopt);
+obj.sossolver = casos.package.solvers.SossolInternal('SOS',opts.sossol,sos,sosopt);
 
 % store basis
 obj.monom_xl = basis(qcsos.x,~Is);

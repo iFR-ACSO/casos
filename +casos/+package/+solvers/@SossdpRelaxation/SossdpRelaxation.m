@@ -1,4 +1,4 @@
-classdef SossdpRelaxation < casos.package.solvers.SosoptCommon
+classdef SossdpRelaxation < casos.package.solvers.SosoptCommon & matlab.mixin.Copyable
 % Solve sum-of-squares problems by relaxation to SDP.
 
 properties (Access=private)
@@ -74,6 +74,29 @@ methods
     function s = get_stats(obj)
         % Return stats.
         s = obj.sdpsolver.stats;
+    end
+end
+
+methods (Access={?casos.package.functions.FunctionCommon, ?casos.package.functions.FunctionWrapper})
+    function S = substitute(obj,idx,expr_in,expr_out)
+        % Substitute a variable for expr_in -> expr_out.
+        if ischar(idx)
+            % map variable name to index
+            idx = get_index_in(obj,idx);
+        end
+
+        % only parameter subsitution supported
+        assert(idx == 1,'Subsitution of input %d not allowed.',idx)
+
+        % project to basis
+        [Qin,Zin] = poly2basis(expr_in);
+        Qout = poly2basis(expr_out,obj.monom_p);
+
+        % substitute
+        S = copy(obj);
+        S.sdpsolver = substitute(obj.sdpsolver,idx,Qin,Qout);
+        % store new basis
+        S.monom_p = Zin;
     end
 end
 

@@ -199,4 +199,13 @@ methods
     end
 end
 
+methods (Access={?casos.package.functions.FunctionInterface})
+    %% Friend interface
+    function f = substitute(obj,varargin)
+        % Substitute variables.
+        f = obj;
+        f.wrap = substitute(obj.wrap,varargin{:});
+    end
+end
+
 end

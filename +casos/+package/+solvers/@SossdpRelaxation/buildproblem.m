@@ -54,7 +54,7 @@ sdpopt.Kx = struct('l', numel(Qlin_x), 's', [Ksdp_x_s; Ksdp_g_s]);
 sdpopt.Kc = struct('l', numel(Qdiff_g));
 
 % initialize SDP solver
-obj.sdpsolver = casos.sdpsol('SDP',solver,sdp,sdpopt);
+obj.sdpsolver = casos.package.solvers.SdpsolInternal('SDP',solver,sdp,sdpopt);
 
 % store basis
 obj.monom_xl = Zlin_x;

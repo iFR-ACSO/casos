@@ -12,6 +12,10 @@ else
     qcpar = argin{2};
 end
 
+% substitute quasiconvex parameter
+tvar = casos.PS.sym('t');
+sossolver = substitute(obj.sossolver,'p',tvar,[qcpar; tvar]);
+
 % initialize confidence intervals
 interval = obj.qc_sign*obj.opts.conf_interval;
 
@@ -26,10 +30,10 @@ for i=1:length(info)
     ttry = mean(interval);
 
     % set parameter to convex problem
-    args{2} = [qcpar; ttry];
+    args{2} = ttry;
 
     % evaluate convex SOS problem
-    sol = call(obj.sossolver, args);
+    sol = call(sossolver, args);
 
     % store iteration info
     info{i} = obj.sossolver.stats;
