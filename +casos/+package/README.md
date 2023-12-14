@@ -10,6 +10,7 @@ flowchart LR
     casos.conic[conic]
     casos.sdpsol[sdpsol]
     casos.sossol[sossol]
+    casos.qcsossol[qcsossol]
   end
   subgraph casos.package.functions
     FunctionInterface --> FunctionCommon
@@ -27,8 +28,13 @@ flowchart LR
     conicInternal -.-> SCSInterface
     SossolInternal --> FunctionWrapper
     SossolInternal -.-> SossdpRelaxation
-    SossdpRelaxation --> FunctionInterface
+    SossdpRelaxation --> SosoptCommon
     SossdpRelaxation -.-> SdpsolInternal
+    QcsossolInternal --> FunctionWrapper
+    QcsossolInternal -.-> QuasiconvBisection
+    QuasiconvBisection --> SosoptCommon
+    QuasiconvBisection -.-> SossolInternal
+    SosoptCommon --> FunctionInterface
   end
   casos.Function --> FunctionWrapper
   casos.Function -.-> CasadiFunction
@@ -39,4 +45,5 @@ flowchart LR
   casos.conic -.-> conicInternal
   casos.sdpsol -.-> SdpsolInternal
   casos.sossol -.-> SossolInternal
+  casos.qcsossol -.-> QcsossolInternal
 ```

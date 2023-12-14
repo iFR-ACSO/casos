@@ -181,7 +181,7 @@ methods
             assert(length(fn_i) == length(L.subs), 'Name-value syntax requires same number of names and values.')
 
             % assign inputs
-            args = cell2struct(L.subs,fn_i(1:length(L.subs)));
+            args = cell2struct(L.subs(:),fn_i(1:length(L.subs)));
         else
             % multiple inputs
             args = L.subs;
@@ -196,6 +196,15 @@ methods
             % return multiple outputs
             varargout = out;
         end
+    end
+end
+
+methods (Access={?casos.package.functions.FunctionInterface})
+    %% Friend interface
+    function f = substitute(obj,varargin)
+        % Substitute variables.
+        f = obj;
+        f.wrap = substitute(obj.wrap,varargin{:});
     end
 end
 

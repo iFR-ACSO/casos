@@ -1,4 +1,4 @@
-function obj = buildproblem(obj,solver,sos)
+function buildproblem(obj,solver,sos)
 % Build SDP problem from SOS relaxation.
 
 opts = obj.opts;
@@ -54,7 +54,7 @@ sdpopt.Kx = struct('l', numel(Qlin_x), 's', [Ksdp_x_s; Ksdp_g_s]);
 sdpopt.Kc = struct('l', numel(Qdiff_g));
 
 % initialize SDP solver
-obj.sdpsolver = casos.sdpsol('SDP',solver,sdp,sdpopt);
+obj.sdpsolver = casos.package.solvers.SdpsolInternal('SDP',solver,sdp,sdpopt);
 
 % store basis
 obj.monom_xl = Zlin_x;
@@ -66,5 +66,8 @@ obj.monom_gs = basis(gdiff, Js);
 % gram basis
 obj.gram_x = Zgram_x;
 obj.gram_g = Zgram_g;
+% output basis
+obj.basis_x_out = blkdiag(obj.monom_xl, obj.gram_x);
+obj.basis_g_out = blkdiag(obj.monom_gl, obj.gram_g);
 
 end

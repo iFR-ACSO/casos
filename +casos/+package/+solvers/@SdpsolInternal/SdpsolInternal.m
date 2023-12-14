@@ -1,4 +1,4 @@
-classdef SdpsolInternal < casos.package.solvers.SolverCallback
+classdef SdpsolInternal < casos.package.solvers.SolverCallback & matlab.mixin.Copyable
 % Internal interface for convex cone (SDP) solvers.
 
 properties (Access=private)
@@ -19,6 +19,24 @@ methods
 
     function obj = SdpsolInternal(name,solver,sdp,opts)
         obj@casos.package.solvers.SolverCallback;
+
+        if isa(name,'casos.package.solvers.SdpsolInternal')
+            % copy constructor
+            obj.solver = name.solver;
+
+            if nargin > 1
+                % change input function
+                obj.fhan = solver;
+            else
+                obj.fhan = name.fhan;
+            end
+            obj.ghan = name.ghan;
+
+            % construct CasADi callback
+            construct(obj,name.name);
+
+            return
+        end
 
         % options
         if nargin < 4
@@ -83,6 +101,34 @@ methods
     function has_option(obj,name)
         % Check if option "name" exists.
         has_option(obj.solver,name);
+    end
+end
+
+methods (Access=protected)
+    function S = copyElement(obj)
+        % Use copy constructor.
+        S = casos.package.solvers.SdpsolInternal(obj);
+    end
+end
+
+methods (Access={?casos.package.functions.FunctionCommon, ?casos.package.functions.FunctionWrapper})
+    function S = substitute(obj,idx,expr_in,expr_out)
+        % Substitute a variable for expr_in -> expr_out.
+        if ischar(idx)
+            % map variable name to index
+            idx = index_in(obj.fhan,idx);
+        end
+
+        % get current input symbols
+        var_in  = sx_in(obj.fhan);
+        var_out = var_in;
+        % replace variable
+        var_in{idx+1}  = expr_in; % CasADi uses 0-based index
+        var_out{idx+1} = expr_out;
+
+        % substitute
+        fhan = casadi.Function('f',var_in,call(obj.fhan,var_out),name_in(obj.fhan),name_out(obj.fhan));
+        S = casos.package.solvers.SdpsolInternal(obj,fhan);
     end
 end
 

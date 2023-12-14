@@ -96,7 +96,7 @@ elseif obj.info.dinf
 elseif obj.info.numerr
     % numerical errors
     obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_NAN;
-    assert(~obj.opts.error_on_fail,'Optimizer run into numerical error (numerr=%d, feasratio=%g)',info.numerr,info.feasratio)
+    assert(~obj.opts.error_on_fail,'Optimizer run into numerical error (numerr=%d, feasratio=%g)',obj.info.numerr,obj.info.feasratio)
 else
     % success
     obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_SUCCESS;

@@ -144,12 +144,30 @@ A sum-of-squares problem is affine if $F$ is a linear (or quadratic) form in $\x
 ```
 S = casos.sossol('S','solver',struct('x',xi,'f',F,'g',G,'p',pi),opts)
 ```
-initializes the SOS solver named `'S'` by relaxation to a convex optimization problem using the convex solver `'solver'`. See [Convex optimization](#convex-optimization) for supported solvers. Options are provided as structure `opts` including optional fields `opts.Kx` and `opts.Kg` describing, respectively, the cones $\mathcal K_X$ and $\mathcal K_G$. See [Polynomial cones](#polynomial-cones) for details.
+initializes the SOS solver named `'S'` by relaxation to a convex optimization problem using the convex solver `'solver'`. See [Convex optimization](#convex-optimization) for supported solvers. Options are provided as structure `opts` including optional fields `opts.Kx` and `opts.Kg` describing, respectively, the cones $\mathcal K_x$ and $\mathcal K_c$. See [Polynomial cones](#polynomial-cones) for details.
 
 ```
 sol = S('lbx',lbx,'ubx',ubx,'lbg',lbg,'ubg',ubg)
 ```
 evaluates the SOS solver `S` providing (optional) arguments to describe $\xi_\mathrm{lb}$, $\xi_\mathrm{ub}$ and $\gamma_\mathrm{lb}$, $\gamma_\mathrm{ub}$.
+
+#### Quasiconvex interface
+
+A quasiconvex sum-of-squares problems takes the form
+
+```math
+\begin{array}{l c r}
+  \min & \pm t, & \xi = (\xi_\mathrm{l}, \xi_\mathrm{c}) \\
+  \text{s.t.} & \gamma_\mathrm{lb} \unlhd G_\mathrm{l}(t,\xi,\pi) \unlhd \gamma_\mathrm{ub}, & G_\mathrm{c}(t,\xi,\pi) \in \mathcal K_c \\
+  \text{and} & \xi_\mathrm{lb} \unlhd \xi_\mathrm{l} \unlhd \xi_\mathrm{ub}, & \xi_\mathrm{c} \in \mathcal K_x
+\end{array}
+```
+where $t$ enters affinely into $G = (G_\mathrm{l}, G_\mathrm{c})$ and $G(t, \xi, \pi)$ is affine in $\xi$ for any $t \in \mathbb R$. For details on quasiconvex sum-of-squares programming, refer to [[SB2010]](#references).
+
+```
+S = casos.qcsossol('S','bisection',struct('x',xi,'f',±t,'g',G,'p',pi),opts)
+```
+initializes the quasiconvex SOS solver named `'S'` by bisection over convex sum-of-squares optimization problems. The options structure `opts` includes optional fields `opts.Kx` and `opts.Kg` describing $\mathcal K_x$ and $\mathcal K_c$, respectively. See [Polynomial cones](#polynomial-cones) for details.
 
 #### Polynomial cones
 
@@ -220,5 +238,9 @@ The options `K_` define the convex cones $\mathcal K$ as well as the number of l
 - further cones, e.g., the Lorentz (or second-order) cone, are supported depending on the convex solver; the total number of *all* cone constraints corresponds to the first dimension of $A_\mathrm{c}$, the dimension of $g_\mathrm{c}$, or the dimension of $x_\mathrm{c}$;
 
 by default (if the option `K_` is omitted), only linear constraints are enforced.
+
+## References
+
+[SB2010]: Seiler, P., Balas, G.J.: Quasiconvex sum-of-squares programming. *49th IEEE Conference on Decision and Control*, pp. 3337–3342, Atlanta, GA (2010). [10.1109/CDC.2010.5717672](https://doi.org/10.1109/CDC.2010.5717672).
 
 [^1]: CaΣoS has been neither supported nor endorsed by CasADi or any of its affilitiates.

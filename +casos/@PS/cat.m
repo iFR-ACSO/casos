@@ -26,16 +26,18 @@ m = length(varargin);
 
 % check dimensions
 sizes = vertcat(szi{:});
+% detect empty polynomials
+I = any(sizes > 0,2);
 
-assert(min(sizes(:,3-dim)) == max(sizes(:,3-dim)), 'Dimensions of polynomials being concatenated are not consistent.')
+assert(min(sizes(I,3-dim)) == max(sizes(I,3-dim)), 'Dimensions of polynomials being concatenated are not consistent.')
 
 p = casos.PS;
 
 % size of output
-sz(dim) = sum(sizes(:,dim)); sz(3-dim) = sizes(1,3-dim);
+sz(dim) = sum(sizes(I,dim)); sz(3-dim) = sizes(find(I,1),3-dim);
 
 % combine variables
-[indets,~,ic] = unique([indets{:}]);
+[indets,~,ic] = unique([indets{I}]);
 
 % iterate over polynomials twice
 % extend degree matrices to combined variables

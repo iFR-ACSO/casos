@@ -15,10 +15,11 @@ l = 1e-6*(x'*x);
 % level of stability
 g = casos.PS.sym('g');
 
+%% Bisection
 % define SOS feasibility
-sos = struct('x',s,'g',[V-l; s*(V-g)-Vdot-l],'p',g);
+sos = struct('x',s,'g',s*(V-g)-Vdot-l,'p',g);
 % states + constraint are SOS cones
-opts.Kx.s = 1; opts.Kc.s = 2;
+opts.Kx.s = 1; opts.Kc.s = 1;
 % ignore infeasibility
 opts.error_on_fail = false;
 
@@ -41,4 +42,15 @@ while (ub - lb > 1e-1)
     end
 end
 
-fprintf('Maximal stable level set is %g.\n', lb);
+fprintf('Maximal stable level set is %g.\n', lb)
+
+%% Quasiconvex optimization
+% define quasiconvex SOS problem
+qcsos = struct('x',s,'f',-g,'g',s*(V-g)-Vdot-l);
+
+% solve by bisection
+S = casos.qcsossol('S','bisection',qcsos,opts);
+% evaluate
+sol = S();
+
+fprintf('Minimum is %g.\n', double(sol.f))

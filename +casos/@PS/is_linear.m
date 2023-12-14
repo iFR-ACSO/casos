@@ -1,19 +1,20 @@
-function tf = is_linear(obj,s)
+function tf = is_linear(p,q)
 % Check if polynomial is linear in symbols.
 
-s = casos.PS(s);
+p = casos.PS(p);
+q = casos.PS(q);
 
 % check if polynomial is in symbolic Gram form
-Q = grammatrix(s);
+Q = grammatrix(q);
 
 if ~isempty(Q)
-    tf = is_linear(obj.coeffs,Q(:));
+    tf = is_linear(p.coeffs,Q(:));
     return
 end
 
 % else
-assert(is_symbolic(s),'Second argument must be purely symbolic.')
+assert(is_symbolic(q),'Second argument must be purely symbolic.')
 
-tf = is_linear(obj.coeffs,s.coeffs);
+tf = is_linear(p.coeffs,q.coeffs);
 
 end
