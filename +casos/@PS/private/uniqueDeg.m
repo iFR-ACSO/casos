@@ -6,14 +6,17 @@ function [coeffs,degmat] = uniqueDeg(coeffs,degmat)
 
 nt = size(coeffs,1);
 
+% sort by ascending degree
+degsum = sum(degmat,2);
+
 % make degree matrix unique
-[degmat2,id,ic] = unique(fliplr(degmat),'rows','sorted');
+[degmat2,id,ic] = unique([degsum fliplr(degmat)],'rows','sorted');
 
 % sum repeated coefficients
 summat = sparse(ic,1:nt,1,length(id),nt);
 coeffs = sparsify(summat*coeffs);
 
 % reverse order of degrees
-degmat = fliplr(degmat2);
+degmat = fliplr(degmat2(:,2:end));
 
 end
