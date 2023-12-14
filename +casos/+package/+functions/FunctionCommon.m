@@ -48,4 +48,9 @@ methods
     end
 end
 
+methods (Abstract, Access={?casos.package.functions.FunctionCommon, ?casos.package.functions.FunctionWrapper})
+    %% Friend interface
+    f = substitute(obj,varargin);
+end
+
 end

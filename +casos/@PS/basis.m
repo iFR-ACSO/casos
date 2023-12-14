@@ -36,7 +36,7 @@ nT = size(D,1);
 [i,j] = find(L');
 
 % coefficient matrix for Z
-coeffs = casadi.SX.triplet(i-1, (j-1)'.*lZ+(1:lZ)-1, ones(lZ,1), nT, lp*lZ);
+coeffs = casadi.SX.triplet(i-1, (j(:)-1)'.*lZ+(1:lZ)-1, ones(lZ,1), nT, lp*lZ);
 
 % set output
 Z = casos.PS;

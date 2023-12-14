@@ -40,8 +40,7 @@ if iscolumn(z) && all(I)
 
 else
     % project onto basis matrix
-    lp = size(z,2);
-    lZ = size(z,1);
+    [lZ,lp] = size(z);
 
     if isscalar(p)
         cfp = repmat(p.coeffs,1,lp);
@@ -61,15 +60,18 @@ else
     end
     
     % else:
+    nT = z.nterm;
+
     % select coefficients
-    Q = casadi.SX(z.nterm,lp);
+    Q = casadi.SX(nT,lp);
     Q(ii(tf),:) = cfp(idx(tf),:);
 
-    % construct template
-    S = z'*ones(lZ,1);
+    % construct sparsity
+    [ii,jj] = get_triplet(sparsity(z.coeffs));
+    S = casadi.Sparsity.triplet(nT,lp,ii,floor(jj/lZ));
 
     % project onto template
-    C = nonzeros(project(Q,sparsity(S.coeffs)));
+    C = nonzeros(project(Q,S));
     q = vertcat(C{:});
 end
 

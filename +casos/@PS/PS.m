@@ -28,23 +28,51 @@ methods
         % Create polynomial variable.
         if nargin == 0
             % nothing to do
+            return
 
         elseif isa(varargin{1},'casos.PS') && nargin < 2
             % keep polynomial
             obj = varargin{1};
+            return
 
         elseif isa(varargin{1},'casos.PS')
             % basis notation: Z'*q
             Z = varargin{1};
             q = varargin{2};
-            assert(size(Z,1) == size(q,1), 'Incompatible size (Expected %d, got %d).', size(Z,2), size(q,1))
+            % length of basis and new polynomial
+            [lZ,lp] = size(Z);
+            % number of terms in basis
+            nT = Z.nterm;
 
-            % TODO: perform operation internally
-            obj = Z'*q;
+            if isempty(Z) && length(q) <= 1
+                % empty basis (coefficients must be empty or scalar)
+                % return empty polynomial
+                return
+
+            elseif isscalar(q)
+                % repeat scalar coefficient for all monomials
+                q = repmat(q,lZ,1);
+
+            else
+                assert(lZ == length(q), 'Incompatible size (Expected %d, got %d).', lZ, length(q))
+            end
+
+            % perform operation Z'*q internally
+            [ii,jj] = get_triplet(sparsity(Z.coeffs));
+            % assign coefficients to monomials
+            S = casadi.SX.triplet(floor(jj/lZ)*nT+ii,(1:lZ)-1,ones(lZ,1),[nT*lp lZ]);
+            obj.coeffs = reshape(S*q(:),[nT lp]);
+
+            % the following works for monomial basis but not Gram
+%             obj.coeffs = casadi.SX.triplet(ii,floor(jj/lZ),q,[nT lp]);
+            obj.degmat = Z.degmat;
+            obj.indets = Z.indets;
 
             if nargin > 2
                 % reshape to given size
                 obj.matdim = varargin{3};
+            else
+                obj.matdim = [lp 1];
             end
 
         elseif isa(varargin{1},'char')
