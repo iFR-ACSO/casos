@@ -23,7 +23,13 @@ methods
         if isa(name,'casos.package.solvers.SdpsolInternal')
             % copy constructor
             obj.solver = name.solver;
-            obj.fhan = name.fhan;
+
+            if nargin > 1
+                % change input function
+                obj.fhan = solver;
+            else
+                obj.fhan = name.fhan;
+            end
             obj.ghan = name.ghan;
 
             % construct CasADi callback
@@ -121,8 +127,8 @@ methods (Access={?casos.package.functions.FunctionCommon, ?casos.package.functio
         var_out{idx+1} = expr_out;
 
         % substitute
-        S = copy(obj);
-        S.fhan = casadi.Function('f',var_in,call(obj.fhan,var_out),name_in(obj.fhan),name_out(obj.fhan));
+        fhan = casadi.Function('f',var_in,call(obj.fhan,var_out),name_in(obj.fhan),name_out(obj.fhan));
+        S = casos.package.solvers.SdpsolInternal(obj,fhan);
     end
 end
 
