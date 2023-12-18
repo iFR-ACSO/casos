@@ -102,6 +102,10 @@ end
 
 methods (Static, Access=protected)
     %% Static helper functions
+    % MOSEK/SCS-style for the semidefinite cone
+    V = sdp_vec(M,varargin);
+    M = sdp_mat(V,varargin);
+
     function N = getdimc(K,type)
         % Return cone dimensions of specific type.        
         if isfield(K,type)

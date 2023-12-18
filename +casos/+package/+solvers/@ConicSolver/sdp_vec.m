@@ -1,5 +1,5 @@
-function V = scs_vec(M)
-% SCS-style matrix vectorization for semidefinite cone embedding.
+function V = sdp_vec(M)
+% MOSEK/SCS-style matrix vectorization for semidefinite cone embedding.
 %
 % This function takes a matrix
 %
