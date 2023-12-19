@@ -52,16 +52,8 @@ else
     msk_sol = [];
 end
 
-% check return code
-if rcode > 0
-    % unexpected termination, warning, or error
-    obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_LIMITED;
-    assert(~obj.opts.error_on_fail,'Call to mosekopt failed: %s (%s).',res.rmsg,res.rcodestr);
-elseif isempty(msk_sol)
-    % unexpected error (no solution)
-    obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_UNKNOWN;
-    assert(~obj.opts.error_on_fail,'Call to mosekopt did not yield a solution.')
-else
+% check solution
+if ~isempty(msk_sol)
     % check problem status
     msk_prosta = msk_sol.prosta;
     switch (msk_prosta)
@@ -97,6 +89,16 @@ else
     sol.sux = msk_sol.sux;
     sol.doty = msk_sol.doty;
     sol.bars = msk_sol.bars;
+
+% check return code
+elseif rcode > 0
+    % unexpected termination, warning, or error
+    obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_LIMITED;
+    assert(~obj.opts.error_on_fail,'Call to mosekopt failed: %s (%s).',res.rmsg,res.rcodestr);
+else
+    % unexpected error (no solution)
+    obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_UNKNOWN;
+    assert(~obj.opts.error_on_fail,'Call to mosekopt did not yield a solution.')
 end
 
 % parse solution
