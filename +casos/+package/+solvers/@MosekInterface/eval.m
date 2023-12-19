@@ -37,7 +37,8 @@ if isfield(res,'info')
     obj.info = res.info;
 end
 
-sol = struct;
+% pre-initialize solution struct
+sol = struct('pobjval',0,'xx',0,'barx',0,'slc',0,'suc',0,'slx',0,'sux',0,'doty',0,'bars',0);
 
 % retrieve solution
 if isfield(res,'sol') && isfield(res.sol,'itr')
