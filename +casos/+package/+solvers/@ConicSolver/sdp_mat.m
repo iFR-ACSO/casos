@@ -1,4 +1,4 @@
-function M = sdp_mat(V)
+function M = sdp_mat(V,scale)
 % MOSEK/SCS-style matrix de-vectorization for semidefinite cone embedding.
 %
 % This function takes a matrix
@@ -14,10 +14,14 @@ function M = sdp_mat(V)
 %
 % where each column satisfies mi = Mi(:).
 
-
 k = (sqrt(8*size(V,1) + 1) - 1)/2;
 
 assert(k == floor(k), 'Input must be a compatible vector.')
+
+% user-defined scaling
+if nargin < 2
+    scale = sqrt(2);
+end
 
 % select lower-triangular elements
 s = casadi.Sparsity.lower(k);
@@ -37,7 +41,7 @@ idx = sub2ind([k k],j,i);
 % mirror off-diagonal lower-triangular entries,
 % note: this ensures output is symmetric
 % de-scale off-diagonal entries
-M = sqrt(2)\(Msc(idx,:) + Msc);
-M(Id,:) = M(Id,:) + (1 - 2/sqrt(2))*Msc(Id,:);
+M = scale\(Msc(idx,:) + Msc);
+M(Id,:) = M(Id,:) + (1 - 2/scale)*Msc(Id,:);
 
 end

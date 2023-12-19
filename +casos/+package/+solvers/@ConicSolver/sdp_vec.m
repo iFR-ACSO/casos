@@ -1,4 +1,4 @@
-function V = sdp_vec(M)
+function V = sdp_vec(M,scale)
 % MOSEK/SCS-style matrix vectorization for semidefinite cone embedding.
 %
 % This function takes a matrix
@@ -18,6 +18,11 @@ k = sqrt(size(M,1));
 
 assert(k == floor(k), 'Input must be a quadratic matrix.')
 
+% user-defined scaling
+if nargin < 2
+    scale = sqrt(2);
+end
+
 % indices
 [i,j] = ind2sub([k k],1:k^2);
 % transpose
@@ -31,10 +36,10 @@ Id = find(casadi.Sparsity.diag(k));
 Il = find(casadi.Sparsity.lower(k));
 
 % scale lower-triangular off-diagonal entries, 
-Msc = sqrt(2)*M;
-Msc(Id,:) = Msc(Id,:) + (1-sqrt(2))*M(Id,:);
+Msc = scale*M;
+Msc(Id,:) = Msc(Id,:) + (1-scale)*M(Id,:);
 
 % stack elements column-wise
-V = Msc(Il,:);
+V = Msc(Il,:); %#ok<FNDSB> % logical indexing not supported by CasADi
 
 end
