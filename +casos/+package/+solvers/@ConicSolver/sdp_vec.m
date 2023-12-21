@@ -126,7 +126,7 @@ else
     % sparsity pattern of block matrix
     Sp = casadi.Sparsity.triplet(sz(1),sz(2),subIv{:});
     % return block matrix V
-    v = feval(class(M),Sp,val);
+    v = feval(class(M),Sp,val');
 end
 
 end
