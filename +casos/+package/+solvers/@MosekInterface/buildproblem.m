@@ -87,6 +87,8 @@ Na_q = sum([Na.q Na.r]);
 % semidefinite variables (vectorized)
 Nx_S = Nx.s.*(Nx.s+1)/2;
 Na_S = Na.s.*(Na.s+1)/2;
+% affine cone constraints (vectorized)
+Na_C = Na_c + sum(Na_S - Na.s.^2);
 
 % separate linear cost for vector and matrix variables
 Cc = mat2cell(g,[Nx_v sum(Nx.s.^2)],1);
@@ -151,7 +153,7 @@ gacc = vertcat(gc{1},gmat);
 
 % separate affine cone constraints for vector and matrix variables
 % F = | f : Fbar |
-Fcc = mat2cell(Facc,Na_c,[Nx_v sum(Nx.s.^2)]);
+Fcc = mat2cell(Facc,Na_C,[Nx_v sum(Nx.s.^2)]);
 % affine cone constraint matrix
 prob.f = [
     Fcc{1}
@@ -186,7 +188,7 @@ obj.barv = casadi.Function('v',struct2cell(obj.args_in),struct2cell(barv),fieldn
 Accs = [
     arrayfun(@(l) [symbcon.MSK_DOMAIN_QUADRATIC_CONE  l], Na.q, 'UniformOutput',false)
     arrayfun(@(l) [symbcon.MSK_DOMAIN_RQUADRATIC_CONE l], Na.r, 'UniformOutput',false)
-    arrayfun(@(d) [symbcon.MSK_DOMAIN_SVEC_SDP_CONE   d], Na.s, 'UniformOutput',false)
+    arrayfun(@(d) [symbcon.MSK_DOMAIN_SVEC_PSD_CONE   d], Na_S, 'UniformOutput',false)
     arrayfun(@(l) [symbcon.MSK_DOMAIN_QUADRATIC_CONE  l], Nx.q, 'UniformOutput',false)
     arrayfun(@(l) [symbcon.MSK_DOMAIN_RQUADRATIC_CONE l], Nx.r, 'UniformOutput',false)
 ];
