@@ -205,8 +205,8 @@ sol.barx = casadi.MX.sym('barx',[sum(Nx_S) 1]);
 % sol.barx = arrayfun(@(d) casadi.MX.sym('Xbar',[d 1]), Nx_S, 'UniformOutput',false);
 sol.slc  = casadi.MX.sym('slc',[Na.l 1]);
 sol.suc  = casadi.MX.sym('suc',[Na.l 1]);
-sol.slx  = casadi.MX.sym('slx',[Nx.l 1]);
-sol.sux  = casadi.MX.sym('sux',[Nx.l 1]);
+sol.slx  = casadi.MX.sym('slx',[Nx.l+Nx_q 1]);
+sol.sux  = casadi.MX.sym('sux',[Nx.l+Nx_q 1]);
 sol.doty = casadi.MX.sym('doty',[Na_q+sum(Na_S)+Nx_q 1]);
 sol.bars = casadi.MX.sym('bars',[sum(Nx_S) 1]);
 % sol.bars = arrayfun(@(d) casadi.MX.sym('Sbar',[d 1]), Nx_S, 'UniformOutput',false);
@@ -223,7 +223,7 @@ Yc_s = obj.sdp_mat(Yc{2},Na.s,1);
 % Yc_s = cellfun(@obj.sdp_mat, mat2cell(Yc{2},Na_S,1), 'UniformOutput',false);
 % multipliers for box constraints
 lam_a_l = sol.suc - sol.slc;
-lam_x_l = sol.sux - sol.slx;
+lam_x_l = sol.sux(1:Nx.l) - sol.slx(1:Nx.l);
 % multipliers for quadratic constraints
 lam_a_q = -Yc{1};
 lam_x_q = -Yc{3};
