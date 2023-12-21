@@ -34,7 +34,7 @@ msk_cmd = sprintf('minimize echo(%d) info statuskeys(0)',msk_echo);
 
 % store info (if any)
 if isfield(res,'info')
-    obj.info = res.info;
+    obj.info.mosek_info = res.info;
 end
 
 % pre-initialize solution struct
@@ -55,19 +55,18 @@ end
 % check solution
 if ~isempty(msk_sol)
     % check problem status
-    msk_prosta = msk_sol.prosta;
-    switch (msk_prosta)
+    obj.info.mosek_prosta = msk_sol.prosta;
+    obj.info.mosek_solsta = msk_sol.solsta;
+    switch (msk_sol.prosta)
         case {'PRIMAL_AND_DUAL_FEASIBLE' 'PRIMAL_FEASIBLE' 'DUAL_FEASIBLE'}
-            % feasible problem
-            msk_solsta = msk_sol.solsta;
-            % check solution status
-            if ismember(msk_solsta,{'OPTIMAL' msk_prosta})
+            % feasible problem, check solution status
+            if ismember(msk_sol.solsta,{'OPTIMAL' msk_sol.prosta})
                 % solution status matches 
                 obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_SUCCESS;
             else
                 % solution status infeasible or unknown
                 obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_UNKNOWN;
-                assert(~obj.opts.error_on_fail,'Problem appears feasible (%s) but solution is not (%s).',msk_prosta,msk_solsta)
+                assert(~obj.opts.error_on_fail,'Problem appears feasible (%s) but solution is not (%s).',msk_sol.prosta,msk_sol.solsta)
             end
         case {'PRIMAL_INFEASIBLE' 'DUAL_INFEASIBLE' 'PRIMAL_AND_DUAL_INFEASIBLE' 'PRIMAL_INFEASIBLE_OR_UNBOUNDED'}
             % infeasible problem
