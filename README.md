@@ -181,7 +181,10 @@ by default (if the option `K_` is omitted), only coefficient-wise constraints ar
 
 ### Convex optimization
 
-To solve polynomial sum-of-squares optimization problems via semidefinite programming, CaΣoS provides both a high-level and low-level interface for convex optimization. These interfaces extend CasADi's [`qpsol`](https://web.casadi.org/docs/#high-level-interface) and [`conic`](https://web.casadi.org/docs/#low-level-interface) syntax. Currently, the convex solvers SeDuMi and SCS are supported (but, unlike CasADi, the solvers must be installed separately and be accessible through MATLAB). Note that SeDuMi does not support quadratic cost functions.
+To solve polynomial sum-of-squares optimization problems via semidefinite programming, CaΣoS provides both a high-level and low-level interface for convex optimization. These interfaces extend CasADi's [`qpsol`](https://web.casadi.org/docs/#high-level-interface) and [`conic`](https://web.casadi.org/docs/#low-level-interface) syntax. Currently, the convex solvers SeDuMi, MOSEK,[^2] and SCS are supported (but, unlike CasADi, the solvers must be installed separately and be accessible through MATLAB). 
+
+> [!NOTE]
+> Neither SeDuMi nor MOSEK currently support quadratic cost functions.
 
 #### High-level interface
 
@@ -244,3 +247,4 @@ by default (if the option `K_` is omitted), only linear constraints are enforced
 [SB2010]: Seiler, P., Balas, G.J.: Quasiconvex sum-of-squares programming. *49th IEEE Conference on Decision and Control*, pp. 3337–3342, Atlanta, GA (2010). [10.1109/CDC.2010.5717672](https://doi.org/10.1109/CDC.2010.5717672).
 
 [^1]: CaΣoS has been neither supported nor endorsed by CasADi or any of its affilitiates.
+[^2]: Using the MOSEK interface requires a separate licence; please see [MOSEK's homepage](https://www.mosek.com/resources/getting-started/) for details.
