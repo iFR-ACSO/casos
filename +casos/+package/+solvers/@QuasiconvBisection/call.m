@@ -55,8 +55,9 @@ for i=1:length(info)
 
         otherwise
             % error: failed
-            obj.status = UnifiedReturnStatus.SOLVER_RET_NAN;
+            obj.status = UnifiedReturnStatus.SOLVER_RET_LIMITED;
             assert(~obj.opts.error_on_fail,'Convex optimization run into numerical errors.')
+            break
     end
 
     % check convergence
