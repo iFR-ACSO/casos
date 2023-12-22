@@ -2,6 +2,8 @@
 
 CaΣoS provides a symbolic framework for convex and nonconvex sum-of-squares problems, making use of the [CasADi](https://web.casadi.org) software for symbolic expressions, automatic differentiation, and numerical optimization.
 
+[^1]: CaΣoS has been neither supported nor endorsed by CasADi or any of its affilitiates.
+
 ## Polynomial expressions
 
 The class `casos.PS` implements polynomials of which the coefficients can be symbolic expressions.
@@ -239,8 +241,42 @@ The options `K_` define the convex cones $\mathcal K$ as well as the number of l
 
 by default (if the option `K_` is omitted), only linear constraints are enforced.
 
+## Transitioning
+
+The following comparison is supposed to ease the transition from other sum-of-squares or general optimization toolboxes to CaΣoS.
+
+> [!NOTE]
+> This section only shows a subset of the CaΣoS interface. For full details, please see the descriptions above.
+
+#### SOSOPT
+
+| SOSOPT | Description | CaΣoS |
+|--------|-------------|-------|
+| `polynomial(0)` | Constant polynomial. | `casos.PS(0)` |
+| `pvar('x')` | Scalar indeterminate variable. | `casos.PS('x')` |
+| `pvar('q')` | Scalar decision variable. | `casos.PS.sym('q')` |
+| `mpvar('x',n,m)` | Matrix of indeterminate variables. | `casos.PS('x',n,m)` |
+| `mpvar('Q',n,m)` | Matrix decision variable. | `casos.PS.sym('Q',n,m)` |
+| `monomials(x,deg)` | Vector of monomials. | `monomials(x,deg)` |
+| `polydecvar('c',z)` | Polynomial decision variable $c^\top z$. | `casos.PS.sym('c',z)` |
+| `sosdecvar('Q',z)` | Gram decision variable $z^\top Q z$. | `casos.PS.sym('Q',z,'gram')` |
+| `jacobian(f,x)` | Partial derivative w.r.t. indeterminates. | `nabla(f,x)` |
+| `jacobian(p,q)` | Partial derivative w.r.t. symbolic variables. | *Not yet supported* |
+| `constr = (p >= 0)` | Sum-of-squares expression constraint. | `sos.g = pexpr; opts.Kc.s = 1` |
+| `constr = (s >= 0)` | Sum-of-squares variable constraint <br/> (requires Gram variable). | `sos.x = pvar; opts.Kx.s = 1` |
+| `constr = (p == q)` | Polynomial expression equality. | `sos.g = (p - q); opts.Kc.l = 1` <br/> `lbg = 0; ubg = 0` |
+| `constr = (q <= 1)` | Scalar variable inequality. | `sos.x = q; opts.Kx.l = 1` <br/> `lbx = -inf; ubx = 1` |
+| `sosopt(constr,x)` | Sum-of-squares feasibility. | `S = casos.sossol('S','solver',sos,opts)` |
+| `sosopt(constr,x,obj)` | Sum-of-squares optimization. | `sos.f = obj` <br/> `S = casos.sossol('S','solver',sos,opts)` |
+| `[info,dopt] = sosopt(...)` | Solve affine problem. | `S = casos.sossol('S','solver',sos,opts)` <br/> `sol = S(...)` |
+| `info.feas` | Retrieve feasibility info. | `S.stats.UNIFIED_RETUR_STATUS` |
+| `info.obj` | Retrieve optimal value. | `sol.f` |
+| `gsosopt(constr,x,obj)` | Quasi-convex optimization (bisection). | `sos.f = obj` <br/> `S = casos.qcsossol('S','bisection',sos,opts)` |
+| `[info,dopt] = gsosopt(...)` | Solve quasi-convex problem. | `sol = S(...)` |
+| `info.tbnds(2)` | Retrieve upper bound on optimal value. | `sol.f` |
+| `subs(s,dopt)` | Retrieve optimal solution (variable). | `sol.x` |
+| `subs(p,dopt)` | Retrieve optimal solution (expression). | `sol.g` |
+
 ## References
 
 [SB2010]: Seiler, P., Balas, G.J.: Quasiconvex sum-of-squares programming. *49th IEEE Conference on Decision and Control*, pp. 3337–3342, Atlanta, GA (2010). [10.1109/CDC.2010.5717672](https://doi.org/10.1109/CDC.2010.5717672).
-
-[^1]: CaΣoS has been neither supported nor endorsed by CasADi or any of its affilitiates.
