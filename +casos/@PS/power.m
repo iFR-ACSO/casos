@@ -40,13 +40,35 @@ b = casos.PS;
 nta = a.nterm; 
 nva = a.nvars;
 nea = numel(a);
-nen = numel(n);
+nen = numel(unique(n)); % count unique exponents
 
 
 % reshape to output dimensions
 cfa = reshape(repmat(a.coeffs,sz./sza),nta,prod(sz));
 dga = a.degmat;
 
+% check number of coefficients per matrix component
+idx = find(sparsity(cfa));
+[~,ja] = ind2sub(size(cfa),idx);
+
+if issorted(ja,'strictascend')
+    % base polynomial is matrix of monomials
+    deg = reshape(repmat(n,sz./szn),1,prod(sz));
+    % match exponents to unique degrees
+    [dd,~,Ideg] = unique(deg);
+    % repeat coefficients and degrees to match exponents
+    cfa = repmat(cfa,nen,1);
+    dga = repmat(dga,nen,1);
+    % match coefficients to corresponding monomials
+    [ia,ja] = get_triplet(sparsity(cfa)); % CasADi interface has 0-index
+    is_deg = ceil((ia(:)+1)./nva) == Ideg(ja(:)+1);
+    % select matching coefficients
+    S = casadi.Sparsity.triplet(size(cfa,1),size(cfa,2),ia(is_deg),ja(is_deg));
+    coeffs = project(cfa,S).^repmat(deg,nva*nen,1);
+    % multiply degree matrix with (unique) exponents
+    degmat = dga.*reshape(repmat(dd,nva,1),nen*nva,1);
+
+else
 % if nen > 1
 %     % modify coefficients so every matrix component has a separate row
 %     idx = find(sparsity(cfa));
@@ -80,15 +102,17 @@ if nen > 1
         [ii,ji] = ind2sub(size(cfi),idx);
         I = (ji == i);
         S = sparsity(casadi.SX(sparse(ii(I),ji(I),1,mi,ni)));
-        Cd{i} = casadi.SX(S, cfi(:,i));
+        Cd{i} = project(cfi, S);
     end
 
     coeffs = vertcat(Cd{:});
     degmat = vertcat(D{1+deg});
 else
     % matrix.^scalar
-    coeffs = C{n+1};
-    degmat = D{n+1};
+    coeffs = C{end};
+    degmat = D{end};
+end
+
 end
 
 % make degree matrix unique
