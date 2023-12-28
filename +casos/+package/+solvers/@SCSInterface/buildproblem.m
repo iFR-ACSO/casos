@@ -111,8 +111,8 @@ Ix = [ones(1,Nx.l) 2*ones(1,sum(Nx.q)) 3*ones(1,sum(Nx.s.^2))];
 Ac = mat2cell(A(idx,:),[1+Na.l+Nx.l sum(K.q) sum(K.s.^2)],n);
 bc = mat2cell(b(idx)  ,[1+Na.l+Nx.l sum(K.q) sum(K.s.^2)],1);
 % vector-based vectorization
-Ac_s = cellfun(@scs_vec, mat2cell(Ac{3},K.s.^2,n), 'UniformOutput', false);
-bc_s = cellfun(@scs_vec, mat2cell(bc{3},K.s.^2,1), 'UniformOutput', false);
+Ac_s = cellfun(@obj.sdp_vec, mat2cell(Ac{3},K.s.^2,n), 'UniformOutput', false);
+bc_s = cellfun(@obj.sdp_vec, mat2cell(bc{3},K.s.^2,1), 'UniformOutput', false);
 % build SCS structures
 Ascs = vertcat(Ac{1},Ac{2},Ac_s{:});
 bscs = vertcat(bc{1},bc{2},bc_s{:});
@@ -134,8 +134,8 @@ lam_x_l = -Yc{3};
 lam_a_q = -Yc{4};
 lam_x_q = -Yc{5};
 % de-vectorize PSD dual variables
-Yc_a_s = cellfun(@scs_mat, mat2cell(Yc{6},Na.s.*(Na.s+1)/2,1), 'UniformOutput', false);
-Yc_x_s = cellfun(@scs_mat, mat2cell(Yc{7},Nx.s.*(Nx.s+1)/2,1), 'UniformOutput', false);
+Yc_a_s = cellfun(@obj.sdp_mat, mat2cell(Yc{6},Na.s.*(Na.s+1)/2,1), 'UniformOutput', false);
+Yc_x_s = cellfun(@obj.sdp_mat, mat2cell(Yc{7},Nx.s.*(Nx.s+1)/2,1), 'UniformOutput', false);
 % multipliers for PSD constraints
 lam_a_s = -vertcat(Yc_a_s{:});
 lam_x_s = -vertcat(Yc_x_s{:});
