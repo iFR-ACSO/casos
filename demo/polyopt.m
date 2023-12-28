@@ -14,7 +14,7 @@ sos = struct('x',g,'f',g,'g',f+g);
 opts = struct('Kc',struct('s',1));
 
 % solve by relaxation to SDP
-S = casos.sossol('S','sedumi',sos,opts);
+S = casos.sossol('S','mosek',sos,opts);
 % evaluate
 sol = S();
 

@@ -6,6 +6,10 @@ switch lower(solver)
         % solve conic problem using SeDuMi
         sol = casos.package.solvers.SedumiInterface(name,conic,varargin{:});
 
+    case 'mosek'
+        % solve conic problem using MOSEK
+        sol = casos.package.solvers.MosekInterface(name,conic,varargin{:});
+
     case 'scs'
         % solve conic problem using SCS
         sol = casos.package.solvers.SCSInterface(name,conic,varargin{:});
