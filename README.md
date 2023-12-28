@@ -262,8 +262,8 @@ The following comparison is supposed to ease the transition from other sum-of-sq
 | `sosdecvar('Q',z)` | Gram decision variable $z^\top Q z$. | `casos.PS.sym('Q',z,'gram')` |
 | `jacobian(f,x)` | Partial derivative w.r.t. indeterminates. | `nabla(f,x)` |
 | `jacobian(p,q)` | Partial derivative w.r.t. symbolic variables. | *Not yet supported* |
-| `constr = (p >= 0)` | Sum-of-squares expression constraint. | `sos.g = pexpr; opts.Kc.s = 1` |
-| `constr = (s >= 0)` | Sum-of-squares variable constraint <br/> (requires Gram variable). | `sos.x = pvar; opts.Kx.s = 1` |
+| `constr = (expr >= 0)` | Sum-of-squares expression constraint. | `sos.g = expr; opts.Kc.s = 1` |
+| `constr = (svar >= 0)` | Sum-of-squares variable constraint <br/> (requires Gram variable). | `sos.x = svar; opts.Kx.s = 1` |
 | `constr = (p == q)` | Polynomial expression equality. | `sos.g = (p - q); opts.Kc.l = 1` <br/> `lbg = 0; ubg = 0` |
 | `constr = (q <= 1)` | Scalar variable inequality. | `sos.x = q; opts.Kx.l = 1` <br/> `lbx = -inf; ubx = 1` |
 | `sosopt(constr,x)` | Sum-of-squares feasibility. | `S = casos.sossol('S','solver',sos,opts)` |
