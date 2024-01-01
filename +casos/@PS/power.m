@@ -30,6 +30,11 @@ if isempty(a) || isempty(n)
 
     b = casos.PS.zeros(sz);
     return
+
+elseif all(n==0)
+    % power of zero is one
+    b = casos.PS.ones(sz);
+    return
 end
 % TODO: handle or escape for other simple cases, e.g., scalar, constant
 % matrix, single term etc.?
@@ -44,6 +49,7 @@ nen = numel(unique(n)); % count unique exponents
 
 
 % reshape to output dimensions
+deg = reshape(repmat(n,sz./szn),1,prod(sz));
 cfa = reshape(repmat(a.coeffs,sz./sza),nta,prod(sz));
 dga = a.degmat;
 
@@ -51,9 +57,16 @@ dga = a.degmat;
 idx = find(sparsity(cfa));
 [~,ja] = ind2sub(size(cfa),idx);
 
-if issorted(ja,'strictascend')
+if nva == 0 ... % base polynomial is a constant
+    || (nta == 1 && nen == 1) % a^n = c*(x^d)^n
+    b.coeffs = cfa.^deg;
+    b.degmat = n.*dga;
+    b.indets = a.indets;
+    b.matdim = sz;
+    return
+
+elseif issorted(ja,'strictascend')
     % base polynomial is matrix of monomials
-    deg = reshape(repmat(n,sz./szn),1,prod(sz));
     % match exponents to unique degrees
     [dd,~,Ideg] = unique(deg);
     % repeat coefficients and degrees to match exponents
@@ -90,7 +103,6 @@ C(2) = {cfa};                   D(2) = {dga};
 
 if nen > 1
     % either matrix.^matrix or vector.^vector
-    deg = repmat(n,sz./szn);
     % prepare components
     Cd = cell(size(deg));
     % iterate over powers
