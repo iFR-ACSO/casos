@@ -44,7 +44,7 @@ b = casos.PS;
 
 nta = a.nterm; 
 nva = a.nvars;
-nea = numel(a);
+neb = prod(sz);
 nen = numel(unique(n)); % count unique exponents
 
 
@@ -96,7 +96,7 @@ else
 
 % compute powers
 C = cell(1,max(n)+1);           D = cell(1,max(n)+1);
-C(1) = {casadi.SX.ones(1,nea)}; D(1) = {sparse(1,nva)};
+C(1) = {casadi.SX.ones(1,neb)}; D(1) = {sparse(1,nva)};
 C(2) = {cfa};                   D(2) = {dga};
 
 [C,D] = powers(C,D,max(n),nta);
