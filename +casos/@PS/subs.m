@@ -54,7 +54,20 @@ else
     % compute coefficients for c
     % where b^a1 = sum_B c_B*y^B
     % hence c = sum_a sum_B c_a*c_B[a1] y^(a2+B) with a = (a1,a2)
-    error('Not implemented.')
+    ntA = a.nterm;
+    ntB = B.nterm;
+
+    % repeat matrices for double sum
+    cfA = kron(a.coeffs,ones(ntB,1)); dgA = kron(degA,ones(ntB,1));
+    cfB = kron(ones(ntA,1),B.coeffs); dgB = kron(ones(ntA,1),degB);
+
+    % select c_B[a1]
+    idx = kron(1:ntA,ones(1,ntB));
+    I = sub2ind(size(cfB),1:(ntA*ntB),idx);
+
+    % combine coefficients and degrees
+    coeffs = cfA .* cfB(I');
+    degmat = dgA + dgB;
 end
 
 % make degree matrix unique
