@@ -93,13 +93,14 @@ else
 %     % repeat degree matrix to match
 %     dga = repmat(a.degmat,nea,1);
 % end
+n_max = max(n,[],'all');
 
 % compute powers
-C = cell(1,max(n)+1);           D = cell(1,max(n)+1);
+C = cell(1,n_max+1);            D = cell(1,n_max+1);
 C(1) = {casadi.SX.ones(1,neb)}; D(1) = {sparse(1,nva)};
 C(2) = {cfa};                   D(2) = {dga};
 
-[C,D] = powers(C,D,max(n),nta);
+[C,D] = powers(C,D,n_max,nta);
 
 if nen > 1
     % either matrix.^matrix or vector.^vector
