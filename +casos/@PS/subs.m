@@ -34,7 +34,7 @@ if is_zerodegree(b)
     b = repmat(reshape(b.coeffs,1,length(b)),a.nterm,1);
     
     % compute exponents b^a1
-    B = prod(b.^deg0,2);
+    B = sx_prod(b.^deg0,2);
 
     % coefficients of c = sum_a c_a*b^a1*y^a2
     coeffs = a.coeffs.*B;
@@ -82,28 +82,4 @@ c.degmat = degmat;
 c.indets = indets;
 c.matdim = a.matdim;
 
-end
-
-function B = prod(A,dim)
-% Product of matrix elements.
-
-    if nargin < 2 && isrow(A)
-        dim = 2;
-    elseif nargin < 2
-        dim = 1;
-    end
-
-    % size of result
-    sz = size(A);
-    sz(dim) = 1;
-    % prepare result
-    B = ones(sz);
-    % select elements to multiply
-    L.type = '()'; L.subs = {':',':'};
-
-    for i = 1:size(A,dim)
-        % select elements
-        L.subs{dim} = i;
-        B = B.*subsref(A,L);
-    end
 end

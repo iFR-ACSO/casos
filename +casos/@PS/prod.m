@@ -20,6 +20,11 @@ if isempty(A)
 
     B = casos.PS.ones(sz);
     return
+
+elseif size(A,dim) == 1
+    % nothing to do
+    B = A;
+    return
 end
 
 % else:
@@ -78,7 +83,7 @@ switch (dim)
     case 1
         % compute product along first dimension
         % columns are colums of c_a, sorted by coefficient
-        term0 = nb*(0:nt-1);
+        term0 = nb*(0:nt-1)';
         row = repmat(1:L,nb*nt^L,1);    % select column
         col = kron(term0(idx),ones(nb,1)) + repmat((1:nb)',nt^L,L);
         ind = sub2ind(size(cfa),row,col);
@@ -105,20 +110,4 @@ B.degmat = degmat;
 B.indets = indets;
 B.matdim = sz;
 
-end
-
-function b = sx_prod(a,dim)
-% Product of SX matrix elements.
-
-    if dim < 2, b = sx_prod(a',2)'; return; end
-    
-    % else
-    [m,n] = size(a);
-    % create function f: (X,U) -> X.*U
-    X = casadi.SX.sym('X',m,1);
-    U = casadi.SX.sym('U',m,1);
-    f = casadi.Function('f',{X U},{X.*U});
-    % fold to F: (X0,[U1...Un]) -> f(f(...f(X0,U1),...),Un)
-    F = fold(f,n);
-    b = F(1,a);
 end
