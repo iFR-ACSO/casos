@@ -43,10 +43,10 @@ if is_zerodegree(b)
 
 else
     % substitution with polynomial
-    assert(length(x) == 1,'Not supported yet.')
+    b = reshape(b,1,length(b));
 
     % compute exponents of b'
-    B = (b').^deg0;
+    B = prod(b.^deg0,2);
 
     % combine variables
     [indets,degA,degB] = combineVar(indets,B.indets,degA,B.degmat);
