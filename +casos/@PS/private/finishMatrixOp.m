@@ -12,7 +12,7 @@ function coeffs = finishMatrixOp(coeffs,sz,dim)
 %
 % where each row of D corresponds to a term of the polynomial.
 
-ne = length(coeffs);
+ne = size(coeffs,3-dim);
 
 switch (dim)
     case 'all'
@@ -24,7 +24,7 @@ switch (dim)
         % input is
         %
         %   D = | a1 ... aN ... z1 ... zN |
-        coeffs = reshape(coeffs,sz(2),ne/sz(2))';
+        coeffs = reshape(coeffs,prod(sz),ne/sz(2))';
 
     case 2
         % Matrix operation along second dimension (column vector)
@@ -38,7 +38,7 @@ switch (dim)
         %       |  : |
         %       | zM |
         %
-        coeffs = reshape(coeffs,ne/sz(1),sz(1));
+        coeffs = reshape(coeffs,ne/sz(1),prod(sz));
 
     otherwise
         error('Invalid dimension input.')
