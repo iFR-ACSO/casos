@@ -101,6 +101,6 @@ else
 end
 
 % parse solution
-argout = call(obj.ghan,struct2cell(sol));
+argout = call(obj.ghan,[struct2cell(sol)' argin]);
 
 end

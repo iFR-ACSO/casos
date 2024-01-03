@@ -87,6 +87,9 @@ Na_S = Na.s.*(Na.s+1)/2;
 % affine cone constraints (vectorized)
 Na_C = Na_c + sum(Na_S - Na.s.^2);
 
+% separate conic bound for vector and matrix conic variables
+[cbx_v,cbx_s] = separate(cbx,[Nx_q sum(Nx.s.^2)]);
+
 % separate linear cost for vector and matrix variables
 Cc = mat2cell(g,[Nx_v sum(Nx.s.^2)],1);
 % linear cost vector
@@ -114,9 +117,14 @@ prob.a = Alin{1};
 Abar = Alin{2};
 % get nonzero elements and subindices (i,j,k,l)
 [barv.a,bara.subi,bara.subj,bara.subk,bara.subl] = obj.sdp_vec(Abar,Nx.s,1,2);
+% rewrite 
+%   lba <= Abar*X <= uba, X in Kx + cbx
+% into
+%   lba <= Abar*(X'+cbx) <= uba, X' in Kx
+Acb = Abar*cbx_s;
 % linear bounds
-prob.blc = lba;
-prob.buc = uba;
+prob.blc = lba - Acb;
+prob.buc = uba - Acb;
 
 % vectorize semidefinite domain for affine cone constraints
 %     | Fvec |
@@ -139,12 +147,17 @@ prob.f = [
     Fcc{1}
     sparse(1:Nx_q,Nx.l+(1:Nx_q),ones(Nx_q,1),Nx_q,Nx_v)
 ];
-% constant cone
-prob.g = [gacc; zeros(Nx_q,1)];
 % symmetric constraint matrices as stacked vectorization
 Fbar = Fcc{2};
 % get nonzero elements and subindices (i,j,k,l)
 [barv.f,barf.subi,barf.subj,barf.subk,barf.subl] = obj.sdp_vec(Fbar,Nx.s,1,2);
+% rewrite 
+%   Fbar*X + g in Kc, X in Kx + cbx
+% into
+%   Fbar*(X'+cbx) + g in Kc, X' in Kx
+Fcb = Fbar*cbx_s;
+% constant cone
+prob.g = [gacc + Fcb; cbx_v];
 
 % linear and vector state constraints
 prob.blx = [lbx; -inf(Nx_q,1)];
@@ -185,7 +198,7 @@ sol.bars = casadi.MX.sym('bars',[sum(Nx_S) 1]);
 % dual variables corresponding to affine conic constraints
 Yc = mat2cell(sol.doty,[Na_q sum(Na_S) Nx_q],1);
 % de-vectorize SDP primal and dual variables (no scaling)
-Xc_s = obj.sdp_mat(sol.barx,Nx.s,1);
+Xc_s = obj.sdp_mat(sol.barx,Nx.s,1) + cbx_s;
 Sc_s = obj.sdp_mat(sol.bars,Nx.s,1);
 % de-vectorize duals corresponding to semidefinite constraints
 Yc_s = obj.sdp_mat(Yc{2},Na.s,1);
@@ -206,6 +219,12 @@ sol_x = vertcat(sol.xx,Xc_s);
 % cost
 cost = sol.pobjval;
 
-obj.ghan = casadi.Function('g',struct2cell(sol),{sol_x cost lam_a lam_x},fieldnames(sol),obj.names_out);
+obj.ghan = casadi.Function('g',[struct2cell(sol); struct2cell(obj.args_in)],{sol_x cost lam_a lam_x},[fieldnames(sol); fieldnames(obj.args_in)],obj.names_out);
 
+end
+
+function varargout = separate(A,varargin)
+% Separate array into subarrays.
+
+    varargout = mat2cell(A,varargin{:});
 end
