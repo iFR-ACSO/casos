@@ -72,9 +72,6 @@ Na.q = (obj.getdimc(Kc,'q'));
 Na.r = (obj.getdimc(Kc,'r'));
 Na.s = (obj.getdimc(Kc,'s'));
 
-% assert(Nx.q+Nx.r == 0, 'Quadratic variables not supporte yet.')
-% assert(Na.q+Na.q == 0, 'Quadratic constraints not supporte yet.')
-
 % number of vector-valued variables
 Nx_v = n - sum(Nx.s.^2);
 % number of quadratic variables
@@ -99,12 +96,6 @@ prob.c = Cc{1};
 Cbar = Cc{2};
 % get nonzero elements and subindices (j,k,l)
 [barv.c,barc.subj,~,barc.subk,barc.subl] = obj.sdp_vec(Cbar,Nx.s,1);
-% % get nonzero indices w.r.t. Cbar
-% Ic = find(sparsity(Cbar));
-% % get subindices (j,k,l) and linear indices for nonzero elements (tril)
-% [barc.subj,barc.subk,barc.subl,Ic] = get_barsub(Nx.s,Ic);
-% % store nonzeros elements
-% barv.c = Cbar(Ic); %vertcat(barc_val{Ic});
 
 % separate linear constraints and affine cone constraints
 %     | a : Abar | 
@@ -123,15 +114,6 @@ prob.a = Alin{1};
 Abar = Alin{2};
 % get nonzero elements and subindices (i,j,k,l)
 [barv.a,bara.subi,bara.subj,bara.subk,bara.subl] = obj.sdp_vec(Abar,Nx.s,1,2);
-% % get nonzero indices w.r.t. Abar
-% [iA,jA] = ind2sub(size(Abar),find(sparsity(Abar)));
-% % get subindices (j,k,l) and linear indices for nonzero elements (tril)
-% [bara.subj,bara.subk,bara.subl,jA,iA] = get_barsub(Nx.s,jA,iA);
-% % subindices i for nonzero elements
-% bara.subi = iA;
-% % store nonzeros elements
-% Ia = sub2ind(size(Abar),iA,jA);
-% barv.a = Abar(Ia); %vertcat(bara_val{Ia,Ja});
 % linear bounds
 prob.blc = lba;
 prob.buc = uba;
@@ -145,8 +127,6 @@ gc = mat2cell( -cba,[Na_q sum(Na.s.^2)],1);
 % vector-based vectorization
 Fmat = obj.sdp_vec(Fc{2},Na.s,[],1);
 gmat = obj.sdp_vec(gc{2},Na.s,[],1);
-% Fmat = cellfun(@obj.sdp_vec, mat2cell(Fc{2},Na.s.^2,n), 'UniformOutput',false);
-% gmat = cellfun(@obj.sdp_vec, mat2cell(gc{2},Na.s.^2,1), 'UniformOutput',false);
 % build affine cone constraints
 Facc = vertcat(Fc{1},Fmat);
 gacc = vertcat(gc{1},gmat);
@@ -165,15 +145,6 @@ prob.g = [gacc; zeros(Nx_q,1)];
 Fbar = Fcc{2};
 % get nonzero elements and subindices (i,j,k,l)
 [barv.f,barf.subi,barf.subj,barf.subk,barf.subl] = obj.sdp_vec(Fbar,Nx.s,1,2);
-% % get nonzero indices w.r.t. Fbar
-% [iF,jF] = ind2sub(size(Fbar),find(sparsity(Fbar)));
-% % get subindices (j,k,l) and linear indices for nonzero elements (tril)
-% [barf.subj,barf.subk,barf.subl,jF,iF] = get_barsub(Nx.s,jF,iF);
-% % subindices i for nonzero elements
-% barf.subi = iF;
-% % store nonzeros elements
-% If = sub2ind(size(Fbar),iF,jF);
-% barv.f = Fbar(If); %vertcat(barf_val{If,Jf});
 
 % linear and vector state constraints
 prob.blx = [lbx; -inf(Nx_q,1)];
@@ -204,25 +175,20 @@ obj.cone = cone;
 sol.pobjval = casadi.MX.sym('pobjval');
 sol.xx   = casadi.MX.sym('xx',[Nx_v 1]);
 sol.barx = casadi.MX.sym('barx',[sum(Nx_S) 1]);
-% sol.barx = arrayfun(@(d) casadi.MX.sym('Xbar',[d 1]), Nx_S, 'UniformOutput',false);
 sol.slc  = casadi.MX.sym('slc',[Na.l 1]);
 sol.suc  = casadi.MX.sym('suc',[Na.l 1]);
 sol.slx  = casadi.MX.sym('slx',[Nx.l+Nx_q 1]);
 sol.sux  = casadi.MX.sym('sux',[Nx.l+Nx_q 1]);
 sol.doty = casadi.MX.sym('doty',[Na_q+sum(Na_S)+Nx_q 1]);
 sol.bars = casadi.MX.sym('bars',[sum(Nx_S) 1]);
-% sol.bars = arrayfun(@(d) casadi.MX.sym('Sbar',[d 1]), Nx_S, 'UniformOutput',false);
 
 % dual variables corresponding to affine conic constraints
 Yc = mat2cell(sol.doty,[Na_q sum(Na_S) Nx_q],1);
 % de-vectorize SDP primal and dual variables (no scaling)
 Xc_s = obj.sdp_mat(sol.barx,Nx.s,1);
 Sc_s = obj.sdp_mat(sol.bars,Nx.s,1);
-% Xc_s = cellfun(@(X) obj.sdp_mat(X,1), mat2cell(sol.barx,Nx_S,1), 'UniformOutput', false);
-% Sc_s = cellfun(@(S) obj.sdp_mat(S,1), mat2cell(sol.bars,Nx_S,1), 'UniformOutput', false);
 % de-vectorize duals corresponding to semidefinite constraints
 Yc_s = obj.sdp_mat(Yc{2},Na.s,1);
-% Yc_s = cellfun(@obj.sdp_mat, mat2cell(Yc{2},Na_S,1), 'UniformOutput',false);
 % multipliers for box constraints
 lam_a_l = sol.suc - sol.slc;
 lam_x_l = sol.sux(1:Nx.l) - sol.slx(1:Nx.l);
@@ -242,38 +208,4 @@ cost = sol.pobjval;
 
 obj.ghan = casadi.Function('g',struct2cell(sol),{sol_x cost lam_a lam_x},fieldnames(sol),obj.names_out);
 
-end
-
-function [j,k,l,I,J] = get_barsub(s,I,J)
-% Return subindices for into nonzeros elements of stacked coefficients.
-
-    I = reshape(I,1,[]); % ensure row vector of linear indices.
-    s = reshape(s,1,[]); % ensure row vector of matrix dimensions.
-
-    % number of matrix components before j-th matrix variables
-    S = cumsum([0 s(1:end-1).^2]);
-
-    % compute index j of corresponding matrix variable
-    j = sum(I > S', 1); % MOSEK interface is 1-based
-
-    % compute linear indices of elements in each matrix
-    I0 = I - S(j);
-
-    % compute indices (k,l) of elements in matrix
-    % as (remainder,quotient) of linear indices divided by matrix size
-    l = ceil(I0 ./ s(j)); % col
-    k = I0 - s(j).*(l-1); % row
-
-    % only keep lower-triangular elements
-    Itril = (k >= l);
-    % remove indices for upper triangular
-    I(~Itril) = [];
-    j(~Itril) = [];
-    l(~Itril) = [];
-    k(~Itril) = [];
-
-    % optional row indices
-    if nargin > 2
-        J(~Itril) = [];
-    end
 end
