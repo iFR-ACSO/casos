@@ -91,12 +91,12 @@ Na_C = Na_c + sum(Na_S - Na.s.^2);
 [cbx_v,cbx_s] = separate(cbx,[Nx_q sum(Nx.s.^2)]);
 
 % separate linear cost for vector and matrix variables
-Cc = mat2cell(g,[Nx_v sum(Nx.s.^2)],1);
+% C' = | c : Cbar |
+[Clin,Cbar] = separate(g,[Nx_v sum(Nx.s.^2)],1);
 % linear cost vector
-prob.c = Cc{1};
+prob.c = Clin;
 % symmetric cost matrices Cbar_j as stacked vectorization
 % Cbar = [Cbar1(:); ...; CbarN(:)]
-Cbar = Cc{2};
 % get nonzero elements and subindices (j,k,l)
 [barv.c,barc.subj,~,barc.subk,barc.subl] = obj.sdp_vec(Cbar,Nx.s,1);
 
@@ -104,17 +104,16 @@ Cbar = Cc{2};
 %     | a : Abar | 
 % A = |----------|
 %     |    F     |
-Ac = mat2cell(a,[Na.l Na_c],n);
+[A,F] = separate(a,[Na.l Na_c],n);
 
 % separate linear constraints for vector and matrix variables
-Alin = mat2cell(Ac{1},Na.l,[Nx_v sum(Nx.s.^2)]);
+[Alin,Abar] = separate(A,Na.l,[Nx_v sum(Nx.s.^2)]);
 % linear constraints matrix
-prob.a = Alin{1};
+prob.a = Alin;
 % symmetric constraint matrices Abar_ij as stacked vectorizations
 %        | Abar11(:)' ... Abar1N(:)' |
 % Abar = |     :       :      :      |
 %        | AbarM1(:)' ... AbarMN(:)' |
-Abar = Alin{2};
 % get nonzero elements and subindices (i,j,k,l)
 [barv.a,bara.subi,bara.subj,bara.subk,bara.subl] = obj.sdp_vec(Abar,Nx.s,1,2);
 % rewrite 
@@ -130,8 +129,8 @@ prob.buc = uba - Acb;
 %     | Fvec |
 % F = |------|
 %     | Fmat |
-Fc = mat2cell(Ac{2},[Na_q sum(Na.s.^2)],n);
-gc = mat2cell( -cba,[Na_q sum(Na.s.^2)],1);
+Fc = mat2cell(   F,[Na_q sum(Na.s.^2)],n);
+gc = mat2cell(-cba,[Na_q sum(Na.s.^2)],1);
 % vector-based vectorization
 Fmat = obj.sdp_vec(Fc{2},Na.s,[],1);
 gmat = obj.sdp_vec(gc{2},Na.s,[],1);
@@ -141,14 +140,13 @@ gacc = vertcat(gc{1},gmat);
 
 % separate affine cone constraints for vector and matrix variables
 % F = | f : Fbar |
-Fcc = mat2cell(Facc,Na_C,[Nx_v sum(Nx.s.^2)]);
+[Flin,Fbar] = separate(Facc,Na_C,[Nx_v sum(Nx.s.^2)]);
 % affine cone constraint matrix
 prob.f = [
-    Fcc{1}
+    Flin
     sparse(1:Nx_q,Nx.l+(1:Nx_q),ones(Nx_q,1),Nx_q,Nx_v)
 ];
 % symmetric constraint matrices as stacked vectorization
-Fbar = Fcc{2};
 % get nonzero elements and subindices (i,j,k,l)
 [barv.f,barf.subi,barf.subj,barf.subk,barf.subl] = obj.sdp_vec(Fbar,Nx.s,1,2);
 % rewrite 
@@ -196,18 +194,18 @@ sol.doty = casadi.MX.sym('doty',[Na_q+sum(Na_S)+Nx_q 1]);
 sol.bars = casadi.MX.sym('bars',[sum(Nx_S) 1]);
 
 % dual variables corresponding to affine conic constraints
-Yc = mat2cell(sol.doty,[Na_q sum(Na_S) Nx_q],1);
+[Yaq,Yas,Yxq] = separate(sol.doty,[Na_q sum(Na_S) Nx_q],1);
 % de-vectorize SDP primal and dual variables (no scaling)
 Xc_s = obj.sdp_mat(sol.barx,Nx.s,1) + cbx_s;
 Sc_s = obj.sdp_mat(sol.bars,Nx.s,1);
 % de-vectorize duals corresponding to semidefinite constraints
-Yc_s = obj.sdp_mat(Yc{2},Na.s,1);
+Yc_s = obj.sdp_mat(Yas,Na.s,1);
 % multipliers for box constraints
 lam_a_l = sol.suc - sol.slc;
 lam_x_l = sol.sux(1:Nx.l) - sol.slx(1:Nx.l);
 % multipliers for quadratic constraints
-lam_a_q = -Yc{1};
-lam_x_q = -Yc{3};
+lam_a_q = -Yaq;
+lam_x_q = -Yxq;
 % multipliers for SDP constraints
 lam_a_s = -vertcat(Yc_s);
 lam_x_s = -vertcat(Sc_s);
