@@ -281,6 +281,12 @@ methods
         % Convert constant polynomial to double data type.
         d = full(casadi.DM(p));
     end
+
+    function f = to_function(p,varargin)
+        % Return polynomial casadi.Function instance.
+        X = casadi.SX.sym('x',p.nvars,1);
+        f = casadi.Function('p',{X},{casadi.SX(subs(p,indeterminates(p),X))},varargin{:});
+    end
 end
 
 methods (Access=protected)
