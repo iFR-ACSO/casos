@@ -181,7 +181,7 @@ if nnz(h) > 0
     % build affine cone constraint 
     % L(y,x) + k = (1+y, sqrt(2)*U*x, 1-y) in SOC
     % note: additional variable y is first decision variable
-    L = [1 sparse(1,n); sparse(n,1) sqrt(2)*U; -1 zeros(1,n)];
+    L = [1 sparse(1,n); sparse(n,1) sqrt(2)*U; -1 sparse(1,n)];
     k = [1; sparse(n,1); 1];
     % number of additional variables and constraints
     Nx_cost = 1;
@@ -228,7 +228,7 @@ Accs = [
     arrayfun(@(l) [symbcon.MSK_DOMAIN_RQUADRATIC_CONE l], Nx.r, 'UniformOutput',false)
     acc_cost
 ];
-cone.bardim = Kx.s;
+cone.bardim = Nx.s;
 cone.barc = barc;
 cone.bara = bara;
 cone.barf = barf;
