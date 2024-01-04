@@ -42,6 +42,7 @@ assert(rcode == 0,'Call to mosekopt failed: %s (%s).',res.rmsg,res.rcodestr);
 symbcon = res.symbcon;
 
 % symbolic variables
+h = obj.args_in.h;
 g = obj.args_in.g;
 a = obj.args_in.a;
 
@@ -161,6 +162,58 @@ prob.g = [gacc + Fcb; cbx_v];
 prob.blx = [lbx; -inf(Nx_q,1)];
 prob.bux = [ubx; +inf(Nx_q,1)];
 
+% handle quadratic cost function
+% MOSEK cannot solve conic problems with quadratic cost
+if nnz(h) > 0
+    % only SX supports Cholesky decomposition
+    H = casadi.SX.sym('H',sparsity(h));
+    chol_f = casadi.Function('chol',{H},{chol(H)});
+    % rewrite quadratic cost
+    %
+    %   min_x 1/2 x'*Q*x + c'*x
+    %
+    % into 
+    %
+    %   min_{x,y} c'*x + y, s.t. 1 + y >= ||(sqrt(2)*U*x, 1 - y)||
+    %
+    % with additional variable y and Cholesky decomposition U'*U = Q
+    U = chol_f(h);
+    % build affine cone constraint 
+    % L(y,x) + k = (1+y, sqrt(2)*U*x, 1-y) in SOC
+    % note: additional variable y is first decision variable
+    L = [1 sparse(1,n); sparse(n,1) sqrt(2)*U; -1 zeros(1,n)];
+    k = [1; sparse(n,1); 1];
+    % number of additional variables and constraints
+    Nx_cost = 1;
+    Na_cost = n + 2;
+    % separate ACC for vector and matrix variables
+    [Llin,Lbar] = separate(L,Na_cost,[Nx_v+1 sum(Nx.s.^2)]);
+    % get nonzero elements and subindices (i,j,k,l) for Lbar
+    [barv_l,barl.subi,barl.subj,barl.subk,barl.subl] = obj.sdp_vec(Lbar,Nx.s,1,2);
+    % add to regular (linear) cost
+    prob.c = [1; prob.c];
+    % add to regular linear constraints
+    prob.a = [sparse(Na.l,1) prob.a];
+    % add to regular affine cone constraints
+    prob.f = [sparse(Na_C+Nx_q,1) prob.f; Llin];
+    prob.g = [prob.g; k];
+    barv.f = [barv.f barv_l];
+    barf.subi = [barf.subi (Na_C+Nx_q)+barl.subi];
+    barf.subj = [barf.subj barl.subj];
+    barf.subk = [barf.subk barl.subk];
+    barf.subl = [barf.subl barl.subl];
+    % add to regular decision variables (y >= 0)
+    prob.blx = [  0; prob.blx];
+    prob.bux = [inf; prob.bux];
+    % add to conic domain
+    acc_cost = [symbcon.MSK_DOMAIN_QUADRATIC_CONE Na_cost];
+
+else
+    Nx_cost = 0;
+    Na_cost = 0;
+    acc_cost = [];
+end
+
 % return MOSEK prob structure
 obj.fhan = casadi.Function('f',struct2cell(obj.args_in),struct2cell(prob),fieldnames(obj.args_in),fieldnames(prob));
 % return bar values
@@ -173,6 +226,7 @@ Accs = [
     arrayfun(@(d) [symbcon.MSK_DOMAIN_SVEC_PSD_CONE   d], Na_S, 'UniformOutput',false)
     arrayfun(@(l) [symbcon.MSK_DOMAIN_QUADRATIC_CONE  l], Nx.q, 'UniformOutput',false)
     arrayfun(@(l) [symbcon.MSK_DOMAIN_RQUADRATIC_CONE l], Nx.r, 'UniformOutput',false)
+    acc_cost
 ];
 cone.bardim = Kx.s;
 cone.barc = barc;
@@ -184,17 +238,20 @@ obj.cone = cone;
 
 % parse MOSEK solution into (x,cost,lam_a,lam_x)
 sol.pobjval = casadi.MX.sym('pobjval');
-sol.xx   = casadi.MX.sym('xx',[Nx_v 1]);
+sol.xx   = casadi.MX.sym('xx',[Nx_cost+Nx_v 1]);
 sol.barx = casadi.MX.sym('barx',[sum(Nx_S) 1]);
 sol.slc  = casadi.MX.sym('slc',[Na.l 1]);
 sol.suc  = casadi.MX.sym('suc',[Na.l 1]);
-sol.slx  = casadi.MX.sym('slx',[Nx.l+Nx_q 1]);
-sol.sux  = casadi.MX.sym('sux',[Nx.l+Nx_q 1]);
-sol.doty = casadi.MX.sym('doty',[Na_q+sum(Na_S)+Nx_q 1]);
+sol.slx  = casadi.MX.sym('slx',[Nx_cost+Nx.l+Nx_q 1]);
+sol.sux  = casadi.MX.sym('sux',[Nx_cost+Nx.l+Nx_q 1]);
+sol.doty = casadi.MX.sym('doty',[Na_q+sum(Na_S)+Nx_q+Na_cost 1]);
 sol.bars = casadi.MX.sym('bars',[sum(Nx_S) 1]);
 
+% dual variables corresponding to linear variables
+[~,Slx,~] = separate(sol.slx,[Nx_cost Nx.l Nx_q],1);
+[~,Slu,~] = separate(sol.sux,[Nx_cost Nx.l Nx_q],1);
 % dual variables corresponding to affine conic constraints
-[Yaq,Yas,Yxq] = separate(sol.doty,[Na_q sum(Na_S) Nx_q],1);
+[Yaq,Yas,Yxq,Ycost] = separate(sol.doty,[Na_q sum(Na_S) Nx_q Na_cost],1);
 % de-vectorize SDP primal and dual variables (no scaling)
 Xc_s = obj.sdp_mat(sol.barx,Nx.s,1) + cbx_s;
 Sc_s = obj.sdp_mat(sol.bars,Nx.s,1);
@@ -202,7 +259,7 @@ Sc_s = obj.sdp_mat(sol.bars,Nx.s,1);
 Yc_s = obj.sdp_mat(Yas,Na.s,1);
 % multipliers for box constraints
 lam_a_l = sol.suc - sol.slc;
-lam_x_l = sol.sux(1:Nx.l) - sol.slx(1:Nx.l);
+lam_x_l = Slu - Slx;
 % multipliers for quadratic constraints
 lam_a_q = -Yaq;
 lam_x_q = -Yxq;
@@ -213,7 +270,8 @@ lam_x_s = -vertcat(Sc_s);
 lam_a = [lam_a_l; lam_a_q; lam_a_s];
 lam_x = [lam_x_l; lam_x_q; lam_x_s];
 % build solution
-sol_x = vertcat(sol.xx,Xc_s);
+[~,Xc_l] = separate(sol.xx,[Nx_cost Nx_v],1);
+sol_x = vertcat(Xc_l,Xc_s);
 % cost
 cost = sol.pobjval;
 
