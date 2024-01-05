@@ -145,7 +145,7 @@ gacc = vertcat(gc{1},gmat);
 % affine cone constraint matrix
 prob.f = [
     Flin
-    sparse(1:Nx_q,Nx.l+(1:Nx_q),ones(Nx_q,1),Nx_q,Nx_v)
+    casadi.DM.triplet((1:Nx_q)-1,Nx.l+(1:Nx_q)-1,ones(Nx_q,1),Nx_q,Nx_v)
 ];
 % symmetric constraint matrices as stacked vectorization
 % get nonzero elements and subindices (i,j,k,l)
@@ -181,8 +181,8 @@ if nnz(h) > 0
     % build affine cone constraint 
     % L(y,x) + k = (1+y, sqrt(2)*U*x, 1-y) in SOC
     % note: additional variable y is first decision variable
-    L = [1 sparse(1,n); sparse(n,1) sqrt(2)*U; -1 sparse(1,n)];
-    k = [1; sparse(n,1); 1];
+    L = [1 casadi.DM(1,n); casadi.DM(n,1) sqrt(2)*U; -1 casadi.DM(1,n)];
+    k = [1; casadi.DM(n,1); 1];
     % number of additional variables and constraints
     Nx_cost = 1;
     Na_cost = n + 2;
@@ -193,9 +193,9 @@ if nnz(h) > 0
     % add to regular (linear) cost
     prob.c = [1; prob.c];
     % add to regular linear constraints
-    prob.a = [sparse(Na.l,1) prob.a];
+    prob.a = [casadi.DM(Na.l,1) prob.a];
     % add to regular affine cone constraints
-    prob.f = [sparse(Na_C+Nx_q,1) prob.f; Llin];
+    prob.f = [casadi.DM(Na_C+Nx_q,1) prob.f; Llin];
     prob.g = [prob.g; k];
     barv.f = [barv.f barv_l];
     barf.subi = [barf.subi (Na_C+Nx_q)+barl.subi];
