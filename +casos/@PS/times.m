@@ -48,7 +48,7 @@ cfb = reshape(repmat(b.coeffs,sz./szb),ntb,prod(sz));
 % combine variables
 [indets,dga,dgb] = combineVar(a.indets,b.indets,a.degmat,b.degmat);
 
-% (sum_a c_a*x^a).*(sum_b c_b*x^b) = (sum_a sum_b (c_a.*c_b)*(x^a*x^b)
+% (sum_a c_a*x^a).*(sum_b c_b*x^b) = sum_a sum_b (c_a.*c_b)*(x^a*x^b)
 coeffs = kron(cfa,ones(ntb,1)) .* kron(ones(nta,1),cfb);
 degmat = kron(dga,ones(ntb,1)) +  kron(ones(nta,1),dgb);
 
