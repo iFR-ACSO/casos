@@ -5,7 +5,19 @@ a = casos.PS(a);
 b = casos.PS(b);
 
 assert(is_indet(x),'Second argument must be vector of indeterminate variables.')
-assert(length(x) == length(b),'Second and third argument have incompatible sizes.')
+
+% check dimensions
+if isscalar(b)
+    % replace all indeterminates by same expression
+    b = repmat(b,size(x));
+
+elseif (size(x,1) == size(b,1) && iscolumn(x) && size(b,2) > 1)
+    % repeated substitution -- not supported
+    error('Repeated substitution not supported, use to_function(a) instead.')
+
+else
+    assert(numel(x) == numel(b),'Second and third argument have incompatible sizes.')
+end
 
 [tf,xloc] = ismember(a.indets,x.indets);
 
@@ -19,7 +31,7 @@ end
 c = casos.PS;
 
 % select expressions to substitute with
-b = x.coeffs(xloc(tf),:)*b; %TODO: internal operation
+b = x.coeffs(xloc(tf),:)*b(:); %TODO: internal operation
 
 % substitute b = sum_b c_b*y^b for x into a = sum_a*c_a*(x,y)^a
 % yields c = sum_a c_a*b^a1*y^a2 with a = (a1,a2)
