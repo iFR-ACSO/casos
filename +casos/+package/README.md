@@ -20,10 +20,12 @@ flowchart LR
   end
   subgraph casos.package.solvers
     ConicSolver --> SolverCallback
+    MosekInterface --> ConicSolver
     SedumiInterface --> ConicSolver
     SCSInterface --> ConicSolver
     SdpsolInternal --> SolverCallback
     SdpsolInternal -.-> ConicSolver
+    conicInternal -.-> MosekInterface
     conicInternal -.-> SedumiInterface
     conicInternal -.-> SCSInterface
     SossolInternal --> FunctionWrapper
