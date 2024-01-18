@@ -1,4 +1,4 @@
-classdef SolverCallback < casadi.Callback & casos.package.functions.FunctionCommon
+classdef (Abstract) SolverCallback < casadi.Callback & casos.package.functions.FunctionCommon
 % Common Callback interface for custom solvers.
 
 properties (Abstract, Access=protected)

@@ -61,16 +61,16 @@ Kx = opts.Kx;
 Kc = opts.Kc;
 
 % number of variables per cone type
-Nx.l = (obj.getdimc(Kx,'l'));
-Nx.q = (obj.getdimc(Kx,'q'));
-Nx.r = (obj.getdimc(Kx,'r'));
-Nx.s = (obj.getdimc(Kx,'s'));
+Nx.l = (obj.getdimc(Kx,'lin'));
+Nx.q = (obj.getdimc(Kx,'lor'));
+Nx.r = (obj.getdimc(Kx,'rot'));
+Nx.s = (obj.getdimc(Kx,'psd'));
 
 % number of constraints per cone type
-Na.l = (obj.getdimc(Kc,'l'));
-Na.q = (obj.getdimc(Kc,'q'));
-Na.r = (obj.getdimc(Kc,'r'));
-Na.s = (obj.getdimc(Kc,'s'));
+Na.l = (obj.getdimc(Kc,'lin'));
+Na.q = (obj.getdimc(Kc,'lor'));
+Na.r = (obj.getdimc(Kc,'rot'));
+Na.s = (obj.getdimc(Kc,'psd'));
 
 % assert(Nx.q+Nx.r == 0, 'Quadratic variables not supporte yet.')
 % assert(Na.q+Na.q == 0, 'Quadratic constraints not supporte yet.')
@@ -192,7 +192,7 @@ Accs = [
     arrayfun(@(l) [symbcon.MSK_DOMAIN_QUADRATIC_CONE  l], Nx.q, 'UniformOutput',false)
     arrayfun(@(l) [symbcon.MSK_DOMAIN_RQUADRATIC_CONE l], Nx.r, 'UniformOutput',false)
 ];
-cone.bardim = Kx.s;
+cone.bardim = Nx.s;
 cone.barc = barc;
 cone.bara = bara;
 cone.barf = barf;

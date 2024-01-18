@@ -50,8 +50,8 @@ sdp.g = Qdiff_g;
 sdp.p = Qlin_p;
 % SDP options
 sdpopt = opts.sdpsol_options;
-sdpopt.Kx = struct('l', numel(Qlin_x), 's', [Ksdp_x_s; Ksdp_g_s]);
-sdpopt.Kc = struct('l', numel(Qdiff_g));
+sdpopt.Kx = struct('lin', numel(Qlin_x), 'psd', [Ksdp_x_s; Ksdp_g_s]);
+sdpopt.Kc = struct('lin', numel(Qdiff_g));
 
 % initialize SDP solver
 obj.sdpsolver = casos.package.solvers.SdpsolInternal('SDP',solver,sdp,sdpopt);

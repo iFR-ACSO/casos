@@ -1,4 +1,4 @@
-classdef (Abstract) ConicSolver < casos.package.solvers.SolverCallback
+classdef (Abstract) ConicSolver < casos.package.solvers.SolverCallback & casos.package.solvers.SolverCommon
 % Base class for low-level conic (SDP) solvers.
 %
 % The generic conic problem has the form
@@ -33,6 +33,13 @@ properties (Constant, Access=protected)
         {'Kx', 'Cone description for state constraints.'
          'Kc', 'Cone description for constraint function.'}
     ];
+
+    conic_cones = casos.package.Cones([
+        casos.package.Cones.LIN
+        casos.package.Cones.LOR
+        casos.package.Cones.ROT
+        casos.package.Cones.PSD
+    ]);
 end
 
 properties (Abstract, Access=protected)
@@ -49,11 +56,16 @@ methods (Static)
         % Return static options.
         options = casos.package.solvers.ConicSolver.conic_options;
     end
+
+    function cones = get_cones
+        % Return supported cones.
+        cones = casos.package.solvers.ConicSolver.conic_cones;
+    end
 end
 
 methods
     function obj = ConicSolver(name,conic,varargin)
-        obj@casos.package.solvers.SolverCallback(varargin{:});
+        obj@casos.package.solvers.SolverCommon(varargin{:});
 
         % sparsity patterns
         as = conic.a;
@@ -67,16 +79,16 @@ methods
         end
 
         % default options
-        if ~isfield(obj.opts,'Kx'), obj.opts.Kx = struct('l',n); end
-        if ~isfield(obj.opts,'Kc'), obj.opts.Kc = struct('l',m); end
+        if ~isfield(obj.opts,'Kx'), obj.opts.Kx = struct('lin',n); end
+        if ~isfield(obj.opts,'Kc'), obj.opts.Kc = struct('lin',m); end
 
         % check cone dimensions
         assert(sum(cellfun(@(fn) obj.getnumc(obj.opts.Kx,fn), fieldnames(obj.opts.Kx))) == n, 'Dimension of Kx must equal to number of variables (%d).', n)
-        assert(sum(cellfun(@(fn) obj.getnumc(obj.opts.Kc,fn), fieldnames(obj.opts.Kc))) == m, 'Dimension of Ka must equal to number of constraints (%d).', m)
+        assert(sum(cellfun(@(fn) obj.getnumc(obj.opts.Kc,fn), fieldnames(obj.opts.Kc))) == m, 'Dimension of Kc must equal to number of constraints (%d).', m)
 
         % dimensions of linear variables and constraints
-        Nl = casos.package.solvers.ConicSolver.getdimc(obj.opts.Kx,'l');
-        Ml = casos.package.solvers.ConicSolver.getdimc(obj.opts.Kc,'l');
+        Nl = obj.getdimc(obj.opts.Kx,'lin');
+        Ml = obj.getdimc(obj.opts.Kc,'lin');
 
         % symbolic inputs
         obj.args_in.h      = casadi.MX.sym('h',hs);
@@ -105,31 +117,18 @@ methods (Static, Access=protected)
     % MOSEK/SCS-style for the semidefinite cone
     [V,varargout] = sdp_vec(M,varargin);
     [M,varargout] = sdp_mat(V,varargin);
+end
 
-    function N = getdimc(K,type)
+methods (Access=protected)
+    %% Cone helper functions
+    function d = getdimc(obj,K,type)
         % Return cone dimensions of specific type.        
-        if isfield(K,type)
-            N = K.(type);
-        elseif strcmp(type,'l')
-            N = 0;
-        else
-            N = [];
-        end
+        d = get_dimension(obj.get_cones,K,type);
     end
 
-    function n = getnumc(K,type)
+    function n = getnumc(obj,K,type)
         % Return number of variables in cone.
-        if ~isfield(K,type)
-            n = 0;
-            return
-        end
-
-        % else
-        switch (type)
-            case 'l', n = K.(type);
-            case 's', n = sum(K.(type).^2);
-            otherwise, n = sum(K.(type));
-        end
+        n = get_length(obj.get_cones,K,type);
     end
 end
 
