@@ -5,6 +5,16 @@ properties (Access=private)
     entries = table({},{},'VariableNames',{'type' 'description'});
 end
 
+properties (Constant)
+    % Predefined cone types
+    LIN = {'lin' 'NUM' 'Linear inequalities (element-wise).'};
+    LOR = {'lor' 'LIST' 'Lorentz (quadratic, second-order) cone.'};
+    ROT = {'rot' 'LIST' 'Rotated Lorentz cone.'};
+    PSD = {'psd' 'LIST' 'Cone of positive semidefinite matrices.'};
+    % Polynomial cones
+    SOS = {'sos' 'NUM' 'Cone of sum-of-squares polynomials.'}
+end
+
 methods
     function obj = Cones(args)
         % Create new Cones instance from cell.
@@ -32,6 +42,14 @@ methods
     function tf = has(obj,name)
         % Check if cone "name" exists.
         tf = ismember(name,obj.entries.Row);
+
+        % legacy
+        switch (name)
+            case 'l', warning('Cone "l" is deprecated, use "lin".')
+            case 'q', warning('Cone "q" is deprecated, use "lor".')
+            case 'r', warning('Cone "r" is deprecated, use "rot".')
+            case 's', warning('Cone "s" is deprecated, use "psd" or "sos".')
+        end
     end
 
     function str = info(obj,name)
@@ -54,10 +72,15 @@ methods
         % Return length of specified cone.
         assert(has(obj,name), 'Unknown cone "%s".',name)
         % check if cone is specified
-        if isfield(K,name)
-            l = sum(K.(name));
-        else
+        if ~isfield(K,name)
             l = 0;
+            return
+        end
+
+        % else
+        switch (name)
+            case 'psd', l = sum(K.(name).^2);
+            otherwise,  l = sum(K.(name));
         end
     end
 
