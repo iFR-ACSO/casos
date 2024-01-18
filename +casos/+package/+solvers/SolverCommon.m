@@ -2,7 +2,7 @@ classdef (Abstract) SolverCommon < casos.package.functions.FunctionCommon
 % Common solver interface.
 
 properties (Constant,Access=protected)
-    common_options = [casos.package.functions.FunctionInterface.options
+    solver_options = [casos.package.functions.FunctionInterface.options
         {'Kx', 'Cone description for state constraints.'
          'Kc', 'Cone description for constraint function.'}
     ];
@@ -15,7 +15,7 @@ end
 methods (Static)
     function options = get_options
         % Return static options.
-        options = casos.package.solvers.SolverCommon.common_options;
+        options = casos.package.solvers.SolverCommon.solver_options;
     end
 end
 
