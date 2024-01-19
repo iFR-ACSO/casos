@@ -104,20 +104,16 @@ s7sym  = casos.PS.sym('s7',basis(s7));
 Vsym = casos.PS.sym('V',basis(V));
 ksym = casos.PS.sym('k',basis(k));
 
-% current work around
-t0 = casos.PS.sym('t0');
-t1 = casos.PS.sym('t1');
-
 
 sos2 = struct('x',[V,s8]',...                                                                        % dec. variable
-              'p',[s1sym,s2sym,s3sym,s4sym,s51sym,s52sym,s61sym,s62sym,s7sym,ksym,Vsym,t0,t1,g]');   % parameter
+              'p',[s1sym,s2sym,s3sym,s4sym,s51sym,s52sym,s61sym,s62sym,s7sym,ksym,Vsym,g]');   % parameter
 
 sos2.('g') = [s1sym*(V-g)  - s2sym*hT     - nabla(V,t) - nabla(V,x)*(f + gx*ksym);
               ksym - umin  + s51sym*(V-g) - s61sym*hT;
               umax - ksym  + s52sym*(V-g) - s62sym*hT;
               s3sym*(V-g)  - s4sym*hT - gc;
-              s7sym*(subs(V,t,t1)-g)    -  l;
-              s8*(subs(Vsym,t,t0)-g)    + g - subs(V,t,t0)];
+              s7sym*(subs(V,t,T)-g)    -  l;
+              s8*(subs(Vsym,t,0)-g)    + g - subs(V,t,0)];
 
 % states + constraint are SOS cones
 opts = struct;
@@ -179,7 +175,7 @@ for iter = 1:10
     end
 
     % V-step
-    sol2 = S2('p',[s1val,s2val,s3val,s4val,s51val,s52val,s61val,s62val,s7val,kval,Vval,0,T,gval],'lbx',Vlb,'ubx',Vub);
+    sol2 = S2('p',[s1val,s2val,s3val,s4val,s51val,s52val,s61val,s62val,s7val,kval,Vval,gval],'lbx',Vlb,'ubx',Vub);
 
 
     switch (S2.stats.UNIFIED_RETURN_STATUS)
@@ -207,16 +203,10 @@ end
 tendIter = toc;
 
 
-
-
 %% plotting
-Vvalpol = to_multipoly(Vval-gval);
 figure()
-pcontour(subs(Vval,t,1)-gval,0,[-2 2 -2 2])
+pcontour(subs(Vval,t,0)-gval,0,[-2 2 -2 2])
 hold on
-pvar t
-pcontour((subs(Vvalpol,t,1)),0,[-2 2 -2 2],'k--')
-hold on
-pcontour(to_multipoly(gc),0,[-2 2 -2 2],'k-')
-pcontour(to_multipoly(l),0,[-2 2 -2 2],'r-')
-t = casos.PS('t');
+pcontour((subs(Vval,t,1)),0,[-2 2 -2 2],'k--')
+pcontour(gc,0,[-2 2 -2 2],'k-')
+pcontour(l,0,[-2 2 -2 2],'r-')
