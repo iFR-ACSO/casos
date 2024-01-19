@@ -42,6 +42,7 @@ assert(rcode == 0,'Call to mosekopt failed: %s (%s).',res.rmsg,res.rcodestr);
 symbcon = res.symbcon;
 
 % symbolic variables
+h = obj.args_in.h;
 g = obj.args_in.g;
 a = obj.args_in.a;
 
@@ -72,9 +73,6 @@ Na.q = (obj.getdimc(Kc,'q'));
 Na.r = (obj.getdimc(Kc,'r'));
 Na.s = (obj.getdimc(Kc,'s'));
 
-% assert(Nx.q+Nx.r == 0, 'Quadratic variables not supporte yet.')
-% assert(Na.q+Na.q == 0, 'Quadratic constraints not supporte yet.')
-
 % number of vector-valued variables
 Nx_v = n - sum(Nx.s.^2);
 % number of quadratic variables
@@ -90,94 +88,131 @@ Na_S = Na.s.*(Na.s+1)/2;
 % affine cone constraints (vectorized)
 Na_C = Na_c + sum(Na_S - Na.s.^2);
 
+% separate conic bound for vector and matrix conic variables
+[cbx_v,cbx_s] = separate(cbx,[Nx_q sum(Nx.s.^2)]);
+
 % separate linear cost for vector and matrix variables
-Cc = mat2cell(g,[Nx_v sum(Nx.s.^2)],1);
+% C' = | c : Cbar |
+[Clin,Cbar] = separate(g,[Nx_v sum(Nx.s.^2)],1);
 % linear cost vector
-prob.c = Cc{1};
+prob.c = Clin;
 % symmetric cost matrices Cbar_j as stacked vectorization
 % Cbar = [Cbar1(:); ...; CbarN(:)]
-Cbar = Cc{2};
 % get nonzero elements and subindices (j,k,l)
 [barv.c,barc.subj,~,barc.subk,barc.subl] = obj.sdp_vec(Cbar,Nx.s,1);
-% % get nonzero indices w.r.t. Cbar
-% Ic = find(sparsity(Cbar));
-% % get subindices (j,k,l) and linear indices for nonzero elements (tril)
-% [barc.subj,barc.subk,barc.subl,Ic] = get_barsub(Nx.s,Ic);
-% % store nonzeros elements
-% barv.c = Cbar(Ic); %vertcat(barc_val{Ic});
 
 % separate linear constraints and affine cone constraints
 %     | a : Abar | 
 % A = |----------|
 %     |    F     |
-Ac = mat2cell(a,[Na.l Na_c],n);
+[A,F] = separate(a,[Na.l Na_c],n);
 
 % separate linear constraints for vector and matrix variables
-Alin = mat2cell(Ac{1},Na.l,[Nx_v sum(Nx.s.^2)]);
+[Alin,Abar] = separate(A,Na.l,[Nx_v sum(Nx.s.^2)]);
 % linear constraints matrix
-prob.a = Alin{1};
+prob.a = Alin;
 % symmetric constraint matrices Abar_ij as stacked vectorizations
 %        | Abar11(:)' ... Abar1N(:)' |
 % Abar = |     :       :      :      |
 %        | AbarM1(:)' ... AbarMN(:)' |
-Abar = Alin{2};
 % get nonzero elements and subindices (i,j,k,l)
 [barv.a,bara.subi,bara.subj,bara.subk,bara.subl] = obj.sdp_vec(Abar,Nx.s,1,2);
-% % get nonzero indices w.r.t. Abar
-% [iA,jA] = ind2sub(size(Abar),find(sparsity(Abar)));
-% % get subindices (j,k,l) and linear indices for nonzero elements (tril)
-% [bara.subj,bara.subk,bara.subl,jA,iA] = get_barsub(Nx.s,jA,iA);
-% % subindices i for nonzero elements
-% bara.subi = iA;
-% % store nonzeros elements
-% Ia = sub2ind(size(Abar),iA,jA);
-% barv.a = Abar(Ia); %vertcat(bara_val{Ia,Ja});
+% rewrite 
+%   lba <= Abar*X <= uba, X in Kx + cbx
+% into
+%   lba <= Abar*(X'+cbx) <= uba, X' in Kx
+Acb = Abar*cbx_s;
 % linear bounds
-prob.blc = lba;
-prob.buc = uba;
+prob.blc = lba - Acb;
+prob.buc = uba - Acb;
 
 % vectorize semidefinite domain for affine cone constraints
 %     | Fvec |
 % F = |------|
 %     | Fmat |
-Fc = mat2cell(Ac{2},[Na_q sum(Na.s.^2)],n);
-gc = mat2cell( -cba,[Na_q sum(Na.s.^2)],1);
+Fc = mat2cell(   F,[Na_q sum(Na.s.^2)],n);
+gc = mat2cell(-cba,[Na_q sum(Na.s.^2)],1);
 % vector-based vectorization
 Fmat = obj.sdp_vec(Fc{2},Na.s,[],1);
 gmat = obj.sdp_vec(gc{2},Na.s,[],1);
-% Fmat = cellfun(@obj.sdp_vec, mat2cell(Fc{2},Na.s.^2,n), 'UniformOutput',false);
-% gmat = cellfun(@obj.sdp_vec, mat2cell(gc{2},Na.s.^2,1), 'UniformOutput',false);
 % build affine cone constraints
 Facc = vertcat(Fc{1},Fmat);
 gacc = vertcat(gc{1},gmat);
 
 % separate affine cone constraints for vector and matrix variables
 % F = | f : Fbar |
-Fcc = mat2cell(Facc,Na_C,[Nx_v sum(Nx.s.^2)]);
+[Flin,Fbar] = separate(Facc,Na_C,[Nx_v sum(Nx.s.^2)]);
 % affine cone constraint matrix
 prob.f = [
-    Fcc{1}
-    sparse(1:Nx_q,Nx.l+(1:Nx_q),ones(Nx_q,1),Nx_q,Nx_v)
+    Flin
+    casadi.DM.triplet((1:Nx_q)-1,Nx.l+(1:Nx_q)-1,ones(Nx_q,1),Nx_q,Nx_v)
 ];
-% constant cone
-prob.g = [gacc; zeros(Nx_q,1)];
 % symmetric constraint matrices as stacked vectorization
-Fbar = Fcc{2};
 % get nonzero elements and subindices (i,j,k,l)
 [barv.f,barf.subi,barf.subj,barf.subk,barf.subl] = obj.sdp_vec(Fbar,Nx.s,1,2);
-% % get nonzero indices w.r.t. Fbar
-% [iF,jF] = ind2sub(size(Fbar),find(sparsity(Fbar)));
-% % get subindices (j,k,l) and linear indices for nonzero elements (tril)
-% [barf.subj,barf.subk,barf.subl,jF,iF] = get_barsub(Nx.s,jF,iF);
-% % subindices i for nonzero elements
-% barf.subi = iF;
-% % store nonzeros elements
-% If = sub2ind(size(Fbar),iF,jF);
-% barv.f = Fbar(If); %vertcat(barf_val{If,Jf});
+% rewrite 
+%   Fbar*X + g in Kc, X in Kx + cbx
+% into
+%   Fbar*(X'+cbx) + g in Kc, X' in Kx
+Fcb = Fbar*cbx_s;
+% constant cone
+prob.g = [gacc + Fcb; cbx_v];
 
 % linear and vector state constraints
 prob.blx = [lbx; -inf(Nx_q,1)];
 prob.bux = [ubx; +inf(Nx_q,1)];
+
+% handle quadratic cost function
+% MOSEK cannot solve conic problems with quadratic cost
+if nnz(h) > 0
+    % only SX supports Cholesky decomposition
+    H = casadi.SX.sym('H',sparsity(h));
+    chol_f = casadi.Function('chol',{H},{chol(H)});
+    % rewrite quadratic cost
+    %
+    %   min_x 1/2 x'*Q*x + c'*x
+    %
+    % into 
+    %
+    %   min_{x,y} c'*x + y, s.t. 1 + y >= ||(sqrt(2)*U*x, 1 - y)||
+    %
+    % with additional variable y and Cholesky decomposition U'*U = Q
+    U = chol_f(h);
+    % build affine cone constraint 
+    % L(y,x) + k = (1+y, sqrt(2)*U*x, 1-y) in SOC
+    % note: additional variable y is first decision variable
+    L = [1 casadi.DM(1,n); casadi.DM(n,1) sqrt(2)*U; -1 casadi.DM(1,n)];
+    k = [1; casadi.DM(n,1); 1];
+    % number of additional variables and constraints
+    Nx_cost = 1;
+    Na_cost = n + 2;
+    % separate ACC for vector and matrix variables
+    [Llin,Lbar] = separate(L,Na_cost,[Nx_v+1 sum(Nx.s.^2)]);
+    % get nonzero elements and subindices (i,j,k,l) for Lbar
+    [barv_l,barl.subi,barl.subj,barl.subk,barl.subl] = obj.sdp_vec(Lbar,Nx.s,1,2);
+    % add to regular (linear) cost
+    prob.c = [1; prob.c];
+    % add to regular linear constraints
+    prob.a = [casadi.DM(Na.l,1) prob.a];
+    % add to regular affine cone constraints
+    prob.f = [casadi.DM(Na_C+Nx_q,1) prob.f; Llin];
+    prob.g = [prob.g; k];
+    barv.f = [barv.f barv_l];
+    barf.subi = [barf.subi (Na_C+Nx_q)+barl.subi];
+    barf.subj = [barf.subj barl.subj];
+    barf.subk = [barf.subk barl.subk];
+    barf.subl = [barf.subl barl.subl];
+    % add to regular decision variables (y >= 0)
+    prob.blx = [  0; prob.blx];
+    prob.bux = [inf; prob.bux];
+    % add to conic domain
+    acc_cost = [symbcon.MSK_DOMAIN_QUADRATIC_CONE Na_cost];
+
+else
+    Nx_cost = 0;
+    Na_cost = 0;
+    acc_cost = [];
+end
 
 % return MOSEK prob structure
 obj.fhan = casadi.Function('f',struct2cell(obj.args_in),struct2cell(prob),fieldnames(obj.args_in),fieldnames(prob));
@@ -191,8 +226,9 @@ Accs = [
     arrayfun(@(d) [symbcon.MSK_DOMAIN_SVEC_PSD_CONE   d], Na_S, 'UniformOutput',false)
     arrayfun(@(l) [symbcon.MSK_DOMAIN_QUADRATIC_CONE  l], Nx.q, 'UniformOutput',false)
     arrayfun(@(l) [symbcon.MSK_DOMAIN_RQUADRATIC_CONE l], Nx.r, 'UniformOutput',false)
+    acc_cost
 ];
-cone.bardim = Kx.s;
+cone.bardim = Nx.s;
 cone.barc = barc;
 cone.bara = bara;
 cone.barf = barf;
@@ -202,33 +238,31 @@ obj.cone = cone;
 
 % parse MOSEK solution into (x,cost,lam_a,lam_x)
 sol.pobjval = casadi.MX.sym('pobjval');
-sol.xx   = casadi.MX.sym('xx',[Nx_v 1]);
+sol.xx   = casadi.MX.sym('xx',[Nx_cost+Nx_v 1]);
 sol.barx = casadi.MX.sym('barx',[sum(Nx_S) 1]);
-% sol.barx = arrayfun(@(d) casadi.MX.sym('Xbar',[d 1]), Nx_S, 'UniformOutput',false);
 sol.slc  = casadi.MX.sym('slc',[Na.l 1]);
 sol.suc  = casadi.MX.sym('suc',[Na.l 1]);
-sol.slx  = casadi.MX.sym('slx',[Nx.l+Nx_q 1]);
-sol.sux  = casadi.MX.sym('sux',[Nx.l+Nx_q 1]);
-sol.doty = casadi.MX.sym('doty',[Na_q+sum(Na_S)+Nx_q 1]);
+sol.slx  = casadi.MX.sym('slx',[Nx_cost+Nx.l+Nx_q 1]);
+sol.sux  = casadi.MX.sym('sux',[Nx_cost+Nx.l+Nx_q 1]);
+sol.doty = casadi.MX.sym('doty',[Na_q+sum(Na_S)+Nx_q+Na_cost 1]);
 sol.bars = casadi.MX.sym('bars',[sum(Nx_S) 1]);
-% sol.bars = arrayfun(@(d) casadi.MX.sym('Sbar',[d 1]), Nx_S, 'UniformOutput',false);
 
+% dual variables corresponding to linear variables
+[~,Slx,~] = separate(sol.slx,[Nx_cost Nx.l Nx_q],1);
+[~,Slu,~] = separate(sol.sux,[Nx_cost Nx.l Nx_q],1);
 % dual variables corresponding to affine conic constraints
-Yc = mat2cell(sol.doty,[Na_q sum(Na_S) Nx_q],1);
+[Yaq,Yas,Yxq,Ycost] = separate(sol.doty,[Na_q sum(Na_S) Nx_q Na_cost],1);
 % de-vectorize SDP primal and dual variables (no scaling)
-Xc_s = obj.sdp_mat(sol.barx,Nx.s,1);
+Xc_s = obj.sdp_mat(sol.barx,Nx.s,1) + cbx_s;
 Sc_s = obj.sdp_mat(sol.bars,Nx.s,1);
-% Xc_s = cellfun(@(X) obj.sdp_mat(X,1), mat2cell(sol.barx,Nx_S,1), 'UniformOutput', false);
-% Sc_s = cellfun(@(S) obj.sdp_mat(S,1), mat2cell(sol.bars,Nx_S,1), 'UniformOutput', false);
 % de-vectorize duals corresponding to semidefinite constraints
-Yc_s = obj.sdp_mat(Yc{2},Na.s,1);
-% Yc_s = cellfun(@obj.sdp_mat, mat2cell(Yc{2},Na_S,1), 'UniformOutput',false);
+Yc_s = obj.sdp_mat(Yas,Na.s,1);
 % multipliers for box constraints
 lam_a_l = sol.suc - sol.slc;
-lam_x_l = sol.sux(1:Nx.l) - sol.slx(1:Nx.l);
+lam_x_l = Slu - Slx;
 % multipliers for quadratic constraints
-lam_a_q = -Yc{1};
-lam_x_q = -Yc{3};
+lam_a_q = -Yaq;
+lam_x_q = -Yxq;
 % multipliers for SDP constraints
 lam_a_s = -vertcat(Yc_s);
 lam_x_s = -vertcat(Sc_s);
@@ -236,44 +270,17 @@ lam_x_s = -vertcat(Sc_s);
 lam_a = [lam_a_l; lam_a_q; lam_a_s];
 lam_x = [lam_x_l; lam_x_q; lam_x_s];
 % build solution
-sol_x = vertcat(sol.xx,Xc_s);
+[~,Xc_l] = separate(sol.xx,[Nx_cost Nx_v],1);
+sol_x = vertcat(Xc_l,Xc_s);
 % cost
 cost = sol.pobjval;
 
-obj.ghan = casadi.Function('g',struct2cell(sol),{sol_x cost lam_a lam_x},fieldnames(sol),obj.names_out);
+obj.ghan = casadi.Function('g',[struct2cell(sol); struct2cell(obj.args_in)],{sol_x cost lam_a lam_x},[fieldnames(sol); fieldnames(obj.args_in)],obj.names_out);
 
 end
 
-function [j,k,l,I,J] = get_barsub(s,I,J)
-% Return subindices for into nonzeros elements of stacked coefficients.
+function varargout = separate(A,varargin)
+% Separate array into subarrays.
 
-    I = reshape(I,1,[]); % ensure row vector of linear indices.
-    s = reshape(s,1,[]); % ensure row vector of matrix dimensions.
-
-    % number of matrix components before j-th matrix variables
-    S = cumsum([0 s(1:end-1).^2]);
-
-    % compute index j of corresponding matrix variable
-    j = sum(I > S', 1); % MOSEK interface is 1-based
-
-    % compute linear indices of elements in each matrix
-    I0 = I - S(j);
-
-    % compute indices (k,l) of elements in matrix
-    % as (remainder,quotient) of linear indices divided by matrix size
-    l = ceil(I0 ./ s(j)); % col
-    k = I0 - s(j).*(l-1); % row
-
-    % only keep lower-triangular elements
-    Itril = (k >= l);
-    % remove indices for upper triangular
-    I(~Itril) = [];
-    j(~Itril) = [];
-    l(~Itril) = [];
-    k(~Itril) = [];
-
-    % optional row indices
-    if nargin > 2
-        J(~Itril) = [];
-    end
+    varargout = mat2cell(A,varargin{:});
 end
