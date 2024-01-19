@@ -1,6 +1,7 @@
 function [A,B,f0] = plinearize(f,x,u,x0,u0)
 
-
+Nx = length(x);
+Nu = length(u);
 
 % Error Checking
 if nargin==2
@@ -20,31 +21,44 @@ end
 
 % Default trim values
 if isempty(x0)
-    Nx = length(x);
     x0 = zeros(Nx,1);
 end
 if isempty(u0)
-    Nu = length(u);
     u0 = zeros(Nu,1);
 end
    
 % Evaluate function at trim
-v = [x(:); u(:)];
-v0 = [x0(:); u0(:)];
-
-f0 = subs(f,v,v0);
-f0 = double(f0);
+f0 = double(subs(f,[x;u],[x0(:); u0(:)]));
 
 % State matrix 
-dfdx = nabla(f,x);
-A = subs(dfdx,v,v0);
-A = double(A);
+fx = nabla(f,x);
 
-% Input matrix
-if ~isempty(u)
-    dfdu = nabla(f,u);
-    B = subs(dfdu,v,v0);
-    B = double(B);
+% check if any state is member of A matrix; if yes evaluate it at trim point; 
+% otherwise convert to double
+if any(ismember(fx.indeterminates.str,x.str))
+
+    A = double(subs(fx,x,x0));
+
 else
-    B=f0;
+    A = double(fx);
+end
+
+% Control matrix
+if ~isempty(u)
+    fu = nabla(f,u);
+    
+    % check if any control is member of B matrix; if yes 
+    % evaluate it at trim point; otherwise convert to double
+    if any(ismember(fu.indeterminates.str,u.str))
+      
+        B = double(subs(fu,u,u0));
+
+    else
+        B = double(fu);
+    end
+else
+    B = [];
+end
+
+
 end
