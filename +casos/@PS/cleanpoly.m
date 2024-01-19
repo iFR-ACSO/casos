@@ -28,15 +28,12 @@ if ~isempty(tol)
             % new polynomial
             B        = casos.PS;
 
-            % Remark: currently all coefficients below tol. are set to
-            % zero and the polynomial size is still the same 
-            % Is it more efficient to adjust the degree matrix and
-            % coefficients i.e. remove the corresponding entries and
-            % having a smaller polynomial? Otherwise it is only cosmetic.
+            % remove zero terms
+            [coeffs,degmat,indets] = removeZero(sparsify(casadi.SX(coeff)),p.degmat,p.indets);
 
-            B.coeffs = casadi.SX(coeff); % polynomial coefficients need to be casadi SX
-            B.degmat = p.degmat; 
-            B.indets = p.indets;
+            B.coeffs = casadi.SX(coeffs); % polynomial coefficients need to be casadi SX
+            B.degmat = degmat; 
+            B.indets = indets;
             B.matdim = p.matdim;
 
         else
@@ -71,10 +68,13 @@ if ~isempty(deg)
         % new polynomial
         B        = casos.PS;
 
-        B.coeffs = coeffs;
-        B.degmat = p.degmat;
-        B.indets = p.indets;
-        B.matdim = p.matdim;
+       % remove zero terms
+       [coeffs,degmat,indets] = removeZero(sparsify(casadi.SX(coeffs)),p.degmat,p.indets);
+
+       B.coeffs = coeffs; % polynomial coefficients need to be casadi SX
+       B.degmat = degmat; 
+       B.indets = indets;
+       B.matdim = p.matdim;
     
     % find all parts that shall be retained with certain degrees of a
     % variable
@@ -120,15 +120,24 @@ if ~isempty(deg)
         % new polynomial
         B        = casos.PS;
 
-        B.coeffs = coeffs;
-        B.degmat = p.degmat;
-        B.indets = p.indets;
-        B.matdim = p.matdim;
+       % remove zero terms
+       [coeffs,degmat,indets] = removeZero(sparsify(casadi.SX(coeffs)),p.degmat,p.indets);
+
+       B.coeffs = coeffs; % polynomial coefficients need to be casadi SX
+       B.degmat = degmat; 
+       B.indets = indets;
+       B.matdim = p.matdim;
+
+       
+
+
     else
 
         error('deg must be a vector of non-negative integers or an Nx2 cell array');
 
     end
+
+    
     
 end
 
