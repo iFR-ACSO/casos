@@ -30,6 +30,7 @@ if obj.opts.verbose
     disp('Start Bisection') 
     disp('=========================================================')
 end
+
 for i=1:length(info)  
     % bisection
     ttry = mean(interval);
@@ -104,7 +105,8 @@ for i=1:length(info)
    if obj.opts.verbose
        tchar = 'gamma_';
         
-       fprintf(['iteration:  %d/%d \t' tchar 'lb  = %-4.4f \t ' tchar 'try = %-4.4f \t'],i,length(info),obj.qc_sign*round(interval(1),4),obj.qc_sign*round(ttry,4));
+       fprintf(['iteration:  %d/%d \t' tchar 'lb  = %-4.4f \t ' tchar 'try = %-4.4f \t'],...
+                i,length(info),obj.qc_sign*round(interval(1),4),obj.qc_sign*round(ttry,4));
        fprintf([tchar 'ub = %-4.4f \t Feas = %d \n'],obj.qc_sign*round(interval(2),4),feas);
    end
 end
