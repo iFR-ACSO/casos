@@ -53,6 +53,7 @@ opts = struct('sossol','mosek');
 opts.error_on_fail = 0; 
 opts.max_iter      = 20;
 opts.conf_interval = [-10 0]';
+opts.verbose = 1;
 opts.sossol_options.sdpsol_options.mosek_param.MSK_IPAR_BI_CLEAN_OPTIMIZER = 'MSK_OPTIMIZER_INTPNT';
 opts.sossol_options.sdpsol_options.mosek_param.MSK_IPAR_INTPNT_BASIS = 'MSK_BI_NEVER';
 opts.Kx.s = 1; 
