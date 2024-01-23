@@ -27,23 +27,42 @@ end
 function [coeffs,degmat] = removeCoeffs(coeffs,degmat)
 % Remove terms with zero coefficient and update degree matrix.
     
-    % nonzero coefficients with linear indices
-    idx = find(sparsity(coeffs));
-    [in,jn] = ind2sub(size(coeffs),idx);
-    
-    % identify all-zero rows
-    [nr,~,ir] = unique(in);
+    % sparsity pattern of coefficients
+    S1 = sparsity(coeffs);
+    % sparsity pattern without zeros
+    S0 = sparsity(sparsify(coeffs));
 
+    % detect full zeros
+    [~,iz] = setdiff(find(S1),find(S0));
+
+    % nonzero coefficients with linear indices
+    [i0,~]  = ind2sub(size(coeffs),find(S0));   % sparse zeros
+    [i1,j1] = ind2sub(size(coeffs),find(S1));   % full zeros
+    
+    % assign full zeros to first not all-sparse row
+    i1(iz) = max([min(i0) 1]);
+    
+    % identify all-zero rows (zero coefficient)
+    [nr,~,ir] = unique(i1);
+
+    % coefficients without all-sparse rows
+    idx = unique(sub2ind(size(coeffs),i1,j1));
+    
     % length corresponds to number of nonzero rows
     I = 1:length(nr);
     
-    % sparsity pattern without all-zero rows (note: 0-based index)
-    S = casadi.Sparsity.triplet(length(nr),size(coeffs,2),I(ir)-1,jn-1);
+    % sparsity pattern without all-sparse rows (note: 0-based index)
+    S = casadi.Sparsity.triplet(length(nr),size(coeffs,2),I(ir)-1,j1-1);
     % assign nonzero coefficients to sparsity pattern
     coeffs = casadi.SX(S,coeffs(idx));
 
-    % remove corresponding degree matrix entries
-    degmat = degmat(nr,:);
+    if isempty(i0)
+        % only zero coefficients
+        degmat = sparse(1,size(degmat,2));
+    else
+        % remove corresponding degree matrix entries
+        degmat = degmat(nr,:);
+    end
 end
 
 function [degmat,indets] = removeDegVar(degmat,indets)
