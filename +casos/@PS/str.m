@@ -8,18 +8,25 @@ end
 
 % else
 out = cell(size(obj));
+% preassign sparse zeros
+out(:) = {'00'};
+
+% coefficient sparsity
+S = sparsity(obj.coeffs);
+% nonzero coefficients
+[iterms,ielems] = ind2sub(size(obj.coeffs),find(S));
 
 % iterate over elements
-for i = 1:numel(obj)
+for ie = unique(ielems)
     % polynomial terms (monomials)
     terms = cell(1,obj.nterm);
 
     firstterm = 1;
 
-    for j = 1:obj.nterm
+    for it = iterms(ielems == ie)
         % coefficient & degree
-        cf = obj.coeffs(j,i);
-        dg = obj.degmat(j,:);
+        cf = obj.coeffs(it,ie);
+        dg = obj.degmat(it,:);
 
         % string representation of coefficient and sign
         mdf = '';
@@ -41,8 +48,9 @@ for i = 1:numel(obj)
             sgn = ' - ';
             mdf = '-';
         else
-            % zero constant
-            continue;
+            % zero constant (nonsparse zero)
+            scf = '0';
+            sgn = ' + ';
         end
 
         % remove sign on first term
@@ -71,15 +79,14 @@ for i = 1:numel(obj)
         end
 
         % combine
-        terms{j} = [sgn scf monom];
+        terms{it} = [sgn scf monom];
     end
 
     % check for zero polynomial
-    if firstterm
-        out{i} = '0';
-    else
-        out{i} = [terms{:}];
-    end
+    assert(~firstterm, 'Notify developers.')
+    
+    % combine terms 
+    out{ie} = [terms{:}];
 end
 
 end
