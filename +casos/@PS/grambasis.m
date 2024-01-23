@@ -72,8 +72,54 @@ Lz(:,~I) = [];
 degmat = z.degmat(I,:);
 z = build_monomials(degmat,z.indets);
 
+% ------------------------------------------------------------------------
+% BLOCK DIAGONALIZATION (Warning: Not fully bullet proof) RL
+% -----------------------------------------------------------------------
+% find all sign-symmetries
+simp=1;
+if simp==1
+    P = p.degmat';
+    N = length(indets);
+    allsym = 2^N;
+    R = dec2bin(0:allsym-1) - '0';
+    signR = zeros(allsym,1);
+    for i=1:allsym
+        if mod(R(i,:)*P, 2) == 0
+            signR(i)=1;
+        end
+    end
+    
+    % remove non-sign symmetric rows
+    if ~isempty(degmat)
+        R(~signR,:)=[];
+        W = R*degmat';
+        W = mod(W,2);
+        [~,~,IC]=unique(W','rows');
+        %Nunique = length(C);
+        [gc,~] = groupcounts(IC);
+        K = gc';
+    else
+        K = full(sum(Lz,2));
+    end
+    
+    % rearrange z vector 
+    zn = casos.PS(length(z),1);
+    j = 0;
+    for i=1:max(IC)
+        temp = z(IC==i);
+        zn(j+1: j + length(temp)) = temp;
+        j = j + length(temp);
+    end
+    degmatn = zn.degmat;
+    degmat = degmatn;
+    z = zn;
+else
+    K = full(sum(Lz,2));
+end
+% ------------------------------------------------------------------------
+
 % dimension K(i) of Gram basis for p(i)
-K = full(sum(Lz,2));
+K1 = full(sum(Lz,2));
 
 % build square matrix of monomials
 nt = size(degmat,1);
@@ -98,7 +144,7 @@ D(~I,:) = [];
 %
 % where i_, j_, k_ are those indices satisfying that
 % L(1,i_), L(2,j_), L(3,k_), respectively, are true
-lZ = sum(K.^2);
+lZ = sum(K1.^2);
 nT = size(D,1);
 
 % enumerate entries of S, first for p(1), then p(2), ...
