@@ -1,7 +1,23 @@
-function [Z,K,z] = grambasis(p,I)
+function [BZ,K,Bz] = grambasis(p, I, simplify)
 % Return Gram basis of polynomial vector.
 
-if nargin < 2
+if nargin < 3
+    simplify = 0;
+end
+
+flag = nargin <= 3 && isempty(I);
+
+% preallocate 
+lp = numel(p);
+Bz = cell(lp,1);
+BZ = cell(lp,1);
+K = cell(1,lp);
+
+aux = p;
+for c=1:length(aux)
+p = aux(c);
+
+if nargin < 2 || flag
     lp = numel(p);
     I = true(lp,1);
     idx = 1:lp;
@@ -9,6 +25,7 @@ else
     lp = nnz(I);
     idx = find(I);
 end
+
 
 % get logical maps for degrees and indeterminate variables
 % -> Ldeg(i,j) is true iff p(i) has terms of degree(j)
@@ -76,8 +93,7 @@ z = build_monomials(degmat,z.indets);
 % BLOCK DIAGONALIZATION (Warning: Not fully bullet proof) RL
 % -----------------------------------------------------------------------
 % find all sign-symmetries
-simp=1;
-if simp==1
+if simplify==1
     P = p.degmat';
     N = length(indets);
     allsym = 2^N;
@@ -97,7 +113,7 @@ if simp==1
         [~,~,IC]=unique(W','rows');
         %Nunique = length(C);
         [gc,~] = groupcounts(IC);
-        K = gc';
+        K{c} = gc';
     else
         K = full(sum(Lz,2));
     end
@@ -113,8 +129,12 @@ if simp==1
     degmatn = zn.degmat;
     degmat = degmatn;
     z = zn;
+    % stores the monomial basis for each constraint
+    Bz{c} = z; 
 else
-    K = full(sum(Lz,2));
+    % if simplify is not 'on'
+    K{c} = full(sum(Lz,2));
+    Bz{c} = z;
 end
 % ------------------------------------------------------------------------
 
@@ -159,5 +179,10 @@ Z = casos.PS;
 [Z.coeffs,Z.degmat] = uniqueDeg(coeffs,D);
 Z.indets = z.indets;
 Z.matdim = [lZ lp];
+% Store Z
+% WARNING: diferent configuration compared with the previously presented 
+BZ{c}= Z;
+
+end
 
 end
