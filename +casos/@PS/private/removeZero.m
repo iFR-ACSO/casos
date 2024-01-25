@@ -32,13 +32,13 @@ function [coeffs,degmat] = removeCoeffs(coeffs,degmat)
     % sparsity pattern without zeros
     S0 = sparsity(sparsify(coeffs));
 
-    % detect full zeros
-    [~,iz] = setdiff(find(S1),find(S0));
-
     % nonzero coefficients with linear indices
-    [i0,~]  = ind2sub(size(coeffs),find(S0));   % sparse zeros
+    [i0,j0] = ind2sub(size(coeffs),find(S0));   % sparse zeros
     [i1,j1] = ind2sub(size(coeffs),find(S1));   % full zeros
     
+    % detect all-zero columns (full zero)
+    iz = ~ismember(j1,j0);
+
     % assign full zeros to first not all-sparse row
     i1(iz) = max([min(i0) 1]);
     
