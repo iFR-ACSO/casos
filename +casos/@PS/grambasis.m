@@ -41,6 +41,16 @@ Ldeg_e(:,2:end) = Ldeg_e(:,2:end) | Ldeg_o;
 % get half-degree vector of monomials
 % TODO: compute degree matrix directly (avoid unnecessary checks)
 z = monomials(indets,mndg:mxdg);
+
+% -------------------------------------------------------------------------
+% ----------------------------- WARNING -----------------------------------
+% removes monomials outside half Newton polytope
+% should receive single constraints 
+% degmat = newton_reduce(p, z);
+% z = build_monomials(degmat,z.indets);
+% -------------------------------------------------------------------------
+% -------------------------------------------------------------------------
+
 % compute logical map for half-degree monomials
 % -> Lz_deg(i,j) is true iff z(i) is of degree(j)/2
 % -> Lz_var(i,j) is true iff z(i) includes indets(j)
