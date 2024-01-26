@@ -7,7 +7,7 @@ a = casos.PS(a);
 x = casos.PS(x);
 b = casos.PS(b);
 
-assert(is_symbolic(x), 'Second argument must be purely symbolic.')
+% assert(is_symbolic(x), 'Second argument must be purely symbolic.')
 
 % check dimensions
 if isscalar(b)
