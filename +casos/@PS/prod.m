@@ -41,7 +41,7 @@ B = casos.PS;
 coeffs = finishMatrixOp(cfb,sz,dim);
 
 % make degree matrix unique
-[coeffs,degmat] = uniqueDeg(coeffs, degmat);
+% [coeffs,degmat] = uniqueDeg(coeffs, degmat);
 
 % remove zero terms
 [coeffs,degmat,indets] = removeZero(coeffs,degmat,A.indets);
@@ -61,6 +61,7 @@ nt = size(degmat,1);
 
 if L <= 1
     % nothing to do
+    return
 
 elseif L == 2 || (L*nt^L) > 1e6
     % two elements to multiply or
@@ -157,5 +158,8 @@ else
     % reshape output degree matrix
     degmat = reshape(dgb,nt^L,nv);
 end
+
+% make degree matrix unique
+[coeffs,degmat] = uniqueDeg(coeffs, degmat, dim);
 
 end
