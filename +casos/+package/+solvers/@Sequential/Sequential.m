@@ -10,12 +10,6 @@ properties (Access=private)
 end
 
 
-properties (Access=public)
-   MeritFunEval;
-
-end
-
-
 properties (Constant,Access=protected)
     nlsos_options = [casos.package.solvers.SosoptCommon.sosopt_options
         {'max_iter', 'Maximum number of sequential sos.'
@@ -80,73 +74,6 @@ methods
         if ~isfield(obj.opts,'tolerance_rel'), obj.opts.tolerance_rel = 1e-3; end
     
        
-        % store user parameter
-        p0 = sos.p;
-        
-        % parameterize decision variables
-        x0    = [];
-        x1    = [];
-        lam_x = [];
-        lam_g = [];
-
-        % for each decision variable generate a parameter (which is the current solution)
-        % naming is not important since this is only for internal 
-        for k = 1:length(sos.x)
-
-            base = basis(sos.x(k));
-           x0 = [x0; 
-                         casos.PS.sym(['X0' num2str(k)],base)];
-
-           x1 = [x1; 
-                 casos.PS.sym(['X1' num2str(k)],base)];
-
-           lam_x = [lam_x; 
-                   casos.PS.sym(['lam_x' num2str(k)],base)];
-        end
-
-
-         for k = 1:length(sos.g)
-           lam_g = [lam_g; 
-                 casos.PS.sym(['lam_g' num2str(k)],basis(sos.g(k)))];
-        end
-
-        
-        d = casos.PS.sym('d');
-  
-        ObjFun   = casos.Function('f',{sos.x}, {sos.f});
-        ConFun   = casos.Function('f',{sos.x}, {sos.g});
-
-        eta = 1e-15;
-
-
-        %% setup line search solver
-        % define SOS problem:
-        %   min_d Psi(d) s.t. 0 \leq d \leq 1 
-        sos_lineSearch = struct('x',d, ...
-                                 'f',ObjFun((1-d)*x0 + d*x1) - dot(lam_x,x0) - dot(lam_g, ConFun((1-d)*x0 + d*x1)) - eta*d.^2, ...
-                                 'g',[], ...
-                                 'p',[x0; x1; lam_x; lam_g]);
-
-        % constraint is scalar SOS cone
-        opts = struct('Kc',struct('s',0),'Kx',struct('l',1));
-        
-        % solve by relaxation to SDP
-        obj.lineSearch = casos.sossol('S','mosek',sos_lineSearch,opts);
-       
-         
-        % Taylor Approximation constraints and evaluate at parameterized
-        % solution
-         sos.g = linearize(sos.g,sos.x,x0);
-
-        % Taylor Approximation cost and evaluate at parameterized
-        % solution
-        sos.f = linearize(sos.f,sos.x,x0);
-        
-        % extend parameter vector
-        sos.p = [p0; x0];
-
-   
-        
         % build SOS problem
         buildproblem(obj,sos);
 
