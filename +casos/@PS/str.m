@@ -93,7 +93,7 @@ for ic = find(S)
 end
 
 % combine terms 
-out(~firstterm) = join(terms(:,~firstterm)', '');
+out(~firstterm) = join(terms(:,~firstterm)', '', 2);
 % assign sparse zeros
 out(firstterm) = {'00'};
 
