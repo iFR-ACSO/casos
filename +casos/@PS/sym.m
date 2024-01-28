@@ -20,6 +20,12 @@ elseif isnumeric(w) && nargin < 3
     sz = w;
     % default monomials: 1
     w = casos.PS(1);
+elseif ~isvector(w)
+    % undocumented: symbolic with given basis
+    assert(nargin < 3, 'Invalid inputs.')
+    
+    p = casos.PS(w, casadi.SX.sym(dstr,size(w,1),1));
+    return
 else
     w = casos.PS(w);
     assert(is_monom(w),'Second input must be a vector of monomials.')
