@@ -1,11 +1,10 @@
-function Zdegmat = newton_reduce(p, z)
+function Lz = newton_reduce(p, Zdegmat)
 % removes monomials outside half Newton polytope
 %   INPUT:  p - single polynomial constraint
 %           z - initial guess of monomial basis
 %   Output: Zdegmat - degree matrix of new monomial basis 
 
 Pdegmat = p.degmat;
-Zdegmat = z.degmat; 
 
 % options for linprog
 options = optimoptions('linprog');
@@ -13,7 +12,6 @@ options.Display = 'off';
 
 % build LP (part 1)
 bfixed = [zeros(size(Pdegmat,1),1);1];
-K.l = length(bfixed);
 
 % save number of number of LP solved
 no_lp_solved = 0;
@@ -24,8 +22,6 @@ dontkeep = zeros(length(keep), 1);
 
 % try to go over each possible monomial basis and verify of it belongs to
 % the newton polytope by checking for the existance of a hyperplane 
-try
-
 for i = 1:length(keep)
      
     if ~keep(i) && ~dontkeep(i)
@@ -58,14 +54,7 @@ for i = 1:length(keep)
     end  
 end
 
-% update monomial basis 
-keep = find(~dontkeep);
-Zdegmat = Zdegmat(keep,:);
+Lz = ~dontkeep;
 
-catch
-    % In case an error occurs during the LP, notify user and use original
-    % monomial basis provided
-    fprintf('The Newton polytope-based monomial reduction failed\n');
-end
 
 end
