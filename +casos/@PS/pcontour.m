@@ -53,43 +53,45 @@ if opts.auto == 1
 
 end
     
-% plot contour
+% discretize the domain
 dg = cell(dim,1);
 for i=1:dim
     dg{i} = linspace(opts.domain(2*i-1),opts.domain(2*i),opts.npts(i));
 end
 
-% WARNING: current CASOS does not support repeated subs
-% TODO: this current approach is slow, improve grid approach
+% pre-allocate memory for pgrid
 pgrid = zeros(opts.npts);
 pgrid = pgrid(:);
+
+% convert polynomial to DM function
+p = to_function(p);
 
 if dim == 2 %2D
     [dg{1},dg{2}] = meshgrid(dg{1},dg{2});
     xg_c = dg{1}(:);
     yg_c = dg{2}(:);
     for i=1:length(pgrid)
-        pgrid(i) = double(subs(p,var,[xg_c(i); yg_c(i)]));
+        pgrid(i) = full(p([xg_c(i); yg_c(i)]));
     end
     pgrid = reshape(pgrid, opts.npts);
     contour(dg{1},dg{2},pgrid,[g g],opts.linespec);  
     axis(opts.domain)
-    xlabel(x)
-    ylabel(y)
+    xlabel('x')
+    ylabel('y')
 else    % 3D
     [dg{1},dg{2},dg{3}] = meshgrid(dg{1},dg{2}, dg{3});
     xg_c = dg{1}(:);
     yg_c = dg{2}(:);
     zg_c = dg{3}(:);
     for i=1:length(pgrid)
-        pgrid(i) = double(subs(p,var,[xg_c(i); yg_c(i); zg_c(i)]));
+        pgrid(i) = full(p([xg_c(i); yg_c(i); zg_c(i)]));
     end
     pgrid = reshape(pgrid, opts.npts);
     isosurface(xg,yg,zg,pgrid,1);    
     axis(opts.domain)
-    xlabel(x)
-    ylabel(y)
-    zlabel(z)
+    xlabel('x')
+    ylabel('y')
+    zlabel('z')
 end
 
 end
