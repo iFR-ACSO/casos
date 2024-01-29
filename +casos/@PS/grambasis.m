@@ -72,14 +72,9 @@ I = any(Lz,1);
 Lz(:,~I) = [];
 degmat = z.degmat(I,:);
 
-% -------------------------------------------------------------------------
 % removes monomials outside half Newton polytope
 Lz = arrayfun(@(g) newton_reduce(g,degmat), p, 'UniformOutput', false);
 Lz = horzcat(Lz{:})';
-I = any(Lz,1);
-Lz(:,~I) = [];
-degmat = z.degmat(I,:);
-% -------------------------------------------------------------------------
 
 z = build_monomials(degmat,z.indets);
 
