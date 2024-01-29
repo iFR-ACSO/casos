@@ -29,10 +29,6 @@ if isfield(opts.Kc,'s'), Ms = opts.Kc.s; else, Ms = 0; end
 assert(n == (Nl + Ns), 'Dimension of Kx must be equal to number of variables (%d).', n);
 assert(m == (Ml + Ms), 'Dimension of Kc must be equal to number of constraints (%d).', m)
 
-% select sum-of-squares variables and constraints
-Is = [false(Nl,1); true(Ns,1)];
-Js = [false(Ml,1); true(Ms,1)];
-
 % build SOS problem
 sos.x = qcsos.x;
 sos.g = qcsos.g;
@@ -49,11 +45,12 @@ sosopt.error_on_fail = false;
 obj.sossolver = casos.package.solvers.SossolInternal('SOS',opts.sossol,sos,sosopt);
 
 % store basis
-obj.monom_xl = basis(qcsos.x,~Is);
-obj.monom_xs = basis(qcsos.x, Is);
+% see SOSOPTCOMMON#GET_MONOMIALS_IN for details
+obj.monom_xl = monomials_in(obj.sossolver,2);
+obj.monom_xs = monomials_in(obj.sossolver,4);
 obj.monom_p  = basis(qcsos.p);
 obj.monom_f  = basis(qcsos.f);
-obj.monom_gl = basis(qcsos.g,~Js);
-obj.monom_gs = basis(qcsos.g, Js);
+obj.monom_gl = monomials_in(obj.sossolver,5);
+obj.monom_gs = monomials_in(obj.sossolver,7);
 
 end
