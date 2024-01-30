@@ -25,7 +25,7 @@ if iscolumn(z) && all(I)
     assert(is_monom(z),'Second argument must be vector of monomials.')
 
     % select coefficients
-    q = casadi.SX(numel(z),numel(p));
+    q = casadi.SX.zeros(numel(z),numel(p));
 
     if all(~tf)
         % zero projection
@@ -54,7 +54,7 @@ else
 
     if all(~tf)
         % zero projection
-        q = casadi.SX(lZ,1);
+        q = casadi.SX.zeros(lZ,1);
         e = p;
         return
     end
@@ -63,7 +63,7 @@ else
     nT = z.nterm;
 
     % select coefficients
-    Q = casadi.SX(nT,lp);
+    Q = casadi.SX.zeros(nT,lp);
     Q(ii(tf),:) = cfp(idx(tf),:);
 
     % construct sparsity
