@@ -12,6 +12,7 @@ if isfield(opts.Kx,'l'), Nl = opts.Kx.l; else, Nl = 0; end
 if isfield(opts.Kx,'s'), Ns = opts.Kx.s; else, Ns = 0; end
 if isfield(opts.Kc,'l'), Ml = opts.Kc.l; else, Ml = 0; end
 if isfield(opts.Kc,'s'), Ms = opts.Kc.s; else, Ms = 0; end
+if isfield(opts,'newton'), useNP = opts.newton; else, useNP = 0; end
 
 assert(n == (Nl + Ns), 'Dimension of Kx must be equal to number of variables (%d).', n);
 assert(m == (Ml + Ms), 'Dimension of Kc must be equal to number of constraints (%d).', m)
@@ -23,7 +24,7 @@ Js = [false(Ml,1); true(Ms,1)];
 % obtain Gram basis and matrix decision variables
 [Qgram_x,Zgram_x,Ksdp_x_s] = grammatrix(sos.x,Is);
 % obtain Gram basis for sum-of-squares constraints
-[Zgram_g,Ksdp_g_s] = grambasis(sos.g,Js);
+[Zgram_g,Ksdp_g_s] = grambasis(sos.g,Js,useNP);
 
 assert(length(Qgram_x) == size(Zgram_x,1), 'Unable to find Gram matrix of decision variables.')
 

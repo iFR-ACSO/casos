@@ -1,4 +1,4 @@
-function [Z,K,z] = grambasis(p,I)
+function [Z,K,z] = grambasis(p,I,useNP)
 % Return Gram basis of polynomial vector.
 
 if nargin < 2
@@ -9,6 +9,8 @@ else
     lp = nnz(I);
     idx = find(I);
 end
+
+if nargin < 3, useNP=0; end
 
 % get logical maps for degrees and indeterminate variables
 % -> Ldeg(i,j) is true iff p(i) has terms of degree(j)
@@ -69,13 +71,13 @@ Lz(reshape(any(Irem,2),lz,lp)') = false;
 
 % remove unused monomials from base vector
 I = any(Lz,1);
-Lz(:,~I) = [];
 degmat = z.degmat(I,:);
 
 % removes monomials outside half Newton polytope
-Lz = arrayfun(@(g) newton_reduce(g,degmat), p, 'UniformOutput', false);
-Lz = horzcat(Lz{:})';
-
+if useNP==1
+    Lz = arrayfun(@(i) newton_reduce(p.degmat(Ldegmat(i,:),Iv),degmat), idx, 'UniformOutput', false);
+    Lz = horzcat(Lz{:})';
+end
 z = build_monomials(degmat,z.indets);
 
 % dimension K(i) of Gram basis for p(i)
