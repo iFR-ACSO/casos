@@ -37,11 +37,9 @@ for i = 1:obj.opts.max_iter
             % where delta x = xk+1 - xk hence xk+1 = delta_x + xk 
             xk1 = sol{1} + xk;
             sol_old = sol;
-            % execute line search
-            solLS = obj.lineSearch('p',[xk;xk1;sol{4};sol{5}], ...
-                                   'lbx',0, ...
-                                   'ubx',1);
-            dopt = solLS.x;
+            sol_old{1} =  xk1;
+
+
          
         otherwise  
         % case UnifiedReturnStatus.SOLVER_RET_INFEASIBLE
@@ -82,6 +80,12 @@ for i = 1:obj.opts.max_iter
 
     % check convergence
     if i > 1 
+
+            % execute line search
+            solLS = obj.lineSearch('p',[xk;xk1;sol{4};sol{5}], ...
+                                   'lbx',0, ...
+                                   'ubx',1);
+            dopt = solLS.x;
         
         % currently only primal variables
         xk1 = dopt*xk1 + (1-dopt)*xk;

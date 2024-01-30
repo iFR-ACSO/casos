@@ -46,11 +46,20 @@ obj.sossolver = casos.package.solvers.SossolInternal('SOS',opts.sossol,sos,sosop
 
 % store basis
 % see SOSOPTCOMMON#GET_MONOMIALS_IN for details
+<<<<<<< HEAD
 obj.monom_xl = obj.sossolver.monom_xl;
 obj.monom_xs = obj.sossolver.monom_xs;
 obj.monom_p  = obj.sossolver.monom_p;
 obj.monom_f  = obj.sossolver.monom_f;
 obj.monom_gl = obj.sossolver.monom_gl;
 obj.monom_gs = obj.sossolver.monom_gs;
+=======
+obj.monom_xl = monomials_in(obj.sossolver,2);
+obj.monom_xs = monomials_in(obj.sossolver,4);
+obj.monom_p  = basis(qcsos.p);
+obj.monom_f  = basis(qcsos.f);
+obj.monom_gl = monomials_in(obj.sossolver,5);
+obj.monom_gs = monomials_in(obj.sossolver,7);
+>>>>>>> e46de63974e6a5759e850b41d75652d9cd4f52a5
 
 end
