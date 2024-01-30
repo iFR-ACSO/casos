@@ -72,12 +72,14 @@ Lz(reshape(any(Irem,2),lz,lp)') = false;
 % remove unused monomials from base vector
 I = any(Lz,1);
 degmat = z.degmat(I,:);
+Lz(:,~I) = [];
 
 % removes monomials outside half Newton polytope
 if useNP==1
     Lz = arrayfun(@(i) newton_reduce(p.degmat(Ldegmat(i,:),Iv),degmat), idx, 'UniformOutput', false);
     Lz = horzcat(Lz{:})';
 end
+
 z = build_monomials(degmat,z.indets);
 
 % dimension K(i) of Gram basis for p(i)
