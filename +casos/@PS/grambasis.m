@@ -1,23 +1,7 @@
-function [BZ,K,Bz] = grambasis(p, I, simplify)
+function [Z,K,z] = grambasis(p,I)
 % Return Gram basis of polynomial vector.
 
-if nargin < 3
-    simplify = 0;
-end
-
-flag = nargin <= 3 && isempty(I);
-
-% preallocate 
-lp = numel(p);
-Bz = cell(lp,1);
-BZ = cell(lp,1);
-K = cell(1,lp);
-
-aux = p;
-for c=1:length(aux)
-p = aux(c);
-
-if nargin < 2 || flag
+if nargin < 2
     lp = numel(p);
     I = true(lp,1);
     idx = 1:lp;
@@ -25,7 +9,6 @@ else
     lp = nnz(I);
     idx = find(I);
 end
-
 
 % get logical maps for degrees and indeterminate variables
 % -> Ldeg(i,j) is true iff p(i) has terms of degree(j)
@@ -89,57 +72,14 @@ Lz(:,~I) = [];
 degmat = z.degmat(I,:);
 z = build_monomials(degmat,z.indets);
 
-% ------------------------------------------------------------------------
-% BLOCK DIAGONALIZATION (Warning: Not fully bullet proof) RL
-% -----------------------------------------------------------------------
-% find all sign-symmetries
-if simplify==1
-    P = p.degmat';
-    N = length(indets);
-    allsym = 2^N;
-    R = dec2bin(0:allsym-1) - '0';
-    signR = zeros(allsym,1);
-    for i=1:allsym
-        if mod(R(i,:)*P, 2) == 0
-            signR(i)=1;
-        end
-    end
-    
-    % remove non-sign symmetric rows
-    if ~isempty(degmat)
-        R(~signR,:)=[];
-        W = R*degmat';
-        W = mod(W,2);
-        [~,~,IC]=unique(W','rows');
-        %Nunique = length(C);
-        [gc,~] = groupcounts(IC);
-        K{c} = gc';
-    else
-        K = full(sum(Lz,2));
-    end
-    
-    % rearrange z vector 
-    zn = casos.PS(length(z),1);
-    j = 0;
-    for i=1:max(IC)
-        temp = z(IC==i);
-        zn(j+1: j + length(temp)) = temp;
-        j = j + length(temp);
-    end
-    degmatn = zn.degmat;
-    degmat = degmatn;
-    z = zn;
-    % stores the monomial basis for each constraint
-    Bz{c} = z; 
-else
-    % if simplify is not 'on'
-    K{c} = full(sum(Lz,2));
-    Bz{c} = z;
+% ----------------------------- WARNING -----------------------------------
+if true
+    [K_test, Lz_test] = arrayfun(@(i) block_diagonalize(p, p.degmat(Ldegmat(i,:),Iv), z), idx, 'UniformOutput', false);
 end
-% ------------------------------------------------------------------------
+% -------------------------------------------------------------------------
 
 % dimension K(i) of Gram basis for p(i)
-K1 = full(sum(Lz,2));
+K = full(sum(Lz,2));
 
 % build square matrix of monomials
 nt = size(degmat,1);
@@ -164,7 +104,7 @@ D(~I,:) = [];
 %
 % where i_, j_, k_ are those indices satisfying that
 % L(1,i_), L(2,j_), L(3,k_), respectively, are true
-lZ = sum(K1.^2);
+lZ = sum(K.^2);
 nT = size(D,1);
 
 % enumerate entries of S, first for p(1), then p(2), ...
@@ -179,10 +119,5 @@ Z = casos.PS;
 [Z.coeffs,Z.degmat] = uniqueDeg(coeffs,D);
 Z.indets = z.indets;
 Z.matdim = [lZ lp];
-% Store Z
-% WARNING: diferent configuration compared with the previously presented 
-BZ{c}= Z;
-
-end
 
 end

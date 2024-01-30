@@ -14,7 +14,7 @@ f = [1 + x(1)^4 + x(1)*x(2)+x(2)^4 + x(3)^2 ;
 
 tic
 % obtain gram basis
-[Z,K_cone,z] = f.grambasis([], 1);
+[Z,K_cone,z] = f.grambasis();
 
 A = [];
 b = [];
