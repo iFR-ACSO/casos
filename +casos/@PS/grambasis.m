@@ -1,4 +1,4 @@
-function [Z,K,z] = grambasis(p,I)
+function [Z,K,z,nz] = grambasis(p,I)
 % Return Gram basis of polynomial vector.
 
 if nargin < 2
@@ -68,13 +68,20 @@ Lz(reshape(any(Irem,2),lz,lp)') = false;
 
 % remove unused monomials from base vector
 I = any(Lz,1);
-Lz(:,~I) = [];
 degmat = z.degmat(I,:);
 z = build_monomials(degmat,z.indets);
 
-% ----------------------------- WARNING -----------------------------------
+% ----------------------------- WARNING (dev) -----------------------------
 if true
-    [K_test, Lz_test] = arrayfun(@(i) block_diagonalize(p, p.degmat(Ldegmat(i,:),Iv), z), idx, 'UniformOutput', false);
+    % Block diagonalize Gram matrix based on symmetries 
+    Nind = length(z.indets);
+    [~, Lz_test, nz] = arrayfun(@(i) block_diagonalize( p.degmat(Ldegmat(i,:),Iv), degmat, Nind), idx, 'UniformOutput', false);
+    Lz = vertcat(Lz_test{:});
+    lp = sum(cellfun(@sum, nz));
+    nz = vertcat(nz{:});
+else
+    nz = ones(lp,1);
+    Lz(:,~I) = [];
 end
 % -------------------------------------------------------------------------
 

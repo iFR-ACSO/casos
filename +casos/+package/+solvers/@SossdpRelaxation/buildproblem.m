@@ -23,15 +23,21 @@ Js = [false(Ml,1); true(Ms,1)];
 % obtain Gram basis and matrix decision variables
 [Qgram_x,Zgram_x,Ksdp_x_s] = grammatrix(sos.x,Is);
 % obtain Gram basis for sum-of-squares constraints
-[Zgram_g,Ksdp_g_s] = grambasis(sos.g,Js);
+[Zgram_g,Ksdp_g_s,~,nz] = grambasis(sos.g,Js);
 
 assert(length(Qgram_x) == size(Zgram_x,1), 'Unable to find Gram matrix of decision variables.')
 
-% matrix decision variables for constraints
+% ---------------------- WARNING (dev) ------------------------------------
+
 Qgram_g = casadi.SX.sym('Q',sum(Ksdp_g_s.^2),1);
 
 % replace sum-of-squares constraints by equality
-gdiff = (sos.g - [zeros(Ml,1); casos.PS(Zgram_g,Qgram_g)]);
+Ib = eye(length(nz));
+Cb = arrayfun(@(i) repmat(Ib(:,i),1,nz(i)), 1:length(nz), 'UniformOutput', false);
+Cb =  horzcat(Cb{:});
+gdiff = (sos.g - [zeros(Ml,1); Cb*casos.PS(Zgram_g,Qgram_g)]);
+
+% -------------------------------------------------------------------------
 % handle (new) equality constraints
 [Qdiff_g,Zdiff_g] = poly2basis(gdiff);
 

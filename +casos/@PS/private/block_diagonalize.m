@@ -1,10 +1,9 @@
-function [K,Lz] = block_diagonalize(p, Pdegmat, z)
+function [K,Lz, nz] = block_diagonalize(Pdegmat, degmat, N)
 % search for simple symmetries in the polynomial, and block-diagonalize 
 % the problem
 
 % obtain degree matrices of polynomials and monomial basis
 P = Pdegmat';
-degmat = z.degmat;
 
 % check if degmat is empty
 if isempty(degmat)
@@ -12,7 +11,6 @@ if isempty(degmat)
 end
 
 % obtain size of indeterminates and matrix R
-N = length(z.indets);
 allsym = 2^N;
 R = dec2bin(0:allsym-1) - '0';
 idx = 1:allsym;
@@ -32,5 +30,5 @@ K = gc';
 % Obtain a Lz vector that chooses the elements from the basis
 Lz = arrayfun(@(i) IC==i, idx, 'UniformOutput', false);
 Lz = horzcat(Lz{:})';
-
+nz = length(idx);
 end
