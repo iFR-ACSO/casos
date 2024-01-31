@@ -157,7 +157,7 @@ tic
 disp('-----------------------------------------')
 disp('Start iteration ... ')
 
-for iter = 1:100
+for iter = 1:10
 
     % multiplier-step
     sol1 = S1('p',Vval','lbx',klb,'ubx',kub);

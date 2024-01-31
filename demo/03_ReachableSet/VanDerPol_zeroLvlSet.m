@@ -50,8 +50,11 @@ s4 = casos.PS.sym('s4',monomials([x;t],4),'gram');  % state constraint
 
 s51 = casos.PS.sym('s51',monomials([x;t],0:2),'gram'); % control constraint
 s52 = casos.PS.sym('s52',monomials([x;t],0:2),'gram'); % control constraint
+
 s61 = casos.PS.sym('s61',monomials([x;t],4),'gram');   % control constraint
 s62 = casos.PS.sym('s62',monomials([x;t],4),'gram');   % control constraint
+
+s6 = casos.PS.sym('s6',monomials([x;t],4),'gram');   % control constraint 
 
 s7 = casos.PS.sym('s7',monomials(x,0:2),'gram');   % grow constraint
 
@@ -192,11 +195,9 @@ end
 
 tendIter = toc;
 
-Vval = to_multipoly(Vval);
 
 figure()
-pvar t
 pcontour((subs(Vval,t,0)),0,[-2 2 -2 2])
 hold on
-pcontour(to_multipoly(g),0,[-2 2 -2 2],'k-')
-pcontour(to_multipoly(l),0,[-2 2 -2 2],'r-')
+pcontour(g,0,[-2 2 -2 2],'k-')
+pcontour(l,0,[-2 2 -2 2],'r-')
