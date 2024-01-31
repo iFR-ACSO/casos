@@ -72,8 +72,10 @@ degmat = z.degmat(I,:);
 z = build_monomials(degmat,z.indets);
 
 % ----------------------------- WARNING (dev) -----------------------------
-if true
-    % Block diagonalize Gram matrix based on symmetries 
+% TODO: add boolean to request for block diagonal decomposition
+% TODO: try to remove the 'else'
+if false
+    % block diagonal decomposition
     Nind = length(z.indets);
     [~, Lz_test, nz] = arrayfun(@(i) block_diagonalize( p.degmat(Ldegmat(i,:),Iv), degmat, Nind), idx, 'UniformOutput', false);
     Lz = vertcat(Lz_test{:});
