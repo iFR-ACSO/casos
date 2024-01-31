@@ -36,11 +36,12 @@ for i = 1:obj.opts.max_iter
             % sos constraint reads  delta x = f(x0) + df/dx(x0)*(x-x0);
             % where delta x = xk+1 - xk hence xk+1 = delta_x + xk 
             xk1 = sol{1} + xk;
-            sol_old = sol;
+             
+            
+            % store old solution
+            sol_old    = sol;
             sol_old{1} =  xk1;
 
-
-         
         otherwise  
         % case UnifiedReturnStatus.SOLVER_RET_INFEASIBLE
             
@@ -51,11 +52,6 @@ for i = 1:obj.opts.max_iter
                info(i+1:end) = [];
                obj.info.iter = info;
 
-               % we take the last feasible solution
-               xk1 = sol_old{1} + xk;
-                
-               sol_old{1} = xk1;
-
                argout = sol_old;
 
               return
@@ -65,32 +61,33 @@ for i = 1:obj.opts.max_iter
             % error: failed
             obj.status = UnifiedReturnStatus.SOLVER_RET_NAN;
             assert(~obj.opts.error_on_fail,'Convex optimization run into numerical errors.')
+
             end
-        % otherwise
-            % % error: failed
-            % obj.status = UnifiedReturnStatus.SOLVER_RET_NAN;
-            % assert(~obj.opts.error_on_fail,'Convex optimization run into numerical errors.')
+  
         
     end
 
 
-   % store iteration info
-   info(i+1:end) = [];
-   obj.info.iter = info;
+       % plot merit function
+       % plot(linspace(0,1,10),arrayfun(@(d) double(obj.Merit(xk.*(1-d)+xk1.*d,sol{5})), linspace(0,1,10)))
 
-    % check convergence
-    if i > 1 
-
-            % execute line search
-            solLS = obj.lineSearch('p',[xk;xk1;sol{4};sol{5}], ...
-                                   'lbx',0, ...
-                                   'ubx',1);
-            dopt = solLS.x;
+        solLS = obj.lineSearch('p',[xk;xk1;sol{5}], ...
+                               'lbx',0, ...
+                               'ubx',1);
+      
+        dopt = solLS.x;
         
-        % currently only primal variables
+        % update primal
         xk1 = dopt*xk1 + (1-dopt)*xk;
 
-        if full( casadi.DM(pnorm2(xk1-xk)) ) < obj.opts.tolerance_abs
+
+       % store iteration info
+       info(i+1:end) = [];
+       obj.info.iter = info;
+
+        
+        % check convergence
+        if i > 1 && full( casadi.DM(pnorm2(xk1-xk)) ) < obj.opts.tolerance_abs %&&....
 
         % adjust last solution similar to iteration i.e. overwrite
         % optimization solution 
@@ -101,14 +98,13 @@ for i = 1:obj.opts.max_iter
         % terminate
         return
 
-        end % end if
-
-
-    end % end if
+        end % end if convergence check
+ 
 
  % set current solution as previous solution for next iteration
  xk = xk1;
+%  dk = sol{5};
 
-end % end for-loop
+end % end for-loop sequential sos
 
 end % end of function

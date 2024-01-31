@@ -17,10 +17,6 @@ if isfield(opts.Kc,'s'), Ms = opts.Kc.s; else, Ms = 0; end
 assert(n == (Nl + Ns), 'Dimension of Kx must be equal to number of variables (%d).', n);
 assert(m == (Ml + Ms), 'Dimension of Kc must be equal to number of constraints (%d).', m)
 
-% select sum-of-squares variables and constraints
-Is = [false(Nl,1); true(Ns,1)];
-Js = [false(Ml,1); true(Ms,1)];
-
 % build SOS problem
 sos.x = nlsos.x;
 sos.g = nlsos.g;
@@ -38,14 +34,14 @@ base_x = basis(sos.x);
 
 x0    = casos.PS.sym('X0',base_x);
 x1    = casos.PS.sym('X1',base_x);
-lam_x = casos.PS.sym('lam_x',base_x);
+% lam_x = casos.PS.sym('lam_x',base_x);
 
 % extend parameter vector
 sos.p = [p0; x0];
 
 % Taylor Approximation constraints and evaluate at parameterized
 % solution
-sos.g = linearize(sos.g,sos.x,x0);
+sos.g = linearize(nlsos.g,nlsos.x,x0);
 
 % Taylor Approximation cost and evaluate at parameterized
 % solution
@@ -71,23 +67,26 @@ obj.monom_gs = monomials_in(obj.sossolver,7);
 
 % setup line-search
 d = casos.PS.sym('d');
-  
-ObjFun   = casos.Function('f',{sos.x}, {sos.f});
-ConFun   = casos.Function('f',{sos.x}, {sos.g});
-
-eta = 1e-15;
-
 
 lam_g = casos.PS.sym('lam_g',obj.monom_gs);
 
-xi  = x0*(1-d) + d*x1;
-Psi = ObjFun(xi) - dot(lam_x,x1) - dot(lam_g, ConFun(xi));
+Psi = casos.Function('f',{sos.x,lam_g}, {nlsos.f + dot(lam_g,nlsos.g)});
+
+% ObjFun = casos.Function('f',{nlsos.x}, {nlsos.f});
+% ConFun = casos.Function('f',{nlsos.x}, {nlsos.g});
+% 
+% obj.Meritobj = casos.Function('f',{x0,d,x1}, {ObjFun(x0*(1-d) + d*x1)});
+% obj.MeritCon = casos.Function('f',{x0,d,x1}, {ConFun(x0*(1-d) + d*x1)});
+% obj.Merit    = Psi;
+
+Psi_d = Psi(x0*(1-d) + d*x1 , lam_g);
+
 
 % define SOS problem:   min_d Psi(d) s.t. 0 \leq d \leq 1 
 sos_lineSearch = struct('x',d, ...
-                        'f',Psi - eta*d, ...
+                        'f',Psi_d, ...
                         'g',[], ... % 0 <= d <= 1  is set in call
-                        'p',[x0; x1; lam_x; lam_g]);
+                        'p',[x0; x1; lam_g]);
 
        
 % solve by relaxation to SDP

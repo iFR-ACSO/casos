@@ -4,6 +4,10 @@ classdef Sequential < casos.package.solvers.SosoptCommon
 properties (Access=private)
     sossolver;
     lineSearch;
+        
+    Merit;
+    Meritobj;
+    MeritCon;
 
     info = struct('iter',[]);
     status = casos.package.UnifiedReturnStatus.SOLVER_RET_UNKNOWN;
