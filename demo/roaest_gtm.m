@@ -45,7 +45,7 @@ sos1.('g') = s1*(V-g)-nabla(V,x)*f-l;
 % states + constraint are SOS cones
 opts.Kx = struct('s', 1);
 opts.Kc = struct('s', 1);
-
+opts.error_on_fail = 0;
 S1 = casos.qcsossol('S1','bisection',sos1,opts);
 
 % solver 2: beta-step
@@ -77,7 +77,7 @@ S3 = casos.sossol('S','sedumi',sos3,opts);
 
 %% gamma-beta-V-iteration
 
-for iter = 1:10
+for iter = 1:3
 
     % gamma step
     sol1 = S1('p',Vval);
@@ -98,3 +98,25 @@ for iter = 1:10
     Vval = sol3.x;
 
 end
+
+
+d = ([
+          convvel(20, 'm/s', 'm/s')  %range.tas.lebesgue.get('ft/s')
+          convang(20, 'deg', 'rad')  %range.gamma.lebesgue.get('rad')
+          convang(50, 'deg', 'rad')  %range.qhat.lebesgue.get('rad')
+          convang(20, 'deg', 'rad')  %range.alpha.lebesgue.get('rad')
+]);
+% d = ones(4,1);
+
+D = diag(d)^-1;
+
+V = subs(Vval,x,D*x);
+V1 = subs(V,[x(1);x(4)],[0 0]');
+
+p = subs(p,x,D*x);
+p1 = subs(p,[x(1);x(4)],[0 0]');
+
+figure(1)
+pcontour(V1, double(gval), [-1 1 -4 4], 'b-');
+hold on
+pcontour(p1, double(bval), [-1 1 -4 4], 'r--');
