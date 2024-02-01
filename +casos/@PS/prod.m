@@ -115,10 +115,7 @@ else
 L = ne/prod(sz);
 
 % multiply entries
-[cfb,degmat] = prod_internal(cfa,A.degmat,dim,L,prod(sz));
-
-% reshape output coefficient matrix
-coeffs = finishMatrixOp(cfb,sz,dim);
+[coeffs,degmat] = prod_internal(cfa,A.degmat,sz,dim,L,prod(sz));
 
 end
 
@@ -133,16 +130,19 @@ B.matdim = sz;
 
 end
 
-function [coeffs,degmat] = prod_internal(coeffs,degmat,dim,L,nb)
+function [coeffs,degmat] = prod_internal(coeffs,degmat,sz,dim,L,nb)
 % Compute product of matrix elements.
 
 nt = size(degmat,1);
 
 if L <= 1
-    % nothing to do
+    % reshape output coefficient matrix
+    coeffs = finishMatrixOp(coeffs,sz,dim);
+
+    % nothing else to do
     return
 
-elseif L == 2 || (L*nt^L) > 1e6
+elseif L == 2 || (L*nt^L) > 1e4
     % two elements to multiply or
     % number of permutations exceeds memory
     L1 = ceil(L/2);
@@ -156,26 +156,20 @@ elseif L == 2 || (L*nt^L) > 1e6
         case 1
             % compute product along first dimension
             cfs = mat2cell(coeffs,[L1 L2],nb*nt);
+
+        otherwise
+            error('Invalid dimension input.')
     end
     % compute partial products
-    [cfa,dga] = prod_internal(cfs{1},degmat,dim,L1,nb);
-    [cfb,dgb] = prod_internal(cfs{2},degmat,dim,L2,nb);
+    [cfa,dga] = prod_internal(cfs{1},degmat,sz,dim,L1,nb);
+    [cfb,dgb] = prod_internal(cfs{2},degmat,sz,dim,L2,nb);
 
     nta = size(dga,1);
     ntb = size(dgb,1);
 
     % multiply partial products
     % see TIMES for details
-    switch (dim)
-        case {2 'all'}
-            % multiply rows
-            coeffs = kron(cfa,ones(ntb,1)) .* kron(ones(nta,1),cfb);
-
-        case 1
-            % multiply columns
-            coeffs = kron(cfa,ones(1,ntb)) .* kron(ones(1,nta),cfb);
-    end
-    % combine degrees (see TIMES)
+    coeffs = kron(cfa,ones(ntb,1)) .* kron(ones(nta,1),cfb);
     degmat = kron(dga,ones(ntb,1)) +  kron(ones(nta,1),dgb);
 
 else
@@ -209,7 +203,7 @@ else
             C = reshape(coeffs(ind),nt^L,L);
     
             % combine coefficients
-            coeffs = sx_prod(C,2);
+            cfb = sx_prod(C,2);
     
         case 2
             % compute product along second dimension
@@ -220,7 +214,7 @@ else
             C = reshape(coeffs(ind),nb*nt^L,L);
     
             % combine coefficients
-            coeffs = sx_prod(C,2);
+            cfb = sx_prod(C,2);
     
         case 1
             % compute product along first dimension
@@ -232,7 +226,7 @@ else
             C = reshape(coeffs(ind'),L,nb*nt^L);
     
             % combine coefficients
-            coeffs = sx_prod(C,1);
+            cfb = sx_prod(C,1);
 
         otherwise
             error('Invalid dimension input.')
@@ -240,9 +234,15 @@ else
     
     % reshape output degree matrix
     degmat = reshape(dgb,nt^L,nv);
+
+    % reshape output coefficient matrix
+    coeffs = finishMatrixOp(cfb,sz,dim);
 end
 
 % make degree matrix unique
-[coeffs,degmat] = uniqueDeg(coeffs, degmat, dim);
+[coeffs,degmat] = uniqueDeg(coeffs, degmat);
+
+% remove zero terms
+[coeffs,degmat] = removeZero(coeffs,degmat);
 
 end

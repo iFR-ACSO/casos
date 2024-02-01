@@ -7,8 +7,10 @@ nel = size(coeffs,2);
 % remove degrees with zero coefficient
 [coeffs,degmat] = removeCoeffs(coeffs,degmat);
 
+if nargin > 2
 % remove unused variables
 [degmat, indets] = removeDegVar(degmat, indets);
+end
 
 % handle empty coeffient and/or degree matrix
 if length(coeffs) < 1
