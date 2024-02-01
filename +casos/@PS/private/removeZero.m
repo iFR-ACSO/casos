@@ -34,25 +34,26 @@ function [coeffs,degmat] = removeCoeffs(coeffs,degmat)
 
     % nonzero coefficients with linear indices
     [i0,j0] = ind2sub(size(coeffs),find(S0));   % sparse zeros
-    [i1,j1] = ind2sub(size(coeffs),find(S1));   % full zeros
+    [~, j1] = ind2sub(size(coeffs),find(S1));   % full zeros
     
     % detect all-zero columns (full zero)
     iz = ~ismember(j1,j0);
 
     % assign full zeros to first not all-sparse row
-    i1(iz) = max([min(i0) 1]);
+    ii = [i0 repmat(max([min(i0) 1]),1,nnz(iz))];
+    jj = [j0 j1(iz)];
     
     % identify all-zero rows (zero coefficient)
-    [nr,~,ir] = unique(i1);
+    [nr,~,ir] = unique(ii);
 
     % coefficients without all-sparse rows
-    idx = unique(sub2ind(size(coeffs),i1,j1));
+    idx = unique(sub2ind(size(coeffs),ii,jj));
     
     % length corresponds to number of nonzero rows
     I = 1:length(nr);
     
     % sparsity pattern without all-sparse rows (note: 0-based index)
-    S = casadi.Sparsity.triplet(length(nr),size(coeffs,2),I(ir)-1,j1-1);
+    S = casadi.Sparsity.triplet(length(nr),size(coeffs,2),I(ir)-1,jj-1);
     % assign nonzero coefficients to sparsity pattern
     coeffs = casadi.SX(S,coeffs(idx));
 
