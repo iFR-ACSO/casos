@@ -48,8 +48,8 @@ end
 if ~isempty(deg)
     
     % find all parts that shall be retained with certain degrees
-    if isa(deg,'double') && size(deg,2) == 2 && ...
-        all(floor(deg)==ceil(deg)) && all(deg>=0)
+    if isa(deg,'double') &&  all(floor(deg)==ceil(deg)) && all(deg>=0) ...
+            % && size(deg,2) == 2 
 
         
         pdeg = sum(p.degmat,2);

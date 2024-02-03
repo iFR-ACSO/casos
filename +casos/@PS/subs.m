@@ -48,8 +48,11 @@ else
     % substitution with polynomial
     b = reshape(b,1,length(b));
 
+
+
     % compute exponents of b'
     B = prod(b.^deg0,2);
+
 
     % combine variables
     [indets,degA,degB] = combineVar(indets,B.indets,degA,B.degmat);
