@@ -25,7 +25,13 @@ info = cell(1,obj.opts.max_iter);
 % last feasible solution
 feas_sol = [];
 
-for i=1:length(info)
+if obj.opts.verbose 
+    disp('=========================================================')
+    disp('Start Bisection') 
+    disp('=========================================================')
+end
+
+for i=1:length(info)  
     % bisection
     ttry = mean(interval);
 
@@ -48,16 +54,30 @@ for i=1:length(info)
             interval(2) = ttry;
             % store feasible solution
             feas_sol = sol;
+            feas = 1;
 
         case UnifiedReturnStatus.SOLVER_RET_INFEASIBLE
             % infeasible: reset lower bound
             interval(1) = ttry;
+            feas = 0;
 
         otherwise
             % error: failed
+            feas = 0;
             obj.status = UnifiedReturnStatus.SOLVER_RET_NAN;
             assert(~obj.opts.error_on_fail,'Convex optimization run into numerical errors.')
+            interval(1) = ttry;
     end
+
+
+    % display bisection iterations
+   if obj.opts.verbose
+       tchar = 'gamma_';
+        
+       fprintf(['iteration:  %d/%d \t' tchar 'lb  = %-4.4f \t ' tchar 'try = %-4.4f \t'],...
+                i,length(info),obj.qc_sign*round(interval(1),4),obj.qc_sign*round(ttry,4));
+       fprintf([tchar 'ub = %-4.4f \t Feas = %d \n'],obj.qc_sign*round(interval(2),4),feas);
+   end
 
     % check convergence
     if abs(diff(interval)) <= obj.opts.tolerance_abs ...
@@ -81,9 +101,18 @@ for i=1:length(info)
         info(i+1:end) = [];
         obj.info.iter = info;
 
+
+        if obj.opts.verbose 
+            disp('')
+            disp('Finished Bisection') 
+            disp('=========================================================')
+        end
+
         % terminate
         return
     end
+    
+
 end
 
 % no convergence

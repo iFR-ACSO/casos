@@ -58,8 +58,10 @@ methods
         H = hessian(sdp.f, x);
         % linear cost
         g = jacobian(simplify(sdp.f - x'*(H/2)*x), x);
+
         % linear constraint
         A = jacobian(sdp_g, x);
+        
         % constant constraint
         b = simplify(A*x - sdp_g);
         

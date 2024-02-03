@@ -17,11 +17,15 @@ g = casos.PS.sym('g');
 
 %% Bisection
 % define SOS feasibility
+
+% opts = struct('sossol','mosek');
+opts = [];
 sos = struct('x',s,'g',s*(V-g)-Vdot-l,'p',g);
 % states + constraint are SOS cones
 opts.Kx.s = 1; opts.Kc.s = 1;
 % ignore infeasibility
 opts.error_on_fail = false;
+
 
 % solve by relaxation to SDP
 S = casos.sossol('S','mosek',sos,opts);
@@ -45,6 +49,15 @@ end
 fprintf('Maximal stable level set is %g.\n', lb)
 
 %% Quasiconvex optimization
+opts = struct('sossol','mosek');
+opts.error_on_fail = 0; 
+opts.max_iter      = 20;
+opts.conf_interval = [-10 0]';
+opts.verbose = 1;
+opts.sossol_options.sdpsol_options.mosek_param.MSK_IPAR_BI_CLEAN_OPTIMIZER = 'MSK_OPTIMIZER_INTPNT';
+opts.sossol_options.sdpsol_options.mosek_param.MSK_IPAR_INTPNT_BASIS = 'MSK_BI_NEVER';
+opts.Kx.s = 1; 
+opts.Kc.s = 1;
 % define quasiconvex SOS problem
 qcsos = struct('x',s,'f',-g,'g',s*(V-g)-Vdot-l);
 

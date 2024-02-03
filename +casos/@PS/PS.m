@@ -287,6 +287,7 @@ methods
         X = casadi.SX.sym('x',p.nvars,1);
         f = casadi.Function('p',{X},{casadi.SX(subs(p,indeterminates(p),X))},varargin{:});
     end
+
 end
 
 methods (Access=protected)

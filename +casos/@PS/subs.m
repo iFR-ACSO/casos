@@ -48,9 +48,15 @@ if is_zerodegree(b)
     % compute exponents b^a1
     B = sx_prod(b.^deg0,2);
 
+<<<<<<< HEAD
     % retain constant monomials (work around)
     B(find(all(deg0==0,2))) = 1; %#ok<FNDSB> 
 
+=======
+        % retain constant monomials (work around)
+    B(find(all(deg0==0,2))) = 1; %#ok<FNDSB> 
+    
+>>>>>>> demos-reachability
     % coefficients of c = sum_a c_a*b^a1*y^a2
     coeffs = a.coeffs.*B;
     % degree matrix of c 
@@ -60,8 +66,11 @@ else
     % substitution with polynomial
     b = reshape(b,1,length(b));
 
+
+
     % compute exponents of b'
     B = prod(b.^deg0,2);
+
 
     % combine variables
     [indets,degA,degB] = combineVar(indets,B.indets,degA,B.degmat);
