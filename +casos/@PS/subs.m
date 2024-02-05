@@ -47,7 +47,7 @@ if is_zerodegree(b)
     
     % compute exponents b^a1
     B = sx_prod(b.^deg0,2);
-    
+
     % retain constant monomials (work around)
     B(find(all(deg0==0,2))) = 1; %#ok<FNDSB> 
 
