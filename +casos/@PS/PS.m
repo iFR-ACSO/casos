@@ -232,6 +232,12 @@ methods (Static)
         % Create identity matrix polynomial.
         p = casos.PS(casadi.SX.eye(varargin{:}));
     end
+
+    %% Save & Load
+    function obj = loadobj(obj)
+        % Load polynomial object from mat file.
+        obj.coeffs = casadi.SX(obj.coeffs);
+    end
 end
 
 methods
@@ -287,6 +293,7 @@ methods
         X = casadi.SX.sym('x',p.nvars,1);
         f = casadi.Function('p',{X},{casadi.SX(subs(p,indeterminates(p),X))},varargin{:});
     end
+
 
 end
 
