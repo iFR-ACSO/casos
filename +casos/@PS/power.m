@@ -70,16 +70,16 @@ elseif issorted(ja,'strictascend')
     % match exponents to unique degrees
     [dd,~,Ideg] = unique(deg);
     % repeat coefficients and degrees to match exponents
-    cfa = repmat(cfa,nen,1);
-    dga = repmat(dga,nen,1);
+    cfA = repmat(cfa,nen,1);
+    dgA = repmat(dga,nen,1);
     % match coefficients to corresponding monomials
-    [ia,ja] = get_triplet(sparsity(cfa)); % CasADi interface has 0-index
-    is_deg = ceil((ia(:)+1)./nva) == Ideg(ja(:)+1);
+    [ia,ja] = get_triplet(sparsity(cfA)); % CasADi interface has 0-index
+    is_deg = ceil((ia(:)+1)./nta) == Ideg(ja(:)+1);
     % select matching coefficients
-    S = casadi.Sparsity.triplet(size(cfa,1),size(cfa,2),ia(is_deg),ja(is_deg));
-    coeffs = project(cfa,S).^repmat(deg,nva*nen,1);
+    S = casadi.Sparsity.triplet(size(cfA,1),size(cfA,2),ia(is_deg),ja(is_deg));
+    coeffs = project(cfA,S).^repmat(deg,nta*nen,1);
     % multiply degree matrix with (unique) exponents
-    degmat = dga.*reshape(repmat(dd,nva,1),nen*nva,1);
+    degmat = dgA.*reshape(repmat(dd,nta,1),nen*nta,1);
 
 else
 % if nen > 1

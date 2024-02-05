@@ -12,13 +12,16 @@ function coeffs = finishMatrixOp(coeffs,sz,dim)
 %
 % where each row of D corresponds to a term of the polynomial.
 
+if isequal(dim,'all')
+    % Matrix operation over all elements (scalar)
+    % nothing to do
+    return
+end
+
+% else:
 ne = size(coeffs,3-dim);
 
 switch (dim)
-    case 'all'
-        % Matrix operation over all elements (scalar)
-        % nothing to do
-
     case 1
         % Matrix operation along first dimension (row vector)
         % input is
