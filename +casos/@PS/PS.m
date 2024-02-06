@@ -28,10 +28,52 @@ methods
         % Create polynomial variable.
         if nargin == 0
             % nothing to do
+            return
 
-        elseif isa(varargin{1},'casos.PS')
+        elseif isa(varargin{1},'casos.PS') && nargin < 2
             % keep polynomial
             obj = varargin{1};
+            return
+
+        elseif isa(varargin{1},'casos.PS')
+            % basis notation: Z'*q
+            Z = varargin{1};
+            q = varargin{2};
+            % length of basis and new polynomial
+            [lZ,lp] = size(Z);
+            % number of terms in basis
+            nT = Z.nterm;
+
+            if isempty(Z) && length(q) <= 1
+                % empty basis (coefficients must be empty or scalar)
+                % return empty polynomial
+                return
+
+            elseif isscalar(q)
+                % repeat scalar coefficient for all monomials
+                q = repmat(q,lZ,1);
+
+            else
+                assert(lZ == length(q), 'Incompatible size (Expected %d, got %d).', lZ, length(q))
+            end
+
+            % perform operation Z'*q internally
+            [ii,jj] = get_triplet(sparsity(Z.coeffs));
+            % assign coefficients to monomials
+            S = casadi.SX.triplet(floor(jj/lZ)*nT+ii,(1:lZ)-1,ones(lZ,1),[nT*lp lZ]);
+            obj.coeffs = reshape(S*q(:),[nT lp]);
+
+            % the following works for monomial basis but not Gram
+%             obj.coeffs = casadi.SX.triplet(ii,floor(jj/lZ),q,[nT lp]);
+            obj.degmat = Z.degmat;
+            obj.indets = Z.indets;
+
+            if nargin > 2
+                % reshape to given size
+                obj.matdim = varargin{3};
+            else
+                obj.matdim = [lp 1];
+            end
 
         elseif isa(varargin{1},'char')
             % indeterminate (pvar / mpvar syntax)
@@ -41,17 +83,21 @@ methods
                 % syntax PS('x')
                 n = 1; m = 1;
                 obj.indets = {var};
+                iv = 1;
             elseif ischar([arg{:}])
                 % syntax PS('x','y',...)
                 n = length(varargin); m = 1;
-                obj.indets = varargin;
+                % sort variables alphabetically
+                [obj.indets,iv] = unique(varargin);
             else
                 % syntax PS('x',m,n)
                 [n,m] = size(zeros(arg{:}));
                 obj.indets = compose('%s_%d',var,1:(n*m));
+                iv = 1:(n*m);
             end
 
-            obj.coeffs = casadi.SX.eye(n*m);
+            % return variables in requested order
+            obj.coeffs = casadi.SX.triplet(iv-1,0:(n*m-1),ones(1,n*m),n*m,n*m);
             obj.degmat = speye(n*m);
             obj.matdim = [n m];
 
@@ -73,7 +119,7 @@ methods
 
     function n = get.nterm(obj)
         % Number of monomials.
-        n = size(obj.coeffs,1);
+        n = size(obj.degmat,1);
     end
 
     function d = get.mindeg(obj)
@@ -123,12 +169,22 @@ methods
 
     function tf = is_symexpr(obj)
         % Check if polynomial contains symbolic expressions.
-        tf = ~isconstant(obj.coeffs);
+        tf = ~is_constant(obj.coeffs);
+    end
+
+    function tf = is_symgram(obj)
+        % Check if polynomial is in symbolic Gram form.
+        tf = ~isempty(grammatrix(obj));
     end
 
     function tf = is_zerodegree(obj)
         % Check if polynomial is of degree zero.
         tf = (obj.maxdeg == 0);
+    end
+
+    function tf = is_zero(obj)
+        % Check if polynomial is equal to zero.
+        tf = (is_zerodegree(obj) && is_zero(obj.coeffs));
     end
 
     function tf = is_constant(obj)
@@ -175,6 +231,12 @@ methods (Static)
     function p = eye(varargin)
         % Create identity matrix polynomial.
         p = casos.PS(casadi.SX.eye(varargin{:}));
+    end
+
+    %% Save & Load
+    function obj = loadobj(obj)
+        % Load polynomial object from mat file.
+        obj.coeffs = casadi.SX(obj.coeffs);
     end
 end
 
@@ -225,6 +287,18 @@ methods
         % Convert constant polynomial to double data type.
         d = full(casadi.DM(p));
     end
+
+    function f = to_function(p,varargin)
+        % Return polynomial casadi.Function instance.
+        X = casadi.SX.sym('x',p.nvars,1);
+        f = casadi.Function('p',{X},{casadi.SX(subs(p,indeterminates(p),X))},varargin{:});
+    end
+
+    %% Save & Load
+    function obj = saveobj(obj)
+        % Save polynomial object to mat file.
+        obj.coeffs = casadi.DM(obj.coeffs); % only nonsymbolic
+    end
 end
 
 methods (Access=protected)
@@ -233,6 +307,11 @@ methods (Access=protected)
     obj = parenDelete(obj,idx);
     n = parenListLength(obj,idx,context);
     varargout = parenReference(obj,index);
+
+    % protected interface for subsref getters
+    [monoms,L] = get_monoms(p,I);
+    [degree,L] = get_degree(p,I);
+    [indets,L] = get_indets(p,I);
 end
 
 end

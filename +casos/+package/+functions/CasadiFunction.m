@@ -12,9 +12,18 @@ end
 methods
     function obj = CasadiFunction(name, ex_i, ex_o, name_i, name_o, varargin)
         % Create new casadi function object.
+        if isa(name,'casadi.Function')
+            % existing casadi Function object
+            func = name;
+            name = func.name;
+        else
+            % create new casadi Function
+            func = casadi.Function(name, ex_i, ex_o, name_i, name_o, varargin{:});
+        end
+
         obj@casos.package.functions.FunctionInterface(name);
 
-        obj.func = casadi.Function(name, ex_i, ex_o, name_i, name_o, varargin{:});
+        obj.func = func;
     end
 
     function cls = get.class_name(obj)
@@ -48,6 +57,11 @@ methods
         sz = size_in(obj.func,i);
     end
 
+    function i = get_index_in(obj,str)
+        % Index of inputs.
+        i = index_in(obj.func,str);
+    end
+
     function n = get_n_out(obj)
         % Number of outputs.
         n = n_out(obj.func);
@@ -55,7 +69,7 @@ methods
 
     function str = get_name_out(obj,varargin)
         % Name of outputs.
-        str = name_out(obj.func,varargin);
+        str = name_out(obj.func,varargin{:});
     end
 
     function z = get_monomials_out(~,~)
@@ -68,9 +82,19 @@ methods
         sz = size_out(obj.func,i);
     end
 
+    function i = get_index_out(obj,str)
+        % Index of outputs.
+        i = index_out(obj.func,str);
+    end
+
     function argout = call(obj, argin)
         % Evaluate casadi function object.
         argout = call(obj.func, argin);
+    end
+
+    function s = get_stats(obj)
+        % Return stats.
+        s = stats(obj.func);
     end
 end
 

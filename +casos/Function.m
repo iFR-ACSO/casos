@@ -10,6 +10,10 @@ methods
             % copy constructor
             wrap = name.wrap;
 
+        elseif isa(name,'casadi.Function')
+            % wrap casadi Function object
+            wrap = CasadiFunction(name);
+
         else
         
         if nargin < 5

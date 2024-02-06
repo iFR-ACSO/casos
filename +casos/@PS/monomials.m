@@ -8,12 +8,8 @@ indets = p.indets;
 if nargin == 1
     % Return vector of monomials in polynomial.
 
-    % TODO: can we assume that degrees are already sorted?
-    % from multipoly:
-    % Flipping/sorting to return output in lexicographic order
-    % (sorted by degree then by alphabetical order)
-    degmatsort = sortrows([sum(p.degmat,2) fliplr(p.degmat)]);
-    degmat = fliplr(degmatsort(:,2:end));
+    % degrees are in graded reverse lexicographic order (canonic)
+    degmat = p.degmat;
 
 elseif deg == 0
     % Return constant one.
@@ -28,9 +24,9 @@ else
     % enumerate monomials up to max(deg)
     r = nchoosek(p.nvars+max(deg),p.nvars); % total number of monomials
     M = nan(r,p.nvars);
-    % iterate over degrees
+    % iterate over ascending degrees
     l = 1;
-    for i = deg
+    for i = unique(deg)
         [M,l] = degreemat(M,l,p.nvars,i);
     end
 
@@ -40,27 +36,23 @@ else
     degmat = M(I,:);
 end
 
-% number of monomials
-nt = size(degmat,1);
-
 % set output
-Z = casos.PS;
-Z.coeffs = casadi.SX.eye(nt);
-Z.degmat = sparse(degmat);
-Z.indets = indets;
-Z.matdim = [nt 1];
+Z = build_monomials(degmat,indets);
 
 end
 
 function [M,l] = degreemat(M, l0, m, d)
 % Build degree matrix for m variables and degree d.
+% Monomials will be in graded REVERSE lexicographic order.
 
     switch m
-        case 1, M(l0,end) = d; l = l0+1;
+
+        case 1, M(l0,1) = d; l = l0+1;
         otherwise
-            for j = 0:d
+            for j = d:-1:0
                 [M,l] = degreemat(M,l0,m-1,j);
-                M(l0:l-1,end-m+1) = d - j;
+                M(l0:l-1,m) = d - j;
+
                 l0 = l;
             end
     end

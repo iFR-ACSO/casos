@@ -30,6 +30,11 @@ if isempty(a) || isempty(n)
 
     b = casos.PS.zeros(sz);
     return
+
+elseif all(n==0)
+    % power of zero is one
+    b = casos.PS.ones(sz);
+    return
 end
 % TODO: handle or escape for other simple cases, e.g., scalar, constant
 % matrix, single term etc.?
@@ -39,14 +44,44 @@ b = casos.PS;
 
 nta = a.nterm; 
 nva = a.nvars;
-nea = numel(a);
-nen = numel(n);
+neb = prod(sz);
+nen = numel(unique(n)); % count unique exponents
 
 
 % reshape to output dimensions
+deg = reshape(repmat(n,sz./szn),1,prod(sz));
 cfa = reshape(repmat(a.coeffs,sz./sza),nta,prod(sz));
 dga = a.degmat;
 
+% check number of coefficients per matrix component
+idx = find(sparsity(cfa));
+[~,ja] = ind2sub(size(cfa),idx);
+
+if nva == 0 ... % base polynomial is a constant
+    || (nta == 1 && nen == 1) % a^n = c*(x^d)^n
+    b.coeffs = cfa.^deg;
+    b.degmat = n.*dga;
+    b.indets = a.indets;
+    b.matdim = sz;
+    return
+
+elseif issorted(ja,'strictascend')
+    % base polynomial is matrix of monomials
+    % match exponents to unique degrees
+    [dd,~,Ideg] = unique(deg);
+    % repeat coefficients and degrees to match exponents
+    cfA = repmat(cfa,nen,1);
+    dgA = repmat(dga,nen,1);
+    % match coefficients to corresponding monomials
+    [ia,ja] = get_triplet(sparsity(cfA)); % CasADi interface has 0-index
+    is_deg = ceil((ia(:)+1)./nta) == Ideg(ja(:)+1);
+    % select matching coefficients
+    S = casadi.Sparsity.triplet(size(cfA,1),size(cfA,2),ia(is_deg),ja(is_deg));
+    coeffs = project(cfA,S).^repmat(deg,nta*nen,1);
+    % multiply degree matrix with (unique) exponents
+    degmat = dgA.*reshape(repmat(dd,nta,1),nen*nta,1);
+
+else
 % if nen > 1
 %     % modify coefficients so every matrix component has a separate row
 %     idx = find(sparsity(cfa));
@@ -58,17 +93,17 @@ dga = a.degmat;
 %     % repeat degree matrix to match
 %     dga = repmat(a.degmat,nea,1);
 % end
+n_max = max(n,[],'all');
 
 % compute powers
-C = cell(1,max(n)+1);           D = cell(1,max(n)+1);
-C(1) = {casadi.SX.ones(1,nea)}; D(1) = {sparse(1,nva)};
+C = cell(1,n_max+1);            D = cell(1,n_max+1);
+C(1) = {casadi.SX.ones(1,neb)}; D(1) = {sparse(1,nva)};
 C(2) = {cfa};                   D(2) = {dga};
 
-[C,D] = powers(C,D,max(n),nta);
+[C,D] = powers(C,D,n_max,nta);
 
 if nen > 1
     % either matrix.^matrix or vector.^vector
-    deg = repmat(n,sz./szn);
     % prepare components
     Cd = cell(size(deg));
     % iterate over powers
@@ -80,15 +115,17 @@ if nen > 1
         [ii,ji] = ind2sub(size(cfi),idx);
         I = (ji == i);
         S = sparsity(casadi.SX(sparse(ii(I),ji(I),1,mi,ni)));
-        Cd{i} = casadi.SX(S, cfi(:,i));
+        Cd{i} = project(cfi, S);
     end
 
     coeffs = vertcat(Cd{:});
     degmat = vertcat(D{1+deg});
 else
     % matrix.^scalar
-    coeffs = C{n+1};
-    degmat = D{n+1};
+    coeffs = C{end};
+    degmat = D{end};
+end
+
 end
 
 % make degree matrix unique

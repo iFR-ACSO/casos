@@ -37,7 +37,7 @@ methods
         out = call(obj.func, in);
 
         % return result
-        argout = cellfun(@(c,z,sz) reshape(c'*z,sz), out, obj.monom_o, obj.size_o, 'UniformOutput', false);
+        argout = cellfun(@(c,z,sz) casos.PS(z,c,sz), out, obj.monom_o, obj.size_o, 'UniformOutput', false);
     end
 
     function n = get_n_in(obj)
@@ -60,6 +60,11 @@ methods
         sz = obj.size_i{idx+1};
     end
 
+    function idx = get_index_in(obj,str)
+        % Index of inputs.
+        idx = index_in(obj.func,str);
+    end
+
     function n = get_n_out(obj)
         % Number of outputs.
         n = n_out(obj.func);
@@ -78,6 +83,11 @@ methods
     function sz = get_size_out(obj,idx)
         % Size of outputs.
         sz = obj.size_o{idx+1};
+    end
+
+    function idx = get_index_out(obj,str)
+        % Index of outputs.
+        idx = index_out(obj.func,str);
     end
 end
 

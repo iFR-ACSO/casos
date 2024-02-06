@@ -18,6 +18,7 @@ properties (Dependent)
 %     name_out;
 %     monomials_out;
 %     size_out;
+    stats;
 end
 
 properties (Access = private)
@@ -69,6 +70,11 @@ methods
         sz = get_size_in(obj.wrap,i);
     end
 
+    function i = index_in(obj,str)
+        % Return index of inputs.
+        i = get_index_in(obj.wrap,str);
+    end
+
     function n = get.n_out(obj)
         % Return number of outputs.
         n = get_n_out(obj.wrap);
@@ -89,6 +95,31 @@ methods
         sz = get_size_out(obj.wrap,i);
     end
 
+    function i = index_out(obj,str)
+        % Return index of outputs.
+        i = get_index_out(obj.wrap,str);
+    end
+
+    function s = get.stats(obj)
+        % Return stats.
+        s = get_stats(obj.wrap);
+    end
+
+    function print_options(obj)
+        % Print list of options.
+        print_options(obj.wrap);
+    end
+
+    function print_option(obj,name)
+        % Print information about an option.
+        print_option(obj.wrap,name);
+    end
+
+    function tf = has_option(obj,name)
+        % Check if option "name" exists.
+        tf = has_option(obj.wrap,name);
+    end
+
     function out = call(obj,args)
         % Evaluate function for given arguments.
         if iscell(args)
@@ -101,31 +132,31 @@ methods
         % else
         assert(isstruct(args),'Arguments must be given as struct.')
 
-        % name of inputs
-        fn_in = num2cell(obj.name_in,2);
+        argin = cell(obj.n_in,1);
 
-        % parse arguments by name
-        fn = fieldnames(args);
+        % name of arguments
+        fn_arg = fieldnames(args);
+
+        % index of arguments
+        idx_in = cellfun(@(arg) obj.index_in(arg), fn_arg);
         
         % find arguments
-        [I,L] = ismember(fn,fn_in);
-
-        assert(all(I), 'Could not find entry "%s".', fn{find(I,1)})
+        L = ismember(0:obj.n_in-1, idx_in);
 
         % default values
-        argin = arrayfun(@(i) obj.default_in(i), 0:obj.n_in-1, 'UniformOutput', false);
+        argin(~L) = arrayfun(@(i) obj.default_in(i), find(~L)-1, 'UniformOutput', false);
 
         % assign arguments
-        argin(L) = struct2cell(args);
+        argin(idx_in+1) = struct2cell(args);
         
         % call function with cell
-        argout = call(obj,argin);
+        argout = call(obj.wrap,argin);
 
         % name of outputs
-        fn_out = num2cell(obj.name_out,2);
+        fn_out = arrayfun(@(i) obj.name_out(i), 0:obj.n_out-1, 'UniformOutput', false);
 
         % parse outputs
-        out = cell2struct(argout,fn_out);
+        out = cell2struct(argout(:),fn_out(:));
     end
 
     function varargout = subsref(obj,L)
@@ -150,7 +181,7 @@ methods
             assert(length(fn_i) == length(L.subs), 'Name-value syntax requires same number of names and values.')
 
             % assign inputs
-            args = cell2struct(L.subs,fn_i(1:length(L.subs)));
+            args = cell2struct(L.subs(:),fn_i(1:length(L.subs)));
         else
             % multiple inputs
             args = L.subs;
@@ -165,6 +196,15 @@ methods
             % return multiple outputs
             varargout = out;
         end
+    end
+end
+
+methods (Access={?casos.package.functions.FunctionInterface})
+    %% Friend interface
+    function f = substitute(obj,varargin)
+        % Substitute variables.
+        f = obj;
+        f.wrap = substitute(obj.wrap,varargin{:});
     end
 end
 
