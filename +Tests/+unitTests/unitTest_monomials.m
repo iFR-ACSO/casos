@@ -14,8 +14,6 @@
 % ========================================================================
 
 function [TestBool] = unitTest_monomials()
-clear
-clc
 
 % define degree and size
 m   = 3;
@@ -26,8 +24,6 @@ deg = 1:2;
 x_cas       = casos.PS('x',m,n);
 x_monom_cas = monomials(x_cas,deg);
 
-% generate monomial vector ordered
-% [~,x_monom_cas,~] = poly2basis(x_monom_cas);
 % generate sorted cell array
 x_monom_cas_str = str(x_monom_cas);
 

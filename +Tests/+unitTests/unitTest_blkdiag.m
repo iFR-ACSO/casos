@@ -15,8 +15,6 @@
 % ========================================================================
 
 function [TestBool] = unitTest_blkdiag()
-clear
-clc
 
 % define degree and size
 m   = 3;
@@ -28,13 +26,7 @@ deg2 = 2;
 x_cas        = casos.PS('x',m,n);
 x_monom1_cas = monomials(x_cas,deg);
 
-% generate monomial vector ordered
-% [~,x_monom1_cas,~] = poly2basis(x_monom1_cas);
-
 x_monom2_cas = monomials(x_cas,deg2);
-
-% generate monomial vector ordered
-% [~,x_monom2_cas,~] = poly2basis(x_monom2_cas);
 
 % generate random coefficients
 coeffs1 = randn(length(x_monom1_cas),1)';

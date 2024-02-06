@@ -15,8 +15,6 @@
 % ========================================================================
 
 function [TestBool] = unitTest_poly2basis()
-clear
-clc
 
 % define degree and size
 m   = 3;
@@ -27,8 +25,6 @@ deg = 1:2;
 x_cas       = casos.PS('x',m,n);
 x_monom_cas = monomials(x_cas,deg);
 
-% bring monomials in compareable order
-% [~,x_monom_cas,~] = poly2basis(x_monom_cas);
 
 % generate casos polynomial
 poly_cas = casos.PS.sym('c',x_monom_cas,n);

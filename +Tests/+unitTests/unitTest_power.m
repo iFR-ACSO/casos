@@ -14,8 +14,6 @@
 % ========================================================================
 
 function [TestBool] = unitTest_power()
-clear
-clc
 
 % define degree and size
 m   = 3;
@@ -27,8 +25,6 @@ deg2 = 2;
 x_cas       = casos.PS('x',m,n);
 x_monom1_cas = monomials(x_cas,deg);
 
-% generate monomial vector ordered
-% [~,x_monom1_cas,~] = poly2basis(x_monom1_cas);
 
 % generate random coefficients
 coeffs1 = randn(length(x_monom1_cas),1)';
