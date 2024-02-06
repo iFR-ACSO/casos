@@ -2,7 +2,7 @@
 %
 % Name: test_runner
 %
-% Short Description: Script executing and checking tests.
+% Short Description: Script executing and checking unit tests.
 %                
 % Date: 08/18/2023 
 %
@@ -10,7 +10,7 @@
 % ========================================================================
 
 % Get all function files in test f
-allFiles = dir(fullfile('./+Tests/', '*.m'));
+allFiles = dir(fullfile('./+Tests/+unitTesting/', '*.m'));
 
 % Initialize a cell array to store the names of functions
 functionNames = char();
