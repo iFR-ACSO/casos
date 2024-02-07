@@ -72,6 +72,15 @@ Lz(:,~I) = [];
 degmat = z.degmat(I,:);
 z = build_monomials(degmat,z.indets);
 
+
+% ---------------- zero diagonal method to reduce basis ------------------
+% if ~isempty(p)
+%     Lz = arrayfun(@(i) zero_diagonal(p.degmat(Ldegmat(i,:),Iv), degmat, Lz(i,:)), idx, 'UniformOutput', false);
+%     Lz = vertcat(Lz{:});
+% end
+% ------------------------------------------------------------------------
+
+
 % dimension K(i) of Gram basis for p(i)
 K = full(sum(Lz,2));
 

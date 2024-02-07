@@ -30,15 +30,6 @@ assert(length(Qgram_x) == size(Zgram_x,1), 'Unable to find Gram matrix of decisi
 % matrix decision variables for constraints
 Qgram_g = casadi.SX.sym('Q',sum(Ksdp_g_s.^2),1);
 
-% ------------------------ Zero diagonal algorithm -----------------------
-% TODO: it works but not yet efficient
-% TODO: deal with multiple constraints
-if false
-    [Ksdp_g_s, Qgram_g, Zgram_g] = zero_diagonal(sos.g, Qgram_g, Zgram_g, Ksdp_g_s, Ml);
-end
-% ------------------------------------------------------------------------
-
-
 % replace sum-of-squares constraints by equality
 gdiff = (sos.g - [zeros(Ml,1); casos.PS(Zgram_g,Qgram_g)]);
 % handle (new) equality constraints
