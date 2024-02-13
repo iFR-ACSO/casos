@@ -59,9 +59,16 @@ methods
         % linear cost
         g = jacobian(simplify(sdp.f - x'*(H/2)*x), x);
         % linear constraint
-        A = jacobian(sdp_g, x);
+         A = [sdp.dgdQx -sdp.dgdQg];
+
+
+        % tic
+        %     A = jacobian(sdp_g, x);
+        % toc
+
+ 
         % constant constraint
-        b = simplify(A*x - sdp_g);
+        b = A*x - sdp_g;
         
         % get sparsity
         conic.h = sparsity(H);
