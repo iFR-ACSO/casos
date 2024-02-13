@@ -1,4 +1,4 @@
-function [Z,K,z] = grambasis(p,I)
+function [Z,K,z,mat] = grambasis(p,I)
 % Return Gram basis of polynomial vector.
 
 if nargin < 2
@@ -113,5 +113,6 @@ Z = casos.PS;
 [Z.coeffs,Z.degmat] = uniqueDeg(coeffs,D);
 Z.indets = z.indets;
 Z.matdim = [lZ lp];
+mat = Z.coeffs;
 
 end
