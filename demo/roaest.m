@@ -1,5 +1,7 @@
 % Validate stability with LF candidate.
-
+clear
+clc
+profile off
 % system states
 x = casos.PS('x',2,1);
 % system dynamics
@@ -17,15 +19,15 @@ g = casos.PS.sym('g');
 
 %% Bisection
 % define SOS feasibility
-sos = struct('x',s,'g',s*(V-g)-Vdot-l,'p',g);
+sos = struct('x',s,'g',s*(V-1)-Vdot-l,'p',g);
 % states + constraint are SOS cones
 opts.Kx.s = 1; opts.Kc.s = 1;
 % ignore infeasibility
 opts.error_on_fail = false;
-
+profile on -historysize 50000000000000000
 % solve by relaxation to SDP
 S = casos.sossol('S','sedumi',sos,opts);
-
+profile viewer
 % find largest stable level set
 lb = 0; ub = 10;
 % bisection
