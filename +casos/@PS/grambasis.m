@@ -34,6 +34,7 @@ Ldeg = tmp(:,ii);
 % split into even and odd monomials
 Ldeg_e = Ldeg(:,mod(degree,2)==0);
 Ldeg_o = Ldeg(:,mod(degree,2) >0);
+
 % add even degrees if necessary
 Ldeg_e(:,1:end-1) = Ldeg_e(:,1:end-1) | Ldeg_o;
 Ldeg_e(:,2:end) = Ldeg_e(:,2:end) | Ldeg_o;
@@ -41,6 +42,7 @@ Ldeg_e(:,2:end) = Ldeg_e(:,2:end) | Ldeg_o;
 % get half-degree vector of monomials
 % TODO: compute degree matrix directly (avoid unnecessary checks)
 z = monomials(indets,mndg:mxdg);
+
 % compute logical map for half-degree monomials
 % -> Lz_deg(i,j) is true iff z(i) is of degree(j)/2
 % -> Lz_var(i,j) is true iff z(i) includes indets(j)

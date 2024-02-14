@@ -59,7 +59,7 @@ methods
         % linear cost
         g = jacobian(simplify(sdp.f - x'*(H/2)*x), x);
         % linear constraint
-         A = [sdp.dgdQx -sdp.dgdQg];
+        A = [sdp.dgdQlx   sdp.dgdQx -sdp.dgdQg];
 
 
         % tic

@@ -1,6 +1,9 @@
 % Estimate region of the Generic Transport Model
 % See Chakraborty et al. 2011 (CEP) for details.
 
+clear
+clc
+
 % system states
 x = casos.PS('x',4,1);
 
@@ -20,11 +23,11 @@ P = [395.382671347059	-23.0032507976836	3.16965275615691	29.2992065909380
 Vval = x'*P*x;
 
 % Lyapunov function candidate
-V = casos.PS.sym('v',monomials(x,2));
+V = casos.PS.sym('v',monomials(x,6));
 
 % SOS multiplier
-s1 = casos.PS.sym('s1',monomials(x,0:2),'gram');
-s2 = casos.PS.sym('s2',monomials(x,0:2),'gram');
+s1 = casos.PS.sym('s1',monomials(x,0:4),'gram');
+s2 = casos.PS.sym('s2',monomials(x,0:4),'gram');
 
 % enforce positivity
 l = 1e-6*(x'*x);
@@ -37,7 +40,7 @@ b = casos.PS.sym('b');
 opts = struct('sossol','sedumi');
 
 %% setup solver
-
+profile on
 % solver 1: gamma-step
 sos1 = struct('x',s1,'f',-g,'p',V);
 sos1.('g') = s1*(V-g)-nabla(V,x)*f-l;
@@ -74,7 +77,7 @@ opts.Kx = struct('s', 0, 'l', 1);
 opts.Kc = struct('s', 3);
 
 S3 = casos.sossol('S','sedumi',sos3,opts);
-
+profile viewer
 %% gamma-beta-V-iteration
 
 for iter = 1:10
