@@ -23,14 +23,31 @@ Js = [false(Ml,1); true(Ms,1)];
 % obtain Gram basis and matrix decision variables
 [Qgram_x,Zgram_x,Ksdp_x_s] = grammatrix(sos.x,Is);
 % obtain Gram basis for sum-of-squares constraints
-[Zgram_g,Ksdp_g_s,~,mat] = grambasis(sos.g,Js);
+[Zgram_g,Ksdp_g_s] = grambasis(sos.g,Js);
 
+dgdQg = [];
+ptr = 0;
+for q = 1:length(sos.g)
+    [~,~,~,mat0] = grambasis(sos.g(q),Js(q));
+
+    if length(sos.g) > 1
+        mat = [sparse(size(mat0,1),ptr) mat0];
+        if isempty(dgdQg)
+            dgdQg = mat;
+        else
+            dgdQg = [ [dgdQg sparse(size(dgdQg,1),size(mat0,2))] ; mat];
+
+        end
+        ptr = size(dgdQg,2);
+    else
+        dgdQg = mat0;
+    end
+end
 
 assert(length(Qgram_x) == size(Zgram_x,1), 'Unable to find Gram matrix of decision variables.')
 
 % matrix decision variables for constraints
 Qgram_g = casadi.SX.sym('Q',sum(Ksdp_g_s.^2),1);
-
 
 % replace sum-of-squares constraints by equality
 gdiff = (sos.g - [zeros(Ml,1); casos.PS(Zgram_g,Qgram_g)]);
@@ -53,9 +70,13 @@ sdp.g = Qdiff_g;
 sdp.p = Qlin_p;
 
 % pre-compute block matrices of jacobian
-sdp.dgdQg  = mat; 
+sdp.dgdQg  = dgdQg; 
+% sdp.dgdQg  = -jacobian(sdp.g,Qgram_g); 
+
 sdp.dgdQlx = jacobian(sdp.g,Qlin_x);
+
 sdp.dgdQx  = jacobian(sdp.g,Qgram_x);
+% sdp.dgdXi  = jacobian(sdp.g,[Qlin_x;Qgram_x]);
 
 
 % SDP options
