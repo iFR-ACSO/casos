@@ -32,7 +32,7 @@ r = casos.PS.sym('r',monomials(x,0:1),[length(l) 1],'gram');
 
 
 % g = [g;l];
-s0 = casos.PS.sym('s0',monomials(x,0:4),'gram');
+s0 = casos.PS.sym('s0',monomials(x,0:2),'gram');
 
 h = casos.PS.sym('h',monomials(x,0:6));
 h_sym = casos.PS.sym('h_sym',basis(h));
@@ -110,6 +110,12 @@ for iter = 1:itermax
     switch (S2.stats.UNIFIED_RETURN_STATUS)
         case 'SOLVER_RET_SUCCESS'
              h_star = sol2.x(1);
+            % figure(1)
+            % clf
+            %  pcontour3(l(1),0,[-5 5 -5 5 -5 5],'r')
+            %     hold on
+            %      pcontour3(l(2),0,[-5 5 -5 5 -5 5],'r')
+            %  pcontour3(h_star,0,[-5 5 -5 5 -5 5],'r')
               disp(['h step feasible in ' num2str(iter) '/' num2str(itermax) ] )
         case {'SOLVER_RET_INFEASIBLE' 'SOLVER_RET_NAN'}
             disp(['h step infeasible in ' num2str(iter) '/' num2str(itermax) ] )

@@ -1,7 +1,7 @@
 % Estimate larget possible safe set
 clc
 clear
-
+profile off
 % system states
 x = casos.PS('x',6,1);
 
@@ -24,14 +24,14 @@ epsilon = 1e-6;
 g = [g; 
     (x(4)^2 + x(5)^2 + x(6)^2 + 1)^2*(1-cTheta+epsilon) - (8*x(4)^2 + 8*x(6)^2)];
 
-l = [];
+
 % SOS multiplier
 s = casos.PS.sym('s',monomials(x,0:1),[length(g) 1],'gram');
-% r = casos.PS.sym('r',monomials(x,0:1),[length(l) 1],'gram');
+
 
 s0 = casos.PS.sym('s0',monomials(x,0:1),'gram');
 
-h = casos.PS.sym('h',monomials(x,0:5));
+h = casos.PS.sym('h',monomials(x,0:6));
 h_sym = casos.PS.sym('h_sym',basis(h));
 
 % level of stability
@@ -40,7 +40,7 @@ h_sym = casos.PS.sym('h_sym',basis(h));
 h_star = x'*eye(length(x))*2*x;
 
 %% Multiplier Step
-profile on
+profile on -historysize 5000000000000000
 disp('=========================================================')
 disp('Build solver...')
 tic
@@ -50,9 +50,9 @@ sos = struct('x',s, ...
              'p',h_sym);
 
 % states + constraint are SOS cones
-opts.Kx.s = length(l)+length(g); 
+opts.Kx.s = length(g); 
 opts.Kx.l = 0; 
-opts.Kc.s = length(l)+length(g);
+opts.Kc.s = length(g);
 
 % ignore infeasibility
 opts.error_on_fail = false;
@@ -61,7 +61,6 @@ opts.error_on_fail = false;
 S1 = casos.sossol('S1','mosek',sos,opts);
 
 s_sym = casos.PS.sym('s_sym',basis(s(1)),[length(g) 1]);
-% r_sym = casos.PS.sym('r_sym',basis(r(1)),[length(l) 1]);
 
 % define SOS feasibility
 sos2 = struct('x',[h;s0], ...
@@ -71,7 +70,7 @@ sos2 = struct('x',[h;s0], ...
 % states + constraint are SOS cones
 opts.Kx.l = 1; 
 opts.Kx.s = 1;
-opts.Kc.s = 1+length(g)+length(l);
+opts.Kc.s = 1+length(g);
 
 % ignore infeasibility
 opts.error_on_fail = false;
@@ -85,6 +84,9 @@ tbuild = toc;
 
 
 profile viewer
+profile off
+
+profile on -historysize 5000000000000000
 disp('Finished building solver!')
 disp('=========================================================')
 disp('Start iteration...')
@@ -125,8 +127,8 @@ disp(['Build time: ' num2str(tbuild) ' s' ])
 disp(['Iteration time: ' num2str(tIter) ' s' ])
 disp('___________________________________________')
 disp(['Total time: ' num2str(tIter+tbuild) ' s' ])
-
-figure()
+ profile viewer
+% figure()
 % plotBoxCon([1 2],x_up,x_low)
 % hold on
 % 
