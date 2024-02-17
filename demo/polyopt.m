@@ -12,10 +12,18 @@ g = casos.PS.sym('g');
 sos = struct('x',g,'f',g,'g',f+g);
 % constraint is scalar SOS cone
 opts = struct('Kc',struct('s',1));
-
+tic
 % solve by relaxation to SDP
-S = casos.sossol('S','mosek',sos,opts);
+S = casos.sossol('S','sedumi',sos,opts);
+% evaluate
+sol = S();
+toc
+fprintf('Sedumi Minimum is %g.\n', double(sol.f))
+tic
+% solve by relaxation to SDP
+S = casos.sossol('S','cdcs',sos,opts);
 % evaluate
 sol = S();
 
-fprintf('Minimum is %g.\n', double(sol.f))
+fprintf('CDCS Minimum is %g.\n', double(sol.f))
+toc

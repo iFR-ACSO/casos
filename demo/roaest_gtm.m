@@ -98,3 +98,6 @@ for iter = 1:10
     Vval = sol3.x;
 
 end
+
+gval
+bval
