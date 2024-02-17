@@ -129,7 +129,7 @@ b = casos.PS.sym('b');
 opts               = struct('sossol','sedumi');
 opts.error_on_fail = 0; 
 opts.max_iter      = 25;
-opts.conf_interval = [-1000 0]';
+% opts.conf_interval = [-1000 0]';
 
 % opts.sossol_options.sdpsol_options.mosek_param.MSK_IPAR_BI_CLEAN_OPTIMIZER  = 'MSK_OPTIMIZER_INTPNT';
 % opts.sossol_options.sdpsol_options.mosek_param.MSK_IPAR_INTPNT_BASIS        = 'MSK_BI_NEVER';
