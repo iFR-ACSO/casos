@@ -70,17 +70,29 @@ d = casos.PS.sym('d');
 
 lam_g = casos.PS.sym('lam_g',obj.monom_gs);
 
-Psi = casos.Function('f',{sos.x,lam_g}, {nlsos.f + dot(lam_g,nlsos.g)});
+% langrange function of linearized problem
+L = casos.Function('f',{sos.x,lam_g}, {sos.f + dot(lam_g,sos.g)});
 
-% ObjFun = casos.Function('f',{nlsos.x}, {nlsos.f});
-% ConFun = casos.Function('f',{nlsos.x}, {nlsos.g});
-% 
-% obj.Meritobj = casos.Function('f',{x0,d,x1}, {ObjFun(x0*(1-d) + d*x1)});
-% obj.MeritCon = casos.Function('f',{x0,d,x1}, {ConFun(x0*(1-d) + d*x1)});
-% obj.Merit    = Psi;
+% Langrange function
+L_sym = casadi.SX( L(sos.x,lam_g) );
 
-Psi_d = Psi(x0*(1-d) + d*x1 , lam_g);
+% get decision variables and multiplier i.e. their coefficients and
+% calculate gradient
+xCoeff  = poly2basis(sos.x);
+nabla_x = gradient(L_sym,xCoeff);
 
+lamCoeff   = poly2basis(lam_g);
+nabla_lam  = gradient(L_sym,lamCoeff(:));
+
+% setup functions for later evaluation
+obj.nabla_x_fun   = casos.Function('f',{x0,sos.x,lam_g}, {nabla_x}, {'x0' 'x1' 'lam'}, {'dL/dx'});
+obj.nabla_lam_fun = casos.Function('f',{x0,sos.x,lam_g}, {nabla_lam}, {'x0' 'x1' 'lam'}, {'dL/dlam'});
+
+
+% Merit function
+L = casos.Function('f',{sos.x,lam_g}, {nlsos.f - dot(lam_g,nlsos.g)});
+
+Psi_d = L(x0*(1-d) + d*x1 , lam_g);
 
 % define SOS problem:   min_d Psi(d) s.t. 0 \leq d \leq 1 
 sos_lineSearch = struct('x',d, ...

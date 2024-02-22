@@ -6,8 +6,9 @@ properties (Access=private)
     lineSearch;
         
     Merit;
-    Meritobj;
-    MeritCon;
+    
+    nabla_x_fun;
+    nabla_lam_fun;
 
     info = struct('iter',[]);
     status = casos.package.UnifiedReturnStatus.SOLVER_RET_UNKNOWN;

@@ -36,8 +36,13 @@ for i = 1:obj.opts.max_iter
             % sos constraint reads  delta x = f(x0) + df/dx(x0)*(x-x0);
             % where delta x = xk+1 - xk hence xk+1 = delta_x + xk 
             xk1 = sol{1} + xk;
-             
             
+            xCoeff_sol     = poly2basis(xk1);
+            lamCoeff_sol   = poly2basis(sol{5});
+
+           nabla_x = full(casadi.DM(obj.nabla_x_fun(xk, sol{1}, sol{5})))
+           nabla_l = full(casadi.DM(obj.nabla_lam_fun(xk, sol{1}, sol{5})))
+
             % store old solution
             sol_old    = sol;
             sol_old{1} =  xk1;
@@ -69,10 +74,10 @@ for i = 1:obj.opts.max_iter
 
 
        % plot merit function
-       % plot(linspace(0,1,10),arrayfun(@(d) double(obj.Merit(xk.*(1-d)+xk1.*d,sol{5})), linspace(0,1,10)))
+%        plot(linspace(0,1,10),arrayfun(@(d) double(obj.Merit(xk.*(1-d)+xk1.*d,sol{5})), linspace(0,1,10)))
 
         solLS = obj.lineSearch('p',[xk;xk1;sol{5}], ...
-                               'lbx',0, ...
+                               'lbx',0.1, ...
                                'ubx',1);
       
         dopt = solLS.x;

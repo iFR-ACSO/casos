@@ -287,6 +287,10 @@ methods
         X = casadi.SX.sym('x',p.nvars,1);
         f = casadi.Function('p',{X},{casadi.SX(subs(p,indeterminates(p),X))},varargin{:});
     end
+
+    function c = get_coeffs(p)
+        c = p.coeffs;
+    end
 end
 
 methods (Access=protected)
