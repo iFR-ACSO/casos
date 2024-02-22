@@ -23,8 +23,8 @@ case 2
     [indets,dga,dgb] = combineVar(a.indets,b.indets,a.degmat,b.degmat);
 
     % get nonzero coefficients
-    nza = nonzeros(a.coeffs);
-    nzb = nonzeros(b.coeffs);
+    nza = a.coeffs(find(sparsity(a.coeffs)));
+    nzb = b.coeffs(find(sparsity(b.coeffs)));
 
     % extend sparsity pattern
     S = [
@@ -33,7 +33,7 @@ case 2
     ];
 
     % combine coefficients
-    coeffs = casadi.SX(S,[nza{:} nzb{:}]);
+    coeffs = casadi.SX(S,[nza(:); nzb(:)]);
 
     % make degree matrix unique
     [coeffs,degmat] = uniqueDeg(coeffs, [dga;dgb]);
