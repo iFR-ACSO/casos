@@ -37,11 +37,11 @@ for i = 1:obj.opts.max_iter
             % where delta x = xk+1 - xk hence xk+1 = delta_x + xk 
             xk1 = sol{1} + xk;
             
-            xCoeff_sol     = poly2basis(xk1);
-            lamCoeff_sol   = poly2basis(sol{5});
-
-           nabla_x = full(casadi.DM(obj.nabla_x_fun(xk, sol{1}, sol{5})))
-           nabla_l = full(casadi.DM(obj.nabla_lam_fun(xk, sol{1}, sol{5})))
+           %  xCoeff_sol     = poly2basis(xk1);
+           %  lamCoeff_sol   = poly2basis(sol{5});
+           % % 
+           % nabla_x = full(casadi.DM(obj.nabla_x_fun(xk, sol{1}, sol{5})))
+           % nabla_l = full(casadi.DM(obj.nabla_lam_fun(xk, sol{1}, sol{5})))
 
             % store old solution
             sol_old    = sol;
@@ -74,41 +74,55 @@ for i = 1:obj.opts.max_iter
 
 
        % plot merit function
-%        plot(linspace(0,1,10),arrayfun(@(d) double(obj.Merit(xk.*(1-d)+xk1.*d,sol{5})), linspace(0,1,10)))
+       % figure(1)
+       % % clf
+       % plot(linspace(0,1,10),arrayfun(@(d) double(obj.Merit(xk.*(1-d)+xk1.*d,sol{5})),...
+       %     linspace(0,1,10)))
 
-        solLS = obj.lineSearch('p',[xk;xk1;sol{5}], ...
-                               'lbx',0.1, ...
-                               'ubx',1);
-      
-        dopt = solLS.x;
         
-        % update primal
-        xk1 = dopt*xk1 + (1-dopt)*xk;
-
-
-       % store iteration info
-       info(i+1:end) = [];
-       obj.info.iter = info;
 
         
         % check convergence
-        if i > 1 && full( casadi.DM(pnorm2(xk1-xk)) ) < obj.opts.tolerance_abs %&&....
+        if i > 1 
+                
+                dopt = bisection_minimization(obj, xk, xk1, sol);
 
-        % adjust last solution similar to iteration i.e. overwrite
-        % optimization solution 
-        sol{1} = xk1;
+           
+                % solLS = obj.lineSearch('p',[xk;xk1;sol{5}], ...
+                %                        'lbx',0, ...
+                %                        'ubx',1);
 
-        argout = sol;
 
-        % terminate
-        return
+                % dopt = solLS.x;
+        
+                %update primal
+                xk1   = dopt*xk1 + (1-dopt)*xk;
+                duals =  dopt*sol{5} + (1-dopt)*sol{5};
 
-        end % end if convergence check
- 
+            if full( casadi.DM(pnorm2(xk1-xk)) ) < obj.opts.tolerance_abs %&& ...
+               full( casadi.DM(pnorm2(duals-sol{5})) ) < obj.opts.tolerance_rel*full( casadi.DM(pnorm2(duals))) 
+               % store iteration info
+               info(i+1:end) = [];
+               obj.info.iter = info;
+        
+                % adjust last solution similar to iteration i.e. overwrite
+                % optimization solution 
+                sol{1} = xk1;
+        
+                argout = sol;
+        
+                % terminate
+                return
+    
+            end % end if convergence check
 
- % set current solution as previous solution for next iteration
- xk = xk1;
-%  dk = sol{5};
+            xk = xk1;
+        else
+             % set current solution as previous solution for next iteration
+             xk = xk1;
+             % dk = sol{5};
+        end
+
 
 end % end for-loop sequential sos
 

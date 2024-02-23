@@ -30,7 +30,7 @@ l = 1e-6*(x'*x);
 b = casos.PS.sym('b');
 
 % options
-opts = struct('sossol','sedumi');
+opts = struct('sossol','mosek');
 
 %% setup solver
 % solver 1: gamma-step

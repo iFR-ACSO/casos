@@ -88,7 +88,7 @@ for iter = 1:10
     % beta step
     sol2 = S2('p',[Vval;gval]);
 
-    bval = -sol2.f;
+    bval = -sol2.f
     s2val = sol2.x;
 
     % V-step

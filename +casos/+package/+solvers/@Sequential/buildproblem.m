@@ -90,9 +90,10 @@ obj.nabla_lam_fun = casos.Function('f',{x0,sos.x,lam_g}, {nabla_lam}, {'x0' 'x1'
 
 
 % Merit function
-L = casos.Function('f',{sos.x,lam_g}, {nlsos.f - dot(lam_g,nlsos.g)});
 
-Psi_d = L(x0*(1-d) + d*x1 , lam_g);
+L = casos.Function('f',{sos.x,lam_g}, {nlsos.f - dot(lam_g,nlsos.g)});
+obj.Merit = L;
+Psi_d = L(x0*(1-d) + d*x1 , lam_g) + 1e-6*d;
 
 % define SOS problem:   min_d Psi(d) s.t. 0 \leq d \leq 1 
 sos_lineSearch = struct('x',d, ...

@@ -156,14 +156,29 @@ tic
 S1 = casos.nlsossol('S1','sequential',sos1,opts);
 toc
 
+% profile on -historysize 500000000000000000
 tic
-% solve
 sol1 = S1('x0',[Vinit ;(x'*x);  (x'*x)^2 ; 1], ...
           'lbx',[Vlb;s1lb;s2lb;glb], ...
           'ubx',[Vub;s1ub;s2ub;gub]);
-toc
 
-% show solution 
-sol1.f
+toc
 sol1.x(end)
 
+
+tic
+sol1 = S1('x0',[sol1.x(1) ;sol1.x(2);  sol1.x(3) ; sol1.x(end)], ...
+          'lbx',[Vlb;s1lb;s2lb;glb], ...
+          'ubx',[Vub;s1ub;s2ub;gub]);
+toc
+sol1.x(end)
+
+
+V = subs(sol1.x(1),x,D*[0;x(2:3);0]);
+p = subs(p,x,D*[0;x(2:3);0]);
+
+figure(1)
+clf
+pcontour(V, 0, [-1 1 -4 4], 'b-');
+hold on
+pcontour(p, double(sol1.x(end)), [-1 1 -4 4], 'r--');
