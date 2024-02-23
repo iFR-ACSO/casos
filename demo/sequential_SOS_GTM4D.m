@@ -174,11 +174,17 @@ toc
 sol1.x(end)
 
 
-V = subs(sol1.x(1),x,D*[0;x(2:3);0]);
-p = subs(p,x,D*[0;x(2:3);0]);
+%% plotting
+xD = D*x;
+V = subs(sol1.x(1),[x(1);x(4)],zeros(2,1));
+V = subs(V,[x(2);x(3)],xD(2:3));
+
+
+p = subs(p,[x(1);x(4)],zeros(2,1));
+p = subs(p,[x(2);x(3)],xD(2:3));
 
 figure(1)
 clf
-pcontour(V, 0, [-1 1 -4 4], 'b-');
+pcontour(V, 1, [-1 1 -4 4], 'b-');
 hold on
 pcontour(p, double(sol1.x(end)), [-1 1 -4 4], 'r--');
