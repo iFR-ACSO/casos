@@ -44,7 +44,7 @@ gdiff = (sos.g - [zeros(Ml,1); casos.PS(Zgram_g,Qgram_g)]);
 [Qlin_f,Zlin_f] = poly2basis(sos.f);
 
 % build SDP problem
-sdp.x = [Qlin_x; Qgram_x; Qgram_g];
+sdp.x = [Qlin_x'; Qgram_x; Qgram_g];
 sdp.f = Qlin_f;
 sdp.g = Qdiff_g;
 sdp.p = Qlin_p;
