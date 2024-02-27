@@ -7,7 +7,7 @@ function min_dtry = bisection_minimization(obj, xk, xk1, sol)
     % Set the tolerance
     tolerance = 1e-2;
     
-    % Initialize bounds
+    % Initialize bounds (linesearch 0 <= d <= 1)
     lower_bound = 0;
     upper_bound = 1;
     

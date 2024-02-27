@@ -21,7 +21,8 @@ properties (Constant,Access=protected)
          'sossol', 'The convex sum-of-squares solver to be used in the bisection.'
          'sossol_options', 'Options to be passed to the SOS solver.'
          'tolerance_abs', 'Absolute tolerance for stopping criterion.'
-         'tolerance_rel', 'Relative tolerance for stopping criterion.'}
+         'tolerance_rel', 'Relative tolerance for stopping criterion.'
+         'verbose', 'Print current iteration to command window'}
     ];
 end
 
@@ -57,12 +58,16 @@ methods
         end
         % objective
         if ~isfield(sos,'f')
-            error('No objective given for quasiconvex problem.')
+            error('No objective given')
         else
-            sos.f = casos.PS(sos.f);
+            if ~isempty(sos.f)
+                sos.f = casos.PS(sos.f);
+            else
+                sos.f = casos.PS(0);
+            end
     
             assert(isscalar(sos.f) && is_zerodegree(sos.f),'Objective must be scalar variable.')
-            assert(is_symbolic(sos.f) || is_symbolic(-sos.f),'Objective must be symbolic variable.')
+            % assert(is_symbolic(sos.f) || is_symbolic(-sos.f),'Objective must be symbolic variable.')
         end
         % constraints
         if ~isfield(sos,'g')
@@ -75,9 +80,9 @@ methods
         if ~isfield(obj.opts,'sossol'), obj.opts.sossol = 'sedumi'; end
         if ~isfield(obj.opts,'sossol_options'), obj.opts.sossol_options = struct; end
         if ~isfield(obj.opts,'max_iter'), obj.opts.max_iter = 1000; end
-        if ~isfield(obj.opts,'tolerance_abs'), obj.opts.tolerance_abs = 1e-3; end
-        if ~isfield(obj.opts,'tolerance_rel'), obj.opts.tolerance_rel = 1e-3; end
-    
+        if ~isfield(obj.opts,'tolerance_abs'), obj.opts.tolerance_abs = 1e-2; end
+        if ~isfield(obj.opts,'tolerance_rel'), obj.opts.tolerance_rel = 1e-2; end
+        if ~isfield(obj.opts,'verbose'), obj.opts.verbose = 0; end
        
         % build SOS problem
         buildproblem(obj,sos);
