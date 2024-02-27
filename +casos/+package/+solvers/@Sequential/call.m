@@ -12,6 +12,11 @@ info = cell(1,obj.opts.max_iter);
 % first initial guess must be provided by user!
 xk = args{1};
 
+if obj.opts.verbose 
+disp('Start sequential SOS...')
+fprintf('%-10s%-15s%-15s%-15s\n', 'Iteration', 'abs(f)', 'abs(primal)', 'abs(dual)');
+fprintf('-------------------------------------------------\n');
+end
 % do bisection
 for i = 1:obj.opts.max_iter
     
@@ -80,8 +85,6 @@ for i = 1:obj.opts.max_iter
        %     linspace(0,1,10)))
 
         
-
-        
         % check convergence
         if i > 1 
                 
@@ -97,11 +100,22 @@ for i = 1:obj.opts.max_iter
         
                 %update primal
                 xk1   = dopt*xk1 + (1-dopt)*xk;
-                duals =  dopt*sol{5} + (1-dopt)*sol{5};
+                duals = dopt*sol{5} + (1-dopt)*dual_k;
 
-            if full( casadi.DM(pnorm2(xk1-xk)) ) < obj.opts.tolerance_abs %&& ...
-               full( casadi.DM(pnorm2(duals-sol{5})) ) < obj.opts.tolerance_rel*full( casadi.DM(pnorm2(duals))) 
-               % store iteration info
+
+                cost = double(sol{2});
+                
+            if obj.opts.verbose 
+                fprintf('%-10d%-15.4f%-15.4f%-15.4f\n',...
+                        i, cost ,...
+                        full(casadi.DM(pnorm2(xk1-xk))), full(casadi.DM(pnorm2(duals-dual_k))));
+            end
+            % check convergence or if maximum number of iterations are reached    
+            if i == obj.opts.max_iter || ...
+               full( casadi.DM(pnorm2(xk1-xk)) ) < obj.opts.tolerance_abs && ...
+               full( casadi.DM(pnorm2(duals-dual_k)) ) < obj.opts.tolerance_rel*full( casadi.DM(pnorm2(duals))) 
+               
+                % store iteration info
                info(i+1:end) = [];
                obj.info.iter = info;
         
@@ -117,13 +131,16 @@ for i = 1:obj.opts.max_iter
             end % end if convergence check
 
             xk = xk1;
+            dual_k = sol{5};
+            cost_prev = cost;
         else
+
              % set current solution as previous solution for next iteration
              xk = xk1;
-             % dk = sol{5};
-        end
+             dual_k = sol{5};
+             cost_prev = sol{2};
+        end % end-if
 
 
 end % end for-loop sequential sos
-
 end % end of function

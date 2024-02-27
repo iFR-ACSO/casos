@@ -33,7 +33,7 @@ p0 = sos.p;
 base_x = basis(sos.x);
 
 x0    = casos.PS.sym('X0',base_x);
-x1    = casos.PS.sym('X1',base_x);
+% x1    = casos.PS.sym('X1',base_x);
 % lam_x = casos.PS.sym('lam_x',base_x);
 
 % extend parameter vector
@@ -65,46 +65,50 @@ obj.monom_gl = monomials_in(obj.sossolver,5);
 obj.monom_gs = monomials_in(obj.sossolver,7);
 
 
-% setup line-search
-d = casos.PS.sym('d');
+% setup Merit-function
+lam_gs = casos.PS.sym('lam_gs',obj.monom_gs);
 
-lam_g = casos.PS.sym('lam_g',obj.monom_gs);
+L = casos.Function('f',{sos.x,lam_gs}, {nlsos.f - dot(lam_gs,nlsos.g)});
 
+obj.Merit = L;
+
+
+% d = casos.PS.sym('d');
 % langrange function of linearized problem
-L = casos.Function('f',{sos.x,lam_g}, {sos.f + dot(lam_g,sos.g)});
+% L = casos.Function('f',{sos.x,lam_gs}, {sos.f + dot(lam_gs,sos.g)});
 
 % Langrange function
-L_sym = casadi.SX( L(sos.x,lam_g) );
+% L_sym = casadi.SX( L(sos.x,lam_gs) );
 
 % get decision variables and multiplier i.e. their coefficients and
 % calculate gradient
-xCoeff  = poly2basis(sos.x);
-nabla_x = gradient(L_sym,xCoeff);
-
-lamCoeff   = poly2basis(lam_g);
-nabla_lam  = gradient(L_sym,lamCoeff(:));
-
-% setup functions for later evaluation
-obj.nabla_x_fun   = casos.Function('f',{x0,sos.x,lam_g}, {nabla_x}, {'x0' 'x1' 'lam'}, {'dL/dx'});
-obj.nabla_lam_fun = casos.Function('f',{x0,sos.x,lam_g}, {nabla_lam}, {'x0' 'x1' 'lam'}, {'dL/dlam'});
+% xCoeff  = poly2basis(sos.x);
+% nabla_x = gradient(L_sym,xCoeff);
+% 
+% lamCoeff   = poly2basis(lam_gs);
+% nabla_lam  = gradient(L_sym,lamCoeff(:));
+% 
+% % setup functions for later evaluation
+% obj.nabla_x_fun   = casos.Function('f',{x0,sos.x,lam_gs}, {nabla_x}, {'x0' 'x1' 'lam'}, {'dL/dx'});
+% obj.nabla_lam_fun = casos.Function('f',{x0,sos.x,lam_gs}, {nabla_lam}, {'x0' 'x1' 'lam'}, {'dL/dlam'});
 
 
 % Merit function
 
-L = casos.Function('f',{sos.x,lam_g}, {nlsos.f - dot(lam_g,nlsos.g)});
-obj.Merit = L;
-Psi_d = L(x0*(1-d) + d*x1 , lam_g) + 1e-6*d;
 
-% define SOS problem:   min_d Psi(d) s.t. 0 \leq d \leq 1 
-sos_lineSearch = struct('x',d, ...
-                        'f',Psi_d, ...
-                        'g',[], ... % 0 <= d <= 1  is set in call
-                        'p',[x0; x1; lam_g]);
+
+% Psi_d = L(x0*(1-d) + d*x1 , lam_g) + 1e-6*d;
+
+% % define SOS problem:   min_d Psi(d) s.t. 0 \leq d \leq 1 
+% sos_lineSearch = struct('x',d, ...
+%                         'f',Psi_d, ...
+%                         'g',[], ... % 0 <= d <= 1  is set in call
+%                         'p',[x0; x1; lam_g]);
 
        
 % solve by relaxation to SDP
-obj.lineSearch = casos.sossol('S','mosek',sos_lineSearch,...
-                              struct('Kc',struct('s',0),'Kx',struct('l',1)));
+obj.lineSearch = [];%casos.sossol('S','mosek',sos_lineSearch,...
+                              %struct('Kc',struct('s',0),'Kx',struct('l',1)));
        
          
 
