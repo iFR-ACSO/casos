@@ -1,4 +1,5 @@
 function B = cleanpoly(p,tol,deg)
+% Remove coefficients from nonsymbolic polynomials.
 
 % check inputs
 if nargin<3
