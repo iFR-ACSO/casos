@@ -25,11 +25,7 @@ info = cell(1,obj.opts.max_iter);
 % last feasible solution
 feas_sol = [];
 
-if obj.opts.verbose 
-    disp('=========================================================')
-    disp('Start Bisection') 
-    disp('=========================================================')
-end
+printf(obj.log,'debug','====== Start Bisection =======\n\n');
 
 for i=1:length(info)  
     % bisection
@@ -65,20 +61,17 @@ for i=1:length(info)
             % error: failed
             feas = 0;
             obj.status = UnifiedReturnStatus.SOLVER_RET_NAN;
+            printf(obj.log,'error','Convex optimization run into numerical errors.');
             assert(~obj.opts.error_on_fail,'Convex optimization run into numerical errors.')
             interval(1) = ttry;
     end
 
-
     % display bisection iterations
-   if obj.opts.verbose
-       tchar = 'gamma_';
-        
-       fprintf(['iteration:  %d/%d \t' tchar 'lb  = %-4.4f \t ' tchar 'try = %-4.4f \t'],...
-                i,length(info),obj.qc_sign*round(interval(1),4),obj.qc_sign*round(ttry,4));
-       fprintf([tchar 'ub = %-4.4f \t Feas = %d \n'],obj.qc_sign*round(interval(2),4),feas);
-   end
-
+    tchar = 'gamma_';
+    printf(obj.log,'info',['iteration:  %d/%d \t' tchar 'lb  = %-4.4f \t ' tchar 'try = %-4.4f \t'],...
+                            i,length(info),obj.qc_sign*round(interval(1),4),obj.qc_sign*round(ttry,4));
+    printf(obj.log,'info',[tchar 'ub = %-4.4f \t Feas = %d \n'],obj.qc_sign*round(interval(2),4),feas);
+   
     % check convergence
     if abs(diff(interval)) <= obj.opts.tolerance_abs ...
         || abs(diff(interval)) <= obj.opts.tolerance_rel*norm(interval)
@@ -92,6 +85,7 @@ for i=1:length(info)
         else
             % no feasible solution found
             obj.status = UnifiedReturnStatus.SOLVER_RET_INFEASIBLE;
+            printf(obj.log,'error','Quasiconvex problems appears infeasible.');
             assert(~obj.opts.error_on_fail,'Quasiconvex problems appears infeasible.')
             % return last solution
             argout = sol;
@@ -101,22 +95,16 @@ for i=1:length(info)
         info(i+1:end) = [];
         obj.info.iter = info;
 
-
-        if obj.opts.verbose 
-            disp('')
-            disp('Finished Bisection') 
-            disp('=========================================================')
-        end
+        printf(obj.log,'debug','\n====== Finished Bisection ======\n'); 
 
         % terminate
         return
     end
-    
-
 end
 
 % no convergence
 obj.status = UnifiedReturnStatus.SOLVER_RET_LIMITED;
+printf(obj.log,'error','Bisection exceeded maximum number of iterations.');
 assert(~obj.opts.error_on_fail,'Bisection exceeded maximum number of iterations.')
 
 % return last solution
