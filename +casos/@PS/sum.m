@@ -29,14 +29,7 @@ B = casos.PS;
 [cfa,sz] = prepareMatrixOp(A.coeffs,A.matdim,dim);
 
 % sum coefficients
-switch (dim)
-    case 'all'
-        % compute total sum of each coefficient
-        cfb = sum(cfa,2);
-    otherwise
-        % compute sum of coefficient along dimension
-        cfb = sum(cfa,dim);
-end
+evalMatrixOp(cfa,@sum,dim);
 
 % reshape output coefficient matrix
 coeffs = finishMatrixOp(cfb,sz,dim);

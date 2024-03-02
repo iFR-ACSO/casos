@@ -9,78 +9,93 @@ end
 % else
 out = cell(size(obj));
 
-% iterate over elements
-for i = 1:numel(obj)
-    % polynomial terms (monomials)
-    terms = cell(1,obj.nterm);
+% coefficient sparsity
+S = sparsity(obj.coeffs);
 
-    firstterm = 1;
+% monomials
+monom = cell(1,obj.nterm);
 
-    for j = 1:obj.nterm
-        % coefficient & degree
-        cf = obj.coeffs(j,i);
-        dg = obj.degmat(j,:);
+% polynomial terms
+terms = cell(size(S));
+% preassign chars
+terms(:) = {''};
 
-        % string representation of coefficient and sign
-        mdf = '';
-        if is_symbolic(cf)
-            % symbolic coefficient
-            scf = sprintf('(%s)', str(cf));
-            sgn = ' + ';
-        elseif ~is_constant(cf)
-            % symbolic expression
-            scf = str(cf);
-            sgn = ' + ';
-        elseif is_one(cf > 0)
-            % positive (constant) coefficient
-            scf = str(cf);
-            sgn = ' + ';
-        elseif is_one(cf < 0)
-            %  negative (constant) coefficient
-            scf = str(abs(cf));
-            sgn = ' - ';
-            mdf = '-';
-        else
-            % zero constant
-            continue;
-        end
+% check whether element has been visited yet
+firstterm = true(1,obj.numel);
 
-        % remove sign on first term
-        if firstterm
-            sgn = mdf;
-            % reset flag
-            firstterm = 0;
-        end
+% iterate over nonzero coefficients
+for ic = find(S)
+    % get term and element indices
+    [it,ie] = ind2sub(size(S),ic);
 
-        % build monomial
-        if sum(dg) == 0
-            % constant
-            monom = '';
-        else
-            % monomial
-            ms = arrayfun(@exp2str, obj.indets(find(dg)), nonzeros(dg)');
-            pd = repmat({'*'},nnz(dg),1);
-            % remove leading one
-            if is_one(abs(cf))
-                scf = '';
-                pd{1} = '';
-            end
+    % coefficient & degree
+    cf = obj.coeffs(ic);
+    dg = obj.degmat(it,:);
 
-            M = [pd(:)'; ms(:)'];
-            monom = [M{:}];
-        end
-
-        % combine
-        terms{j} = [sgn scf monom];
-    end
-
-    % check for zero polynomial
-    if firstterm
-        out{i} = '0';
+    % string representation of coefficient and sign
+    mdf = '';
+    if is_symbolic(cf)
+        % symbolic coefficient
+        scf = sprintf('(%s)', str(cf));
+        sgn = ' + ';
+    elseif ~is_constant(cf)
+        % symbolic expression
+        scf = str(cf);
+        sgn = ' + ';
+    elseif is_one(cf > 0)
+        % positive (constant) coefficient
+        scf = str(cf);
+        sgn = ' + ';
+    elseif is_one(cf < 0)
+        %  negative (constant) coefficient
+        scf = str(abs(cf));
+        sgn = ' - ';
+        mdf = '-';
     else
-        out{i} = [terms{:}];
+        % zero constant (nonsparse zero)
+        scf = '0';
+        sgn = ' + ';
     end
+
+    % remove sign on first term
+    if firstterm(ie)
+        sgn = mdf;
+        % mark element as visited
+        firstterm(ie) = 0;
+    end
+
+    % build monomial
+    if ~isempty(monom{it})
+        % nothing to do
+    elseif sum(dg) == 0
+        % constant
+        monom{it} = '';
+    else
+        % monomial
+        ms = arrayfun(@exp2str, obj.indets(find(dg)), nonzeros(dg)');
+
+        monom{it} = strjoin(ms,'*');
+    end
+
+    % remove leading one
+    if sum(dg) == 0
+        % constant
+        pd = '';
+    elseif is_one(abs(cf))
+        scf = '';
+        pd = '';
+    else
+        pd = '*';
+    end
+
+    % combine
+    terms{ic} = [sgn scf pd monom{it}];
 end
+
+% combine terms 
+out(~firstterm) = join(terms(:,~firstterm)', '', 2);
+% assign sparse zeros
+out(firstterm) = {'00'};
 
 end
 
