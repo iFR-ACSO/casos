@@ -294,6 +294,11 @@ methods
         f = casadi.Function('p',{X},{casadi.SX(subs(p,indeterminates(p),X))},varargin{:});
     end
 
+   function obj = saveobj(obj)
+        % Save polynomial object to mat file.
+        obj.coeffs = casadi.DM(obj.coeffs); % only nonsymbolic
+    end
+
 
 end
 
