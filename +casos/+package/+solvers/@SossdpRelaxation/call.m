@@ -29,20 +29,21 @@ sdpsol = call(obj.sdpsolver, args);
 sol_f  = sdpsol.f;
 sol_x  = sdpsol.x(find(~Ig));
 sol_g  = [
-    sdpsol.x(find(Ig))
     sdpsol.g(find(~Jg))
+    sdpsol.x(find(Ig))
 ];
 sol_lam_x = sdpsol.lam_x(find(~Ig));
 sol_lam_g = [
-    sdpsol.lam_x(find(Ig))
     sdpsol.lam_g(find(~Jg))
+...    sdpsol.lam_x(find(Ig))
+    sdpsol.lam_g(find(Jg))
 ];
 
 % build polynomial solution
 argout{2} = casos.PS(obj.monom_f,sol_f); % f
 argout{1} = casos.PS(obj.basis_x_out,sol_x); % x
 argout{3} = casos.PS(obj.basis_g_out,sol_g); % g
-argout{4} = casos.PS(obj.basis_x_out,sol_lam_x); % lam_x
-argout{5} = casos.PS(obj.basis_g_out,sol_lam_g); % lam_g
+argout{4} = casos.PS(obj.basis_x_lam,sol_lam_x); % lam_x
+argout{5} = casos.PS(obj.monom_g,sol_lam_g); % lam_g
 
 end
