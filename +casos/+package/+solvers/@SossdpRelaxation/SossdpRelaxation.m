@@ -9,6 +9,8 @@ properties (Access=private)
 
     basis_x_out;
     basis_g_out;
+
+    basis_x_lam;
 end
 
 properties (Constant,Access=protected)
