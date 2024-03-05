@@ -29,7 +29,7 @@ if isempty(domain)
     xmax = ones(1,nvar);
 else
     nvar = size(domain,1);
-    
+  
     L.type = '()';
     L.subs = {':',1};
     var = subsref(domain,L);
