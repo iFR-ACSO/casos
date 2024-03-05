@@ -30,9 +30,7 @@ x_low = [-3 -3];
 
 load safe_set.mat
 
-
-g = casos.PS();
-g = struct2poly(g,hstruct);
+g = loadobj(hstruct);
 
 % control constraint
 umin = -1;

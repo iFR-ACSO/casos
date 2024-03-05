@@ -32,11 +32,11 @@ Vval = x'*P*x-1;
 f = subs(f+gx*u,u,-K*x);
 
 % Lyapunov function candidate
-V = casos.PS.sym('v',monomials(x,2));
+V = casos.PS.sym('v',monomials(x,1:4));
 
 % SOS multiplier
-s1 = casos.PS.sym('s1',monomials(x,1),'gram');
-s2 = casos.PS.sym('s2',monomials(x,0),'gram');
+s1 = casos.PS.sym('s1',monomials(x,4),'gram');
+s2 = casos.PS.sym('s2',monomials(x,2),'gram');
 
 % enforce positivity
 l = 1e-6*(x'*x);
@@ -51,9 +51,9 @@ b = casos.PS.sym('b');
 % options
 opts               = struct('sossol','mosek');
 opts.error_on_fail = 0; 
-% opts.verbose = 1;
+opts.verbose = 1;
 opts.max_iter      = 20;
-opts.conf_interval = [-1 0]';
+opts.conf_interval = [-0.5 0]';
 % 
 % opts.gcssol_options.sdpsol_options.mosek_param.MSK_IPAR_BI_CLEAN_OPTIMIZER  = 'MSK_OPTIMIZER_INTPNT';
 % opts.qcsssol_options.sdpsol_options.mosek_param.MSK_IPAR_INTPNT_BASIS        = 'MSK_BI_NEVER';
@@ -188,49 +188,10 @@ pcontour(p,bval,[-2 2 -2 2],'r')
 legend('ROA','Shape')
 
 
+V0 = Vval-gval;
 
-%% we want to know what is the maximum disturbance that renders V invariant
+V0 = saveobj(V0);
 
-w = casos.PS('w');
-gw = [0;1];
-s1 = casos.PS.sym('s1',monomials([x;w],1),'gram');
-s3 = casos.PS.sym('s3',monomials([x;w],1),'gram');
-
-sos4        = struct('x',[s1;s3],'f',-g);
-
-sos4.('g')  = s1*(Vval - gval)-nabla(Vval,x)*(f + gw*w) + s3*(w'*w - g);
-
-% states + constraint are SOS cones
-opts.Kx = struct('s', 2);
-opts.Kc = struct('s', 1);
-opts.verbose = 1;
-opts.max_iter      = 20;
-S4 = casos.qcsossol('S4','bisection',sos4,opts);
-
-sol4 = S4();
-
-maxG =  double(sol4.f)
-sol4.x
-
-
-
-%% simulate
-
-x = casadi.SX.sym('x',2,1);
-w = casadi.SX.sym('w',1,1);
-
-f = [x(2);
-        (1-x(1)^2)*x(2)-x(1)];
-
-gx = [0;1];
-
-gw = [0;1];
-
-
-
-xdot = casadi.Function('f',{x,w},{f+gx*(-K*x)+gw*w});
-
-
-
+save('ROA_vdp.mat','V0')
 
 

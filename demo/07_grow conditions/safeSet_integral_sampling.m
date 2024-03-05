@@ -1,38 +1,40 @@
 % Estimate larget possible safe set
-
+clear 
+close all
+clc
 
 % system states
-x = casos.PS('x',3,1);
+x = casos.PS('x',2,1);
 
 % box constraint(s)
-x_up  = [ ];
-x_low = [];
+x_up  = [ 3  3];
+x_low = [-3 -3];
 
 g = [];
-
-if ~isempty(x_low)
 for k= 1:length(x_up)
     g = [g ; -(x(k)-x_low(k))*(x_up(k)-x(k) )]; % g(x) <= 0
 end
-end
 
-cTheta     = cos(20*pi/180);
-epsilon    = 1e-6;
+% g = [g; x'*eye(2)*x-1];
 
 % keep-out
-l = [cTheta*(x(1)^2 + x(2)^2 + x(3)^2 + 1)^2 - (8*x(1)*x(2) - x(3)*(4*x(1)^2 + 4*x(2)^2 + 4*x(3)^2 - 4)); ...
-     cTheta*(x(1)^2 + x(2)^2 + x(3)^2 + 1)^2 + (8*x(1)*x(2) - x(3)*(4*x(1)^2 + 4*x(2)^2 + 4*x(3)^2 - 4))];
+xc = [-2;2];
+l = (x-xc)'*eye(2)*2*(x-xc)-1-1e-6; % l(x) > 0
 
+% xc = [2;2];
+% l =[l; (x-xc)'*eye(2)*2*(x-xc)-1-1e-6]; % l(x) > 0
+% 
+% 
+xc = [2;-2];
+l =[l; (x-xc)'*eye(2)*2*(x-xc)-1-1e-6]; % l(x) > 0
 
+% xc = [-2;-2];
+% l =[l; (x-xc)'*eye(2)*2*(x-xc)-1-1e-6]; % l(x) > 0
 
 
 % SOS multiplier
 s = casos.PS.sym('s',monomials(x,0:1),[length(g) 1],'gram');
 r = casos.PS.sym('r',monomials(x,0:1),[length(l) 1],'gram');
-
-
-% g = [g;l];
-s0 = casos.PS.sym('s0',monomials(x,0:2),'gram');
 
 h = casos.PS.sym('h',monomials(x,0:6));
 h_sym = casos.PS.sym('h_sym',basis(h));
@@ -40,7 +42,7 @@ h_sym = casos.PS.sym('h_sym',basis(h));
 % level of stability
 c = casos.PS.sym('c');
 
-h_star = x'*eye(3)*4*x-0.21;
+h_star = x'*eye(2)*10*x-1;
 
 %% Multiplier Step
 % profile on
@@ -49,7 +51,7 @@ disp('Build solver...')
 tic
 % define SOS feasibility
 sos = struct('x',[s;r], ...
-             'g',[r.*h_sym.*ones(length(l),1) + l ], ...
+             'g',[s.*h_sym.*ones(length(g),1) - g; r.*h_sym.*ones(length(l),1) + l ], ...
              'p',h_sym);
 
 % states + constraint are SOS cones
@@ -63,18 +65,51 @@ opts.error_on_fail = false;
 % solve by relaxation to SDP
 S1 = casos.sossol('S1','mosek',sos,opts);
 
-% s_sym = casos.PS.sym('s_sym',basis(s(1)),[length(g) 1]);
+s_sym = casos.PS.sym('s_sym',basis(s(1)),[length(g) 1]);
 r_sym = casos.PS.sym('r_sym',basis(r(1)),[length(l) 1]);
 
-% define SOS feasibility
-sos2 = struct('x',[h;s0], ...
-              'g',[r_sym.*h.*ones(length(l),1) + l; s0*h_sym - h ], ...
-              'p',[r_sym;h_sym]);
+% profile on  -historysize 500000000000000
+% figure()
+N = 500;
+
+h_fun = to_function(h);
+% while true
+
+a = -3; 
+b = 3; 
+r = (b-a).*net(haltonset(2),N)'+ a; 
+
+
+    % if double(subs(l(2),x,r)) > 0 && double(subs(l(1),x,r)) > 0
+        plot(r(1,:),r(2,:),'k*')
+        hold on
+
+        cost = sum(h_fun(casadi.SX(r)));
+
+        % counter = counter +1;
+        % if counter >= N
+        %     break
+        % end
+    
+    % end
+% end
+for k= 1:length(l)
+    pcontour(l(k),0,[-3 3 -3 3],'r')
+end
+cost = cost*1/N;
+
+
+% define SOS feasibility2
+sos2 = struct('x',h, ...
+              'f', cost,...
+              'g',[s_sym.*h.*ones(length(g),1) - g; ...
+                   r_sym.*h.*ones(length(l),1) + l], ...
+              'p',[s_sym;r_sym]);
 
 % states + constraint are SOS cones
 opts.Kx.l = 1; 
-opts.Kx.s = 1;
-opts.Kc.s = 1+length(g)+length(l);
+opts.Kx.s = 0;
+opts.Kc.s = length(g)+length(l);
 
 % ignore infeasibility
 opts.error_on_fail = false;
@@ -85,12 +120,13 @@ hub = casos.PS(basis(h),+inf);
 % solve by relaxation to SDP
 S2 = casos.sossol('S2','mosek',sos2,opts);
 tbuild = toc;
+
 % profile viewer
 disp('Finished building solver!')
 disp('=========================================================')
 disp('Start iteration...')
 
-itermax = 100;
+itermax = 250;
 for iter = 1:itermax
     % evaluate parametrized SOS problem
    sol1 = S1('p',h_star);
@@ -105,17 +141,11 @@ for iter = 1:itermax
             break
     end
 
-     sol2 = S2('p',[sol1.x;h_star],'lbx',hlb,'ubx',hub);
+     sol2 = S2('p',[sol1.x],'lbx',hlb,'ubx',hub);
 
     switch (S2.stats.UNIFIED_RETURN_STATUS)
         case 'SOLVER_RET_SUCCESS'
              h_star = sol2.x(1);
-            % figure(1)
-            % clf
-            %  pcontour3(l(1),0,[-5 5 -5 5 -5 5],'r')
-            %     hold on
-            %      pcontour3(l(2),0,[-5 5 -5 5 -5 5],'r')
-            %  pcontour3(h_star,0,[-5 5 -5 5 -5 5],'r')
               disp(['h step feasible in ' num2str(iter) '/' num2str(itermax) ] )
         case {'SOLVER_RET_INFEASIBLE' 'SOLVER_RET_NAN'}
             disp(['h step infeasible in ' num2str(iter) '/' num2str(itermax) ] )
@@ -123,6 +153,16 @@ for iter = 1:itermax
         otherwise
             disp(['h step infeasible in ' num2str(iter) '/' num2str(itermax) ] )
             break
+    end
+
+    if iter < 2
+     costold = sol2.f;
+    else
+        if abs(double(costold-sol2.f)) < 1e-3
+            disp('Cost function converged')
+            break
+        end
+        costold = sol2.f;
     end
 end
 tIter = toc-tbuild;
@@ -132,14 +172,17 @@ disp(['Build time: ' num2str(tbuild) ' s' ])
 disp(['Iteration time: ' num2str(tIter) ' s' ])
 disp('___________________________________________')
 disp(['Total time: ' num2str(tIter+tbuild) ' s' ])
+domain = [x(1), -4, 4; x(2), -4, 4];
+[vol,~] = pvolume(h_star,0,domain )
 
-h_star = cleanpoly(h_star,1e-4);
 figure()
+plotBoxCon([1 2],x_up,x_low)
+hold on
+% pcontour(g(3),0,[-4 4 -4 4],'b')
 for k= 1:length(l)
-    pcontour3(l(k),0,[-5 5 -5 5 -5 5],'r')
+    pcontour(l(k),0,[-4 4 -4 4],'r')
 end
-pcontour3(h_star,0,[-5 5 -5 5 -5 5],'g')
-
-
-
+pcontour(h_star,0,[-4 4 -4 4],'g')
+% cleanfigure();
+% matlab2tikz('safesetCost.tex','width','\figW','height','\figH');
 

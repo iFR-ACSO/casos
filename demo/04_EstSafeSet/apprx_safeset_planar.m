@@ -1,17 +1,21 @@
 % Estimate larget possible safe set
-
+clear 
+close all
+clc
 
 % system states
 x = casos.PS('x',2,1);
 
 % box constraint(s)
-x_up  = [ 3  3];
-x_low = [-3 -3];
+x_up  = [ 3.2  3.2];
+x_low = [-3.2 -3.2];
 
 g = [];
 for k= 1:length(x_up)
     g = [g ; -(x(k)-x_low(k))*(x_up(k)-x(k) )]; % g(x) <= 0
 end
+
+g = [g; x'*eye(2)*0.1*x-1];
 
 % keep-out
 xc = [-2;2];
@@ -123,12 +127,18 @@ disp(['Total time: ' num2str(tIter+tbuild) ' s' ])
 figure()
 plotBoxCon([1 2],x_up,x_low)
 hold on
-
+pcontour(g(3),0,[-4 4 -4 4],'b')
 for k= 1:length(l)
-    pcontour(l(k),0,[-3 3 -3 3],'r')
+    pcontour(l(k),0,[-4 4 -4 4],'r')
 end
-pcontour(h_star,0,[-3 3 -3 3],'g')
+pcontour(h_star,0,[-4 4 -4 4],'g')
+domain = [x(1), -4, 4; x(2), -4, 4];
+[vol,~] = pvolume(h_star,0,domain )
 
-hstruct = to_struct(h_star);
-save('safe_set.mat',"hstruct")
+qw{1} = plot(nan, 'k--');
+qw{2} = plot(nan, 'r');
+qw{3} = plot(nan, 'g');
+% qw{4} = plot(nan, 'k-d'); % You can add an extra element too
+legend([qw{:}], {'Box Constraint','Keep-out','inner-approx',}, 'location', 'best')
+
 

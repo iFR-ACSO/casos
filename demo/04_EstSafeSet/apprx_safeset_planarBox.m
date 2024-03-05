@@ -1,52 +1,42 @@
 % Estimate larget possible safe set
 clc
-close all
 clear
-profile off
+
 % system states
-x = casos.PS('x',3,1);
+x = casos.PS('x',2,1);
+
+% box constraint(s)
+x_up  = [ 3  3];
+x_low = [-3 -3];
+
+g = [];
+for k= 1:length(x_up)
+    g = [g ; -(x(k)-x_low(k))*(x_up(k)-x(k) )]; % g(x) <= 0
+end
+
 
 % SOS multiplier
-s = casos.PS.sym('s',monomials(x,0:1),[3 1],'gram');
+s = casos.PS.sym('s',monomials(x,0:1),[length(g) 1],'gram');
+% r = casos.PS.sym('r',monomials(x,0:1),[length(l) 1],'gram');
 
+s0 = casos.PS.sym('s0',monomials(x,0:4),'gram');
 
-s0 = casos.PS.sym('s0',monomials(x,0:2),'gram');
-
-h = casos.PS.sym('h',monomials(x,0:4));
-
-omega_max =  3*pi/180;
-x_up  = [ omega_max omega_max omega_max];
-x_low = [-omega_max -omega_max -omega_max];
-
-
-Dx = diag([180/pi,180/pi,180/pi]);
-
-% Dx = Dx^-1;
-g = (Dx^-1*x-x_low').*(x_up'-Dx^-1*x);
-
-% keep-in
-cTheta = cos(45*pi/180);
-epsilon = 1e-6;
-% g = [g; 
-%     (x(4)^2 + x(5)^2 + x(6)^2 + 1)^2*(1-cTheta+epsilon) - (8*x(4)^2 + 8*x(6)^2)];
-
-
-
+h = casos.PS.sym('h',monomials(x,0:6));
 h_sym = casos.PS.sym('h_sym',basis(h));
 
 % level of stability
-% c = casos.PS.sym('c');
+c = casos.PS.sym('c');
 
-h_star = x'*eye(length(x))*2*x;
+h_star = x'*eye(2)*10*x-1;
 
 %% Multiplier Step
-% profile on -historysize 5000000000000000
+% profile on
 disp('=========================================================')
 disp('Build solver...')
 tic
 % define SOS feasibility
 sos = struct('x',s, ...
-             'g',s.*h_sym.*ones(length(g),1) + g, ...
+             'g',s*h_sym - g, ...
              'p',h_sym);
 
 % states + constraint are SOS cones
@@ -61,10 +51,12 @@ opts.error_on_fail = false;
 S1 = casos.sossol('S1','mosek',sos,opts);
 
 s_sym = casos.PS.sym('s_sym',basis(s(1)),[length(g) 1]);
+% r_sym = casos.PS.sym('r_sym',basis(r(1)),[length(l) 1]);
 
 % define SOS feasibility
 sos2 = struct('x',[h;s0], ...
-              'g',[s_sym.*h.*ones(length(g),1) + g; s0*h_sym - h ], ...
+              'g',[s_sym.*h.*ones(length(g),1) - g; .....
+                   s0*h_sym - h ], ...
               'p',[s_sym;h_sym]);
 
 % states + constraint are SOS cones
@@ -81,17 +73,12 @@ hub = casos.PS(basis(h),+inf);
 % solve by relaxation to SDP
 S2 = casos.sossol('S2','mosek',sos2,opts);
 tbuild = toc;
-
-
 % profile viewer
-% profile off
-
-% profile on -historysize 5000000000000000
 disp('Finished building solver!')
 disp('=========================================================')
 disp('Start iteration...')
 
-itermax = 100;
+itermax = 200;
 for iter = 1:itermax
     % evaluate parametrized SOS problem
    sol1 = S1('p',h_star);
@@ -103,7 +90,7 @@ for iter = 1:itermax
              disp(['s step infeasible in ' num2str(iter) '/' num2str(itermax) ] )
         otherwise
             disp(['s step infeasible in ' num2str(iter) '/' num2str(itermax) ] )
-            % break
+            break
     end
 
      sol2 = S2('p',[sol1.x;h_star],'lbx',hlb,'ubx',hub);
@@ -127,19 +114,12 @@ disp(['Build time: ' num2str(tbuild) ' s' ])
 disp(['Iteration time: ' num2str(tIter) ' s' ])
 disp('___________________________________________')
 disp(['Total time: ' num2str(tIter+tbuild) ' s' ])
- % profile viewer
+
 figure()
-% plotBoxCon([1 2],x_up,x_low)
+plotBoxCon([1 2],x_up,x_low)
 hold on
+pcontour(h_star,0,[-3 3 -3 3],'g')
 
-% for k= 1:length(l)
-    % pcontour3(g(4)<,0,[-3 3 -3 3 -3 3],'r')
-% end
-
-
-pcontour3(subs(h_star,x,Dx*x),0,[-omega_max omega_max -omega_max omega_max -omega_max omega_max],'g')
-box on
-
-% hstruct = to_struct(h_star);
-% save('safe_set.mat',"hstruct")
+hstruct = saveobj(h_star);
+save('safe_set.mat',"hstruct")
 
