@@ -61,7 +61,8 @@ methods
 
         % linear constraint
         A = jacobian(sdp_g, x);
-        
+   
+       
         % constant constraint
         b = simplify(A*x - sdp_g);
         
