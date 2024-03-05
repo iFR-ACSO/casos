@@ -4,15 +4,16 @@ CaΣoS provides a symbolic framework for convex and nonconvex sum-of-squares pro
 
 [^1]: CaΣoS has been neither supported nor endorsed by CasADi or any of its affilitiates.
 
-## Install
+### Install
 
 The following requirements need to be met in order to use all functionalities of CaΣoS:
 1. Download [Casadi](https://web.casadi.org/get/) (currently, using v3.5.5 is recommended) and add it to your Matlab path.
-2. Download and install [Mosek](https://www.mosek.com/downloads/) and/or [SeDuMi](https://sedumi.ie.lehigh.edu/?page_id=58) and add them to the Matlab Path. You need at least one solver.
+2. Download and install at least one solver for semidefinite (conic) programs, and add the solver(s) to the Matlab Path.
 
-   > **Note:** Mosek requires a license file. [Academic Licenses](https://www.mosek.com/products/academic-licenses/) are available.
+   - Currently supported are [Mosek](https://www.mosek.com/downloads/) (v10.1), [SCS](https://www.cvxgrp.org/scs/install/matlab.html#matlab-install) (v3.2.4), and [SeDuMi](https://sedumi.ie.lehigh.edu/?page_id=58) (v1.3).
+   - **Note:** Mosek requires a separate license. [Academic Licenses](https://www.mosek.com/products/academic-licenses/) are available.
 
-3. Add CaΣoS to your Matlab path.
+3. Add the CaΣoS root folder (the one that contains the directory `+casos`) to your Matlab path.
 
 ## Polynomial expressions
 
@@ -193,10 +194,10 @@ by default (if the option `K_` is omitted), only coefficient-wise constraints ar
 
 ### Convex optimization
 
-To solve polynomial sum-of-squares optimization problems via semidefinite programming, CaΣoS provides both a high-level and low-level interface for convex optimization. These interfaces extend CasADi's [`qpsol`](https://web.casadi.org/docs/#high-level-interface) and [`conic`](https://web.casadi.org/docs/#low-level-interface) syntax. Currently, the convex solvers SeDuMi, MOSEK,[^2] and SCS are supported (but, unlike CasADi, the solvers must be installed separately and be accessible through MATLAB). 
+To solve polynomial sum-of-squares optimization problems via semidefinite programming, CaΣoS provides both a high-level and low-level interface for convex optimization. These interfaces extend CasADi's [`qpsol`](https://web.casadi.org/docs/#high-level-interface) and [`conic`](https://web.casadi.org/docs/#low-level-interface) syntax. The convex solvers SeDuMi, MOSEK,[^2] and SCS are supported (but, unlike CasADi, the solvers must be installed separately and be accessible through MATLAB). 
 
 > [!NOTE]
-> Neither SeDuMi nor MOSEK currently support quadratic cost functions.
+> SeDuMi does not support quadratic cost functions.
 
 [^2]: Using the MOSEK interface requires a separate licence; please see [MOSEK's homepage](https://www.mosek.com/resources/getting-started/) for details.
 
