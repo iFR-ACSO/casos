@@ -4,6 +4,16 @@ CaΣoS provides a symbolic framework for convex and nonconvex sum-of-squares pro
 
 [^1]: CaΣoS has been neither supported nor endorsed by CasADi or any of its affilitiates.
 
+## Install
+
+The following requirements need to be met in order to use all functionalities of CaΣoS:
+1. Download [Casadi](https://web.casadi.org/get/) (currently, using v3.5.5 is recommended) and add it to your Matlab path.
+2. Download and install [Mosek](https://www.mosek.com/downloads/) and/or [SeDuMi](https://sedumi.ie.lehigh.edu/?page_id=58) and add them to the Matlab Path. You need at least one solver.
+
+   > **Note:** Mosek requires a license file. [Academic Licenses](https://www.mosek.com/products/academic-licenses/) are available.
+
+3. Add CaΣoS to your Matlab path.
+
 ## Polynomial expressions
 
 The class `casos.PS` implements polynomials of which the coefficients can be symbolic expressions.
