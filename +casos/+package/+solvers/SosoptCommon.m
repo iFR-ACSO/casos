@@ -20,7 +20,8 @@ classdef (Abstract) SosoptCommon < casos.package.functions.FunctionInterface
 properties (Constant,Access=protected)
     sosopt_options = [casos.package.functions.FunctionInterface.options
         {'Kx', 'Cone description for state constraints.'
-         'Kc', 'Cone description for constraint function.'}
+         'Kc', 'Cone description for constraint function.'
+         'newton', 'Newton polytope reduction'}
     ];
 
     name_i = {'x0' 'p' 'lbx' 'ubx' 'cbx' 'lbg' 'ubg' 'cbg' 'lam_x0' 'lam_g0'};
