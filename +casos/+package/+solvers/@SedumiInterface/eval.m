@@ -78,12 +78,42 @@ c = c(idx);
 K.f = length(If);
 K.l = K.l - nnz(J) - length(If);
 
-% call SeDuMi
-[x_,y_,obj.info] = sedumi(A,b,full(c),K,opts);
+% -------------------------------------------------------------------------
+% RL: use of frlib to obtain reduced SDP
+% if frlib Prg is available 
+frlib = 1 && (exist('frlib-master/','dir')~=0);
 
-% assign full solution
-x = sparse(idx,1,x_,length(J),1);
-y = sparse(find(~I),1,y_,length(I),1);
+if frlib == 1
+    prg = frlibPrg(A,b,c,K);
+    opts.useQR = 1; % apparently using this removes the warning due to rank
+
+    if ~isempty(obj.faces)
+        % use previous faces with verification  
+        %currentFace = faceBase(prg.cone,prg.cone.K);
+        %faces = {currentFace};
+
+        prgD = reducedPrimalPrg(prg, obj.faces,opts); % use faces without verifying 
+    else
+        % find faces and reduce
+        [prgD, obj.faces] = prg.ReducePrimal('d', opts);
+    end
+
+    pars.fid = 0;
+    [x_, y_, obj.info] = prgD.Solve(pars);
+
+    [xr,yr,dual_recov_success] = prgD.Recover(x_,y_,eps);
+    x_ = xr; y_ = yr;
+
+    x = sparse(idx,1,x_,length(J),1);
+    y = zeros(length(I),1); % dummy dual solution
+else
+% call SeDuMi
+    [x_,y_,obj.info] = sedumi(A,b,full(c),K,opts);
+    % assign full solution
+    x = sparse(idx,1,x_,length(J),1);
+    y = sparse(find(~I),1,y_,length(I),1);
+end
+% -------------------------------------------------------------------------
 
 if obj.info.pinf
     % primal infeasible

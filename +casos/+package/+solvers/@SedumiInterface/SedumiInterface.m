@@ -5,6 +5,7 @@ properties (Access=protected)
     fhan;
     ghan;
     cone;
+    faces;
 end
 
 properties (Access=private)
