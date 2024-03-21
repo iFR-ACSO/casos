@@ -86,7 +86,6 @@ frlib = 1 && (exist('frlib-master/','dir')~=0);
 if frlib == 1
     prg = frlibPrg(A,b,c,K);
     opts.useQR = 1; % apparently using this removes the warning due to rank
-
     if ~isempty(obj.faces)
         % use previous faces with verification  
         %currentFace = faceBase(prg.cone,prg.cone.K);
@@ -95,10 +94,12 @@ if frlib == 1
         prgD = reducedPrimalPrg(prg, obj.faces,opts); % use faces without verifying 
     else
         % find faces and reduce
-        [prgD, obj.faces] = prg.ReducePrimal('d', opts);
+        [prgD, obj.faces] = prg.ReducePrimal('dd', opts);
+        prgD.K.s = prgD.K.s(prgD.K.s~=0);  % remove zeros from prgD.K.s
     end
 
     pars.fid = 0;
+    pars.eps = 10^-4;
     [x_, y_, obj.info] = prgD.Solve(pars);
 
     [xr,yr,dual_recov_success] = prgD.Recover(x_,y_,eps);
@@ -107,7 +108,7 @@ if frlib == 1
     x = sparse(idx,1,x_,length(J),1);
     y = zeros(length(I),1); % dummy dual solution
 else
-% call SeDuMi
+    % call SeDuMi
     [x_,y_,obj.info] = sedumi(A,b,full(c),K,opts);
     % assign full solution
     x = sparse(idx,1,x_,length(J),1);
