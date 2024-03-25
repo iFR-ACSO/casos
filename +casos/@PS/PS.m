@@ -58,9 +58,10 @@ methods
             end
 
             % perform operation Z'*q internally
-            [ii,jj] = get_triplet(sparsity(Z.coeffs));
+            sp = sparsity(Z.coeffs);
+            [ii,jj] = get_triplet(sp);
             % assign coefficients to monomials
-            S = casadi.SX.triplet(floor(jj/lZ)*nT+ii,(1:lZ)-1,ones(lZ,1),[nT*lp lZ]);
+            S = casadi.SX.triplet(floor(jj/lZ)*nT+ii,(1:lZ)-1,Z.coeffs(find(sp)),[nT*lp lZ]);
             obj.coeffs = reshape(S*q(:),[nT lp]);
 
             % the following works for monomial basis but not Gram
@@ -232,6 +233,12 @@ methods (Static)
         % Create identity matrix polynomial.
         p = casos.PS(casadi.SX.eye(varargin{:}));
     end
+
+    %% Save & Load
+    function obj = loadobj(obj)
+        % Load polynomial object from mat file.
+        obj.coeffs = casadi.SX(obj.coeffs);
+    end
 end
 
 methods
@@ -286,6 +293,12 @@ methods
         % Return polynomial casadi.Function instance.
         X = casadi.SX.sym('x',p.nvars,1);
         f = casadi.Function('p',{X},{casadi.SX(subs(p,indeterminates(p),X))},varargin{:});
+    end
+
+    %% Save & Load
+    function obj = saveobj(obj)
+        % Save polynomial object to mat file.
+        obj.coeffs = casadi.DM(obj.coeffs); % only nonsymbolic
     end
 end
 

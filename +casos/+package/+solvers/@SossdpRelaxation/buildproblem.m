@@ -69,5 +69,7 @@ obj.gram_g = Zgram_g;
 % output basis
 obj.basis_x_out = blkdiag(obj.monom_xl, obj.gram_x);
 obj.basis_g_out = blkdiag(obj.monom_gl, obj.gram_g);
+% basis of dual variable
+obj.basis_x_lam = blkdiag(obj.monom_xl, adjoint_inverse(obj.gram_x));
 
 end
