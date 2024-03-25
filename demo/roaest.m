@@ -19,7 +19,7 @@ g = casos.PS.sym('g');
 % define SOS feasibility
 sos = struct('x',s,'g',s*(V-g)-Vdot-l,'p',g);
 % states + constraint are SOS cones
-opts.Kx.s = 1; opts.Kc.s = 1;
+opts.Kx.sos = 1; opts.Kc.sos = 1;
 % ignore infeasibility
 opts.error_on_fail = false;
 

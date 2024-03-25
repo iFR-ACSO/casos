@@ -8,10 +8,10 @@ n = length(sos.x);
 m = length(sos.g);
 
 % get cone dimensions
-if isfield(opts.Kx,'l'), Nl = opts.Kx.l; else, Nl = 0; end
-if isfield(opts.Kx,'s'), Ns = opts.Kx.s; else, Ns = 0; end
-if isfield(opts.Kc,'l'), Ml = opts.Kc.l; else, Ml = 0; end
-if isfield(opts.Kc,'s'), Ms = opts.Kc.s; else, Ms = 0; end
+Nl = get_dimension(obj.get_cones,opts.Kx,'lin');
+Ns = get_dimension(obj.get_cones,opts.Kx,'sos');
+Ml = get_dimension(obj.get_cones,opts.Kc,'lin');
+Ms = get_dimension(obj.get_cones,opts.Kc,'sos');
 
 assert(n == (Nl + Ns), 'Dimension of Kx must be equal to number of variables (%d).', n);
 assert(m == (Ml + Ms), 'Dimension of Kc must be equal to number of constraints (%d).', m)
