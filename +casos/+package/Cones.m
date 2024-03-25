@@ -45,10 +45,10 @@ methods
 
         % legacy
         switch (name)
-            case 'l', warning('Cone "l" is deprecated, use "lin".')
-            case 'q', warning('Cone "q" is deprecated, use "lor".')
-            case 'r', warning('Cone "r" is deprecated, use "rot".')
-            case 's', warning('Cone "s" is deprecated, use "psd" or "sos".')
+            case 'l', warning('Cone "l" is not supported, use "lin".')
+            case 'q', warning('Cone "q" is not supported, use "lor".')
+            case 'r', warning('Cone "r" is not supported, use "rot".')
+            case 's', warning('Cone "s" is not supported, use "psd" or "sos".')
         end
     end
 
@@ -68,9 +68,18 @@ methods
         assert(all(tf), 'Unknown cone "%s".', fn_cone{find(~tf,1)});
     end
 
-    function l = get_length(obj,K,name)
-        % Return length of specified cone.
-        assert(has(obj,name), 'Unknown cone "%s".',name)
+    function l = get_length(obj,K,name,no_check)
+        % Return length of cones.
+        if nargin < 3
+            % return total length
+            l = sum(cellfun(@(fn) get_length(obj,K,fn,true), fieldnames(K)));
+            return
+        end
+
+        % else:
+        % return length of specified cone
+        assert(has(obj,name) || (nargin > 3 && no_check), 'Unknown cone "%s".',name)
+        
         % check if cone is specified
         if ~isfield(K,name)
             l = 0;

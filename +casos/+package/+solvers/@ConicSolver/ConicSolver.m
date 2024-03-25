@@ -80,8 +80,8 @@ methods
         if ~isfield(obj.opts,'Kc'), obj.opts.Kc = struct('lin',m); end
 
         % check cone dimensions
-        assert(sum(cellfun(@(fn) obj.getnumc(obj.opts.Kx,fn), fieldnames(obj.opts.Kx))) == n, 'Dimension of Kx must equal to number of variables (%d).', n)
-        assert(sum(cellfun(@(fn) obj.getnumc(obj.opts.Kc,fn), fieldnames(obj.opts.Kc))) == m, 'Dimension of Kc must equal to number of constraints (%d).', m)
+        assert(obj.getnumc(obj.opts.Kx) == n, 'Dimension of Kx must equal to number of variables (%d).', n)
+        assert(obj.getnumc(obj.opts.Kc) == m, 'Dimension of Kc must equal to number of constraints (%d).', m)
 
         % dimensions of linear variables and constraints
         Nl = obj.getdimc(obj.opts.Kx,'lin');
@@ -123,9 +123,9 @@ methods (Access=protected)
         d = get_dimension(obj.get_cones,K,type);
     end
 
-    function n = getnumc(obj,K,type)
+    function n = getnumc(obj,K,varargin)
         % Return number of variables in cone.
-        n = get_length(obj.get_cones,K,type);
+        n = get_length(obj.get_cones,K,varargin{:});
     end
 end
 
