@@ -56,16 +56,34 @@ methods
         % Return description for cone
         assert(has(obj,name), 'Unknown cone "%s".',name);
         % description
-        str = obj.entries(name,:).description{:};
+        str = obj.entries.description{name};
     end
 
-    function check(obj,opts)
+    function check(obj,K)
         % Check cone structure.
-        fn_cone = fieldnames(opts);
+        fn_cone = fieldnames(K);
         % check if cones exist
-        tf = cellfun(@(fn) has(obj,fn), fn_cone);
-        % throw error
-        assert(all(tf), 'Unknown cone "%s".', fn_cone{find(~tf,1)});
+        cellfun(@(fn) check_cone(obj,K,fn), fn_cone);
+    end
+
+    function check_cone(obj,K,name)
+        % Check specified cone.
+        assert(has(obj,name), 'Unknown cone "%s".', name);
+
+        if ~isfield(K,name)
+            % nothing to do
+            return
+        end
+
+        % else
+        switch lower(obj.entries.type{name})
+            case 'num'
+                assert(isscalar(K.(name)), 'Cone "%s" must be specified as scalar.', name);
+            case 'list'
+                assert(isvector(K.(name)), 'Cone "%s" must be specified as vector.', name);
+            case {'struct' 'cones'}
+                assert(isstruct(K.(name)), 'Cone "%s" must be specified as struct.', name);
+        end
     end
 
     function l = get_length(obj,K,name,no_check)
@@ -99,7 +117,7 @@ methods
         % check if cone is specified
         if isfield(K,name)
             d = K.(name);
-        elseif strcmpi(obj.entries(name,:).type,'list')
+        elseif strcmpi(obj.entries.type{name},'list')
             d = [];
         else
             d = 0;
