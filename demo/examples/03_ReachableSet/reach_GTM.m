@@ -12,7 +12,8 @@
 
 
 clear
-
+clc
+close all
 
 
 %% define variables
@@ -73,10 +74,10 @@ x_dot =  f+gx*u;
 d2r = pi/180;
 
 % scale matrix
-Dmax = diag([20 20*d2r 50*d2r 20*d2r]);
+% Dmax = diag([20 20*d2r 50*d2r 20*d2r]);
 
 % target function
-l = x'*Dmax'*blkdiag(1/(4)^2, 1/(pi/30)^2, 1/(pi/15)^2, 1/(pi/30)^2)*Dmax*x - 1;
+% l = x'*Dmax'*blkdiag(1/(4)^2, 1/(pi/30)^2, 1/(pi/15)^2, 1/(pi/30)^2)*Dmax*x - 1;
 
 
 Apre = nabla(x_dot,x);
@@ -86,7 +87,7 @@ Bpre = nabla(x_dot,u);
 xbar = zeros(4,1);
 ubar = 0;
 
-% substitute in the value of equilibrium
+% substitute in the value of equilibrium; scaled dynamics was used
 A = double(subs(subs(Apre,x,xbar),u,ubar));
 B = double(subs(subs(Bpre,x,xbar),u,ubar));
 
@@ -97,12 +98,8 @@ K = lqr(A,B,Q,R);
 
 P = lyap((A-B*K)',eye(4));
 
-Vval = x'*P*x;
-% 
-% load('step3.mat','Vval_list')
-% Vval = Vval_list(end);
+Vval0 = x'*P*x;
 
-% Vval = Vval.coefficient'*monomials([x;t],0:4)
 
 
 % Trim point for elevator channel is 0.0489 rad.
@@ -114,35 +111,34 @@ uM =    10*d2r - 0.0489;
 u_min = u - um; 
 u_max = uM - u;
 
+%% est. ROA to get a valid terminal set
+xdot_c = subs(x_dot,u,-K*x);
 
+[Vval,gval] = estROAGTM(xdot_c,Vval0,x);
+
+l = Vval-gval;
+Vval = Vval;
 %% define SOS problem polynomials
 
 % reachability storage function
-V = casos.PS.sym('v',monomials([x;t],0:4));
-k = casos.PS.sym('k',monomials([x;t],0:4),[length(u) 1]);
+V = casos.PS.sym('v',monomials([x;t],2));
+k = casos.PS.sym('k',monomials([x;t],0:2),[length(u) 1]);
 
 % SOS multiplier dissipation inequality
-s1 = casos.PS.sym('s1',monomials([x;t],0:4));
-s2 = casos.PS.sym('s2',monomials([x;t],0:4));
+s1 = casos.PS.sym('s1',monomials([x;t],0:2));
+s2 = casos.PS.sym('s2',monomials([x;t],2));
 
 % SOS multiplier for control constraints
-s51 = casos.PS.sym('s51',monomials([x;t],0:4),[length(u) 1]);
-s52 = casos.PS.sym('s52',monomials([x;t],0:4),[length(u) 1]);
+s51 = casos.PS.sym('s51',monomials([x;t],0:2),[length(u) 1]);
+s52 = casos.PS.sym('s52',monomials([x;t],0:2),[length(u) 1]);
 
-s61 = casos.PS.sym('s61',monomials([x;t],0:4),[length(u) 1]);
-s62 = casos.PS.sym('s62',monomials([x;t],0:4),[length(u) 1]);
-
-% SOS multiplier terminal-set inclusion
-s7 = casos.PS.sym('s7',monomials(x,0:4));  
-
-% % SOS multiplier grow constraint
-% s8 = casos.PS.sym('s8',monomials(x,0:2));   
-
+s61 = casos.PS.sym('s61',monomials([x;t],0:2),[length(u) 1]);
+s62 = casos.PS.sym('s62',monomials([x;t],0:2),[length(u) 1]);
 
 g = casos.PS.sym('g');
 
 % Time horizon
-T  = 3;
+T  = 1;
 
 t0 = 0;
 t1 = T;
@@ -158,21 +154,14 @@ tic
 
 V_sym = casos.PS.sym('V',basis(V));
 
-sos1 = struct('x',[k;s1;s51;s52;s2;s61;s62;s7],...
-              'p',[V_sym;g]);     
+sos1 = struct('x',[k;s1;s2;s51;s52;s61;s62],...
+              'p',V_sym);     
 
-sos1.('g') = [s1; s2;s51;s52;s61;s62;
-              s7-0.0001;
-              s1*(V_sym-g) - s2*hT - nabla((V_sym),t) - nabla((V_sym),x)*(f+gx*k);
-              subs(u_min,u,k)     + s51.*(V_sym-g) - s61.*hT;
-              subs(u_max,u,k)     + s52.*(V_sym-g) - s62.*hT
-              subs(V_sym,t,T) - g  - s7*l
+sos1.('g') = [s1;s2;
+              s1*(V_sym-gval) - s2*hT - nabla((V_sym),t) - nabla((V_sym),x)*(f+gx*k);
+              subs(u_min,u,k)     + s51.*(V_sym-gval) - s61.*hT;
+              subs(u_max,u,k)     + s52.*(V_sym-gval) - s62.*hT
               ];
-
-% states + constraint are SOS cones
-% opts = struct('sossol','mosek');
-% opts.Kx = struct('s', size(sos1.x( (length(u)+1):end) ,1), ...
-%                  'l',length(u));                
 
 opts.Kx = struct('s', 0, ...
                  'l',size(sos1.x,1));                
@@ -189,49 +178,6 @@ tend1 = toc;
 
 disp(['setting up solver 1 took ' num2str(tend1) ' s'])
 
-% % copy SOS constraints; currently SOS poly cannot be used for
-% % parameterization; and helps code readability
-% s1_sym = casos.PS.sym('s1',basis(s1));
-% s2_sym = casos.PS.sym('s2',basis(s2));
-% 
-% s51_sym = casos.PS.sym('s51',basis(s51(1)),[length(u) 1]);
-% s52_sym = casos.PS.sym('s52',basis(s52(1)),[length(u) 1]);
-% 
-% s61_sym = casos.PS.sym('s61',basis(s61(1)),[length(u) 1]);
-% s62_sym = casos.PS.sym('s62',basis(s62(1)),[length(u) 1]);
-% 
-% s7_sym  = casos.PS.sym('s7',basis(s7));
-% s8_sym  = casos.PS.sym('s8',basis(s8));
-% 
-% k_sym = casos.PS.sym('V',basis(k));
-% tic
-% sos2 = struct('x',[V;s2;s61;s62;s7;s8], ...
-%               'p',[g;V_sym;k_sym;s1_sym;s51_sym;s52_sym]);     
-% 
-% sos2.('g') = [
-%               s1_sym*(V-g) - s2*hT - nabla(V,t) - nabla(V,x)*(f+g*k_sym);
-%               subs(u_min,u,k_sym)  + s51_sym.*(V-g) - s61.*hT;
-%               subs(u_max,u,k_sym)  + s52_sym.*(V-g) - s62.*hT;
-%               (s7-0.0001)*l - (subs(V,t,t1)-g); 
-%               s8*(subs(V_sym,t,t0)-g)  + g - subs(V,t,t0);
-%               ];
-
-% 
-% % states + constraint are SOS cones
-% opts    = struct;
-% opts.Kx = struct('s', length(sos2.x(2:end)), ... % first entry storage fun.
-%                  'l',1); 
-% opts.Kc = struct('s', length(sos2.g));           % we only have sos con.
-% 
-% % setup solver
-% solver_Vstep = casos.sossol('S2','mosek',sos2,opts);
-
-% tend2 = toc;
-
-
-
-%% V-s-iteration
-% disp(['setting up solver 2 took ' num2str(tend2) ' s'])
 
 disp('==================================================================')
 
@@ -242,53 +188,40 @@ itermax = 10;
 disp('Start V-S-iteration ...')
 for iter = 1:itermax
 
-   gamma_ub = 1;
-    gamma_lb = 0;
-    num_exp = 0;
-    go = 1;
-    while (num_exp <= 12 || go)
-        num_exp = num_exp + 1;
-        if num_exp >= 20
-            break
-        end
-        
-        gamma_try = (gamma_ub + gamma_lb)/2
 
         % find mulitplier and control law
-        sol_Sstep = solve_Sstep('p',[Vval;gamma_try]);
+        sol_Sstep = solve_Sstep('p',Vval);
     
         switch (solve_Sstep.stats.UNIFIED_RETURN_STATUS)
             case 'SOLVER_RET_SUCCESS' 
-                 gamma_lb = gamma_try;
-                go = 0;
-                gamma_use = gamma_try;
+             
                 disp(['S-step feasible in ' num2str(iter) '/' num2str(itermax)])
                 
             case {'SOLVER_RET_INFEASIBLE' 'SOLVER_RET_NAN'}
     
                 disp(['g-step infeasible in ' num2str(iter) '/' num2str(itermax)])
-                   gamma_ub = gamma_try;
+         
         end
-    end
+   
 
-   % find reachability storage function
-   sol_Vstep = solver_Vstep('p',[-sol_Sstep.f;Vval;sol_Sstep.x(1:7)]);
-
-
-   switch (solver_Vstep.stats.UNIFIED_RETURN_STATUS)
-        case 'SOLVER_RET_SUCCESS' 
-
-            Vval = sol_Vstep.x(1);
-
-            disp(['V-step feasible in ' num2str(iter) '/' num2str(itermax) ])
-            
-        case {'SOLVER_RET_INFEASIBLE' 'SOLVER_RET_NAN'}
-
-            disp(['V-step infeasible in ' num2str(iter) '/' num2str(itermax)])
-            break
-                    
-        otherwise, error('Failed.')
-   end
+   % % find reachability storage function
+   % sol_Vstep = solver_Vstep('p',[-sol_Sstep.f;Vval;sol_Sstep.x(1:7)]);
+   % 
+   % 
+   % switch (solver_Vstep.stats.UNIFIED_RETURN_STATUS)
+   %      case 'SOLVER_RET_SUCCESS' 
+   % 
+   %          Vval = sol_Vstep.x(1);
+   % 
+   %          disp(['V-step feasible in ' num2str(iter) '/' num2str(itermax) ])
+   % 
+   %      case {'SOLVER_RET_INFEASIBLE' 'SOLVER_RET_NAN'}
+   % 
+   %          disp(['V-step infeasible in ' num2str(iter) '/' num2str(itermax)])
+   %          break
+   % 
+   %      otherwise, error('Failed.')
+   % end
 
 end
 

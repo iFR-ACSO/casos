@@ -38,7 +38,7 @@ T  = 1;
 hT = (t)*(T-t);
 
 % Storage function and control law
-V = casos.PS.sym('v',monomials([x;t],0:6));
+V = casos.PS.sym('v',monomials([x;t],0:2));
 k = casos.PS.sym('k',monomials([t;x],0:4));
 
 % SOS multiplier
@@ -69,16 +69,16 @@ r = (b-a).*rand(2,1) + a;
 
         
         if double(subs(g,x,r)) <= 0
-        plot(r(1),r(2),'k*')
-        hold on
-
-        cost = cost + subs((subs(V,t,0)-g)^2,x,r);
-
-        counter = counter +1;
-        if counter >= N
-            break
-        end
-        end
+            plot(r(1),r(2),'k*')
+            hold on
+    
+            cost = cost + subs(subs(V,t,0),x,r);
+    
+            counter = counter +1;
+            if counter >= N
+                break
+            end
+       end
 end
 
 pcontour(g,0,[-3 3 -3 3],'r')
@@ -232,6 +232,9 @@ tendIter = toc;
 figure()
 pcontour((subs(Vval,t,0)),0,[-1 1 -1 1])
 hold on
+for k = 0.1:0.1:T-0.1
+   pcontour((subs(Vval,t,k)),0,[-1 1 -1 1],'g--') 
+end
 pcontour((subs(Vval,t,T)),0,[-1 1 -1 1],'b--')
 pcontour(g,0,[-1 1 -1 1],'k-')
 pcontour(l,0,[-1 1 -1 1],'r-')

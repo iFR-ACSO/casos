@@ -1,7 +1,6 @@
 % Inner-approximation reachable set Van-der-Pol Oscillator
 
 clear
-close all
 clc
 
 % system states
@@ -29,19 +28,9 @@ l = x'*P*x-1;              % l(x) \leq 0
 x_up  = [ 3  3];
 x_low = [-3 -3];
 
-g = [];
-for k= 1:length(x_up)
-    g = [g ; -(x(k)-x_low(k))*(x_up(k)-x(k) )]; % g(x) <= 0
-end
+load safe_set.mat
 
-% keep-out
-xc = [-2;2];
-lc = (x-xc)'*eye(2)*2*(x-xc)-1-1e-6; % l(x) > 0
-
-xc = [2;-2];
-lc = [lc; (x-xc)'*eye(2)*2*(x-xc)-1-1e-6]; % l(x) > 0
-
-g = [g;-lc];
+g = loadobj(hstruct);
 
 % control constraint
 umin = -1;
@@ -205,7 +194,6 @@ end
 
 tendIter = toc;
 
-
 disp(['Build time is: ' num2str(tend1) ' s'])
 disp(['Opt. time is: ' num2str(tendIter) ' s'])
 disp('_______________________________________')
@@ -216,8 +204,9 @@ figure()
 pcontour(subs(Vval,t,0),0,[-2 2 -2 2])
 plotBoxCon([1 2],x_up,x_low)
 hold on
-
-for k= 1:length(lc)
-    pcontour(lc(k),0,[-3 3 -3 3],'r--')
-end
+pcontour(g,0,[-3 3 -3 3],'g')
 pcontour(l,0,[-2 2 -2 2],'r-')
+
+ r = 2;
+domain = [x(1), -r, r; x(2), -r, r];
+pvolume(subs(Vval,t,0),0,domain)

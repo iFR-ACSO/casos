@@ -70,21 +70,19 @@ r_sym = casos.PS.sym('r_sym',basis(r(1)),[length(l) 1]);
 
 % profile on  -historysize 500000000000000
 % figure()
-N = 500;
 
+N = 20000;
 h_fun = to_function(h);
-% while true
-
 a = -3; 
 b = 3; 
 r = (b-a).*net(haltonset(2),N)'+ a; 
 
 
     % if double(subs(l(2),x,r)) > 0 && double(subs(l(1),x,r)) > 0
-        plot(r(1,:),r(2,:),'k*')
-        hold on
+plot(r(1,:),r(2,:),'k*')
+hold on
 
-        cost = sum(h_fun(casadi.SX(r)));
+cost = sum( h_fun(casadi.SX(r)) );
 
         % counter = counter +1;
         % if counter >= N
@@ -96,6 +94,7 @@ r = (b-a).*net(haltonset(2),N)'+ a;
 for k= 1:length(l)
     pcontour(l(k),0,[-3 3 -3 3],'r')
 end
+
 cost = cost*1/N;
 
 
@@ -121,12 +120,21 @@ hub = casos.PS(basis(h),+inf);
 S2 = casos.sossol('S2','mosek',sos2,opts);
 tbuild = toc;
 
+
+    figure(1)
+plotBoxCon([1 2],x_up,x_low)
+hold on
+% pcontour(g(3),0,[-4 4 -4 4],'b')
+for k= 1:length(l)
+    pcontour(l(k),0,[-4 4 -4 4],'r')
+end
+
 % profile viewer
 disp('Finished building solver!')
 disp('=========================================================')
 disp('Start iteration...')
 
-itermax = 250;
+itermax = 40;
 for iter = 1:itermax
     % evaluate parametrized SOS problem
    sol1 = S1('p',h_star);
@@ -155,6 +163,18 @@ for iter = 1:itermax
             break
     end
 
+
+figure(1)
+clf
+plotBoxCon([1 2],x_up,x_low)
+hold on
+% pcontour(g(3),0,[-4 4 -4 4],'b')
+for k= 1:length(l)
+    pcontour(l(k),0,[-4 4 -4 4],'r')
+end
+pcontour(h_star,0,[-4 4 -4 4],'g')
+sol2.f
+pause(0.1)
     if iter < 2
      costold = sol2.f;
     else
@@ -173,7 +193,7 @@ disp(['Iteration time: ' num2str(tIter) ' s' ])
 disp('___________________________________________')
 disp(['Total time: ' num2str(tIter+tbuild) ' s' ])
 domain = [x(1), -4, 4; x(2), -4, 4];
-[vol,~] = pvolume(h_star,0,domain )
+[vol,~] = pvolume(h_star,0,domain,20000 )
 
 figure()
 plotBoxCon([1 2],x_up,x_low)

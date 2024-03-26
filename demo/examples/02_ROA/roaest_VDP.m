@@ -5,9 +5,6 @@ close all
 clc
 profile off
 
-
-
-
 % indeterminates
 x = casos.PS('x',2,1);
 u = casos.PS('u',1,1);
