@@ -34,6 +34,7 @@ methods
 
     function print_cones(obj)
         % Print list of supported cones.
+        disp('Supported Cones:')
         print_all(obj.get_cones);
     end
 
@@ -45,6 +46,29 @@ methods
     function tf = has_cone(obj,name)
         % Check if cone "name" is supported.
         tf = has(obj.get_cones,name);
+    end
+
+    function print_options(obj)
+        % Overwrite FunctionCommon#print_options
+        print_options@casos.package.functions.FunctionCommon(obj);
+
+        print_cones(obj);
+    end
+
+    function print_option(obj,name)
+        % Overwrite FunctionCommon#print_option
+        names = split(name,'.');
+        % print specified option
+        print_option@casos.package.functions.FunctionCommon(obj,names{1});
+
+        % print specified cone, if any
+        if ~ismember(names{1},{'Kx' 'Kc'}) %TODO: check for type rather than name
+            assert(length(names) == 1,'Undefined behaviour.')
+        elseif length(names) > 1
+            print_cone(obj,names{2});
+        else
+            print_cones(obj);
+        end
     end
 end
 
