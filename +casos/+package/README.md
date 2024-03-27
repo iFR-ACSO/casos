@@ -29,6 +29,7 @@ flowchart LR
     conicInternal -.-> MosekInterface
     conicInternal -.-> SedumiInterface
     conicInternal -.-> SCSInterface
+    SosoptCommon --> SolverCommon
     SossolInternal --> FunctionWrapper
     SossolInternal -.-> SossdpRelaxation
     SossdpRelaxation --> SosoptCommon
