@@ -8,14 +8,14 @@ f = [-x(2); x(1) + (x(1)^2 - 1)*x(2)];
 
 % Lyapunov function candidate
 Vval = 1.5*x(1)^2 - x(1)*x(2) + x(2)^2;
-p = Vval*5;
+p = x'*x;
 
 % Lyapunov function candidate
 V = casos.PS.sym('v',monomials(x,2));
 
 % SOS multiplier
-s1 = casos.PS.sym('s1',monomials(x,0:2),'gram');
-s2 = casos.PS.sym('s2',monomials(x,0:2),'gram');
+s1 = casos.PS.sym('s1',monomials(x,1),'gram');
+s2 = casos.PS.sym('s2',monomials(x,0),'gram');
 
 % enforce positivity
 l = 1e-6*(x'*x);
@@ -27,8 +27,7 @@ b = casos.PS.sym('b');
 % options
 opts = struct('sossol','sedumi');
 
-%% setup solver
-
+%% Setup solver
 % solver 1: gamma-step
 sos1 = struct('x',s1,'f',-g,'p',V);
 sos1.('g') = s1*(V-g)-nabla(V,x)*f-l;
@@ -66,8 +65,7 @@ opts.Kc = struct('sos', 3);
 
 S3 = casos.sossol('S','sedumi',sos3,opts);
 
-%% gamma-beta-V-iteration
-
+%% V-s-iteration
 for iter = 1:10
 
     % gamma step
@@ -87,4 +85,5 @@ for iter = 1:10
 
     Vval = sol3.x;
 
+    fprintf('Iteration %d: b = %g, g = %g.\n',iter,bval,gval);
 end
