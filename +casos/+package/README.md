@@ -20,12 +20,16 @@ flowchart LR
   end
   subgraph casos.package.solvers
     ConicSolver --> SolverCallback
+    SolverCallback --> SolverCommon
+    MosekInterface --> ConicSolver
     SedumiInterface --> ConicSolver
     SCSInterface --> ConicSolver
     SdpsolInternal --> SolverCallback
     SdpsolInternal -.-> ConicSolver
+    conicInternal -.-> MosekInterface
     conicInternal -.-> SedumiInterface
     conicInternal -.-> SCSInterface
+    SosoptCommon --> SolverCommon
     SossolInternal --> FunctionWrapper
     SossolInternal -.-> SossdpRelaxation
     SossdpRelaxation --> SosoptCommon
@@ -34,14 +38,14 @@ flowchart LR
     QcsossolInternal -.-> QuasiconvBisection
     QuasiconvBisection --> SosoptCommon
     QuasiconvBisection -.-> SossolInternal
-    SosoptCommon --> FunctionInterface
   end
   casos.Function --> FunctionWrapper
   casos.Function -.-> CasadiFunction
   casos.Function -.-> PSFunction
   CasadiFunction -.-> casadi.Function
   SolverCallback --> casadi.Callback
-  SolverCallback --> FunctionCommon
+  SolverCommon --> FunctionCommon
+  SosoptCommon --> FunctionInterface
   casos.conic -.-> conicInternal
   casos.sdpsol -.-> SdpsolInternal
   casos.sossol -.-> SossolInternal

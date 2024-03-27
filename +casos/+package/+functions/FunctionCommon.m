@@ -34,6 +34,7 @@ methods
 
     function print_options(obj)
         % Print list of options.
+        disp('Available Options:')
         print_all(obj.get_options);
     end
 

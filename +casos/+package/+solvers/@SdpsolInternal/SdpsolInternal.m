@@ -14,6 +14,13 @@ methods (Access=private)
     buildproblem(obj,prob,data,opts);
 end
 
+methods (Static)
+    function cones = get_cones
+        % Return supported cones.
+        cones = casos.package.solvers.ConicSolver.get_cones;
+    end
+end
+
 methods
     argout = eval(obj,argin);
 
