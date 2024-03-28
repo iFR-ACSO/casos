@@ -4,7 +4,7 @@ clear
 clc
 
 % system states
-x = casos.PS('x',2,1);
+x  = casos.PS('x',2,1);
 u  = casos.PS('u');
 t  = casos.PS('t');
 t0 = casos.PS.sym('t0');
@@ -19,7 +19,7 @@ gx = [0;1];
 
 % terminal region
 P = [6.4314    0.4580
-    0.4580    5.8227];
+     0.4580    5.8227];
 
 l = x'*P*x-1;              % l(x) \leq 0
 
@@ -37,14 +37,14 @@ umin = -1;
 umax = 1;
 
 % Time horizon
-T  = 2;
+T  = 1;
 
 % time polynomial
 hT = (t)*(T-t);
 
 % Storage function and control law
 V = casos.PS.sym('v',monomials([x;t],0:6));
-k = casos.PS.sym('k',monomials([t;x],0:4));
+k = casos.PS.sym('k',monomials([t;x],0:5));
 
 % SOS multiplier
 
@@ -75,8 +75,8 @@ disp('Building solver ... ')
 sos1 = struct('x',[k;s1;s2;s3;s4;s51;s52;s61;s62],'p',V);     % parameter
 
 sos1.('g') = [s1*V - s2*hT - nabla(V,t) - nabla(V,x)*(f + gx*k);
-              k - umin  + s51*V - s61*hT;
-              umax - k   + s52*V - s62*hT;
+              k - umin  + s51*g - s61*hT;
+              umax - k  + s52*g - s62*hT;
               s3.*V.*ones(length(g),1) - s4.*hT.*ones(length(g),1) - g];
 
 % states + constraint are SOS cones
@@ -87,8 +87,6 @@ opts.Kc = struct('s', 1+length(u)*2+length(g));
 klb = casos.PS(basis(k),-inf);
 kub = casos.PS(basis(k),+inf);
 
-opts.sdpsol_options.mosek_param.MSK_IPAR_BI_CLEAN_OPTIMIZER = 'MSK_OPTIMIZER_INTPNT';
-opts.sdpsol_options.mosek_param.MSK_IPAR_INTPNT_BASIS = 'MSK_BI_NEVER';
 
 % solver for S-step
 S1 = casos.sossol('S1','mosek',sos1,opts);
@@ -107,12 +105,10 @@ Vsym = casos.PS.sym('V',basis(V));
 ksym = casos.PS.sym('k',basis(k));
 
 
-sos2 = struct('x',[V,s7]',...                                                                % dec. variable
-              'p',[ksym;s1sym;s2sym;s3sym;s4sym;s51sym;s52sym;s61sym;s62sym;Vsym;t0;t1]);   % parameter
+sos2 = struct('x',[V;s7]',...                                                                % dec. variable
+              'p',[ksym;s1sym;s2sym;s3sym;s4sym;Vsym;t0;t1]);   % parameter
 
-sos2.('g') = [s1sym*V   - s2sym*hT - nabla(V,t) - nabla(V,x)*(f + gx*ksym);
-              ksym - umin  + s51sym*V - s61sym*hT;
-              umax - ksym  + s52sym*V - s62sym*hT;
+sos2.('g') = [s1sym*V   - s2sym*hT - nabla(V,t) - nabla(V,x)*(f + gx*ksym);     % k is constant! hence it 
               s3sym.*V.*ones(length(g),1) - s4sym.*hT.*ones(length(g),1) - g
               subs(V,t,t1)    -  l;
               s7*subs(Vsym,t,t0)  - subs(V,t,t0)];
@@ -120,14 +116,10 @@ sos2.('g') = [s1sym*V   - s2sym*hT - nabla(V,t) - nabla(V,x)*(f + gx*ksym);
 % states + constraint are SOS cones
 opts = struct;
 opts.Kx = struct('s', 1,'l',1);
-opts.Kc = struct('s', 3+length(u)*2+length(g));
+opts.Kc = struct('s', 3+length(g));
 
 Vlb = casos.PS(basis(V),-inf);
 Vub = casos.PS(basis(V),+inf);
-
-opts.sdpsol_options.mosek_param.MSK_IPAR_BI_CLEAN_OPTIMIZER = 'MSK_OPTIMIZER_INTPNT';
-opts.sdpsol_options.mosek_param.MSK_IPAR_INTPNT_BASIS = 'MSK_BI_NEVER';
-
 
 % solver for V-step
 S2 = casos.sossol('S2','mosek',sos2,opts);
@@ -135,8 +127,7 @@ S2 = casos.sossol('S2','mosek',sos2,opts);
 
 tend1 = toc;
 disp(['took ' num2str(tend1) ' s'])
-% profile viewer
-% profile off
+
 
 %% gamma-beta-V-iteration
 
@@ -167,7 +158,7 @@ for iter = 1:100
     end
 
 
-    sol2 = S2('p',[sol1.x;Vval;0;T],'lbx',Vlb,'ubx',Vub);
+    sol2 = S2('p',[sol1.x(1:5);Vval;0;T],'lbx',Vlb,'ubx',Vub);
 
 
     switch (S2.stats.UNIFIED_RETURN_STATUS)

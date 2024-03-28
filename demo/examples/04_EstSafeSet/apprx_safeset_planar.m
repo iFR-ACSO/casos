@@ -31,7 +31,7 @@ r = casos.PS.sym('r',monomials(x,0:1),[length(l) 1],'gram');
 
 s0 = casos.PS.sym('s0',monomials(x,0:4),'gram');
 
-h = casos.PS.sym('h',monomials(x,0:6));
+h = casos.PS.sym('h',monomials(x,0:2));
 h_sym = casos.PS.sym('h_sym',basis(h));
 
 % level of stability
@@ -87,7 +87,7 @@ disp('Finished building solver!')
 disp('=========================================================')
 disp('Start iteration...')
 
-itermax = 200;
+itermax = 4;
 for iter = 1:itermax
     % evaluate parametrized SOS problem
    sol1 = S1('p',h_star);
@@ -142,3 +142,6 @@ qw{3} = plot(nan, 'g');
 legend([qw{:}], {'Box Constraint','Keep-out','inner-approx',}, 'location', 'best')
 
 
+g = saveobj(h_star);
+
+save('safe_set.mat','g')
