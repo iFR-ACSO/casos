@@ -36,6 +36,8 @@ methods
     function obj = SossdpRelaxation(name,solver,sos,varargin)
         obj@casos.package.solvers.SosoptCommon(name,sos,varargin{:});
 
+        % default options
+        if ~isfield(obj.opts,'sdpsol_options'), obj.opts.sdpsol_options = struct; end
         % pass options to sdpsol
         if ~isfield(obj.opts.sdpsol_options,'error_on_fail')
             obj.opts.sdpsol_options.error_on_fail = obj.opts.error_on_fail;
