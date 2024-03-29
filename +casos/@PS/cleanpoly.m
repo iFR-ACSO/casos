@@ -6,16 +6,17 @@ if nargin<3
     deg = [];
 end
 
-assert(~is_symexpr(p.coeffs), 'Coefficients must not be symbolic expressions.')
-assert(isempty(tol) ||((isa(tol,'double') && isscalar(tol) && tol>=0)), 'Tolerance must be a positive scalar or is empty.')
+assert(~is_symexpr(p), 'Coefficients must not be symbolic expressions.')
 
-coeffs = p.coeffs;
+% copy coefficients
+coeffs = casadi.SX(p.coeffs);
 
 % sparse zero
 sp_zero = casadi.SX(1,1);
 
 if ~isempty(tol)
     % remove coefficients below tolerance
+    assert(isdouble(tol) && isscalar(tol) && tol >= 0, 'Tolerance must be a positive scalar or is empty.')
 
     % polynomial coefficients are casadi SX; we need numerical values
     idx = find(abs(full(casadi.DM(coeffs))) < tol);
@@ -32,23 +33,17 @@ if ~isempty(deg)
         % degree of each term
         pdeg = sum(p.degmat,2);
 
-        % find all terms we want to retain
-        idx = arrayfun(@(x) find(pdeg == x), unique(deg), 'UniformOutput', false);
-        idx = vertcat(idx{:});
-        
         % find all terms we don't want to retain
-        idx = setdiff(1:length(pdeg),idx);
+        idx = find(~ismember(pdeg,deg));
         
         % remove the coefficients
-        coeffs(idx,:) = sp_zero;
+        coeffs(idx,:) = sp_zero; %#ok<FNDSB> 
 
     % find all parts that shall be retained with certain degrees of a variable
     elseif iscell(deg)  && size(deg,2)== 2
         warning('This use of cleanpoly is deprecated.')
 
         % deg is a cell array of pvars and vectors of non-neg integers
-        coeffs = p.coeffs;
-
         for i1=1:size(deg,1)
             % check if variable is part of indeterminates
             var = deg{i1,1};
