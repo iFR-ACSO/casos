@@ -57,14 +57,14 @@ Kx = opts.Kx;
 Kc = opts.Kc;
 
 % number of variables per cone type
-Nx.l = (obj.getdimc(Kx,'l'));
-Nx.q = (obj.getdimc(Kx,'q'));
-Nx.s = (obj.getdimc(Kx,'s'));
+Nx.l = (obj.getdimc(Kx,'lin'));
+Nx.q = (obj.getdimc(Kx,'lor'));
+Nx.s = (obj.getdimc(Kx,'psd'));
 
 % number of constraints per cone type
-Na.l = (obj.getdimc(Kc,'l'));
-Na.q = (obj.getdimc(Kc,'q'));
-Na.s = (obj.getdimc(Kc,'s'));
+Na.l = (obj.getdimc(Kc,'lin'));
+Na.q = (obj.getdimc(Kc,'lor'));
+Na.s = (obj.getdimc(Kc,'psd'));
 
 % rewrite linear and state constraints, that is,
 % 

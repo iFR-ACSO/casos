@@ -9,6 +9,8 @@ properties (Access=private)
 
     basis_x_out;
     basis_g_out;
+
+    basis_x_lam;
 end
 
 properties (Constant,Access=protected)
@@ -34,6 +36,8 @@ methods
     function obj = SossdpRelaxation(name,solver,sos,varargin)
         obj@casos.package.solvers.SosoptCommon(name,sos,varargin{:});
 
+        % default options
+        if ~isfield(obj.opts,'sdpsol_options'), obj.opts.sdpsol_options = struct; end
         % pass options to sdpsol
         if ~isfield(obj.opts.sdpsol_options,'error_on_fail')
             obj.opts.sdpsol_options.error_on_fail = obj.opts.error_on_fail;

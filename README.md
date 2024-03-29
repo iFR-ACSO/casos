@@ -4,6 +4,17 @@ CaΣoS provides a symbolic framework for convex and nonconvex sum-of-squares pro
 
 [^1]: CaΣoS has been neither supported nor endorsed by CasADi or any of its affilitiates.
 
+### Install
+
+The following requirements need to be met in order to use all functionalities of CaΣoS:
+1. Download [Casadi](https://web.casadi.org/get/) (currently, using v3.5.5 is recommended) and add it to your Matlab path.
+2. Download and install at least one solver for semidefinite (conic) programs, and add the solver(s) to the Matlab Path.
+
+   - Currently supported are [Mosek](https://www.mosek.com/downloads/) (v10.1), [SCS](https://www.cvxgrp.org/scs/install/matlab.html#matlab-install) (v3.2.4), and [SeDuMi](https://sedumi.ie.lehigh.edu/?page_id=58) (v1.3).
+   - **Note:** Mosek requires a separate license. [Academic Licenses](https://www.mosek.com/products/academic-licenses/) are available.
+
+3. Add the CaΣoS root folder (the one that contains the directory `+casos`) to your Matlab path.
+
 ## Polynomial expressions
 
 The class `casos.PS` implements polynomials of which the coefficients can be symbolic expressions.
@@ -175,18 +186,18 @@ initializes the quasiconvex SOS solver named `'S'` by bisection over convex sum-
 
 The options `K_` define the (convex) polynomial cones $\mathcal K$ as well as the number of coefficient-wise constraints in the SOS problems. Each option takes a structure `K` as value which can have the following fields:
 
-- `K.l` : number of coefficient-wise constraints; corresponds to the dimension of $G_\mathrm{l}$ or $\xi_\mathrm{l} \in \mathbb R[x]^l$;
-- `K.s` : number of sum-of-squares constraints, that is, $\mathcal K = \Sigma[x]^s$; corresponds to the dimension of $g_\mathrm{c}$ or $\xi_\mathrm{c}$;
+- `K.lin` : number of coefficient-wise constraints; corresponds to the dimension of $G_\mathrm{l}$ or $\xi_\mathrm{l} \in \mathbb R[x]^l$;
+- `K.sos` : number of sum-of-squares constraints, that is, $\mathcal K = \Sigma[x]^s$; corresponds to the dimension of $g_\mathrm{c}$ or $\xi_\mathrm{c}$;
 - no further cones are currently supported;
 
 by default (if the option `K_` is omitted), only coefficient-wise constraints are enforced.
 
 ### Convex optimization
 
-To solve polynomial sum-of-squares optimization problems via semidefinite programming, CaΣoS provides both a high-level and low-level interface for convex optimization. These interfaces extend CasADi's [`qpsol`](https://web.casadi.org/docs/#high-level-interface) and [`conic`](https://web.casadi.org/docs/#low-level-interface) syntax. Currently, the convex solvers SeDuMi, MOSEK,[^2] and SCS are supported (but, unlike CasADi, the solvers must be installed separately and be accessible through MATLAB). 
+To solve polynomial sum-of-squares optimization problems via semidefinite programming, CaΣoS provides both a high-level and low-level interface for convex optimization. These interfaces extend CasADi's [`qpsol`](https://web.casadi.org/docs/#high-level-interface) and [`conic`](https://web.casadi.org/docs/#low-level-interface) syntax. The convex solvers SeDuMi, MOSEK,[^2] and SCS are supported (but, unlike CasADi, the solvers must be installed separately and be accessible through MATLAB). 
 
 > [!NOTE]
-> Neither SeDuMi nor MOSEK currently support quadratic cost functions.
+> SeDuMi does not support quadratic cost functions.
 
 [^2]: Using the MOSEK interface requires a separate licence; please see [MOSEK's homepage](https://www.mosek.com/resources/getting-started/) for details.
 
@@ -240,8 +251,8 @@ evaluates the conic solver `S` providing (optional) arguments to describe $H$, $
 
 The options `K_` define the convex cones $\mathcal K$ as well as the number of linear constraints in SDP or conic problems. Each option takes a structure `K` as value which can have the following fields:
 
-- `K.l` : number of linear constraints; corresponds to the first dimension of $A_\mathrm{l}$, the dimension of $g_\mathrm{l}$, or the dimension of $x_\mathrm{l}$;
-- `K.s` : vector $(s_1, \ldots, s_k)$ of semidefinite cone dimensions, that is, $\mathcal K = \mathbb S_{s_1}^{+} \times \cdots \times \mathbb S_{s_k}^{+}$; the total number of SDP cone constraints is equal to $\sum_i s_i^2$;
+- `K.lin` : number of linear constraints; corresponds to the first dimension of $A_\mathrm{l}$, the dimension of $g_\mathrm{l}$, or the dimension of $x_\mathrm{l}$;
+- `K.sos` : vector $(s_1, \ldots, s_k)$ of semidefinite cone dimensions, that is, $\mathcal K = \mathbb S_{s_1}^{+} \times \cdots \times \mathbb S_{s_k}^{+}$; the total number of SDP cone constraints is equal to $\sum_i s_i^2$;
 - further cones, e.g., the Lorentz (or second-order) cone, are supported depending on the convex solver; the total number of *all* cone constraints corresponds to the first dimension of $A_\mathrm{c}$, the dimension of $g_\mathrm{c}$, or the dimension of $x_\mathrm{c}$;
 
 by default (if the option `K_` is omitted), only linear constraints are enforced.
@@ -267,10 +278,10 @@ The following comparison is supposed to ease the transition from other sum-of-sq
 | `sosdecvar('Q',z)` | Gram decision variable $z^\top Q z$. | `casos.PS.sym('Q',z,'gram')` |
 | `jacobian(f,x)` | Partial derivative w.r.t. indeterminates. | `nabla(f,x)` |
 | `jacobian(p,q)` | Partial derivative w.r.t. symbolic variables. | *Not yet supported* |
-| `constr = (expr >= 0)` | Sum-of-squares expression constraint. | `sos.g = expr; opts.Kc.s = 1` |
-| `constr = (svar >= 0)` | Sum-of-squares variable constraint <br/> (requires Gram variable). | `sos.x = svar; opts.Kx.s = 1` |
-| `constr = (p == q)` | Polynomial expression equality. | `sos.g = (p - q); opts.Kc.l = 1` <br/> `lbg = 0; ubg = 0` |
-| `constr = (q <= 1)` | Scalar variable inequality. | `sos.x = q; opts.Kx.l = 1` <br/> `lbx = -inf; ubx = 1` |
+| `constr = (expr >= 0)` | Sum-of-squares expression constraint. | `sos.g = expr; opts.Kc.sos = 1` |
+| `constr = (svar >= 0)` | Sum-of-squares variable constraint <br/> (requires Gram variable). | `sos.x = svar; opts.Kx.sos = 1` |
+| `constr = (p == q)` | Polynomial expression equality. | `sos.g = (p - q); opts.Kc.lin = 1` <br/> `lbg = 0; ubg = 0` |
+| `constr = (q <= 1)` | Scalar variable inequality. | `sos.x = q; opts.Kx.lin = 1` <br/> `lbx = -inf; ubx = 1` |
 | `sosopt(constr,x)` | Sum-of-squares feasibility. | `S = casos.sossol('S','solver',sos,opts)` |
 | `sosopt(constr,x,obj)` | Sum-of-squares optimization. | `sos.f = obj` <br/> `S = casos.sossol('S','solver',sos,opts)` |
 | `[info,dopt] = sosopt(...)` | Solve affine problem. | `S = casos.sossol('S','solver',sos,opts)` <br/> `sol = S(...)` |

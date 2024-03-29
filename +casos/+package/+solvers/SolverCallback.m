@@ -1,4 +1,4 @@
-classdef SolverCallback < casadi.Callback & casos.package.functions.FunctionCommon
+classdef (Abstract) SolverCallback < casadi.Callback & casos.package.solvers.SolverCommon
 % Common Callback interface for custom solvers.
 
 properties (Abstract, Access=protected)
@@ -7,7 +7,7 @@ properties (Abstract, Access=protected)
 end
 
 properties (Constant, Access=protected)
-    solver_options = casos.package.functions.FunctionCommon.options;
+%     solver_options = casos.package.functions.FunctionCommon.options;
 end
 
 methods (Static)
@@ -19,7 +19,7 @@ end
 
 methods
     function obj = SolverCallback(varargin)
-        obj@casos.package.functions.FunctionCommon(varargin{:});
+        obj@casos.package.solvers.SolverCommon(varargin{:});
     end
 
     %% Common function interface

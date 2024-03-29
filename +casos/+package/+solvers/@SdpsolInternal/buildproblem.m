@@ -29,23 +29,23 @@ sz_g = size(gx);
 
 % ensure cone has default value
 if ~isfield(opts,'Kx')
-    opts.Kx.l = prod(sz_x);
-elseif ~isfield(opts.Kx,'l')
-    opts.Kx.l = 0; 
+    opts.Kx.lin = prod(sz_x);
+elseif ~isfield(opts.Kx,'lin')
+    opts.Kx.lin = 0; 
 end
 if ~isfield(opts,'Kc')
-    opts.Kc.l = prod(sz_g);
-elseif ~isfield(opts.Kc,'l')
-    opts.Kc.l = 0;
+    opts.Kc.lin = prod(sz_g);
+elseif ~isfield(opts.Kc,'lin')
+    opts.Kc.lin = 0;
 end
 
 % linear variables
-Nx_l = opts.Kx.l;
+Nx_l = opts.Kx.lin;
 % cone variables
 Nx_c = prod(sz_x) - Nx_l;
 
 % linear constraints
-Ng_l = opts.Kc.l;
+Ng_l = opts.Kc.lin;
 % cone constraints
 Ng_c = prod(sz_g) - Ng_l;
 
