@@ -11,6 +11,7 @@ from the existing literature (see below).
 3. Add the examples folder and its specific subfolders to the Matlab path as follows:
     -   In the command window type: "addpath(genpath("./examples"))" to add all examples to the Matlab path (recommended).
     -   In the command window type: "addpath(genpath("./examples/desiredFolder")) to add only examples in a desired subdirectory; replace "desiredFolder" with the corresponding name of the folder.
+    -   Right-click of the examples folder and then select "Add to path" and then (as desired) folder or also all subfolders.
 
 ## Usage
 Run the corresponding script by either opening the desired script and hitting the play button in the editor or type in the filename to the command window and press enter.
