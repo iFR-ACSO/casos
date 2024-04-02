@@ -201,22 +201,22 @@ disp(['--------------------------------------------------------------------' ...
     '---------'])
 
 %% Plotting
-% d = ([
-%           convvel(50, 'm/s', 'm/s') 
-%           convang(20, 'deg', 'rad')  
-%           convang(30, 'deg', 'rad')  
-%           convang(10, 'deg', 'rad') 
-% ]);
-% 
-% D = diag(d)^-1;
-% V = subs(Vval,x,D*x);
-% V1 = subs(V,[x(1);x(4)],[0 0]');
-% 
-% p = subs(p,x,D*x);
-% p1 = subs(p,[x(1);x(4)],[0 0]');
-% 
-% figure(1)
-% pcontour(V1, double(gval), [-1 1 -4 4], 'b-');
-% hold on
-% pcontour(p1, double(bval), [-1 1 -4 4], 'r--');
+d = ([
+          convvel(50, 'm/s', 'm/s') 
+          convang(20, 'deg', 'rad')  
+          convang(30, 'deg', 'rad')  
+          convang(10, 'deg', 'rad') 
+]);
+
+D = diag(d)^-1;
+V = subs(Vval,x,D*x);
+V1 = subs(V,[x(1);x(4)],[0 0]');
+
+p = subs(p,x,D*x);
+p1 = subs(p,[x(1);x(4)],[0 0]');
+
+figure(1)
+pcontour(V1, double(gval), [-1 1 -4 4], 'b-');
+hold on
+pcontour(p1, double(bval), [-1 1 -4 4], 'r--');
 

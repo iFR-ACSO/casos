@@ -1,4 +1,4 @@
-## Region of Attraction
+# Region of Attraction Estimation
 
 
 This folder contains examples regarding region-of-attraction (ROA) estimation for nonlinear polynomial systems. 
