@@ -2,20 +2,20 @@
 %
 % Short Description: 
 % This script implements the the region-of attraction(ROA) estimation 
-% problem found in [1]. The resulting bilinear a three step iterative 
-% procedure. An elliposoidal shape function is used to ensure grow of
-% the sublevel set.
+% problem found in [1]. The resulting bilinear problem is a three step 
+% iterative procedure. An elliposoidal shape function is used to ensure 
+% grow of the sublevel set.
 %
 % Date: 04/01/2024
 %
 % Reference: 
 % [1] Chakraborty, A., Seiler, P., & Balas, G. J. (2011). 
-%  Nonlinear region of attraction analysis for flight control verification 
-%  and validation. Control Engineering Practice, 19(4), 335-345. 
-%  doi:10.1016/j.conengprac.2010.12.001
+%     Nonlinear region of attraction analysis for flight control 
+%     verification and validation. Control Engineering Practice, 
+%     19(4), 335-345. doi:10.1016/j.conengprac.2010.12.001
 %
 % ------------------------------------------------------------------------
-import casos.toolboxes.sosopt.pcontour % legacy code for plotting
+import casos.toolboxes.sosopt.pcontour.* % legacy code for plotting
 
 
 disp(['--------------------------------------------------------------------' ...
