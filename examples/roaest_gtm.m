@@ -43,8 +43,8 @@ sos1 = struct('x',s1,'f',-g,'p',V);
 sos1.('g') = s1*(V-g)-nabla(V,x)*f-l;
 
 % states + constraint are SOS cones
-opts.Kx = struct('s', 1);
-opts.Kc = struct('s', 1);
+opts.Kx = struct('sos', 1);
+opts.Kc = struct('sos', 1);
 
 S1 = casos.qcsossol('S1','bisection',sos1,opts);
 
@@ -53,8 +53,8 @@ sos2 = struct('x',s2,'f',-b,'p',[V;g]);
 sos2.('g') = s2*(p-b)+g-V;
 
 % states + constraint are SOS cones
-opts.Kx = struct('s', 1);
-opts.Kc = struct('s', 1);
+opts.Kx = struct('sos', 1);
+opts.Kc = struct('sos', 1);
 
 S2 = casos.qcsossol('S2','bisection',sos2,opts);
 
@@ -70,8 +70,8 @@ sos3 = struct('x',V,'p',[b,g,s1_sym,s2_sym]);
 sos3.('g') = [V-l; s2_sym*(p-b)+g-V; s1_sym*(V-g)-nabla(V,x)*f-l];
 
 opts = struct;
-opts.Kx = struct('s', 0, 'l', 1); 
-opts.Kc = struct('s', 3);
+opts.Kx = struct('sos', 0, 'lin', 1); 
+opts.Kc = struct('sos', 3);
 
 S3 = casos.sossol('S','sedumi',sos3,opts);
 

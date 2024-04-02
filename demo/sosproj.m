@@ -17,7 +17,7 @@ e = s - p;
 %   min ||s-p||^2 s.t. s is SOS
 sos = struct('x',s,'f',dot(e,e));
 % states is scalar SOS cone
-opts = struct('Kx',struct('s',1));
+opts = struct('Kx',struct('sos',1));
 
 % solve by relaxation to SDP
 S = casos.sossol('S','mosek',sos,opts);
