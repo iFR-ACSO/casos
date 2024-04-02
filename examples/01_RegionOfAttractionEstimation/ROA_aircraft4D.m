@@ -15,7 +15,7 @@
 %  doi:10.1016/j.conengprac.2010.12.001
 %
 % ------------------------------------------------------------------------
-import casos.toolboxes.sosopt.* % legacy code for plotting
+import casos.toolboxes.sosopt.pcontour % legacy code for plotting
 
 
 disp(['--------------------------------------------------------------------' ...
@@ -77,7 +77,7 @@ prob_gamma_step.('g') = s1*(V-g)-nabla(V,x)*f-l; % constraint functions
 opts.Kx = struct('sos', 1); % cone for decision variables
 opts.Kc = struct('sos', 1); % cone for constraints
 
-% setup solver for quasi-convex problem (biscetion
+% setup solver for quasi-convex problem (biscetion)
 solver_gamma_step = casos.qcsossol('S1', ...
                                   'bisection', ...
                                    prob_gamma_step, ...
@@ -103,7 +103,7 @@ solver_beta_step = casos.qcsossol('S2', ...
 disp(['... beta step succesful after ',  num2str(toc) ' s'])
 % solver 3: V-step
 tic
-% parameter; currently only gram-like polynomials can be used for paramter
+% parameter; currently only gram-like polynomials can be used for parameter
 s1_sym = casos.PS.sym('s1',basis(s1));
 s2_sym = casos.PS.sym('s2',basis(s2));
 
