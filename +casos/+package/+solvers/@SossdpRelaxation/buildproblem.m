@@ -8,10 +8,10 @@ n = length(sos.x);
 m = length(sos.g);
 
 % get cone dimensions
-if isfield(opts.Kx,'l'), Nl = opts.Kx.l; else, Nl = 0; end
-if isfield(opts.Kx,'s'), Ns = opts.Kx.s; else, Ns = 0; end
-if isfield(opts.Kc,'l'), Ml = opts.Kc.l; else, Ml = 0; end
-if isfield(opts.Kc,'s'), Ms = opts.Kc.s; else, Ms = 0; end
+Nl = get_dimension(obj.get_cones,opts.Kx,'lin');
+Ns = get_dimension(obj.get_cones,opts.Kx,'sos');
+Ml = get_dimension(obj.get_cones,opts.Kc,'lin');
+Ms = get_dimension(obj.get_cones,opts.Kc,'sos');
 
 assert(n == (Nl + Ns), 'Dimension of Kx must be equal to number of variables (%d).', n);
 assert(m == (Ml + Ms), 'Dimension of Kc must be equal to number of constraints (%d).', m)
@@ -50,8 +50,8 @@ sdp.g = Qdiff_g;
 sdp.p = Qlin_p;
 % SDP options
 sdpopt = opts.sdpsol_options;
-sdpopt.Kx = struct('l', numel(Qlin_x), 's', [Ksdp_x_s; Ksdp_g_s]);
-sdpopt.Kc = struct('l', numel(Qdiff_g));
+sdpopt.Kx = struct('lin', numel(Qlin_x), 'psd', [Ksdp_x_s; Ksdp_g_s]);
+sdpopt.Kc = struct('lin', numel(Qdiff_g));
 
 % initialize SDP solver
 obj.sdpsolver = casos.package.solvers.SdpsolInternal('SDP',solver,sdp,sdpopt);
@@ -69,5 +69,7 @@ obj.gram_g = Zgram_g;
 % output basis
 obj.basis_x_out = blkdiag(obj.monom_xl, obj.gram_x);
 obj.basis_g_out = blkdiag(obj.monom_gl, obj.gram_g);
+% basis of dual variable
+obj.basis_x_lam = blkdiag(obj.monom_xl, adjoint_inverse(obj.gram_x));
 
 end

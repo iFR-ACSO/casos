@@ -1,4 +1,4 @@
-classdef (Abstract) SosoptCommon < casos.package.functions.FunctionInterface
+classdef (Abstract) SosoptCommon < casos.package.solvers.SolverCommon & casos.package.functions.FunctionInterface
 % Common superclass for sum-of-squares optimization problems.
 %
 % The generic sum-of-squares problem has the form
@@ -18,10 +18,12 @@ classdef (Abstract) SosoptCommon < casos.package.functions.FunctionInterface
 %
 
 properties (Constant,Access=protected)
-    sosopt_options = [casos.package.functions.FunctionInterface.options
-        {'Kx', 'Cone description for state constraints.'
-         'Kc', 'Cone description for constraint function.'}
-    ];
+    sosopt_options = casos.package.solvers.SolverCommon.solver_options;
+
+    sosopt_cones = casos.package.Cones([
+        casos.package.Cones.LIN
+        casos.package.Cones.SOS
+    ]);
 
     name_i = {'x0' 'p' 'lbx' 'ubx' 'cbx' 'lbg' 'ubg' 'cbg' 'lam_x0' 'lam_g0'};
     name_o = {'x' 'f' 'g' 'lam_x' 'lam_g'};
@@ -46,11 +48,17 @@ methods (Static)
         % Return static options.
         options = casos.package.solvers.SosoptCommon.sosopt_options;
     end
+
+    function cones = get_cones
+        % Return supported cones.
+        cones = casos.package.solvers.SosoptCommon.sosopt_cones;
+    end
 end
 
 methods
     function [obj,sos] = SosoptCommon(name,sos,varargin)
-        obj@casos.package.functions.FunctionInterface(name,varargin{:});
+        obj@casos.package.functions.FunctionInterface(name);
+        obj@casos.package.solvers.SolverCommon(varargin{:});
 
         % problem size
         if isfield(sos,'x')
@@ -65,9 +73,8 @@ methods
         end
 
         % default options
-        if ~isfield(obj.opts,'Kx'), obj.opts.Kx = struct('l',n); end
-        if ~isfield(obj.opts,'Kc'), obj.opts.Kc = struct('l',m); end
-        if ~isfield(obj.opts,'sdpsol_options'), obj.opts.sdpsol_options = struct; end
+        if ~isfield(obj.opts,'Kx'), obj.opts.Kx = struct('lin',n); end
+        if ~isfield(obj.opts,'Kc'), obj.opts.Kc = struct('lin',m); end
     end
 
     %% Getter
