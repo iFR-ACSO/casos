@@ -5,4 +5,4 @@
 *.DS_Store
 
 # ignore doc build
-doc/build
+doc/build/doctrees
