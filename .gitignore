@@ -3,3 +3,6 @@
 
 # ignore MAC OS files
 *.DS_Store
+
+# ignore doc build
+doc/build
