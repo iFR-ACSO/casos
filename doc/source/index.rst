@@ -43,3 +43,7 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+
+Latex Example:
+==============
+:math:`\begin{align*}\min_{x \in \mathbb{R}^n} \quad & c^Tx \\\text{s.t.} \quad & Ax -b = 0 \\& Ex \geq d\end{align*}`
