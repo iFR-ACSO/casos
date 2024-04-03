@@ -10,10 +10,7 @@ Welcome to casos's documentation!
    :maxdepth: 6
    :caption: Contents:
 
-   matlab_files
-   toolboxes
    install
-   ps
 
 .. automodule:: casos
     :members:
