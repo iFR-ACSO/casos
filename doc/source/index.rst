@@ -7,12 +7,38 @@ Welcome to casos's documentation!
 =================================
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 6
    :caption: Contents:
 
+   matlab_files
+   toolboxes
    install
+   ps
+
+.. automodule:: casos
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. automodule:: casos.package
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+@PS
 
 
+.. automodule:: +casos.@PS
+   :show-inheritance:
+
+
+PS Folder
+~~~~~~~~~~~
+
+.. autoclass:: PS
+   :show-inheritance:
+
+   
 
 Indices and tables
 ==================
