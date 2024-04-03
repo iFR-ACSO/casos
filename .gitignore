@@ -6,3 +6,4 @@
 
 # ignore doc build
 doc/build/doctrees
+doc/build/html/.buildinfo
