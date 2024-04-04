@@ -49,7 +49,8 @@ methods
         if nargin < 4
             opts = struct;
         else
-            if isfield(opts, 'Kx') && isfield(opts.Kx, 'ddm')
+            if (isfield(opts, 'Kx') && isfield(opts.Kx, 'ddm'))|| ...
+                    (isfield(opts, 'Kc') && isfield(opts.Kc, 'ddm'))
                 [sdp, opts] = dd_relax(obj, sdp, opts);
             end
         end
@@ -145,6 +146,65 @@ end
 
 methods (Access=protected)
     function [sdp, opts] = dd_relax(obj, sdp, opts)
+
+        opts.add_lbc = [];
+        opts.add_ubc = [];
+
+        % Verify DD cones in the constraints and create slack DD variables
+        if isfield(opts.Kc, 'ddm') && ~isempty(opts.Kc.ddm)
+            % Get DD cone sizes 
+            n_ddm = opts.Kc.ddm;
+
+            % get current number of constraints
+            n_g = length(sdp.g);
+
+            % update opts
+            if ~isfield(opts.Kc, 'lin')
+                opts.Kc.lin = 0;
+            end    
+            if ~isfield(opts.Kx, 'ddm')
+                opts.Kx.ddm = [];
+            end
+            
+            % loop to iterate over each DD cone in the constraints
+            for i=1:length(n_ddm)
+                
+                % locate set of DD constraints (start from the end)
+                dd_g = sdp.g(end - n_ddm(end-i+1)^2+1:end);
+
+                % create slack variables that need to be DD
+                dd_s = casadi.MX.sym(strjoin({'sg_', num2str(i)}, ''), n_ddm(end-i+1)^2, 1);
+
+                % rewrite constraints and add to linear constraints
+                dd_g = dd_g - dd_s;
+
+                % add new constraints to the place of the linear
+                % constraints
+                sdp.g = [sdp.g(1:opts.Kc.lin); dd_g; sdp.g(opts.Kc.lin+1:end)];
+
+                % remove the last constraints
+                sdp.g = sdp.g(1: end - n_ddm(end-i+1)^2);
+
+                % update lower and upper bound on the linear constraints
+                % lower bounds is always zero
+                opts.add_lbc = [opts.add_lbc; zeros(n_ddm(i)^2, 1)];
+                % upper bounds is always infinity
+                opts.add_ubc = [opts.add_ubc; zeros(n_ddm(i)^2, 1)];
+
+                % update decision variables
+                sdp.x = [sdp.x; dd_s];
+                
+                % add linear cones to constraints
+                opts.Kc.lin = opts.Kc.lin + n_ddm^2;
+                % add DD cones to decision variables
+                opts.Kx.ddm = [opts.Kx.ddm; n_ddm];
+
+            end
+            % remove DD cone from constraints
+            opts.Kc = rmfield(opts.Kc, 'ddm');
+
+        end
+
         if isfield(opts.Kx, 'ddm') && ~isempty(opts.Kx.ddm)
             % Get DD cone sizes
             n_ddm = opts.Kx.ddm;
@@ -153,8 +213,6 @@ methods (Access=protected)
             if ~isfield(opts.Kx, 'lin')
                 opts.Kx.lin = 0;
             end
-            opts.add_lbc = [];
-            opts.add_ubc = [];
 
             for i=1:length(n_ddm)
 
@@ -167,7 +225,7 @@ methods (Access=protected)
                 
                 % create slack variables (only corresponding to the upper
                 % triangle except the diagonal elements
-                ddm_s = casadi.MX.sym('s', n_ddm(i)*(n_ddm(i)+1)/2 - n_ddm(i), 1);
+                ddm_s = casadi.MX.sym(strjoin({'sx_', num2str(i)}, ''), n_ddm(i)*(n_ddm(i)+1)/2 - n_ddm(i), 1);
                 
                 % create symmetric matrix with zero diagonal and upper and
                 % bottom triangle equal to ddm_s            
@@ -211,12 +269,9 @@ methods (Access=protected)
                 % upper bounds is always infinity
                 opts.add_ubc = [opts.add_ubc; inf(n_new_g,1)];
             end
-
-            % remove ddm field
+            % remove ddm field from decision variables
             opts.Kx = rmfield(opts.Kx, 'ddm');
-
         end
-
     end
 
 end
