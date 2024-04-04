@@ -11,6 +11,7 @@ properties (Constant)
     LOR = {'lor' 'LIST' 'Lorentz (quadratic, second-order) cone.'};
     ROT = {'rot' 'LIST' 'Rotated Lorentz cone.'};
     PSD = {'psd' 'LIST' 'Cone of positive semidefinite matrices.'};
+    DDM = {'ddm' 'LIST' 'Cone of symmetric diagonally dominat matrices'};
     % Polynomial cones
     SOS = {'sos' 'NUM' 'Cone of sum-of-squares polynomials.'}
 end

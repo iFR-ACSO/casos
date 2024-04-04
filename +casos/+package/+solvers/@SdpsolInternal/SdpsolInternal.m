@@ -48,6 +48,10 @@ methods
         % options
         if nargin < 4
             opts = struct;
+        else
+            if isfield(opts, 'Kx') && isfield(opts.Kx, 'ddm')
+                [sdp, opts] = dd_relax(obj, sdp, opts);
+            end
         end
 
         % decision variables
@@ -137,6 +141,78 @@ methods (Access={?casos.package.functions.FunctionCommon, ?casos.package.functio
         fhan = casadi.Function('f',var_in,call(obj.fhan,var_out),name_in(obj.fhan),name_out(obj.fhan));
         S = casos.package.solvers.SdpsolInternal(obj,fhan);
     end
+end
+
+methods (Access=protected)
+    function [sdp, opts] = dd_relax(obj, sdp, opts)
+        if isfield(opts.Kx, 'ddm') && ~isempty(opts.Kx.ddm)
+            n_ddm = opts.Kx.ddm;
+
+            % extract the ddm elements from sdp.x
+            ddm_x = sdp.x(size(sdp.x,1)- n_ddm^2+1:end);
+            ddm_x = ddm_x.reshape(n_ddm, n_ddm); % matrix of the form (n_ddm x n_ddm)
+
+            % obtain diagonal elements of ddm_x
+            ddm_x_diag = diag(ddm_x);
+            
+            % create slack variables (only corresponding to the upper
+            % triangle except the diagonal elements
+            ddm_s = casadi.MX.sym('s', n_ddm*(n_ddm+1)/2 - n_ddm, 1);
+            
+            % create symmetric matrix with zero diagonal and upper and
+            % bottom triangle equal to ddm_s            
+            ind_s = triu(ones(n_ddm, n_ddm),1); % extracts the upper triangle without the diagonal
+            ind_d = ind_s + ind_s';
+            
+            % by the order of ddm_s, subs the 1 in ind_s with ddm_s
+            s_matrix = casadi.MX(n_ddm^2, 1);
+
+            % find indexes where ind_s is 1
+            s_matrix(find(ind_s(:))) = ddm_s;
+            s_matrix = s_matrix.reshape(n_ddm, n_ddm);
+            s_matrix = s_matrix + s_matrix';
+
+            % add constraints of the type s_i - x_i >= 0 and s_i + x_i >= 0
+            dd_g1 = s_matrix - ind_d.*ddm_x;
+            dd_g2 = s_matrix + ind_d.*ddm_x;
+            
+            % create new constrains according to Gershgorin's circle theorem.
+            dd_g3 = ddm_x_diag - sum(s_matrix,1)';
+            
+            % create constraints for symmetry of ddm_x
+            dd_g4 = ddm_x - ddm_x';
+            dd_g5 = ddm_x' - ddm_x;
+
+            % new sdp.x
+            sdp.x = [sdp.x; ddm_s];
+
+            % new sdp.g
+            n_new_g = size(sdp.g,1);
+            sdp.g = [sdp.g; dd_g1(:); dd_g2(:); dd_g3(:); dd_g4(:); dd_g5(:)];
+            n_new_g = size(sdp.g,1) - n_new_g;
+
+            % update opts
+            if ~isfield(opts.Kx, 'lin')
+                opts.Kx.lin = 0;
+            end
+            
+            % define size of new linear cones
+            opts.Kx.lin = opts.Kx.lin + n_ddm^2 + size(ddm_s,1); 
+            opts.Kc.lin = opts.Kc.lin + n_new_g;
+
+            % remove ddm field
+            opts.Kx = rmfield(opts.Kx, 'ddm');
+
+            % add new bounds
+            % lower bounds is always zero
+            opts.add_lbc = zeros(n_new_g,1);
+            % upper bounds is always infinity
+            opts.add_ubc = inf(n_new_g,1);
+
+        end
+
+    end
+
 end
 
 end
