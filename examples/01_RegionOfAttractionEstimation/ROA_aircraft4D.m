@@ -15,8 +15,6 @@
 %     19(4), 335-345. doi:10.1016/j.conengprac.2010.12.001
 %
 % ------------------------------------------------------------------------
-import casos.toolboxes.sosopt.pcontour.* % legacy code for plotting
-
 
 disp(['--------------------------------------------------------------------' ...
     '---------'])
@@ -201,6 +199,9 @@ disp(['--------------------------------------------------------------------' ...
     '---------'])
 
 %% Plotting
+% legacy code for plotting
+import casos.toolboxes.sosopt.pcontour 
+
 d = ([
           convvel(50, 'm/s', 'm/s') 
           convang(20, 'deg', 'rad')  
@@ -209,11 +210,13 @@ d = ([
 ]);
 
 D = diag(d)^-1;
-V = subs(Vval,x,D*x);
-V1 = subs(V,[x(1);x(4)],[0 0]');
 
-p = subs(p,x,D*x);
-p1 = subs(p,[x(1);x(4)],[0 0]');
+% rescale and substitute 
+V_res = subs(Vval,x,D*x);
+V1 = subs(V_res,[x(1);x(4)],[1 1]');
+
+p_res = subs(p,x,D*x);
+p1 = subs(p_res,[x(1);x(4)],[1 1]');
 
 figure(1)
 pcontour(V1, double(gval), [-1 1 -4 4], 'b-');
