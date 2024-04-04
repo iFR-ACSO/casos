@@ -49,6 +49,12 @@ methods
         if nargin < 4
             opts = struct;
         else
+            % convert everything that is psd into ddm
+            %if isfield(opts.Kx, 'psd')
+            %    opts.Kx.ddm = opts.Kx.psd;
+            %    opts.Kx = rmfield(opts.Kx, 'psd');
+            %end
+            % rebuild problem from DD to linear program
             if (isfield(opts, 'Kx') && isfield(opts.Kx, 'ddm'))|| ...
                     (isfield(opts, 'Kc') && isfield(opts.Kc, 'ddm'))
                 [sdp, opts] = dd_relax(obj, sdp, opts);
@@ -173,7 +179,7 @@ methods (Access=protected)
                 dd_g = sdp.g(end - n_ddm(end-i+1)^2+1:end);
 
                 % create slack variables that need to be DD
-                dd_s = casadi.MX.sym(strjoin({'sg_', num2str(i)}, ''), n_ddm(end-i+1)^2, 1);
+                dd_s = casadi.SX.sym(strjoin({'sg_', num2str(i)}, ''), n_ddm(end-i+1)^2, 1);
 
                 % rewrite constraints and add to linear constraints
                 dd_g = dd_g - dd_s;
@@ -225,7 +231,8 @@ methods (Access=protected)
                 
                 % create slack variables (only corresponding to the upper
                 % triangle except the diagonal elements
-                ddm_s = casadi.MX.sym(strjoin({'sx_', num2str(i)}, ''), n_ddm(i)*(n_ddm(i)+1)/2 - n_ddm(i), 1);
+                if n_ddm(i)*(n_ddm(i)+1)/2 - n_ddm(i) >= 1
+                ddm_s = casadi.SX.sym(strjoin({'sx_', num2str(i)}, ''), n_ddm(i)*(n_ddm(i)+1)/2 - n_ddm(i), 1);
                 
                 % create symmetric matrix with zero diagonal and upper and
                 % bottom triangle equal to ddm_s            
@@ -233,7 +240,7 @@ methods (Access=protected)
                 ind_d = ind_s + ind_s';
                 
                 % by the order of ddm_s, subs the 1 in ind_s with ddm_s
-                s_matrix = casadi.MX(n_ddm(i)^2, 1);
+                s_matrix = casadi.SX(n_ddm(i)^2, 1);
     
                 % find indexes where ind_s is 1
                 s_matrix(find(ind_s(:))) = ddm_s;
@@ -250,14 +257,20 @@ methods (Access=protected)
                 % create constraints for symmetry of ddm_x
                 dd_g4 = ddm_x - ddm_x';
                 dd_g5 = ddm_x' - ddm_x;
+
+                % new sdp.g
+                n_new_g = size(sdp.g,1);
+                sdp.g = [sdp.g(:); dd_g1(:); dd_g2(:); dd_g3(:); dd_g4(:); dd_g5(:)];
+                n_new_g = size(sdp.g,1) - n_new_g;
+                else
+                    ddm_s = [];
+                    n_new_g = 0;
+                end
     
                 % new sdp.x
                 sdp.x = [sdp.x; ddm_s];
     
-                % new sdp.g
-                n_new_g = size(sdp.g,1);
-                sdp.g = [sdp.g; dd_g1(:); dd_g2(:); dd_g3(:); dd_g4(:); dd_g5(:)];
-                n_new_g = size(sdp.g,1) - n_new_g;
+                
                 
                 % define size of new linear cones
                 opts.Kx.lin = opts.Kx.lin + n_ddm(i)^2 + size(ddm_s,1); 
