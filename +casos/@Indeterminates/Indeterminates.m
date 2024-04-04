@@ -82,7 +82,7 @@ methods (Access=protected)
     varargout = parenReference(obj,index);
 end
 
-methods (Access={?casos.package.core.AlgebraicObject})
+methods (Access={?casos.package.core.PolynomialInterface})
     % friend class access
     [indets,ic] = combine(varargin);
     [indets,ic] = sort(obj);

@@ -37,7 +37,7 @@ p = casos.PS;
 sz(dim) = sum(sizes(I,dim)); sz(3-dim) = sizes(find(I,1),3-dim);
 
 % combine variables
-[indets,~,ic] = unique([indets{I}]);
+[indets,ic] = combine(indets{I});
 
 % iterate over polynomials twice
 % extend degree matrices to combined variables

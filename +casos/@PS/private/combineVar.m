@@ -5,7 +5,7 @@ nta = size(dga,1);
 ntb = size(dgb,1);
 
 % combine variables
-[indets,~,ic] = unique([indetA indetB]);
+[indets,ic] = combine(indetA,indetB);
 
 nv = length(indets);
 

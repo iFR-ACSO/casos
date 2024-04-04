@@ -102,6 +102,7 @@ end
 function s = exp2str(v,d)
 % Convert exponential v^d to string.
 
+    v = str(v);
     switch d
         case 0, s = {''};
         case 1, s = v;

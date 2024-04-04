@@ -1,4 +1,5 @@
-classdef (InferiorClasses = {?casadi.SX, ?casadi.DM}) PS < matlab.mixin.indexing.RedefinesParen
+classdef (InferiorClasses = {?casadi.SX, ?casadi.DM, ?casos.Indeterminates}) ...
+        PS < casos.package.core.GenericPolynomial
 % Polynomials with symbolic coefficients.
 
 properties (GetAccess=protected, SetAccess=private)
@@ -11,7 +12,7 @@ properties (GetAccess=protected, SetAccess=private)
     % and c_a are (possibly matrix-valued) coefficients.
     coeffs = casadi.SX;     % matrix of which the rows are vec(c_a)
     degmat = sparse([]);    % matrix of which the rows are [a1 ... aN]
-    indets = {};            % cell array of strings {x1,...,xN} 
+    indets = casos.Indeterminates;             % variables {x1,...,xN} 
     matdim = [0 0];         % dimensions (size) of coefficients c_a
 end
 
@@ -76,31 +77,18 @@ methods
                 obj.matdim = [lp 1];
             end
 
-        elseif isa(varargin{1},'char')
+        elseif isa(varargin{1},'char') || isa(varargin{1},'casos.Indeterminates')
             % indeterminate (pvar / mpvar syntax)
-            var = varargin{1};
-            arg = varargin(2:end);
-            if nargin == 1
-                % syntax PS('x')
-                n = 1; m = 1;
-                obj.indets = {var};
-                iv = 1;
-            elseif ischar([arg{:}])
-                % syntax PS('x','y',...)
-                n = length(varargin); m = 1;
-                % sort variables alphabetically
-                [obj.indets,iv] = unique(varargin);
-            else
-                % syntax PS('x',m,n)
-                [n,m] = size(zeros(arg{:}));
-                obj.indets = compose('%s_%d',var,1:(n*m));
-                iv = 1:(n*m);
-            end
+            indets = casos.Indeterminates(varargin{:});
+            N = length(indets);
+
+            % sort variables alphabetically
+            [obj.indets,iv] = sort(indets);
 
             % return variables in requested order
-            obj.coeffs = casadi.SX.triplet(iv-1,0:(n*m-1),ones(1,n*m),n*m,n*m);
-            obj.degmat = speye(n*m);
-            obj.matdim = [n m];
+            obj.coeffs = casadi.SX.triplet(iv-1,0:(N-1),ones(1,N),N,N);
+            obj.degmat = speye(N);
+            obj.matdim = [N 1];
 
         else
             % constant polynomial (casadi syntax)
@@ -140,7 +128,7 @@ methods
 
     function x = indeterminates(obj)
         % Return indeterminate variables of polynomial.
-        x = casos.PS(obj.indets{:});
+        x = casos.Indeterminates(obj.indets);
     end
 
     function tf = isrow(obj)
@@ -270,6 +258,16 @@ methods
     end
 
     %% Conversion
+    function v = casos.Indeterminates(p)
+        % Convert vector of indeterminate variables to tuple type.
+        assert(is_indet(p), 'Can only convert vector of indeterminates.')
+        
+        % get order of variables in vector
+        iv = get_triplet(sparsity(p.coeffs));
+        % return
+        v = casos.Indeterminates(p.indets(iv+1));
+    end
+
     function d = casadi.SX(p)
         % Convert degree-zero polynomial to casadi.SX type.
         assert(is_zerodegree(p), 'Can only convert polynomial of degree zero.')
