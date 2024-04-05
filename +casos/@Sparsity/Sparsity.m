@@ -1,0 +1,230 @@
+classdef Sparsity < casos.package.core.PolynomialInterface
+% Polynomial sparsity class.
+
+properties (GetAccess=protected, SetAccess=private)
+    % polynomial sparsity is stored in multi-index fashion, that is,
+    %
+    %   p = sum_a c_a*x^a
+    %
+    % where x = (x1,...,xN) are the indeterminates, a = (a1,...,aN) are the
+    % indices/degrees, the expression x^a is shorthand for x1^a1*...*xN^aN,
+    % and c_a are (possibly matrix-valued) sparsity patterns.
+    coeffs = casadi.Sparsity;    % matrix of which the rows are vec(c_a)
+    degmat = sparse([]);         % matrix of which the rows are [a1 ... aN]
+    indets = casos.Indeterminates;             % variables {x1,...,xN} 
+    matdim = [0 0];              % dimensions (size) of coefficients c_a
+end
+
+properties (Dependent=true)
+    nvars;      % number of indeterminate variables
+    nterm;      % number of monomial terms
+    maxdeg;
+    mindeg;
+
+%     nnz;        % number of nonzero coefficients
+%     matrix_nnz; % number of nonzero components
+end
+
+methods
+    %% Public constructor
+    function obj = Sparsity(varargin)
+        % Create polynomial sparsity pattern.
+        if nargin == 0
+            % empty sparsity pattern
+            obj.coeffs = casadi.Sparsity(0,0);
+            return
+
+        elseif isa(varargin{1},'casos.Sparsity')
+            % keep sparsity pattern
+            obj = varargin{1};
+            return
+
+        elseif ischar(varargin{1}) || isa(varargin{1},'casos.Indeterminates')
+            % indeterminate (pvar / mpvar syntax)
+            indets = casos.Indeterminates(varargin{:});
+            N = length(indets);
+
+            % sort variables alphabetically
+            [obj.indets,~] = sort(indets);
+
+            % return scalar linear sparsity pattern
+            obj.coeffs = casadi.Sparsity.dense(N,1);
+            obj.degmat = speye(N);
+            obj.matdim = [1 1];
+
+        else
+            % zero-degree sparsity (casadi syntax)
+            S = casadi.Sparsity(varargin{:});
+            % store size and coefficients
+            obj.coeffs = reshape(S,1,numel(S));
+            obj.degmat = sparse(1,0);
+            obj.matdim = size(S);
+        end
+    end
+
+    %% Getter
+    function n = get.nvars(obj)
+        % Number of indeterminate variables.
+        n = length(obj.indets);
+    end
+
+    function n = get.nterm(obj)
+        % Number of monomials.
+        n = size(obj.degmat,1);
+    end
+
+    function d = get.mindeg(obj)
+        % Minimum degree of polynomial.
+        d = full(min(sum(obj.degmat,2)));
+    end
+
+    function d = get.maxdeg(obj)
+        % Maximum degree of polynomial.
+        d = full(max(sum(obj.degmat,2)));
+    end
+
+    function n = nnz(obj)
+        % Return number of nonzero coefficients.
+        n = nnz(obj.coeffs);  
+    end
+
+    function n = numel(obj)
+        % Return number of elements.
+        n = prod(obj.matdim);
+    end
+
+    function n = matrix_nnz(obj)
+        % Return number of nonzero (matrix) components.
+        n = length(unique(get_col(obj.coeffs)));
+    end
+
+    function varargout = size(obj,varargin)
+        % Return size of polynomial.
+        [varargout{1:nargout}] = size(sparse(obj.matdim(1),obj.matdim(2)),varargin{:});
+    end
+
+    function x = indeterminates(obj)
+        % Return indeterminate variables of polynomial.
+        x = casos.Indeterminates(obj.indets);
+    end
+
+    function tf = isrow(obj)
+        % Check if polynomial is a row vector.
+        tf = (size(obj,1) == 1);
+    end
+
+    function tf = iscolumn(obj)
+        % Check if polynomial is a column vector.
+        tf = (size(obj,2) == 1);
+    end
+
+    function tf = isvector(obj)
+        % Check if polynomial is a vector.
+        tf = any(size(obj) == 1);
+    end
+
+    function tf = isscalar(obj)
+        % Check if polyonomial is a scalar.
+        tf = all(size(obj) == 1);
+    end
+
+    function tf = is_zerodegree(obj)
+        % Check if polynomial is of degree zero.
+        tf = (obj.maxdeg == 0);
+    end
+end
+
+methods (Static)
+    %% Static constructors
+    S = monomials(varargin);
+
+    function S = diag(varargin)
+        % Create diagonal matrix pattern.
+        S = casos.Sparsity(casadi.Sparsity.diag(varargin{:}));
+    end
+
+    function S = dense(varargin)
+        % Create dense matrix pattern.
+        S = casos.Sparsity(casadi.Sparsity.dense(varargin{:}));
+    end
+
+    % to be completed
+end
+
+methods
+    %% Polynomial Sparsity interface
+    function idx = find(obj)
+        % Return indices of nonzero elements.
+        idx = matrix_find(obj); % TODO
+    end
+
+    function [i,j] = get_triplet(obj)
+        % Return triplets for polynomial sparsity pattern.
+        [i,j] = matrix_triplet(obj); % TODO
+    end
+
+    %% Conversion & matrix Sparsity interface
+    function obj = reshape(obj,varargin)
+        % Reshape polynomial matrix.
+        assert(length(varargin{1}) <= 2, 'Size vector must not exceed two elements.')
+        assert(length(varargin) <= 2, 'Size arguments must not exceed two scalars.')
+
+        obj.matdim = size(reshape(sparse(size(obj,1),size(obj,2)),varargin{:}));
+    end
+
+    function S = casadi.Sparsity(obj)
+        % Convert zero-degree pattern to casadi.Sparsity type.
+        assert(is_zerodegree(obj), 'Can only convert pattern of degree zero.')
+
+        S = reshape(obj.coeffs,obj.matdim);
+    end
+
+    function S = matrix_sparsity(obj)
+        % Return matrix sparsity pattern.
+        S = reshape(sum1(obj.coeffs),obj.matdim);
+    end
+
+    function [i,j] = matrix_triplet(obj)
+        % Return triplets for matrix sparsity pattern.
+        [i,j] = ind2sub(size(obj),matrix_find(obj)-1);
+    end
+
+    function idx = matrix_find(obj)
+        % Return indices of nonzero elements.
+        idx = find(sum1(obj.coeffs));
+    end
+
+    %% Display output
+    function matrix_spy(obj)
+        % Print matrix sparsity pattern.
+        spy(matrix_sparsity(obj));
+    end
+end
+
+methods (Access={?casos.package.core.PolynomialInterface})
+    %% Friend class interface
+    function S = coeff_sparsity(obj)
+        % Return sparsity pattern of coefficient matrix.
+        S = casadi.Sparsity(obj.coeffs);
+    end
+
+    function [i,j] = coeff_triplet(obj)
+        % Return triplets for coefficient matrix sparsity.
+        [i,j] = get_triplet(obj.coeffs);
+    end
+
+    function idx = coeff_find(obj)
+        % Return indices of nonzero coefficients.
+        idx = find(obj.coeffs);
+    end
+
+    % protected interface for display output
+    out = str_monoms(obj);
+
+    % protected interface for subsref getters
+    [monoms,L] = get_monoms(S,I);
+    [degree,L] = get_degree(S,I);
+    [indets,L] = get_indets(S,I);
+end
+
+end
