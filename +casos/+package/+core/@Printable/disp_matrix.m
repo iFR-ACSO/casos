@@ -1,23 +1,22 @@
-function disp(obj)
-% Print polynomial to command line (display).
+function disp_matrix(obj,delim,out)
+% Print matrix to command line (display).
 
 % Mostly taken from multipoly, version history:
 % 6/7/2002: PJS  Initial Coding
 % 6/9/2002: PJS  Use char conversion and display matrices
 
-%   Get String Representation of a
-s = str(obj);
+if nargin < 3
+    % get String Representation of object
+    out = str(obj);
+end
+if nargin < 2
+    % use default delimiter
+    delim = '[]';
+end
 sza = size(obj);
 
-compact = strcmp(settings().matlab.commandwindow.DisplayLineSpacing,'compact');
-
-%   Display the Polynomial
-% if ~compact
-%     disp(' ');
-% end
-
 % Compute sizes of character arrays and max size
-nchar = cellfun('size',s,2);
+nchar = cellfun('size',out,2);
 maxr = max(nchar,[],1);
 numc = sum(maxr);
 rootprops = fieldnames(get(0));
@@ -25,29 +24,29 @@ if any(strcmp(rootprops,'CommandWindowSize'))
     ws = get(0,'CommandWindowSize');
 else
     % Older Versions of matlab don't allow access to the
-    % window size.  Modify window size (ws) if polynomial
+    % window size.  Modify window size (ws) if matrix
     % line breaks are not in the right spot.
     ws = 80;
 end
 maxchar=ws(1)-6-3*(sza(2)-1);
 
 if isempty(obj)
-    disp([' ' 'Empty polynomial: ' int2str(sza(1)) '-by-' int2str(sza(2))]);
+    fprintf('Empty %s: %dx%d\n',class(obj),sza(1),sza(2));
     
 elseif max(numc) < maxchar
     % Display as matrix if all rows can fit on screen
     for i1 = 1:sza(1)
         if all(sza==[1 1])
-            d = '  ';
+            d = '';
         else
-            d = '  [ ';
+            d = delim(1);
         end
         for i2 = 1:sza(2)
-            d = [d blanks(maxr(i2)-nchar(i1,i2)) s{i1,i2}];
+            d = [d blanks(maxr(i2)-nchar(i1,i2)) out{i1,i2}];
             if i2~=sza(2)
                 d = [d ', '];
             elseif ~all(sza==[1 1])
-                d = [d ']'];
+                d = [d delim(2)];
             end
         end
         disp(d);
@@ -69,7 +68,7 @@ else
 %             end
             
             % Break lines at +,-, or *
-            sr = s{i1,i2};
+            sr = out{i1,i2};
             while ~isempty(sr) %length(sr)>0
                 if length(sr) < (ws(1)-6)
                     disp(['  ' sr]);
@@ -96,6 +95,6 @@ else
     
 end
 
-if ~compact
-    disp(' ');
-end
+% if ~compact
+%     disp(' ');
+% end

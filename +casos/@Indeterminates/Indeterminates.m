@@ -1,4 +1,4 @@
-classdef Indeterminates < casos.package.core.AlgebraicObject
+classdef Indeterminates < casos.package.core.AlgebraicObject & casos.package.core.Printable
 % Indeterminate variables.
 
 properties (GetAccess=protected, SetAccess=private)
@@ -73,6 +73,12 @@ methods
 
     % AlgebraicObject interface
     function tf = is_indet(~), tf = true; end
+
+    % Display
+    function disp(obj)
+        % Display indeterminates as matrix.
+        disp_matrix(obj,'()');
+    end
 end
 
 methods (Access=protected)

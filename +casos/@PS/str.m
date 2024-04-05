@@ -2,7 +2,7 @@ function out = str(obj)
 % Return string representation for polynomial.
 
 if isempty(obj)
-    out = {'[]'};
+    out = {};
     return
 end
 

@@ -298,6 +298,12 @@ methods
         % Save polynomial object to mat file.
         obj.coeffs = casadi.DM(obj.coeffs); % only nonsymbolic
     end
+
+    %% Display
+    function disp(obj)
+        % Display polynomial as matrix.
+        disp_matrix(obj);
+    end
 end
 
 methods (Access=protected)
