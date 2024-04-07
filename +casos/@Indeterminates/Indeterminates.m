@@ -6,6 +6,10 @@ properties (GetAccess=protected, SetAccess=private)
     variables = {};
 end
 
+properties (Dependent)
+    nvars;
+end
+
 methods
     %% Public constructor
     function obj = Indeterminates(varargin)
@@ -48,9 +52,14 @@ methods
     end
 
     %% Getter
+    function n = get.nvars(obj)
+        % Return number of variables.
+        n = length(obj.variables);
+    end
+
     function varargout = size(obj,varargin)
         % Return size of indeterminate variables.
-        [varargout{1:nargout}] = size(sparse(1,length(obj.variables)),varargin{:});
+        [varargout{1:nargout}] = size(sparse(1,obj.nvars),varargin{:});
     end
 
     function out = str(obj)
