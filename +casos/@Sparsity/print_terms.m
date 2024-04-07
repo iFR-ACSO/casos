@@ -15,7 +15,7 @@ for i = find(obj)
 
     if sum(L(i,:)) > 1
         % embed vector in parentheses
-        out(i) = compose('(%s)',m);
+        out(i) = compose('(%s)',m{:});
     else
         out(i) = m;
     end
@@ -23,5 +23,6 @@ end
 
 % print matrix of terms
 disp_matrix(obj,'[]',out);
+disp(' ')
 
 end

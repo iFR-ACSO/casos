@@ -23,5 +23,6 @@ out(maxdeg > 0) = compose('%d',full(maxdeg(maxdeg > 1)));
 
 % print output to command line
 disp(cell2mat(out))
+disp(' ')
 
 end
