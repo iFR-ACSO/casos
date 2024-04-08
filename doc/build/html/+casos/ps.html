@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PS &mdash; casos  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="prev" title="+casos" href="casos.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            casos
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Install</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="casos.html">+casos</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">PS</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#polynomial-expressions">Polynomial expressions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#polynomials-of-degree-zero">Polynomials of degree zero</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#indeterminate-variables-monomials">Indeterminate variables &amp; monomials</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#polynomials-with-symbolic-coefficients">Polynomials with symbolic coefficients</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#class-documentation">Class Documentation</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">casos</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="casos.html">+casos</a></li>
+      <li class="breadcrumb-item active">PS</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/+casos/ps.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="ps">
+<h1>PS<a class="headerlink" href="#ps" title="Link to this heading"></a></h1>
+<section id="polynomial-expressions">
+<h2>Polynomial expressions<a class="headerlink" href="#polynomial-expressions" title="Link to this heading"></a></h2>
+<p>The class <code class="docutils literal notranslate"><span class="pre">casos.PS</span></code> implements polynomials of which the coefficients can be symbolic expressions.</p>
+<section id="polynomials-of-degree-zero">
+<h3>Polynomials of degree zero<a class="headerlink" href="#polynomials-of-degree-zero" title="Link to this heading"></a></h3>
+<p>Polynomials of degree zero correspond to constant or symbolic expressions without indeterminate variables.</p>
+<div class="highlight-matlab notranslate"><div class="highlight"><pre><span></span><span class="n">casos</span><span class="p">.</span><span class="n">PS</span><span class="p">(</span><span class="n">M</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>creates a zero-degree polynomial which corresponds to the double, <code class="docutils literal notranslate"><span class="pre">casadi.DM</span></code>, or <code class="docutils literal notranslate"><span class="pre">casadi.SX</span></code> matrix <code class="docutils literal notranslate"><span class="pre">M</span></code>.</p>
+<div class="highlight-matlab notranslate"><div class="highlight"><pre><span></span><span class="n">casos</span><span class="p">.</span><span class="n">PS</span><span class="p">(</span><span class="n">m</span><span class="p">,</span><span class="n">n</span><span class="p">)</span>
+<span class="n">casos</span><span class="p">.</span><span class="n">PS</span><span class="p">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">m</span><span class="p">,</span><span class="n">n</span><span class="p">)</span>
+<span class="n">casos</span><span class="p">.</span><span class="n">PS</span><span class="p">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>creates a zero-degree polynomial which corresponds to a <code class="docutils literal notranslate"><span class="pre">m</span> <span class="pre">×</span> <span class="pre">n</span></code> matrix (resp., a column vector with length <code class="docutils literal notranslate"><span class="pre">n</span></code>) of zeros.</p>
+<div class="highlight-matlab notranslate"><div class="highlight"><pre><span></span><span class="n">casos</span><span class="p">.</span><span class="n">PS</span><span class="p">.</span><span class="n">ones</span><span class="p">(</span><span class="n">m</span><span class="p">,</span><span class="n">n</span><span class="p">)</span>
+<span class="n">casos</span><span class="p">.</span><span class="n">PS</span><span class="p">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>creates a zero-degree polynomial which corresponds to a <code class="docutils literal notranslate"><span class="pre">m</span> <span class="pre">×</span> <span class="pre">n</span></code> matrix (resp., a column vector with length <code class="docutils literal notranslate"><span class="pre">n</span></code>) of ones.</p>
+<div class="highlight-matlab notranslate"><div class="highlight"><pre><span></span><span class="n">casos</span><span class="p">.</span><span class="n">PS</span><span class="p">.</span><span class="n">eye</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>creates a zero-degree polynomial which corresponds to the <code class="docutils literal notranslate"><span class="pre">n</span> <span class="pre">×</span> <span class="pre">n</span></code> identity matrix.</p>
+</section>
+<section id="indeterminate-variables-monomials">
+<h3>Indeterminate variables &amp; monomials<a class="headerlink" href="#indeterminate-variables-monomials" title="Link to this heading"></a></h3>
+<p>CaΣoS distinguishes between <em>indeterminate</em> variables (symbols in a polynomial sense) and <em>symbolic</em> variables (variables in an optimization sense). The following syntax creates polynomials that correspond to (vectors of) indeterminate variables and monomial expressions.</p>
+<div class="highlight-matlab notranslate"><div class="highlight"><pre><span></span><span class="n">casos</span><span class="p">.</span><span class="n">PS</span><span class="p">(</span><span class="s">&#39;x&#39;</span><span class="p">,</span><span class="s">&#39;y&#39;</span><span class="p">,</span><span class="k">...</span><span class="c">)</span>
+</pre></div>
+</div>
+<p>creates a <code class="docutils literal notranslate"><span class="pre">n</span> <span class="pre">×</span> <span class="pre">1</span></code> vector of indeterminate variables, where <code class="docutils literal notranslate"><span class="pre">n</span></code> corresponds to the number of arguments.</p>
+<div class="highlight-matlab notranslate"><div class="highlight"><pre><span></span><span class="n">casos</span><span class="p">.</span><span class="n">PS</span><span class="p">(</span><span class="s">&#39;x&#39;</span><span class="p">,</span><span class="n">m</span><span class="p">,</span><span class="n">n</span><span class="p">)</span>
+<span class="n">casos</span><span class="p">.</span><span class="n">PS</span><span class="p">(</span><span class="s">&#39;x&#39;</span><span class="p">,</span><span class="n">n</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>creates a <code class="docutils literal notranslate"><span class="pre">m</span> <span class="pre">×</span> <span class="pre">n</span></code> matrix (resp., a square matrix) of indeterminate variables.</p>
+<div class="highlight-matlab notranslate"><div class="highlight"><pre><span></span><span class="n">monomials</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">deg</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>creates a <code class="docutils literal notranslate"><span class="pre">l</span> <span class="pre">×</span> <span class="pre">1</span></code> vector of all monomials in <code class="docutils literal notranslate"><span class="pre">x</span></code> with degree(s) in <code class="docutils literal notranslate"><span class="pre">deg</span></code>, where <code class="docutils literal notranslate"><span class="pre">x</span></code> must be a vector of indeterminate variables and <code class="docutils literal notranslate"><span class="pre">deg</span></code> is vector of nonnegative integers; where <code class="docutils literal notranslate"><span class="pre">l</span></code> is the total number of such monomials.</p>
+<div class="highlight-matlab notranslate"><div class="highlight"><pre><span></span><span class="n">monomials</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>creates a <code class="docutils literal notranslate"><span class="pre">l</span> <span class="pre">×</span> <span class="pre">1</span></code> vector of all monomials in the polynomial <code class="docutils literal notranslate"><span class="pre">p</span></code>; where <code class="docutils literal notranslate"><span class="pre">l</span></code> is the total number of monomials in <code class="docutils literal notranslate"><span class="pre">p</span></code>.</p>
+</section>
+<section id="polynomials-with-symbolic-coefficients">
+<h3>Polynomials with symbolic coefficients<a class="headerlink" href="#polynomials-with-symbolic-coefficients" title="Link to this heading"></a></h3>
+<p>Unlike indeterminate variables, symbolic variables can be decision variables of an optimization problem. The following syntax creates polynomials which have symbolic variables as coefficients. In all of the following syntaxes, the first argument corresponds to the display name (resp., prefix) for the symbolic coefficients. See <a class="reference external" href="https://web.casadi.org/docs/#the-sx-symbolics">Casadi’s SX symbolics</a> for details.</p>
+<div class="highlight-matlab notranslate"><div class="highlight"><pre><span></span><span class="n">casos</span><span class="p">.</span><span class="n">PS</span><span class="p">.</span><span class="n">sym</span><span class="p">(</span><span class="s">&#39;c&#39;</span><span class="p">,</span><span class="n">w</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>creates a scalar polynomial with symbolic coefficients and monomials in <code class="docutils literal notranslate"><span class="pre">w</span></code>, where <code class="docutils literal notranslate"><span class="pre">w</span></code> must be a vector of monomials.</p>
+<div class="highlight-matlab notranslate"><div class="highlight"><pre><span></span><span class="n">casos</span><span class="p">.</span><span class="n">PS</span><span class="p">.</span><span class="n">sym</span><span class="p">(</span><span class="s">&#39;c&#39;</span><span class="p">,</span><span class="n">w</span><span class="p">,[</span><span class="n">m</span><span class="w"> </span><span class="n">n</span><span class="p">])</span>
+<span class="n">casos</span><span class="p">.</span><span class="n">PS</span><span class="p">.</span><span class="n">sym</span><span class="p">(</span><span class="s">&#39;c&#39;</span><span class="p">,</span><span class="n">w</span><span class="p">,</span><span class="n">n</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>creates a <code class="docutils literal notranslate"><span class="pre">m</span> <span class="pre">×</span> <span class="pre">n</span></code> matrix (resp., a square matrix with length <code class="docutils literal notranslate"><span class="pre">n</span></code>) of polynomials with symbolic coefficients and monomials in <code class="docutils literal notranslate"><span class="pre">w</span></code>, where <code class="docutils literal notranslate"><span class="pre">w</span></code> must be a vector of monomials.</p>
+<div class="highlight-matlab notranslate"><div class="highlight"><pre><span></span><span class="n">casos</span><span class="p">.</span><span class="n">PS</span><span class="p">.</span><span class="n">sym</span><span class="p">(</span><span class="s">&#39;c&#39;</span><span class="p">,[</span><span class="n">m</span><span class="w"> </span><span class="n">n</span><span class="p">])</span>
+<span class="n">casos</span><span class="p">.</span><span class="n">PS</span><span class="p">.</span><span class="n">sym</span><span class="p">(</span><span class="s">&#39;c&#39;</span><span class="p">,</span><span class="n">n</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>creates a <code class="docutils literal notranslate"><span class="pre">m</span> <span class="pre">×</span> <span class="pre">n</span></code> matrix (resp., a square matrix with length <code class="docutils literal notranslate"><span class="pre">n</span></code>) of polynomials of degree zero; essentially, this is a symbolic matrix similar to <code class="docutils literal notranslate"><span class="pre">casadi.SX</span></code>.</p>
+<div class="highlight-matlab notranslate"><div class="highlight"><pre><span></span><span class="n">casos</span><span class="p">.</span><span class="n">PS</span><span class="p">.</span><span class="n">sym</span><span class="p">(</span><span class="k">...</span><span class="c">,&#39;gram&#39;)</span>
+</pre></div>
+</div>
+<p>where <code class="docutils literal notranslate"><span class="pre">...</span></code> denotes any of the syntaxes above, creates a scalar or matrix polynomial in Gram form, that is, with entries <code class="docutils literal notranslate"><span class="pre">p</span> <span class="pre">=</span> <span class="pre">z'*Q*z</span></code>, where <code class="docutils literal notranslate"><span class="pre">z</span></code> is the vector of monomials in <code class="docutils literal notranslate"><span class="pre">w</span></code> and <code class="docutils literal notranslate"><span class="pre">Q</span></code> is a quadratic symbolic matrix.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The syntax <code class="docutils literal notranslate"><span class="pre">casos.PS.sym('c',w,...)</span></code> creates polynomials with monomials <em>in</em> <code class="docutils literal notranslate"><span class="pre">w</span></code> and is therefore equivalent to <code class="docutils literal notranslate"><span class="pre">casos.PS.sym('c',monomials(w),...)</span></code>. In consequence, all of the following syntaxes yield the same result:</p>
+</div>
+<div class="highlight-matlab notranslate"><div class="highlight"><pre><span></span><span class="n">casos</span><span class="p">.</span><span class="n">PS</span><span class="p">.</span><span class="n">sym</span><span class="p">(</span><span class="s">&#39;c&#39;</span><span class="p">,[</span><span class="mi">1</span><span class="p">;</span><span class="n">w</span><span class="p">])</span>
+<span class="n">casos</span><span class="p">.</span><span class="n">PS</span><span class="p">.</span><span class="n">sym</span><span class="p">(</span><span class="s">&#39;c&#39;</span><span class="p">,[</span><span class="n">w</span><span class="p">;</span><span class="mi">1</span><span class="p">])</span>
+<span class="n">casos</span><span class="p">.</span><span class="n">PS</span><span class="p">.</span><span class="n">sym</span><span class="p">(</span><span class="s">&#39;c&#39;</span><span class="p">,[</span><span class="mi">1</span><span class="p">;</span><span class="n">w</span><span class="p">;</span><span class="n">w</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>We say that a polynomial is <em>symbolic</em> if and only if all of its (nonzero) coefficients are symbols in the sense of Casadi. Except for the Gram form, all polynomials created with the syntaxes above are symbolic but the result of the notation</p>
+</div>
+<div class="highlight-matlab notranslate"><div class="highlight"><pre><span></span><span class="n">casos</span><span class="p">.</span><span class="n">PS</span><span class="p">.</span><span class="n">sym</span><span class="p">(</span><span class="s">&#39;c&#39;</span><span class="p">,[</span><span class="mi">1</span><span class="w"> </span><span class="mi">2</span><span class="p">])</span><span class="o">*</span><span class="p">[</span><span class="n">x</span><span class="p">;</span><span class="n">x</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>with <code class="docutils literal notranslate"><span class="pre">x</span> <span class="pre">=</span> <span class="pre">casos.PS('x')</span></code> would only be a symbolic <em>expression</em>. The same is true for the Gram form syntax because of the symmetries in the Gram matrix expression. The queries <code class="docutils literal notranslate"><span class="pre">is_symbolic</span></code>, <code class="docutils literal notranslate"><span class="pre">is_symexpr</span></code>, and <code class="docutils literal notranslate"><span class="pre">is_symgram</span></code> check whether a polynomial is a symbolic polynomial, a symbolic expression, or a symbolic Gram form, respectively.</p>
+</section>
+</section>
+<section id="class-documentation">
+<h2>Class Documentation<a class="headerlink" href="#class-documentation" title="Link to this heading"></a></h2>
+<dl class="mat class" id="module-casos">
+<dt class="sig sig-object mat" id="casos.PS">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">casos.</span></span><span class="sig-name descname"><span class="pre">PS</span></span><a class="headerlink" href="#casos.PS" title="Link to this definition"></a></dt>
+<dd><p>Polynomials with symbolic coefficients.</p>
+<div class="members docutils container">
+<dl>
+<dt>Constructor Summary</dt><dd><dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.PS">
+<span class="sig-name descname"><span class="pre">PS</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">varargin</span></em><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.PS" title="Link to this definition"></a></dt>
+<dd><p>Create polynomial variable.</p>
+</dd></dl>
+
+</dd>
+<dt>Property Summary</dt><dd><dl class="mat attribute">
+<dt class="sig sig-object mat" id="casos.PS.nterm">
+<span class="sig-name descname"><span class="pre">nterm</span></span><a class="headerlink" href="#casos.PS.nterm" title="Link to this definition"></a></dt>
+<dd><p>number of monomial terms</p>
+</dd></dl>
+
+<dl class="mat attribute">
+<dt class="sig sig-object mat" id="casos.PS.nvars">
+<span class="sig-name descname"><span class="pre">nvars</span></span><a class="headerlink" href="#casos.PS.nvars" title="Link to this definition"></a></dt>
+<dd><p>number of indeterminate variables</p>
+</dd></dl>
+
+</dd>
+<dt>Method Summary</dt><dd><dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.adjoint_inverse">
+<span class="sig-name descname"><span class="pre">adjoint_inverse</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.adjoint_inverse" title="Link to this definition"></a></dt>
+<dd><p>Compute the adjoint-inverse of a Gram basis.</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.basis">
+<span class="sig-name descname"><span class="pre">basis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">p</span></em>, <em class="sig-param"><span class="pre">I</span></em><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.basis" title="Link to this definition"></a></dt>
+<dd><p>Return base matrix of multidimensional polynomial.</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.blkdiag">
+<span class="sig-name descname"><span class="pre">blkdiag</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">varargin</span></em><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.blkdiag" title="Link to this definition"></a></dt>
+<dd><p>Block diagonal matrix concatenation of polynomial matrices.</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.cat">
+<span class="sig-name descname"><span class="pre">cat</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">dim</span></em>, <em class="sig-param"><span class="pre">varargin</span></em><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.cat" title="Link to this definition"></a></dt>
+<dd><p>Concatenate polynomial arrays along specified dimension.</p>
+<p>Overwriting matlab.mixin.indexing.RedefinesParen.cat</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.cleanpoly">
+<span class="sig-name descname"><span class="pre">cleanpoly</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">p</span></em>, <em class="sig-param"><span class="pre">tol</span></em>, <em class="sig-param"><span class="pre">deg</span></em><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.cleanpoly" title="Link to this definition"></a></dt>
+<dd><p>Remove coefficients from nonsymbolic polynomials.</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.ctranspose">
+<span class="sig-name descname"><span class="pre">ctranspose</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">a</span></em><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.ctranspose" title="Link to this definition"></a></dt>
+<dd><p>Conjugate transpose of a polynomial matrix.</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.degrees">
+<span class="sig-name descname"><span class="pre">degrees</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.degrees" title="Link to this definition"></a></dt>
+<dd><p>Return degrees of polynomial.</p>
+<p>Possible syntax:</p>
+<blockquote>
+<div><p>deg = degrees(p)</p>
+</div></blockquote>
+<p>Returns a vector of degrees.</p>
+<blockquote>
+<div><p>[mn,mx] = degrees(p)</p>
+</div></blockquote>
+<p>Returns the minimum and maximum degrees.</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.disp">
+<span class="sig-name descname"><span class="pre">disp</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.disp" title="Link to this definition"></a></dt>
+<dd><p>Print polynomial to command line (display).</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.dot">
+<span class="sig-name descname"><span class="pre">dot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">p</span></em>, <em class="sig-param"><span class="pre">q</span></em><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.dot" title="Link to this definition"></a></dt>
+<dd><p>Scalar dot product of two polynomials.</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.double">
+<span class="sig-name descname"><span class="pre">double</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">p</span></em><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.double" title="Link to this definition"></a></dt>
+<dd><p>Convert constant polynomial to double data type.</p>
+</dd></dl>
+
+<dl class="mat staticmethod">
+<dt class="sig sig-object mat" id="casos.PS.empty">
+<em class="property"><span class="pre">static</span> </em><span class="sig-name descname"><span class="pre">empty</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.empty" title="Link to this definition"></a></dt>
+<dd><p>Create empty polynomial matrix.</p>
+</dd></dl>
+
+<dl class="mat staticmethod">
+<dt class="sig sig-object mat" id="casos.PS.eye">
+<em class="property"><span class="pre">static</span> </em><span class="sig-name descname"><span class="pre">eye</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">varargin</span></em><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.eye" title="Link to this definition"></a></dt>
+<dd><p>Create identity matrix polynomial.</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.get_degree">
+<span class="sig-name descname"><span class="pre">get_degree</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">p</span></em>, <em class="sig-param"><span class="pre">I</span></em><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.get_degree" title="Link to this definition"></a></dt>
+<dd><p>Return vector of degrees of polynomial terms.</p>
+<p>Available syntax:</p>
+<blockquote>
+<div><p>degrees = get_degree(p)</p>
+</div></blockquote>
+<p>Returns ordered vector of degrees in polynomial <cite>p</cite>.</p>
+<blockquote>
+<div><p>[…,L] = get_degree(p)</p>
+</div></blockquote>
+<p>If p is an n-by-m vector of polynomials with l monomial terms, this
+returns an (n*m)-by-l logical matrix of component L_ij, indicating
+whether the entry <cite>p(i)</cite> has term of degree <cite>degrees(j)</cite>.</p>
+<blockquote>
+<div><p>degrees = get_degree(p,I)</p>
+</div></blockquote>
+<p>Returns ordered vector of degrees in the polynomial expression <cite>p(I)</cite>.</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.get_indets">
+<span class="sig-name descname"><span class="pre">get_indets</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">p</span></em>, <em class="sig-param"><span class="pre">I</span></em><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.get_indets" title="Link to this definition"></a></dt>
+<dd><p>Return indeterminate variables of polynomial.</p>
+<p>Available syntax:</p>
+<blockquote>
+<div><p>x = get_indets(p)</p>
+</div></blockquote>
+<p>Returns indeterminate variables of polynomial <cite>p</cite>.</p>
+<blockquote>
+<div><p>[…,L] = get_indets(p)</p>
+</div></blockquote>
+<p>If p is an n-by-m vector of polynomials with l monomial terms, this
+returns an (n*m)-by-l logical matrix of component L_ij, indicating
+whether the entry <cite>p(i)</cite> has the indeterminate variable x(j)`.</p>
+<blockquote>
+<div><p>x = get_indets(p,I)</p>
+</div></blockquote>
+<p>Returns indeterminate variables of the polynomial expression <cite>p(I)</cite>.</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.get_monoms">
+<span class="sig-name descname"><span class="pre">get_monoms</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">p</span></em>, <em class="sig-param"><span class="pre">varargin</span></em><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.get_monoms" title="Link to this definition"></a></dt>
+<dd><p>Return vector of monomials of polynomial.</p>
+<p>Available syntax:</p>
+<blockquote>
+<div><p>monoms = get_monoms(p)</p>
+</div></blockquote>
+<p>Returns (unsorted) vector of monomials in polynomial <cite>p</cite>.</p>
+<blockquote>
+<div><p>[…,L] = get_monoms(p)</p>
+</div></blockquote>
+<p>If p is an n-by-m vector of polynomials with l monomial terms, this
+returns an (n*m)-by-l logical matrix of component L_ij, indicating
+whether the entry <cite>p(i)</cite> has monomials <cite>monoms(j)</cite>.</p>
+<blockquote>
+<div><p>monoms = get_monoms(p,I)</p>
+</div></blockquote>
+<p>Returns vector of monomials in the polynomial expression <cite>p(I)</cite>.</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.grambasis">
+<span class="sig-name descname"><span class="pre">grambasis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">p</span></em>, <em class="sig-param"><span class="pre">I</span></em><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.grambasis" title="Link to this definition"></a></dt>
+<dd><p>Return Gram basis of polynomial vector.</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.grammatrix">
+<span class="sig-name descname"><span class="pre">grammatrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">p</span></em>, <em class="sig-param"><span class="pre">I</span></em><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.grammatrix" title="Link to this definition"></a></dt>
+<dd><p>Attempts to compute a symbolic Gram matrix for polynomial vector.</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.indeterminates">
+<span class="sig-name descname"><span class="pre">indeterminates</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.indeterminates" title="Link to this definition"></a></dt>
+<dd><p>Return indeterminate variables of polynomial.</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.int">
+<span class="sig-name descname"><span class="pre">int</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">f</span></em>, <em class="sig-param"><span class="pre">x</span></em>, <em class="sig-param"><span class="pre">varargin</span></em><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.int" title="Link to this definition"></a></dt>
+<dd><p>Evaluate polynomial integral operator (definite/indefinite integral).</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.is_constant">
+<span class="sig-name descname"><span class="pre">is_constant</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.is_constant" title="Link to this definition"></a></dt>
+<dd><p>Check if polynomial is constant.</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.is_indet">
+<span class="sig-name descname"><span class="pre">is_indet</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.is_indet" title="Link to this definition"></a></dt>
+<dd><p>Check if polynomial is a vector of indeterminates.</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.is_linear">
+<span class="sig-name descname"><span class="pre">is_linear</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">p</span></em>, <em class="sig-param"><span class="pre">q</span></em><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.is_linear" title="Link to this definition"></a></dt>
+<dd><p>Check if polynomial is linear in symbols.</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.is_monom">
+<span class="sig-name descname"><span class="pre">is_monom</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.is_monom" title="Link to this definition"></a></dt>
+<dd><p>Check if polynomial is a vector of monomials.</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.is_symbolic">
+<span class="sig-name descname"><span class="pre">is_symbolic</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.is_symbolic" title="Link to this definition"></a></dt>
+<dd><p>Check if polynomial has symbolic coefficients.</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.is_symexpr">
+<span class="sig-name descname"><span class="pre">is_symexpr</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.is_symexpr" title="Link to this definition"></a></dt>
+<dd><p>Check if polynomial contains symbolic expressions.</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.is_symgram">
+<span class="sig-name descname"><span class="pre">is_symgram</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.is_symgram" title="Link to this definition"></a></dt>
+<dd><p>Check if polynomial is in symbolic Gram form.</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.is_zero">
+<span class="sig-name descname"><span class="pre">is_zero</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.is_zero" title="Link to this definition"></a></dt>
+<dd><p>Check if polynomial is equal to zero.</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.is_zerodegree">
+<span class="sig-name descname"><span class="pre">is_zerodegree</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.is_zerodegree" title="Link to this definition"></a></dt>
+<dd><p>Check if polynomial is of degree zero.</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.iscolumn">
+<span class="sig-name descname"><span class="pre">iscolumn</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.iscolumn" title="Link to this definition"></a></dt>
+<dd><p>Check if polynomial is a column vector.</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.isequal">
+<span class="sig-name descname"><span class="pre">isequal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">a</span></em>, <em class="sig-param"><span class="pre">b</span></em><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.isequal" title="Link to this definition"></a></dt>
+<dd><p>Check if polynomial arrays are equal.</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.isrow">
+<span class="sig-name descname"><span class="pre">isrow</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.isrow" title="Link to this definition"></a></dt>
+<dd><p>Check if polynomial is a row vector.</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.isscalar">
+<span class="sig-name descname"><span class="pre">isscalar</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.isscalar" title="Link to this definition"></a></dt>
+<dd><p>Check if polyonomial is a scalar.</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.isvector">
+<span class="sig-name descname"><span class="pre">isvector</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.isvector" title="Link to this definition"></a></dt>
+<dd><p>Check if polynomial is a vector.</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.jacobian">
+<span class="sig-name descname"><span class="pre">jacobian</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">f</span></em>, <em class="sig-param"><span class="pre">x</span></em><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.jacobian" title="Link to this definition"></a></dt>
+<dd><p>Compute symbolic Jacobian matrix of vector polynomial expression.</p>
+<p>Use of JACOBIAN for the polynomial Jacobian matrix is deprecated.
+Use NABLA instead.</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.kron">
+<span class="sig-name descname"><span class="pre">kron</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">a</span></em>, <em class="sig-param"><span class="pre">b</span></em><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.kron" title="Link to this definition"></a></dt>
+<dd><p>Compute Kronecker product of two polynomial matrices.</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.ldivide">
+<span class="sig-name descname"><span class="pre">ldivide</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">a</span></em>, <em class="sig-param"><span class="pre">p</span></em><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.ldivide" title="Link to this definition"></a></dt>
+<dd><p>Element-wise left array division with constant or symbolic matrix.</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.linearize">
+<span class="sig-name descname"><span class="pre">linearize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">a</span></em>, <em class="sig-param"><span class="pre">x</span></em>, <em class="sig-param"><span class="pre">b</span></em><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.linearize" title="Link to this definition"></a></dt>
+<dd><p>Symbolic linearization of polynomial expression.</p>
+</dd></dl>
+
+<dl class="mat staticmethod">
+<dt class="sig sig-object mat" id="casos.PS.loadobj">
+<em class="property"><span class="pre">static</span> </em><span class="sig-name descname"><span class="pre">loadobj</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.loadobj" title="Link to this definition"></a></dt>
+<dd><p>Load polynomial object from mat file.</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.minus">
+<span class="sig-name descname"><span class="pre">minus</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">a</span></em>, <em class="sig-param"><span class="pre">b</span></em><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.minus" title="Link to this definition"></a></dt>
+<dd><p>Substract two polynomials.</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.mldivide">
+<span class="sig-name descname"><span class="pre">mldivide</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">a</span></em>, <em class="sig-param"><span class="pre">p</span></em><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.mldivide" title="Link to this definition"></a></dt>
+<dd><p>Matrix left division with constant or symbolic matrix.</p>
+<p>Note: c = Ap is equivalent to solving the linear equation A*c = p.</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.monomials">
+<span class="sig-name descname"><span class="pre">monomials</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">vars</span></em>, <em class="sig-param"><span class="pre">deg</span></em><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.monomials" title="Link to this definition"></a></dt>
+<dd><p>Create vector of monomials.</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.mpower">
+<span class="sig-name descname"><span class="pre">mpower</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">a</span></em>, <em class="sig-param"><span class="pre">n</span></em><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.mpower" title="Link to this definition"></a></dt>
+<dd><p>Power of polynomial matrix.</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.mrdivide">
+<span class="sig-name descname"><span class="pre">mrdivide</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">p</span></em>, <em class="sig-param"><span class="pre">a</span></em><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.mrdivide" title="Link to this definition"></a></dt>
+<dd><p>Matrix right division with constant or symbolic matrix.</p>
+<p>Note: c = p/A is equivalent to solving the linear equation c*A = p.</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.mtaylor">
+<span class="sig-name descname"><span class="pre">mtaylor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">a</span></em>, <em class="sig-param"><span class="pre">x</span></em>, <em class="sig-param"><span class="pre">b</span></em>, <em class="sig-param"><span class="pre">deg</span></em><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.mtaylor" title="Link to this definition"></a></dt>
+<dd><p>Symbolic Taylor expansion for polynomial expansion.</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.mtimes">
+<span class="sig-name descname"><span class="pre">mtimes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">a</span></em>, <em class="sig-param"><span class="pre">b</span></em><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.mtimes" title="Link to this definition"></a></dt>
+<dd><p>Matrix multiplication of two polynomials.</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.nabla">
+<span class="sig-name descname"><span class="pre">nabla</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">f</span></em>, <em class="sig-param"><span class="pre">x</span></em><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.nabla" title="Link to this definition"></a></dt>
+<dd><p>Evaluate polynomial nabla operator (Jacobian matrix).</p>
+</dd></dl>
+
+<dl class="mat staticmethod">
+<dt class="sig sig-object mat" id="casos.PS.ones">
+<em class="property"><span class="pre">static</span> </em><span class="sig-name descname"><span class="pre">ones</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">varargin</span></em><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.ones" title="Link to this definition"></a></dt>
+<dd><p>Create one polynomial.</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.parenAssign">
+<span class="sig-name descname"><span class="pre">parenAssign</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">indexOp</span></em>, <em class="sig-param"><span class="pre">varargin</span></em><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.parenAssign" title="Link to this definition"></a></dt>
+<dd><p>Overwriting matlab.mixin.indexing.RedefinesParen.parenAssign</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.parenDelete">
+<span class="sig-name descname"><span class="pre">parenDelete</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">indexOp</span></em><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.parenDelete" title="Link to this definition"></a></dt>
+<dd><p>Overwriting matlab.mixin.indexing.RedefinesParen.parenDelete</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.parenListLength">
+<span class="sig-name descname"><span class="pre">parenListLength</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">indexOp</span></em>, <em class="sig-param"><span class="pre">context</span></em><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.parenListLength" title="Link to this definition"></a></dt>
+<dd><p>Overwriting matlab.mixin.indexing.RedefinesParen.parenListLength</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.parenReference">
+<span class="sig-name descname"><span class="pre">parenReference</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">indexOp</span></em><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.parenReference" title="Link to this definition"></a></dt>
+<dd><p>Overwriting matlab.mixin.indexing.RedefinesParen.parenReference</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.plus">
+<span class="sig-name descname"><span class="pre">plus</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">a</span></em>, <em class="sig-param"><span class="pre">b</span></em><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.plus" title="Link to this definition"></a></dt>
+<dd><p>Add two polynomials.</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.pnorm2">
+<span class="sig-name descname"><span class="pre">pnorm2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">a</span></em><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.pnorm2" title="Link to this definition"></a></dt>
+<dd><p>Compute polynomial 2-norm as integral of a^2 over [0 1].</p>
+<p>Note: This 2-norm does NOT correspond to the norm induced by dot.</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.poly2basis">
+<span class="sig-name descname"><span class="pre">poly2basis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">p</span></em>, <em class="sig-param"><span class="pre">z</span></em>, <em class="sig-param"><span class="pre">I</span></em><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.poly2basis" title="Link to this definition"></a></dt>
+<dd><p>Project polynnomial p onto the span of monomials contained in z.</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.power">
+<span class="sig-name descname"><span class="pre">power</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">a</span></em>, <em class="sig-param"><span class="pre">n</span></em><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.power" title="Link to this definition"></a></dt>
+<dd><p>Element-wise powers.</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.prod">
+<span class="sig-name descname"><span class="pre">prod</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">A</span></em>, <em class="sig-param"><span class="pre">dim</span></em><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.prod" title="Link to this definition"></a></dt>
+<dd><p>Return product of array elements.</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.ptaylor">
+<span class="sig-name descname"><span class="pre">ptaylor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">a</span></em>, <em class="sig-param"><span class="pre">x</span></em>, <em class="sig-param"><span class="pre">b</span></em>, <em class="sig-param"><span class="pre">deg</span></em><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.ptaylor" title="Link to this definition"></a></dt>
+<dd><p>Polynomial Taylor expansion.</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.rdivide">
+<span class="sig-name descname"><span class="pre">rdivide</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">p</span></em>, <em class="sig-param"><span class="pre">b</span></em><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.rdivide" title="Link to this definition"></a></dt>
+<dd><p>Element-wise right array division with constant or symbolic matrix.</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.repmat">
+<span class="sig-name descname"><span class="pre">repmat</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">varargin</span></em><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.repmat" title="Link to this definition"></a></dt>
+<dd><p>Repeat copies of polynomial.</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.reshape">
+<span class="sig-name descname"><span class="pre">reshape</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">varargin</span></em><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.reshape" title="Link to this definition"></a></dt>
+<dd><p>Reshape polynomial matrix.</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.saveobj">
+<span class="sig-name descname"><span class="pre">saveobj</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.saveobj" title="Link to this definition"></a></dt>
+<dd><p>Save polynomial object to mat file.</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.simplify">
+<span class="sig-name descname"><span class="pre">simplify</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">a</span></em><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.simplify" title="Link to this definition"></a></dt>
+<dd><p>Simplify symbolic expressions.</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.size">
+<span class="sig-name descname"><span class="pre">size</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">varargin</span></em><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.size" title="Link to this definition"></a></dt>
+<dd><p>Return size of polynomial.</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.sparsify">
+<span class="sig-name descname"><span class="pre">sparsify</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">a</span></em><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.sparsify" title="Link to this definition"></a></dt>
+<dd><p>Sparsify symbolic expressions.</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.str">
+<span class="sig-name descname"><span class="pre">str</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.str" title="Link to this definition"></a></dt>
+<dd><p>Return string representation for polynomial.</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.subs">
+<span class="sig-name descname"><span class="pre">subs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">a</span></em>, <em class="sig-param"><span class="pre">x</span></em>, <em class="sig-param"><span class="pre">b</span></em><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.subs" title="Link to this definition"></a></dt>
+<dd><p>Polynomial substitution of indeterminates x in a by expression b.</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.sum">
+<span class="sig-name descname"><span class="pre">sum</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">A</span></em>, <em class="sig-param"><span class="pre">dim</span></em><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.sum" title="Link to this definition"></a></dt>
+<dd><p>Return sum of array elements.</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.sym">
+<span class="sig-name descname"><span class="pre">sym</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">dstr</span></em>, <em class="sig-param"><span class="pre">w</span></em>, <em class="sig-param"><span class="pre">sz</span></em>, <em class="sig-param"><span class="pre">type</span></em><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.sym" title="Link to this definition"></a></dt>
+<dd><p>Create symbolic polynomial.</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.times">
+<span class="sig-name descname"><span class="pre">times</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">a</span></em>, <em class="sig-param"><span class="pre">b</span></em><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.times" title="Link to this definition"></a></dt>
+<dd><p>Element-wise multiplication of two polynomial matrices.</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.to_function">
+<span class="sig-name descname"><span class="pre">to_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">p</span></em>, <em class="sig-param"><span class="pre">varargin</span></em><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.to_function" title="Link to this definition"></a></dt>
+<dd><p>Return polynomial casadi.Function instance.</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.to_multipoly">
+<span class="sig-name descname"><span class="pre">to_multipoly</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">p</span></em><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.to_multipoly" title="Link to this definition"></a></dt>
+<dd><p>Convert a polynomial with constant coefficients into a multipoly object.</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.transpose">
+<span class="sig-name descname"><span class="pre">transpose</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">a</span></em><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.transpose" title="Link to this definition"></a></dt>
+<dd><p>Non-conjugate transpose of a polynomial matrix.</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.uminus">
+<span class="sig-name descname"><span class="pre">uminus</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">p</span></em><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.uminus" title="Link to this definition"></a></dt>
+<dd><p>Unary minus.</p>
+</dd></dl>
+
+<dl class="mat method">
+<dt class="sig sig-object mat" id="casos.PS.uplus">
+<span class="sig-name descname"><span class="pre">uplus</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">p</span></em><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.uplus" title="Link to this definition"></a></dt>
+<dd><p>Unary plus.</p>
+</dd></dl>
+
+<dl class="mat staticmethod">
+<dt class="sig sig-object mat" id="casos.PS.zeros">
+<em class="property"><span class="pre">static</span> </em><span class="sig-name descname"><span class="pre">zeros</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">varargin</span></em><span class="sig-paren">)</span><a class="headerlink" href="#casos.PS.zeros" title="Link to this definition"></a></dt>
+<dd><p>Create zero polynomial.</p>
+</dd></dl>
+
+</dd>
+</dl>
+</div>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="casos.html" class="btn btn-neutral float-left" title="+casos" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Torbjørn Cunis, Jan Olucak, Renato Loureiro, Fabian Geyer.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

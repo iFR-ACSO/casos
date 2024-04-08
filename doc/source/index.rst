@@ -7,36 +7,13 @@ Welcome to casos's documentation!
 =================================
 
 .. toctree::
-   :maxdepth: 6
+   :maxdepth: 2
    :caption: Contents:
-
+   
    install
-
-.. automodule:: casos
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-.. automodule:: casos.package
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-@PS
-
-
-.. automodule:: +casos.@PS
-   :show-inheritance:
-
-
-PS Folder
-~~~~~~~~~~~
-
-.. autoclass:: PS
-   :show-inheritance:
+   +casos/casos
 
    
-
 Indices and tables
 ==================
 
