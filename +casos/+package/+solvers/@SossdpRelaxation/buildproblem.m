@@ -37,6 +37,12 @@ gdiff = (sos.g - [zeros(Ml,1); casos.PS(Zgram_g,Qgram_g)]);
 
 % handle linear decision variables
 [Qlin_x,Zlin_x] = poly2basis(sos.x,~Is);
+
+% Quick fix for dimesions
+if size(Qlin_x,1) < size(Qlin_x,2) 
+    Qlin_x = Qlin_x;
+end
+
 % handle parameter
 [Qlin_p,Zlin_p] = poly2basis(sos.p);
 
