@@ -12,6 +12,7 @@ Welcome to casos's documentation!
    
    install
    +casos/casos
+   Internal/internal
 
    
 Indices and tables
