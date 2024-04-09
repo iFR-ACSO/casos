@@ -12,7 +12,7 @@ properties (GetAccess=protected, SetAccess=private)
     coeffs = casadi.Sparsity;    % matrix of which the rows are vec(c_a)
     degmat = sparse([]);         % matrix of which the rows are [a1 ... aN]
     indets = casos.Indeterminates;             % variables {x1,...,xN} 
-    matdim = [0 0];              % dimensions (size) of coefficients c_a
+    matdim = [1 1];              % dimensions (size) of coefficients c_a
 end
 
 properties (Dependent=true)
@@ -30,8 +30,7 @@ methods
     function obj = Sparsity(varargin)
         % Create polynomial sparsity pattern.
         if nargin == 0
-            % empty sparsity pattern
-            obj.coeffs = casadi.Sparsity(0,0);
+            % nothing to do (null)
             return
 
         elseif isa(varargin{1},'casos.Sparsity')
@@ -132,6 +131,11 @@ methods
         % Check if polynomial is of degree zero.
         tf = (obj.maxdeg == 0);
     end
+
+    function tf = is_null(obj)
+        % Check if sparsity pattern is null.
+        tf = is_null(obj.coeffs);
+    end
 end
 
 methods (Static)
@@ -199,10 +203,22 @@ methods
         % Print matrix sparsity pattern.
         spy(matrix_sparsity(obj));
     end
+
+    function disp(obj)
+        % Display object.
+        if is_null(obj), disp('NULL');
+        else, disp@casos.package.core.PolynomialInterface(obj);
+        end
+    end
 end
 
 methods (Access={?casos.package.core.PolynomialInterface})
     %% Friend class interface
+    function varargout = coeff_size(obj,varargin)
+        % Return size of coefficient matrix.
+        [varargout{1:nargout}] = size(obj.coeffs,varargin{:});
+    end
+
     function S = coeff_sparsity(obj)
         % Return sparsity pattern of coefficient matrix.
         S = casadi.Sparsity(obj.coeffs);
