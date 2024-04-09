@@ -6,4 +6,8 @@
    :caption: Contents:
    
    ps
-
+   conic
+   sdpsol
+   sossol
+   qcsossol
+   function

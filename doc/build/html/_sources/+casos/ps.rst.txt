@@ -1,5 +1,5 @@
-PS
-========
+The PS class
+============
 
 Polynomial expressions
 ----------------------
