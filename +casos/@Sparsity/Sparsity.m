@@ -31,12 +31,15 @@ methods
         % Create polynomial sparsity pattern.
         if nargin == 0
             % nothing to do (null)
-            return
 
         elseif isa(varargin{1},'casos.Sparsity')
-            % keep sparsity pattern
-            obj = varargin{1};
-            return
+            % copy sparsity pattern
+            assert(nargin == 1,'Too many arguments.')
+            
+            obj.coeffs = casadi.Sparsity(varargin{1}.coeffs);
+            obj.degmat = varargin{1}.degmat;
+            obj.indets = varargin{1}.indets;
+            obj.matdim = varargin{1}.matdim;
 
         elseif ischar(varargin{1}) || isa(varargin{1},'casos.Indeterminates')
             % indeterminate (pvar / mpvar syntax)
@@ -55,9 +58,7 @@ methods
             % zero-degree sparsity (casadi syntax)
             S = casadi.Sparsity(varargin{:});
             % store size and coefficients
-            obj.coeffs = reshape(S,1,numel(S));
-            obj.degmat = sparse(1,0);
-            obj.matdim = size(S);
+            obj = casos.Sparsity.coeff_zerodegree(S);
         end
     end
 
@@ -212,6 +213,25 @@ methods
     end
 end
 
+methods (Static, Access={?casos.package.core.PolynomialInterface})
+    %% Static friend interface
+    function [S,coeffs] = coeff_zerodegree(A)
+        % Set sparsity and coefficients for zero-degree polynomial.
+        S = casos.Sparsity;
+        % reshape to coefficient matrix
+        coeffs = reshape(A,1,numel(A));
+        % store size
+        S.degmat = sparse(1,0);
+        S.matdim = size(A);
+        % store coefficients
+        if nargout > 1
+            S.coeffs = sparsity(coeffs);
+        else
+            S.coeffs = coeffs;
+        end
+    end
+end
+
 methods (Access={?casos.package.core.PolynomialInterface})
     %% Friend class interface
     function varargout = coeff_size(obj,varargin)
@@ -235,7 +255,7 @@ methods (Access={?casos.package.core.PolynomialInterface})
     end
 
     % protected interface for display output
-    out = str_monoms(obj);
+    out = str_monoms(obj,flag);
 
     % protected interface for subsref getters
     [monoms,L] = get_monoms(S,I);

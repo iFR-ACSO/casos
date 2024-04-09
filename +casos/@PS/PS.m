@@ -1,5 +1,7 @@
 classdef (InferiorClasses = {?casadi.SX, ?casadi.DM, ?casos.Indeterminates}) ...
-        PS < casos.package.core.GenericPolynomial
+        PS < ...casos.package.core.GenericPolynomial
+        casos.package.core.AlgebraicObject ...
+        & casos.package.core.PolynomialInterface
 % Polynomials with symbolic coefficients.
 
 properties (GetAccess=protected, SetAccess=private)
