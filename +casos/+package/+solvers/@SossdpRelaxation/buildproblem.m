@@ -40,7 +40,7 @@ gdiff = (sos.g - [zeros(Ml,1); casos.PS(Zgram_g,Qgram_g)]);
 
 % Quick fix for dimesions
 if size(Qlin_x,1) < size(Qlin_x,2) 
-    Qlin_x = Qlin_x;
+    Qlin_x = Qlin_x';
 end
 
 % handle parameter
