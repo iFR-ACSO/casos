@@ -141,7 +141,7 @@ end
 
 methods (Static)
     %% Static constructors
-    S = monomials(varargin);
+    S = scalar(varargin);
 
     function S = diag(varargin)
         % Create diagonal matrix pattern.

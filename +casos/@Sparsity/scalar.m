@@ -1,18 +1,23 @@
-function z = monomials(vars,deg)
-% Create monomial sparsity pattern.
+function z = scalar(vars,deg)
+% Create a scalar monomial sparsity pattern.
+
+if nargin == 0 || (nargin > 1 && isequal(deg, 0))
+    % return zero-degree scalar
+    z = casos.Sparsity(casadi.Sparsity.scalar);
+    return
+end
 
 assert(is_indet(vars), 'First input must be indeterminate variables.')
 
-if deg == 0
-    % Return constant one.
-    degmat = sparse(1,0);
-    indets = casos.Indeterminates;
+p = casos.Indeterminates(vars);
+
+if nargin < 2
+    % return linear sparsity pattern
+    degmat = speye(p.nvars);
 
 else
-    % Return vector of monomials of desired degree.
+    % return vector of monomials of desired degree
     assert(isvector(deg) && all(deg >= 0 & floor(deg) == ceil(deg)), 'Second input must be vector of nonnegative integers.')
-
-    p = casos.Indeterminates(vars);
 
     % enumerate monomials up to max(deg)
     r = nchoosek(p.nvars+max(deg),p.nvars); % total number of monomials
@@ -27,11 +32,10 @@ else
     I = ismember(sum(M,2),deg);
 
     degmat = M(I,:);
-    indets = p;
 end
 
 % set output
-z = build_monomials(degmat,indets);
+z = build_monomials(degmat,p);
 
 end
 
