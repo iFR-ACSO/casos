@@ -1,5 +1,36 @@
 # Internal class diagram
 
+## Polynomial types
+```mermaid
+flowchart LR
+  subgraph casadi
+    casadi.DM[DM]
+    casadi.SX[SX]
+    casadi.Sparsity[Sparsity]
+  end
+  subgraph casos
+    casos.PD[PD]
+    casos.PS[PS]
+    casos.Sparsity[Sparsity]
+    casos.Indeterminates[Indeterminates]
+  end
+  subgraph casos.package.core
+    Polynomial --> GenericPolynomial
+    GenericPolynomial --> AlgebraicObject
+    GenericPolynomial --> PolynomialInterface
+    PolynomialInterface --> Printable
+  end
+  casos.PD --> Polynomial
+  casos.PD -.-> casadi.DM
+  casos.PS -.-> casadi.SX
+  casos.Sparsity --> PolynomialInterface
+  casos.Sparsity -.-> casadi.Sparsity
+  casos.Sparsity -.-> casos.Indeterminates
+  casos.Indeterminates --> AlgebraicObject
+  GenericPolynomial -.-> casos.Sparsity
+```
+
+## Functions & Solvers
 ```mermaid
 flowchart LR
   subgraph casadi
