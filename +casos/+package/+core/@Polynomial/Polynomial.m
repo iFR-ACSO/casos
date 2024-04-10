@@ -14,6 +14,15 @@ methods (Static, Abstract, Access=protected)
     p = new_poly(varargin);
 end
 
+methods (Static, Abstract)
+    % Static constructors
+    p = sym(dstr,varargin);
+    p = empty();
+    p = zeros(varargin);
+    p = ones(varargin);
+    p = eye(varargin);
+end
+
 methods
     %% Public constructor
     function obj = Polynomial(varargin)
@@ -116,6 +125,9 @@ methods
 end
 
 methods (Access=protected)
+    % helper for static constructors
+    obj = new_sym(obj,dstr,varargin);
+
     % protected RedefinesParen interface
     obj = parenAssign(obj,idx,varargin);
     obj = parenDelete(obj,idx);
