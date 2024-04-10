@@ -174,12 +174,18 @@ methods
     end
 
     %% Conversion & matrix Sparsity interface
-    function obj = reshape(obj,varargin)
+    function S = reshape(obj,varargin)
         % Reshape polynomial matrix.
         assert(length(varargin{1}) <= 2, 'Size vector must not exceed two elements.')
         assert(length(varargin) <= 2, 'Size arguments must not exceed two scalars.')
 
-        obj.matdim = size(reshape(sparse(size(obj,1),size(obj,2)),varargin{:}));
+        S = casos.Sparsity(obj);
+        S.matdim = size(reshape(sparse(size(obj,1),size(obj,2)),varargin{:}));
+    end
+
+    function S = repmat(obj,varargin)
+        % Repeat sparsity pattern.
+        S = coeff_repmat(obj,obj.coeffs,varargin{:});
     end
 
     function S = casadi.Sparsity(obj)
@@ -218,6 +224,17 @@ methods
     end
 end
 
+methods (Access=private)
+    function obj = set_coefficients(obj,coeffs)
+        % Store (generic) coefficients.
+        if isa(coeffs,'casadi.Sparsity')
+            obj.coeffs = coeffs;
+        else
+            obj.coeffs = sparsity(coeffs);
+        end
+    end
+end
+
 methods (Static, Access={?casos.package.core.PolynomialInterface})
     %% Static friend interface
     function [S,coeffs] = coeff_zerodegree(A)
@@ -229,11 +246,7 @@ methods (Static, Access={?casos.package.core.PolynomialInterface})
         S.degmat = sparse(1,0);
         S.matdim = size(A);
         % store coefficients
-        if nargout > 1
-            S.coeffs = sparsity(coeffs);
-        else
-            S.coeffs = coeffs;
-        end
+        S = set_coefficients(S,coeffs);
     end
 end
 
@@ -258,6 +271,9 @@ methods (Access={?casos.package.core.PolynomialInterface})
         % Return indices of nonzero coefficients.
         idx = find(obj.coeffs);
     end
+
+    % protected interface for operations
+    [S,coeffs] = coeff_repmat(obj,coeffs,varargin);
 
     % protected interface for display output
     out = str_monoms(obj,flag);

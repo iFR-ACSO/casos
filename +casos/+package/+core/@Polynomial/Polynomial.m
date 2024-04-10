@@ -98,7 +98,14 @@ methods
         assert(length(varargin{1}) <= 2, 'Size vector must not exceed two elements.')
         assert(length(varargin) <= 2, 'Size arguments must not exceed two scalars.')
 
-        error('Not implemented.')
+        S = reshape(obj.get_sparsity,varargin{:});
+        obj = obj.set_sparsity(S);
+    end
+
+    function obj = repmat(obj,varargin)
+        % Repeat polynomial matrix.
+        [S,obj.coeffs] = coeff_repmat(obj.get_sparsity,obj.coeffs,varargin{:});
+        obj = obj.set_sparsity(S);
     end
 
     %% Unary operators
