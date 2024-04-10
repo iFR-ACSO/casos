@@ -16,6 +16,16 @@ methods
     end
 end
 
+methods (Static)
+    %% Common indeterminate variables interface
+    function z = monomials(obj,varargin)
+        % Return monomial sparsity pattern.
+        assert(is_indet(obj), 'First input must be indeterminate variables.')
+
+        z = casos.Sparsity.scalar(obj,varargin);
+    end
+end
+
 methods (Access=protected)
     %% protected RedefinesParen interface
     function n = parenListLength(obj,indexOp,context)

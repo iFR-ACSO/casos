@@ -168,6 +168,11 @@ methods
         [i,j] = matrix_triplet(obj); % TODO
     end
 
+    function z = monomials(obj)
+        % Return scalar monomial sparsity pattern.
+        z = build_monomials(obj.degmat,obj.indets);
+    end
+
     %% Conversion & matrix Sparsity interface
     function obj = reshape(obj,varargin)
         % Reshape polynomial matrix.

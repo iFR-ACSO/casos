@@ -94,6 +94,17 @@ methods
         % Return (copy of) sparsity pattern.
         S = casos.Sparsity(obj.poly_sparsity);
     end
+
+    function Z = monomials(obj,deg)
+        % Return monomial sparsity pattern.
+        if nargin > 1
+            % create pattern
+            Z = monomials@casos.package.core.AlgebraicObject(obj,deg);
+        else
+            % return pattern
+            Z = monomials(obj.poly_sparsity);
+        end
+    end
 end
 
 methods (Access=protected)
