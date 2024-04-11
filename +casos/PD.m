@@ -26,9 +26,9 @@ methods (Static)
         error('Not implemented for PD.');
     end
 
-    function p = empty()
+    function p = empty(varargin)
         % Empty polynomial matrix.
-        p = casos.PD;
+        p = casos.PD(double.empty(varargin{:}));
     end
 
     function p = zeros(varargin)
