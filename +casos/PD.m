@@ -47,4 +47,12 @@ methods (Static)
     end
 end
 
+methods
+    %% Algebraic operations
+    function c = plus(a,b)
+        % Add
+        c = plus@casos.package.core.Polynomial(casos.PD(a),casos.PD(b));
+    end
+end
+
 end

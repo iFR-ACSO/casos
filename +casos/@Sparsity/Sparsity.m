@@ -1,4 +1,5 @@
-classdef Sparsity < casos.package.core.PolynomialInterface
+classdef (InferiorClasses = {?casadi.Sparsity}) Sparsity ...
+        < casos.package.core.PolynomialInterface
 % Polynomial sparsity class.
 
 properties (GetAccess=protected, SetAccess=private)
@@ -274,6 +275,7 @@ methods (Access={?casos.package.core.PolynomialInterface})
 
     % protected interface for operations
     [S,coeffs] = coeff_repmat(obj,coeffs,varargin);
+    [S,coeffs] = coeff_plus(S1,S2,coeff1,coeff2);
 
     % protected interface for display output
     out = str_monoms(obj,flag);
