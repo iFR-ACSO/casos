@@ -16,6 +16,16 @@ case 2
     a = casos.PS(varargin{1});
     b = casos.PS(varargin{2});
 
+    if isempty(a)
+        % return second block
+        c = b;
+        return
+    elseif isempty(b)
+        % return first block
+        c = a;
+        return
+    end
+
     % sizes
     sza = size(a);
     szb = size(b);
