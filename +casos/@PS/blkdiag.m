@@ -16,24 +16,43 @@ case 2
     a = casos.PS(varargin{1});
     b = casos.PS(varargin{2});
 
-    % size of block diagional
-    sz = size(a) + size(b);
+    if isempty(a)
+        % return second block
+        c = b;
+        return
+    elseif isempty(b)
+        % return first block
+        c = a;
+        return
+    end
+
+    % sizes
+    sza = size(a);
+    szb = size(b);
+
+    % terms
+    nta = a.nterm;
+    ntb = b.nterm;
+
+    % size of block diagonal
+    sz = sza + szb;
 
     % combine variables
     [indets,dga,dgb] = combineVar(a.indets,b.indets,a.degmat,b.degmat);
 
-    % get nonzero coefficients
-    nza = a.coeffs(find(sparsity(a.coeffs)));
-    nzb = b.coeffs(find(sparsity(b.coeffs)));
+    % reshape to access columns
+    cfa = prepareMatrixOp(a.coeffs,sza,1);
+    cfb = prepareMatrixOp(b.coeffs,szb,1);
 
-    % extend sparsity pattern
-    S = [
-        sparsity(a.coeffs) casadi.Sparsity(a.nterm,prod(sz)-numel(a))
-        casadi.Sparsity(b.nterm,prod(sz)-numel(b)) sparsity(b.coeffs)
-    ];
+    % add zeros to each column
+    cfA = [cfa; sparse(szb(1),size(cfa,2))];
+    cfB = [sparse(sza(1),size(cfb,2)); cfb];
 
     % combine coefficients
-    coeffs = casadi.SX(S,[nza(:); nzb(:)]);
+    coeffs = [
+        finishMatrixOp(cfA,[sz(1) sza(2)],1) sparse(nta,sz(1)*szb(2))
+        sparse(ntb,sz(1)*sza(2)) finishMatrixOp(cfB,[sz(1) szb(2)],1)
+    ];
 
     % make degree matrix unique
     [coeffs,degmat] = uniqueDeg(coeffs, [dga;dgb]);
