@@ -14,7 +14,7 @@ degsum = sum(degmat,2);
 
 % sum repeated coefficients
 summat = sparse(ic,1:nt,1,length(id),nt);
-coeffs = sparsify(summat*coeffs);
+coeffs = (summat*coeffs);
 
 % reverse order of degrees
 degmat = fliplr(degmat2(:,2:end));
