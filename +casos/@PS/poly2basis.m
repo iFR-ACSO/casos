@@ -81,7 +81,7 @@ else
     S = casadi.Sparsity.triplet(nT,lp,ii,floor(jj/lZ));
 
     % project onto template
-    q = Q(find(S)); %#ok<FNDSB> 
+    q = Q(find(S)'); %#ok<FNDSB> 
 end
 
 % build projection error
