@@ -80,8 +80,8 @@ else
     [ii,jj] = get_triplet(sparsity(z.coeffs));
     S = casadi.Sparsity.triplet(nT,lp,ii,floor(jj/lZ));
 
-    % project onto template
-    q = Q(find(S)); %#ok<FNDSB> 
+    % project onto template (ensure column vector)
+    q = reshape(Q(find(S)),lZ,1); %#ok<FNDSB> 
 end
 
 % build projection error
