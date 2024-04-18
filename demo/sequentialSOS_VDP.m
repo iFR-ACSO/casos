@@ -45,9 +45,9 @@ sos1.('g') = [s1;
               s1*(p-b) + 1 - V];
 
 % states + constraint are SOS cones
-opts.Kx = struct('l', 4);
-opts.Kc = struct('s', 5);
-
+opts.Kx = struct('lin', 4);
+opts.Kc = struct('sos', 5);
+opts.verbose = 1;
     
 Vlb  = casos.PS(basis(V),-inf);
 Vub  = casos.PS(basis(V),+inf);

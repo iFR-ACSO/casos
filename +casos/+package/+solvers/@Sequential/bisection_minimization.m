@@ -5,7 +5,7 @@ function min_dtry = bisection_minimization(obj, xk, xk1, sol)
     f = @(dtry) double(obj.Merit(xk.*(1-dtry) + xk1.*dtry, sol{5}));
     
     % Set the tolerance
-    tolerance = 1e-2;
+    tolerance = 1e-6;
     
     % Initialize bounds (linesearch 0 <= d <= 1)
     lower_bound = 0;

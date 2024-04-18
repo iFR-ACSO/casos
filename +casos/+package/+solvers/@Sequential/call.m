@@ -115,6 +115,7 @@ for i = 1:obj.opts.max_iter
                full( casadi.DM(pnorm2(xk1-xk)) ) < obj.opts.tolerance_abs && ...
                full( casadi.DM(pnorm2(duals-dual_k)) ) < obj.opts.tolerance_rel*full( casadi.DM(pnorm2(duals))) 
                
+               disp('Converged!')
                 % store iteration info
                info(i+1:end) = [];
                obj.info.iter = info;
@@ -131,7 +132,7 @@ for i = 1:obj.opts.max_iter
             end % end if convergence check
 
             xk = xk1;
-            dual_k = sol{5};
+            dual_k = duals;
             cost_prev = cost;
         else
 

@@ -139,9 +139,9 @@ sos1.('g') = [s1;
               s1*(p-b) + 1 - V];
 
 % states + constraint are SOS cones
-opts.Kx = struct('l', 4);
-opts.Kc = struct('s', 5);
-
+opts.Kx = struct('lin', 4);
+opts.Kc = struct('sos', 5);
+opts.verbose = 1;
     
 Vlb  = casos.PS(basis(V),-inf);
 Vub  = casos.PS(basis(V),+inf);
@@ -166,15 +166,9 @@ toc
 sol1.x(end)
 
 
-tic
-sol1 = S1('x0',[sol1.x(1) ;sol1.x(2);  sol1.x(3) ; sol1.x(end)], ...
-          'lbx',[Vlb;s1lb;s2lb;glb], ...
-          'ubx',[Vub;s1ub;s2ub;gub]);
-toc
-sol1.x(end)
-
-
 %% plotting
+import casos.toolboxes.sosopt.pcontour
+
 xD = D*x;
 V = subs(sol1.x(1),[x(1);x(4)],zeros(2,1));
 V = subs(V,[x(2);x(3)],xD(2:3));
