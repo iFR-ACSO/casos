@@ -18,6 +18,7 @@
         <script src="../_static/documentation_options.js?v=5929fcd5"></script>
         <script src="../_static/doctools.js?v=888ff710"></script>
         <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -49,6 +50,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../install.html">Install</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="casos.html">+casos</a><ul class="current">
 <li class="toctree-l2 current"><a class="current reference internal" href="#">The PS class</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#polynomials">Polynomials</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#polynomial-expressions">Polynomial expressions</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#polynomials-of-degree-zero">Polynomials of degree zero</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#indeterminate-variables-monomials">Indeterminate variables &amp; monomials</a></li>
@@ -95,6 +97,26 @@
              
   <section id="the-ps-class">
 <h1>The PS class<a class="headerlink" href="#the-ps-class" title="Link to this heading"></a></h1>
+<section id="polynomials">
+<h2>Polynomials<a class="headerlink" href="#polynomials" title="Link to this heading"></a></h2>
+<p>One polynomial is mathematically defined as</p>
+<p><span class="math notranslate nohighlight">\(p(x) = \sum_a \underbrace{c_a x^a}_{\textrm{monomial}} = \sum_a c_a x_1^{a_1}x_2^{a_2}\cdots x_n^{a_n}\)</span></p>
+<p>where:</p>
+<ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(x_i = (x_1, \cdots, x_n)\)</span> represent the indeterminate variables.</p></li>
+<li><p><span class="math notranslate nohighlight">\(a = (a_1, \cdots, a_n)\)</span> are the indices/degrees.</p></li>
+<li><p><span class="math notranslate nohighlight">\(c = (c_1, \cdots, c_m)\)</span> are coefficients for each monomial.</p></li>
+</ul>
+<p><strong>Example:</strong></p>
+<p>Consider the polynomial</p>
+<p><span class="math notranslate nohighlight">\(p(x_1, x_2) = 3x_1^2 x_2 + 5x_1 x_2^3 - 2x_2^2\)</span></p>
+<p>This is a polynomial with</p>
+<ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(x=(x_1, x_2)\)</span></p></li>
+<li><p><span class="math notranslate nohighlight">\(c=(3, 5, -2)^{\top}\)</span> = <code class="code docutils literal notranslate"><span class="pre">PS.coeffs</span></code></p></li>
+<li><p><span class="math notranslate nohighlight">\(a = \begin{bmatrix} 2 &amp; 1 \\ 5 &amp; 3 \\ 0 &amp; 2 \end{bmatrix}\)</span> = <code class="code docutils literal notranslate"><span class="pre">PS.degmat</span></code></p></li>
+</ul>
+</section>
 <section id="polynomial-expressions">
 <h2>Polynomial expressions<a class="headerlink" href="#polynomial-expressions" title="Link to this heading"></a></h2>
 <p>The class <code class="docutils literal notranslate"><span class="pre">casos.PS</span></code> implements polynomials of which the coefficients can be symbolic expressions.</p>

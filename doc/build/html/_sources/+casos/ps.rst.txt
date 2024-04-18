@@ -1,6 +1,33 @@
 The PS class
 ============
 
+Polynomials
+-----------
+
+One polynomial is mathematically defined as
+
+:math:`p(x) = \sum_a \underbrace{c_a x^a}_{\textrm{monomial}} = \sum_a c_a x_1^{a_1}x_2^{a_2}\cdots x_n^{a_n}`
+
+where:
+ 
+- :math:`x_i = (x_1, \cdots, x_n)` represent the indeterminate variables.
+- :math:`a = (a_1, \cdots, a_n)` are the indices/degrees.
+- :math:`c = (c_1, \cdots, c_m)` are coefficients for each monomial.
+
+**Example:**
+
+Consider the polynomial 
+
+:math:`p(x_1, x_2) = 3x_1^2 x_2 + 5x_1 x_2^3 - 2x_2^2`
+
+This is a polynomial with
+
+- :math:`x=(x_1, x_2)`
+- :math:`c=(3, 5, -2)^{\top}` = :code:`PS.coeffs`
+- :math:`a = \begin{bmatrix} 2 & 1 \\ 5 & 3 \\ 0 & 2 \end{bmatrix}` = :code:`PS.degmat`
+
+
+
 Polynomial expressions
 ----------------------
 
