@@ -1,16 +1,26 @@
-function [q,z,e] = poly2basis(p,z,I)
+function [q,z,e] = poly2basis(p,z,I,legacy)
 % Project polynnomial p onto the span of monomials contained in z.
 
 p = casos.PS(p);
 
 if nargin < 2
+    % syntax poly2basis(p)
     z = basis(p);
     I = true(size(p));
+    legacy = true;
 elseif islogical(z)
+    % syntax poly2basis(p,I)
     I = z;
     z = basis(p,I);
+    legacy = true;
 elseif nargin < 3
+    % syntax poly2basis(p,z,I)
     I = true(size(p));
+    legacy = true;
+elseif isempty(z) || isempty(I)
+    % syntax poly2basis(...,legacy)
+    if isempty(I), I = true(size(p)); end
+    if isempty(z), z = basis(p,I); end
 end
 
 % combine variables
@@ -20,7 +30,7 @@ end
 [tf,ii] = ismember(dgp,dgz,'rows');
 idx = 1:p.nterm;
 
-if iscolumn(z) && all(I)
+if iscolumn(z) && all(I) && legacy
     % legacy code: project onto monomial vector
     assert(is_monom(z),'Second argument must be vector of monomials.')
 
@@ -70,8 +80,8 @@ else
     [ii,jj] = get_triplet(sparsity(z.coeffs));
     S = casadi.Sparsity.triplet(nT,lp,ii,floor(jj/lZ));
 
-    % project onto template
-    q = Q(find(S)); %#ok<FNDSB> 
+    % project onto template (ensure column vector)
+    q = reshape(Q(find(S)),lZ,1); %#ok<FNDSB> 
 end
 
 % build projection error
