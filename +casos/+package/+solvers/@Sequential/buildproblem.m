@@ -22,35 +22,32 @@ sos.g = nlsos.g;
 sos.f = nlsos.f;
 sos.p = nlsos.p;
 
-
 % store user parameter
 p0 = sos.p;
         
-
 % for each decision variable generate a parameter (which is the current solution)
 % naming is not important since this is only for internal 
 base_x = basis(sos.x);
 
-x0    = casos.PS.sym('X0',base_x);
-% x1    = casos.PS.sym('X1',base_x);
-% lam_x = casos.PS.sym('lam_x',base_x);
+
+xi_k    = casos.PS.sym('xi_k',base_x);
+xi_plus = casos.PS.sym('xi_plus',base_x);
 
 % extend parameter vector
-sos.p = [p0; x0];
+sos.p = [p0; xi_k];
 
-% Taylor Approximation constraints and evaluate at parameterized
-% solution
-sos.g = linearize(nlsos.g,nlsos.x,x0);
+% Taylor Approximation constraints and evaluate at current solution
+sos.g = linearize(nlsos.g,nlsos.x,xi_k);
 
-% Taylor Approximation cost and evaluate at parameterized
-% solution
-sos.f = linearize(sos.f,sos.x,x0);
+% Taylor Approximation cost and evaluate at current solution
+sos.f = linearize(nlsos.f,nlsos.x,xi_k);
 
 % SOS options
-sosopt = opts.sossol_options;
+sosopt    = opts.sossol_options;
 sosopt.Kx = struct('lin',Nl,'sos',Ns);
 sosopt.Kc = struct('lin',Ml,'sos',Ms);
-sosopt.error_on_fail = false;
+
+% sosopt.error_on_fail = false;
 
 % initialize convex SOS solver
 obj.sossolver = casos.package.solvers.SossolInternal('SOS',opts.sossol,sos,sosopt);
@@ -64,50 +61,31 @@ obj.monom_gl = monomials_in(obj.sossolver,5);
 obj.monom_gs = monomials_in(obj.sossolver,7);
 
 
-% setup Merit-function
+%% setup Merit-function
 lam_gs = casos.PS.sym('lam_gs',obj.monom_gs);
 
+% Langrange function
 L = casos.Function('f',{sos.x,lam_gs}, {nlsos.f - dot(lam_gs,nlsos.g)});
 
 obj.Merit = L;
 
+%% setup line search
+d = casos.PS.sym('d');
 
-% d = casos.PS.sym('d');
-% langrange function of linearized problem
-% L = casos.Function('f',{sos.x,lam_gs}, {sos.f + dot(lam_gs,sos.g)});
-
-% Langrange function
-% L_sym = casadi.SX( L(sos.x,lam_gs) );
-
-% get decision variables and multiplier i.e. their coefficients and
-% calculate gradient
-% xCoeff  = poly2basis(sos.x);
-% nabla_x = gradient(L_sym,xCoeff);
-% 
-% lamCoeff   = poly2basis(lam_gs);
-% nabla_lam  = gradient(L_sym,lamCoeff(:));
-% 
-% % setup functions for later evaluation
-% obj.nabla_x_fun   = casos.Function('f',{x0,sos.x,lam_gs}, {nabla_x}, {'x0' 'x1' 'lam'}, {'dL/dx'});
-% obj.nabla_lam_fun = casos.Function('f',{x0,sos.x,lam_gs}, {nabla_lam}, {'x0' 'x1' 'lam'}, {'dL/dlam'});
-
-
-% Merit function
-
-
-
-% Psi_d = L(x0*(1-d) + d*x1 , lam_g) + 1e-6*d;
+Psi_d = L(xi_plus*d + (1-d)*xi_k , lam_gs) - 1e-15*d^2; % see bisos implementation
 
 % % define SOS problem:   min_d Psi(d) s.t. 0 \leq d \leq 1 
-% sos_lineSearch = struct('x',d, ...
-%                         'f',Psi_d, ...
-%                         'g',[], ... % 0 <= d <= 1  is set in call
-%                         'p',[x0; x1; lam_g]);
+poly_lineSearch = struct('x',d, ...
+                        'f',Psi_d, ...
+                        'g',[], ... % 0 <= d <= 1  is set in call
+                        'p',[xi_k; xi_plus; lam_gs]);
 
        
 % solve by relaxation to SDP
-obj.lineSearch = [];%casos.sossol('S','mosek',sos_lineSearch,...
-                              %struct('Kc',struct('s',0),'Kx',struct('l',1)));
+obj.lineSearch = casos.sossol('S', ...
+                              'sedumi', ...
+                              poly_lineSearch,...
+                              struct('Kc',struct('sos',0),'Kx',struct('lin',1)));
        
          
 

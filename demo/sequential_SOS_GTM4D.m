@@ -79,6 +79,7 @@ f = @(x,u) [
                     f4(x(1,:),x(2,:),x(3,:),x(4,:),u(1,:),u(2,:))
 ];
 
+[x0, u0] = findtrim(f,x0, u0);
 
 % set up dynamic system
 f = f(x+x0,[Kq*x(3); 0]+u0);
@@ -90,7 +91,6 @@ d = ([
           convang(20, 'deg', 'rad')  %range.alpha.lebesgue.get('rad')
 ]);
 
-% d = ones(4,1);
 
 D = diag(d)^-1;
 
@@ -112,11 +112,11 @@ Vinit = x'*P*x;
 p = x'*x*1e2;
 
 % Lyapunov function candidate
-V = casos.PS.sym('v',monomials(x,2:4));
+V = casos.PS.sym('v',monomials(x,2));
 
 % SOS multiplier
-s1 = casos.PS.sym('s1',monomials(x,0:2));
-s2 = casos.PS.sym('s2',monomials(x,2:4));
+s1 = casos.PS.sym('s1',monomials(x,0));
+s2 = casos.PS.sym('s2',monomials(x,4));
 
 % enforce positivity
 l = 1e-6*(x'*x);
@@ -139,8 +139,8 @@ sos1.('g') = [s1;
               s1*(p-b) + 1 - V];
 
 % states + constraint are SOS cones
-opts.Kx = struct('lin', 4);
-opts.Kc = struct('sos', 5);
+opts.Kx      = struct('lin', 4);
+opts.Kc      = struct('sos', 5);
 opts.verbose = 1;
     
 Vlb  = casos.PS(basis(V),-inf);
@@ -156,9 +156,8 @@ tic
 S1 = casos.nlsossol('S1','sequential',sos1,opts);
 toc
 
-% profile on -historysize 500000000000000000
 tic
-sol1 = S1('x0',[Vinit ;(x'*x);  (x'*x)^2 ; 1], ...
+sol1 = S1('x0' ,[Vinit; 1; (x'*x)^2; 1], ...
           'lbx',[Vlb;s1lb;s2lb;glb], ...
           'ubx',[Vub;s1ub;s2ub;gub]);
 

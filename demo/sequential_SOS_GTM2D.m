@@ -71,14 +71,17 @@ delta0  = 14.33;   % percent
 x0 = [v0; alpha0; q0; theta0];
 u0 = [eta0; delta0];
 
-% get trim point 
-% f = @(x,u) [
-%                     f1(x(1,:),x(2,:),x(3,:),x(4,:),u(1,:),u(2,:))
-%                     f2(x(1,:),x(2,:),x(3,:),x(4,:),u(1,:),u(2,:))
-%                     f3(x(1,:),x(2,:),x(3,:),x(4,:),u(1,:),u(2,:))
-%                     f4(x(1,:),x(2,:),x(3,:),x(4,:),u(1,:),u(2,:))
-% ];
 
+% get trim point 
+f = @(x,u) [
+                    f1(x(1,:),x(2,:),x(3,:),x(4,:),u(1,:),u(2,:))
+                    f2(x(1,:),x(2,:),x(3,:),x(4,:),u(1,:),u(2,:))
+                    f3(x(1,:),x(2,:),x(3,:),x(4,:),u(1,:),u(2,:))
+                    f4(x(1,:),x(2,:),x(3,:),x(4,:),u(1,:),u(2,:))
+];
+
+% find more accurate trim values  
+[x0, u0] = findtrim(f,x0, u0);
 
 % short period
 f = @(x,u) [
@@ -90,6 +93,7 @@ f = @(x,u) [
 % set up dynamic system
 f = f(x+[x0(2);x0(3)],u0(1));
 
+% scaling
 d = ([
           convvel(20, 'm/s', 'm/s')  %range.tas.lebesgue.get('ft/s')
           convang(20, 'deg', 'rad')  %range.gamma.lebesgue.get('rad')
@@ -102,7 +106,7 @@ D = diag(d(2:3))^-1;
 f = D*subs(f, x, D^-1*x);
 
 
-f = cleanpoly(f,1e-6);
+f = cleanpoly(f,1e-6,0:5);
 
 % use scaled dynamics to compute initial guess for lyapunov function
 A = nabla(f,x);
@@ -121,8 +125,8 @@ p = x'*x;
 V = casos.PS.sym('v',monomials(x,2));
 
 % SOS multiplier
-s1 = casos.PS.sym('s1',monomials(x,1));
-s2 = casos.PS.sym('s2',monomials(x,4));
+s1 = casos.PS.sym('s1',monomials(x,0));
+s2 = casos.PS.sym('s2',monomials(x,2));
 
 % enforce positivity
 l = 1e-6*(x'*x);
@@ -130,10 +134,13 @@ l = 1e-6*(x'*x);
 % level of stability
 b = casos.PS.sym('b');
 
-% options
-opts = struct('sossol','sedumi');
 
 %% setup solver
+
+% options
+opts = struct('sossol','mosek');
+opts.verbose = 1;
+
 sos1 = struct('x',[V; s1; s2; b],...
               'f',-b, ...
               'p',[]);
@@ -145,8 +152,8 @@ sos1.('g') = [s1;
               s1*(p-b) + 1 - V];
 
 % states + constraint are SOS cones
-opts.Kx = struct('l', 4);
-opts.Kc = struct('s', 5);
+opts.Kx = struct('lin', 4);
+opts.Kc = struct('sos', 5);
 
     
 Vlb  = casos.PS(basis(V),-inf);
@@ -163,7 +170,8 @@ S1 = casos.nlsossol('S1','sequential',sos1,opts);
 toc
 
 tic
-% solve
+
+%% solve
 sol1 = S1('x0',[Vinit ; 1;  (x'*x) ; 1], ...
           'lbx',[Vlb;s1lb;s2lb;glb], ...
           'ubx',[Vub;s1ub;s2ub;gub]);

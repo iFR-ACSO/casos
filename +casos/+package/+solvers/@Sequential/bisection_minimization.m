@@ -4,11 +4,13 @@ function min_dtry = bisection_minimization(obj, xk, xk1, sol)
     % Define the function to minimize
     f = @(dtry) double(obj.Merit(xk.*(1-dtry) + xk1.*dtry, sol{5}));
     
+    dopt = fminbnd(@(d) double(obj.Merit(xk.*(1-d) + xk1.*d, sol{5})), 0.1, 1);
+
     % Set the tolerance
     tolerance = 1e-6;
     
     % Initialize bounds (linesearch 0 <= d <= 1)
-    lower_bound = 0;
+    lower_bound = 0.1;
     upper_bound = 1;
     
     % Start bisection loop
