@@ -45,11 +45,8 @@ function argout = call(obj,argin)
     
                 dual_plus = sol{5};
     
-                cost = double(sol{2});
+                cost      = double(sol{2});
                 
-                % store old solution
-                sol_old    = sol;
-                sol_old{1} =  xi_plus;
     
             otherwise  
     
@@ -58,16 +55,17 @@ function argout = call(obj,argin)
                    % store iteration info
                    info(i+1:end) = [];
                    obj.info.iter = info;
-    
+                    
+                   % take solution from previous iteration
                    argout = sol_old;
     
                   return
     
                 else
     
-                % error: failed
-                obj.status = UnifiedReturnStatus.SOLVER_RET_NAN;
-                assert(~obj.opts.error_on_fail,'Convex optimization run into numerical errors.')
+                    % error: failed
+                    obj.status = UnifiedReturnStatus.SOLVER_RET_NAN;
+                    assert(~obj.opts.error_on_fail,'Convex optimization run into numerical errors.')
     
                 end
       
@@ -77,9 +75,30 @@ function argout = call(obj,argin)
     
             % check convergence
             if i > 1 
-                    
-                    dopt = line_search_fminbnd(obj,  xi_k,xi_plus,sol);
-     
+                    % select an algorithm to perform the linesearch
+                    switch(obj.opts.line_search) 
+                        case 'fminbnd'
+                                dopt = line_search_fminbnd(obj, ...
+                                                           xi_k, ...
+                                                           xi_plus, ...
+                                                           dual_plus );
+                        case 'bisection'
+                                dopt = bisection_minimization(obj, ...
+                                                              xi_k, ...
+                                                              xi_plus, ...
+                                                              dual_plus );
+                        case 'polySolver'
+                                sol = obj.lineSearch('p',[xi_k; xi_plus; dual_plus],...
+                                                     'lbx',0.1,...
+                                                     'ubx',1);
+
+                                dopt = double(sol.x);
+
+
+                        case 'none'
+                            dopt = 1;
+                    end
+
                     % update primal and dual solution
                     xi_k1    = dopt*xi_plus    + (1-dopt)*xi_k;
                     duals_k1 = dopt*dual_plus  + (1-dopt)*dual_k;
@@ -115,13 +134,13 @@ function argout = call(obj,argin)
                 % set current solution as previous solution for next iteration
                 xi_k      = xi_k1;
                 dual_k    = duals_k1;
-         
-            else
+                sol_old = sol;
+                else
     
                  % set current solution as previous solution for next iteration
                  xi_k = xi_plus;
                  dual_k = dual_plus;
-    
+                 sol_old = sol;
             end % end-if
     
     

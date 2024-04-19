@@ -1,11 +1,9 @@
-function min_dtry = bisection_minimization(obj, xk, xk1, sol)
+function min_dtry = bisection_minimization(obj, xk, xk1, dual_plus )
     % Bisection algorithm to minimize the given function
     
     % Define the function to minimize
-    f = @(dtry) double(obj.Merit(xk.*(1-dtry) + xk1.*dtry, sol{5}));
+    f = @(dtry) double(obj.Merit(xk.*(1-dtry) + xk1.*dtry, dual_plus));
     
-    dopt = fminbnd(@(d) double(obj.Merit(xk.*(1-d) + xk1.*d, sol{5})), 0.1, 1);
-
     % Set the tolerance
     tolerance = 1e-6;
     

@@ -17,12 +17,13 @@ end
 
 properties (Constant,Access=protected)
     nlsos_options = [casos.package.solvers.SosoptCommon.sosopt_options
-        {'max_iter', 'Maximum number of sequential sos.'
-         'sossol', 'The convex sum-of-squares solver to be used in the bisection.'
+        {'max_iter'      , 'Maximum number of sequential sos.'
+         'sossol'        , 'The convex sum-of-squares solver to be used in the bisection.'
          'sossol_options', 'Options to be passed to the SOS solver.'
-         'tolerance_abs', 'Absolute tolerance for stopping criterion.'
-         'tolerance_rel', 'Relative tolerance for stopping criterion.'
-         'verbose', 'Print current iteration to command window'}
+         'tolerance_abs' , 'Absolute tolerance for stopping criterion.'
+         'tolerance_rel' , 'Relative tolerance for stopping criterion.'
+         'verbose'       , 'Print current iteration to command window'
+         'line_search'   , 'Select an algorithm to solve the linesearch problem.'}
     ];
 end
 
@@ -83,6 +84,7 @@ methods
         if ~isfield(obj.opts,'tolerance_abs'), obj.opts.tolerance_abs = 1e-6; end
         if ~isfield(obj.opts,'tolerance_rel'), obj.opts.tolerance_rel = 1e-6; end
         if ~isfield(obj.opts,'verbose'), obj.opts.verbose = 0; end
+         if ~isfield(obj.opts,'line_search'), obj.opts.line_search = 'fminbnd'; end
        
         % build SOS problem
         buildproblem(obj,sos);
