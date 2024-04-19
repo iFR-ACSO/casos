@@ -50,8 +50,13 @@ end
 methods
     %% Algebraic operations
     function c = plus(a,b)
-        % Add
+        % Addition
         c = plus@casos.package.core.Polynomial(casos.PD(a),casos.PD(b));
+    end
+
+    function c = times(a,b)
+        % Element-wise multiplication
+        c = times@casos.package.core.Polynomial(casos.PD(a),casos.PD(b));
     end
 end
 

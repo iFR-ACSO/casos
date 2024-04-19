@@ -1,5 +1,5 @@
-function c = plus(a,b)
-% Add two polynomials.
+function c = times(a,b)
+% Element-wise multiplication of two polynomial matrices.
 
 % input dimensions
 sza = size(a);
@@ -15,20 +15,22 @@ I0 = (sza == 0) | (szb == 0);
 % find one dimension
 I1 = (sza == 1) | (szb == 1);
 
-% dimensions are compatible if equal or one summand is row/column
+% dimensions are compatible if equal or one factor is row/column
 assert(all(I | I1), errsz, size2str(a), size2str(b))
 
-% dimensions of sum
+% dimensions of element-wise product
 sz = max(sza,szb);
 
 % handle simple case(s) for speed up
 if isempty(a) || isempty(b)
-    % addition with empty polynomial is empty
+    % element-wise multiplication with empty polynomial is empty
     sz(I0) = 0;
 
     c = a.empty(sz);
     return
 end
+% TODO: handle or escape for other simple cases, e.g., scalar, constant
+% matrix, single term etc.?
 
 % else
 c = a.new_poly;
@@ -37,8 +39,8 @@ c = a.new_poly;
 [S1,cfa] = coeff_repmat(a.get_sparsity,a.coeffs,sz./sza);
 [S2,cfb] = coeff_repmat(b.get_sparsity,b.coeffs,sz./szb);
 
-% add coefficient matrices
-[S,c.coeffs] = coeff_plus(S1,S2,cfa,cfb);
+% multiply coefficient matrices
+[S,c.coeffs] = coeff_times(S1,S2,cfa,cfb);
 
 % set sparsity
 c = set_sparsity(c,S);
