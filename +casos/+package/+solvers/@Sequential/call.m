@@ -11,25 +11,32 @@ function argout = call(obj,argin)
     
     % first initial guess must be provided by user!
     xi_k = args{1};
+
+    % check if we have parameter from the original nonlinear problem
+    if ~is_zero(args{2})
+        p0   = args{2};
+    else
+        p0 = [];
+    end
     
     if obj.opts.verbose 
-    disp('Start sequential SOS...')
-    fprintf('%-10s%-15s%-15s%-15s\n', 'Iteration', 'abs(f)', 'abs(primal)', 'abs(dual)');
-    fprintf('-------------------------------------------------\n');
+        disp('Start sequential SOS...')
+        fprintf('%-10s%-15s%-15s%-15s\n', 'Iteration', 'abs(f)', 'abs(primal)', 'abs(dual)');
+        fprintf('-------------------------------------------------\n');
     end
 
     % solve nonconvex SOS problem via sequence of convex SOS problem
     for i = 1:obj.opts.max_iter
         
-        % initial guesss
+        % initial guesss; actually not used but just for completness
         args{1} = xi_k;
     
         % set parameter to convex problem
-        args{2}  = xi_k;
+        args{2}  = [p0; xi_k];
     
         % evaluate convex SOS problem
         sol = call(obj.sossolver, args);
-    
+  
         % store iteration info
         info{i} = obj.sossolver.stats;
     
@@ -44,6 +51,8 @@ function argout = call(obj,argin)
                 xi_plus   = sol{1} + xi_k;
     
                 dual_plus = sol{5};
+                
+                constraintVio = pnorm2( obj.constraintFun(xi_plus,p0) - sol{3} );
     
                 cost      = double(sol{2});
                 
@@ -79,6 +88,7 @@ function argout = call(obj,argin)
                     switch(obj.opts.line_search) 
                         case 'fminbnd'
                                 dopt = line_search_fminbnd(obj, ...
+                                                           p0,...
                                                            xi_k, ...
                                                            xi_plus, ...
                                                            dual_plus );
@@ -135,6 +145,7 @@ function argout = call(obj,argin)
                 xi_k      = xi_k1;
                 dual_k    = duals_k1;
                 sol_old = sol;
+
                 else
     
                  % set current solution as previous solution for next iteration

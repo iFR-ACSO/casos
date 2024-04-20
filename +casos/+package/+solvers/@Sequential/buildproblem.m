@@ -29,7 +29,6 @@ p0 = sos.p;
 % naming is not important since this is only for internal 
 base_x = basis(sos.x);
 
-
 xi_k    = casos.PS.sym('xi_k',base_x);
 xi_plus = casos.PS.sym('xi_plus',base_x);
 
@@ -47,8 +46,6 @@ sosopt    = opts.sossol_options;
 sosopt.Kx = struct('lin',Nl,'sos',Ns);
 sosopt.Kc = struct('lin',Ml,'sos',Ms);
 
-% sosopt.error_on_fail = false;
-
 % initialize convex SOS solver
 obj.sossolver = casos.package.solvers.SossolInternal('SOS',opts.sossol,sos,sosopt);
 
@@ -65,14 +62,14 @@ obj.monom_gs = monomials_in(obj.sossolver,7);
 lam_gs = casos.PS.sym('lam_gs',obj.monom_gs);
 
 % Langrange function
-L = casos.Function('f',{sos.x,lam_gs}, {nlsos.f - dot(lam_gs,nlsos.g)});
+L = casos.Function('f',{sos.x,lam_gs,p0}, {nlsos.f - dot(lam_gs,nlsos.g)});
 
 obj.Merit = L;
 
 %% setup line search
 d = casos.PS.sym('d');
 
-Psi_d = L(xi_plus*d + (1-d)*xi_k , lam_gs) - 1e-15*d^2; % see bisos implementation
+Psi_d = L(xi_plus*d + (1-d)*xi_k , lam_gs,p0) - 1e-15*d^2; % see bisos implementation
 
 % % define SOS problem:   min_d Psi(d) s.t. 0 \leq d \leq 1 
 poly_lineSearch = struct('x',d, ...
@@ -80,7 +77,9 @@ poly_lineSearch = struct('x',d, ...
                         'g',[], ... % 0 <= d <= 1  is set in call
                         'p',[xi_k; xi_plus; lam_gs]);
 
-       
+
+obj.constraintFun = casos.Function('f',{sos.x,p0}, {nlsos.g});
+
 % solve by relaxation to SDP
 obj.lineSearch = casos.sossol('S', ...
                               'sedumi', ...
