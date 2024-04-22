@@ -52,11 +52,12 @@ function argout = call(obj,argin)
     
                 dual_plus = sol{5};
                 
-                constraintVio = pnorm2( obj.constraintFun(xi_plus,p0) - sol{3} );
-    
+                constraint_vio = sqrt(full(casadi.DM( pnorm2( obj.constraintFun(xi_plus,p0) - sol{3} ) )));
+                                
+                % double(obj.cost_fun(xi_plus))
                 cost      = double(sol{2});
                 
-    
+  
             otherwise  
     
                 if i > 1
@@ -81,6 +82,23 @@ function argout = call(obj,argin)
             
         end
     
+
+            % filter
+            if i == 1
+                Filter = [cost , constraint_vio];
+                
+            else
+                % check new iterate
+                % if Filter(:,2) < constraint_vio && Filter(:,1) < cost
+                    % if both new values are larger then reject
+                    % filterReject = 1;
+                % else
+                    % accept to filter
+                    % filterReject = 0;
+                    Filter(i,1) = cost;
+                    Filter(i,2) = constraint_vio;
+                % end
+            end
     
             % check convergence
             if i > 1 

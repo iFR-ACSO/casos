@@ -139,7 +139,7 @@ b = casos.PS.sym('b');
 
 % options
 opts = struct('sossol','mosek');
-opts.verbose = 0;
+opts.verbose = 1;
 
 sos1 = struct('x',[V; s1; s2; b],...
               'f',-b, ...

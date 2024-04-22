@@ -49,8 +49,9 @@ Vval = Omega;
 Xs = 3*x(2)^2 + x(1)^2 -1;
 
 %% Define all polynmoials
-T = 0.1;
-N = 10;
+T = 2;
+dt = 0.1;
+N = T/dt;
 
 
 t0 = 0;
@@ -59,23 +60,23 @@ T  = T/N;
 hT = (t-t0)*(T-t);
 
 % Lyapunov function candidate
-V    = casos.PS.sym('v',monomials([x;t],0:3));
-Vsym = casos.PS.sym('vsym',monomials([x;t],0:3));
+V    = casos.PS.sym('v',monomials([x;t],0:4));
+Vsym = casos.PS.sym('vsym',monomials([x;t],0:4));
 K    = casos.PS.sym('K',monomials(x,0:2));
 
 
 % SOS multiplier
-s1 = casos.PS.sym('s1',monomials([x;t],0:2),'gram');
-s2 = casos.PS.sym('s2',monomials([x;t],0:2),'gram');
+s1 = casos.PS.sym('s1',monomials([x;t],0:4),'gram');
+s2 = casos.PS.sym('s2',monomials([x;t],4),'gram');
 
 s3 = casos.PS.sym('s3',monomials([x;t],0:2),'gram');
-s4 = casos.PS.sym('s4',monomials([x;t],0:2),'gram');
+s4 = casos.PS.sym('s4',monomials([x;t],2),'gram');
 
 s51 = casos.PS.sym('s51',monomials([x;t],0:2),'gram');
 s52 = casos.PS.sym('s52',monomials([x;t],0:2),'gram');
 
-s61 = casos.PS.sym('s61',monomials([x;t],0:2),'gram');
-s62 = casos.PS.sym('s62',monomials([x;t],0:2),'gram');
+s61 = casos.PS.sym('s61',monomials([x;t],2),'gram');
+s62 = casos.PS.sym('s62',monomials([x;t],2),'gram');
 
 s7 = casos.PS.sym('s7',monomials(x,0:2),'gram');
 s8 = casos.PS.sym('s8',monomials(x,0:2),'gram');
@@ -130,15 +131,15 @@ Vfun0 = to_function(subs(V,t,0));
 VfunT = to_function(subs(V,t,T));
 gfun  = to_function(Xs);
 
-Nsample = 100;
+Nsample = 10000;
 a = -1;
 b = -1;
 samples = randn(2,Nsample);
-gval = full(casadi.DM(gfun(samples)));
+% gval = full(casadi.DM(gfun(samples)));
 
-idx = find(gval <= 0);
+% idx = find(gval <= 0);
 
-cost    = 1/Nsample*sum( ( Vfun0(casadi.SX(samples(:,idx)))  ) );
+cost    = 1/Nsample*sum( ( Vfun0(casadi.SX(samples))  ) );
 
 
 prob_v_step = struct('x',V, ...                % decision variables
@@ -148,10 +149,10 @@ prob_v_step = struct('x',V, ...                % decision variables
 
 prob_v_step.('g') = [s1sym*V - s2sym*hT - nabla(V,t) - nabla(V,x)*(f + gx*Ksym); 
                      s3sym*V - s4sym*hT - Xs;
-                    Ksym - umin + s51sym*V - s61sym*hT  ; 
-                    umax- Ksym  + s52sym*V - s62sym*hT  ; 
-                    s7sym*subs(V,t,T) - Omega;
-                    s8sym*Omega - subs(V,t,t0)]; % alternative  s8sym*subs(V,t,T) - subs(V,t,t0)
+                     Ksym - umin + s51sym*V - s61sym*hT  ; 
+                     umax- Ksym  + s52sym*V - s62sym*hT  ; 
+                     s7sym*subs(V,t,T) - Omega;
+                     s8sym*Omega - subs(V,t,t0)]; % alternative  s8sym*subs(V,t,T) - subs(V,t,t0)
 
 % states + constraint are SOS cones
 opts.Kx = struct('sos', 0,'lin',1);
@@ -192,17 +193,17 @@ Omega_prev = subs(sol_v_step.x,t,T);
 X1_tilde   = subs(sol_v_step.x,t,0);
 
 %% setup new solver for subsequent steps
-s1 = casos.PS.sym('s1',monomials([x;t],0:2));
-s2 = casos.PS.sym('s2',monomials([x;t],0:2));
+s1 = casos.PS.sym('s1',monomials([x;t],0:4));
+s2 = casos.PS.sym('s2',monomials([x;t],4));
 
 s3 = casos.PS.sym('s3',monomials([x;t],0:2));
-s4 = casos.PS.sym('s4',monomials([x;t],0:2));
+s4 = casos.PS.sym('s4',monomials([x;t],2));
 
 s51 = casos.PS.sym('s51',monomials([x;t],0:2));
 s52 = casos.PS.sym('s52',monomials([x;t],0:2));
 
 s61 = casos.PS.sym('s61',monomials([x;t],0:2));
-s62 = casos.PS.sym('s62',monomials([x;t],0:2));
+s62 = casos.PS.sym('s62',monomials([x;t],2));
 
 s7 = casos.PS.sym('s7',monomials(x,0:2));
 s8 = casos.PS.sym('s8',monomials(x,0:2));
@@ -213,7 +214,7 @@ X1_tilde_sym = casos.PS.sym('xsym',basis(V));
 Omegasym     = casos.PS.sym('omegasym',basis(subs(V,t,T)));
 
 
-prob_v_step = struct('x',[V;K;s1;s2;s3;s4;s51;s52;s61;s62;s7;s8;s9], ...                % decision variables
+prob_v_step = struct('x',[V;K;s1;s2;s3;s4;s51;s52;s61;s62;s7;s8;s9], ...  % decision variables
                      'f',[],...
                      'p',[X1_tilde_sym; Omegasym]); % parameter
 
@@ -234,7 +235,7 @@ prob_v_step.('g') = [s1;
                      umax           - K     + s52*V   - s62*hT  ; 
                      s7*Omegasym    - subs(V,t,T);
                      s8*subs(V,t,T) - X1_tilde_sym;
-                     s9*subs(V,t,T) - subs(V,t,t0)
+                     s9*X1_tilde_sym - subs(V,t,t0)
                      ]; 
 
 % states + constraint are SOS cones
@@ -293,9 +294,9 @@ ubx = [Vub; Kub; s1ub; s2ub; s3ub; s4ub; s51ub; s52ub; s61ub; s62ub; s7ub; s8ub;
 s9_0       = ones(length(s9_mon),1)'*s9_mon;
 
 kstep        = 0;
-NstepStorage = [cleanpoly(sol_v_step.x,1e-5)];
-NstepConSet  = [cleanpoly(subs(sol_v_step.x,t,0),1e-5)];
-NstepTermSet = [cleanpoly(subs(sol_v_step.x,t,T),1e-5)];
+NstepStorage = sol_v_step.x;
+NstepConSet  = subs(sol_v_step.x,t,0);
+NstepTermSet = subs(sol_v_step.x,t,T);
 
 for k = 1:N
 
@@ -313,21 +314,20 @@ for k = 1:N
                                    'ubx',ubx); 
         
         % set solutions input for next set
-        Omega_prev = cleanpoly(subs(sol_v_step.x(1),t,T),1e-4);
-        X1_tilde   = cleanpoly(subs(sol_v_step.x(1),t,0),1e-4);
+        Omega_prev = subs(sol_v_step.x(1),t,T);
+        X1_tilde   = subs(sol_v_step.x(1),t,0);
 
     % store computations in array
     kstep        = [kstep; k];
-    NstepStorage = [NstepStorage; cleanpoly(sol_v_step.x(1),1e-5)];
-    NstepConSet  = [NstepConSet;  cleanpoly(subs(sol_v_step.x(1),t,0),1e-5)];
-    NstepTermSet = [NstepTermSet; cleanpoly(subs(sol_v_step.x(1),t,T),1e-5)];
+    NstepStorage = [NstepStorage; sol_v_step.x(1)];
+    NstepConSet  = [NstepConSet;  subs(sol_v_step.x(1),t,0)];
+    NstepTermSet = [NstepTermSet; subs(sol_v_step.x(1),t,T)];
     
     % plotting of controllable sets
     figure(1)
-    clf
-    pcontour(Omega0,0,[-1 1 -1 1],'b')
-    hold on
-    pcontour(Xs,0,[-1 1 -1 1],'k--')
+    % pcontour(Omega0,0,[-1 1 -1 1],'b')
+    % hold on
+    % pcontour(Xs,0,[-1 1 -1 1],'k--')
     pcontour(subs(sol_v_step.x(1),t,0),0,[-1 1 -1 1],'g')
     pause(0.01)
     

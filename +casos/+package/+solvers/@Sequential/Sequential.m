@@ -7,6 +7,7 @@ properties (Access=private)
         
     Merit;
     constraintFun
+    cost_fun
     
     nabla_x_fun;
     nabla_lam_fun;
@@ -82,8 +83,8 @@ methods
         if ~isfield(obj.opts,'sossol'), obj.opts.sossol = 'sedumi'; end
         if ~isfield(obj.opts,'sossol_options'), obj.opts.sossol_options = struct; end
         if ~isfield(obj.opts,'max_iter'), obj.opts.max_iter = 1000; end
-        if ~isfield(obj.opts,'tolerance_abs'), obj.opts.tolerance_abs = 1e-4; end
-        if ~isfield(obj.opts,'tolerance_rel'), obj.opts.tolerance_rel = 1e-4; end
+        if ~isfield(obj.opts,'tolerance_abs'), obj.opts.tolerance_abs = 1e-3; end
+        if ~isfield(obj.opts,'tolerance_rel'), obj.opts.tolerance_rel = 1e-3; end
         if ~isfield(obj.opts,'verbose'), obj.opts.verbose = 0; end
          if ~isfield(obj.opts,'line_search'), obj.opts.line_search = 'fminbnd'; end
        

@@ -41,6 +41,8 @@ sos.g = linearize(nlsos.g,nlsos.x,xi_k);
 % Taylor Approximation cost and evaluate at current solution
 sos.f = linearize(nlsos.f,nlsos.x,xi_k);
 
+
+obj.cost_fun = casos.Function('f',{sos.x}, {nlsos.f});
 % SOS options
 sosopt    = opts.sossol_options;
 sosopt.Kx = struct('lin',Nl,'sos',Ns);
