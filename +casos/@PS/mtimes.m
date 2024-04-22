@@ -20,9 +20,6 @@ errsz = 'Polynomials have incompatible sizes for this operation ([%s] vs. [%s]).
 % dimensions are compatible if inner dimensions agree
 assert(sza(2) == szb(1), errsz, size2str(sza), size2str(szb))
 
-% TODO: handle or escape for other simple cases, e.g., scalar, constant
-% matrix, single term etc.?
-
 % else
 c = casos.PS;
 
@@ -31,6 +28,15 @@ ntb = b.nterm;
 
 % combine variables
 [indets,dga,dgb] = combineVar(a.indets,b.indets,a.degmat,b.degmat);
+
+if isrow(a) && isvector(b)
+    % inner vector product
+    % (sum_a c_a'*x^a)*(sum_b c_b*x^b) = sum_a sum_b (c_a'*c_b)*(x^a*x^b)
+    coeffs = reshape(a.coeffs*b.coeffs',nta*ntb,1);
+
+else
+% TODO: handle or escape for other simple cases, e.g., scalar, constant
+% matrix, single term etc.?
 
 % Vectorized code to compute coef matrix
 % from multipoly
@@ -60,6 +66,8 @@ idx2 = repmat(idx2(:),[nta 1]);
 
 idx = sub2ind([nta*sza(1) ntb*szb(2)],idx1,idx2);
 coeffs = reshape(tempcoef(idx),sza(1)*szb(2),nta*ntb)';
+
+end
 
 % (sum_a c_a*x^a)*(sum_b c_b*x^b) = (sum_a sum_b (c_a*c_b)*(x^a*x^b)
 degmat = kron(dga,ones(ntb,1)) +  kron(ones(nta,1),dgb);
