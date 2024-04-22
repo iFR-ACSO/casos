@@ -52,9 +52,10 @@ function argout = call(obj,argin)
     
                 dual_plus = sol{5};
                 
-                constraint_vio = sqrt(full(casadi.DM( pnorm2( obj.constraintFun(xi_plus,p0) - sol{3} ) )));
-                                
-                % double(obj.cost_fun(xi_plus))
+                % constraint_vio = sqrt(full(casadi.DM( pnorm2( obj.constraintFun(xi_plus,p0) - sol{3} ) )));
+                 
+                delta_constraint = obj.constraintFun(xi_plus,p0) - sol{3} ;
+                constraint_vio  = full(casadi.DM( dot( delta_constraint, delta_constraint ) ));
                 cost      = double(sol{2});
                 
   
@@ -88,20 +89,13 @@ function argout = call(obj,argin)
                 Filter = [cost , constraint_vio];
                 
             else
-                % check new iterate
-                % if Filter(:,2) < constraint_vio && Filter(:,1) < cost
-                    % if both new values are larger then reject
-                    % filterReject = 1;
-                % else
-                    % accept to filter
-                    % filterReject = 0;
-                    Filter(i,1) = cost;
-                    Filter(i,2) = constraint_vio;
-                % end
+                Filter(i,1) = cost;
+                Filter(i,2) = constraint_vio;
             end
     
             % check convergence
             if i > 1 
+
                     % select an algorithm to perform the linesearch
                     switch(obj.opts.line_search) 
                         case 'fminbnd'
@@ -112,6 +106,7 @@ function argout = call(obj,argin)
                                                            dual_plus );
                         case 'bisection'
                                 dopt = bisection_minimization(obj, ...
+                                                              p0,...
                                                               xi_k, ...
                                                               xi_plus, ...
                                                               dual_plus );
@@ -131,24 +126,31 @@ function argout = call(obj,argin)
                     xi_k1    = dopt*xi_plus    + (1-dopt)*xi_k;
                     duals_k1 = dopt*dual_plus  + (1-dopt)*dual_k;
                      
-    
+                
+                % check convergence or if maximum number of iterations are reached    
+                delta_xi    = xi_k1 - xi_k;
+                delta_dual  = duals_k1 - dual_k;
+
+                delta_xi_double   = full( casadi.DM( (dot(delta_xi,delta_xi)) ) );
+                delta_dual_double = full( casadi.DM( (dot(delta_dual,delta_dual))) );
                  if obj.opts.verbose 
                     fprintf('%-10d%-15.4f%-15.4f%-15.4f\n',...
                             i, cost ,...
-                            full(casadi.DM(pnorm2(xi_k1 - xi_k))), full(casadi.DM(pnorm2(duals_k1 - dual_k))));
+                            delta_xi_double, delta_dual_double  );
                 end
     
-                % check convergence or if maximum number of iterations are reached    
+
                 if i == obj.opts.max_iter || ...
-                   full( casadi.DM( pnorm2(xi_k1 - xi_k)) )       < obj.opts.tolerance_abs && ...
-                   full( casadi.DM( pnorm2(duals_k1 - dual_k) ) ) < obj.opts.tolerance_rel*full( casadi.DM( pnorm2( duals_k1 ) ) ) 
+                   delta_xi_double      < obj.opts.tolerance_abs && ...
+                   delta_dual_double    < obj.opts.tolerance_rel*full( casadi.DM(  (dot(duals_k1,duals_k1)) ) )  
+                   % full( casadi.DM( pnorm2()) )       < obj.opts.tolerance_abs && ...
+                   % full( casadi.DM( pnorm2(duals_k1 - dual_k) ) ) < obj.opts.tolerance_rel*full( casadi.DM( pnorm2( duals_k1 ) ) ) 
                   
                    % store iteration info
                    info(i+1:end) = [];
                    obj.info.iter = info;
             
-                    % adjust last solution similar to iteration i.e. overwrite
-                    % optimization solution 
+                    % adjust last solution similar to iteration i.e. overwrite optimization solution 
                     sol{1} = xi_k1;
                     sol{5} = duals_k1;
             
@@ -164,12 +166,13 @@ function argout = call(obj,argin)
                 dual_k    = duals_k1;
                 sol_old = sol;
 
-                else
+            else % first iteration
     
                  % set current solution as previous solution for next iteration
                  xi_k = xi_plus;
                  dual_k = dual_plus;
                  sol_old = sol;
+
             end % end-if
     
     
