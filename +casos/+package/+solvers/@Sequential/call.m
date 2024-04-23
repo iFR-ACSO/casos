@@ -20,9 +20,9 @@ function argout = call(obj,argin)
     end
     
     if obj.opts.verbose 
-        disp('Start sequential SOS...')
-        fprintf('%-10s%-15s%-15s%-15s\n', 'Iteration', 'abs(f)', 'abs(primal)', 'abs(dual)');
-        fprintf('-------------------------------------------------\n');
+        % disp('Start sequential SOS...')
+        printf(obj.log,'debug','%-15s%-15s%-20s%-20s%-20s%-20s\n', 'Iteration', 'cost', 'sqL2_pr', 'sqL2_du', 'sqL2_vio','alpha');
+        printf(obj.log,'debug','-----------------------------------------------------------------------------------------------\n');
     end
 
     % solve nonconvex SOS problem via sequence of convex SOS problem
@@ -178,9 +178,8 @@ function argout = call(obj,argin)
             delta_dual_double = full( casadi.DM( (dot(delta_dual,delta_dual))) );
 
              if obj.opts.verbose 
-                fprintf('%-10d%-15.4f%-15.4f%-15.4f\n',...
-                        i, cost ,...
-                        delta_xi_double, delta_dual_double  );
+                printf(obj.log,'debug','%-15d%-15f%-20e%-20e%-20e%-20.4f\n',...
+                        i, cost , delta_xi_double, delta_dual_double, constraint_vio, dopt  );
             end
     
 
@@ -199,7 +198,9 @@ function argout = call(obj,argin)
                 sol{5} = duals_k1;
         
                 argout = sol;
-        
+                printf(obj.log,'debug','---------------------------------------------------------------------------------\n');
+                printf(obj.log,'debug','Solution status: Optimal solution found\n'); 
+
                 % terminate
                 return
         
