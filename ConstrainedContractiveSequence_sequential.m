@@ -240,6 +240,7 @@ prob_v_step.('g') = [s1;
 
 % states + constraint are SOS cones
 opts = struct('sossol','mosek');
+opts.error_on_fail = 0;
 opts.Kx = struct('sos',0,'lin',length(prob_v_step.x));
 opts.Kc = struct('sos', length(prob_v_step.g));
 opts.verbose = 1;

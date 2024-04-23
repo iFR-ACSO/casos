@@ -69,6 +69,9 @@ function argout = call(obj,argin)
                     
                    % take solution from previous iteration
                    argout = sol_old;
+
+                 printf(obj.log,'error','Convex optimization run into numerical errors.');
+                 assert(~obj.opts.error_on_fail,'Convex optimization run into numerical errors.')
     
                   return
     

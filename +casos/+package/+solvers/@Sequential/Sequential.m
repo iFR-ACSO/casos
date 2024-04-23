@@ -20,7 +20,7 @@ end
 properties (Constant,Access=protected)
     nlsos_options = [casos.package.solvers.SosoptCommon.sosopt_options
         {'max_iter'      , 'Maximum number of sequential sos.'
-         'sossol'        , 'The convex sum-of-squares solver to be used in the bisection.'
+         'sossol'        , 'The convex sum-of-squares solver to be used in the sequential SOS.'
          'sossol_options', 'Options to be passed to the SOS solver.'
          'tolerance_abs' , 'Absolute tolerance for stopping criterion.'
          'tolerance_rel' , 'Relative tolerance for stopping criterion.'
