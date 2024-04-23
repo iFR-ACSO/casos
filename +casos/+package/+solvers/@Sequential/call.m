@@ -21,7 +21,7 @@ function argout = call(obj,argin)
     
     if obj.opts.verbose 
         % disp('Start sequential SOS...')
-        printf(obj.log,'debug','%-15s%-15s%-20s%-20s%-20s%-20s\n', 'Iteration', 'cost', 'sqL2_pr', 'sqL2_du', 'sqL2_vio','alpha');
+        printf(obj.log,'debug','%-15s%-15s%-20s%-20s%-20s%-20s\n', 'Iteration', 'cost', 'squared_L2_pr', 'squared_L2_du', 'squared_L2_vio','alpha');
         printf(obj.log,'debug','-----------------------------------------------------------------------------------------------\n');
     end
 
@@ -32,7 +32,8 @@ function argout = call(obj,argin)
         args{1} = xi_k;
     
         % set parameter to convex problem
-        args{2}  = [p0; xi_k];
+        % args{2}  = [p0; xi_k];
+        args{2} = obj.vertcatFun(p0, xi_k);
     
         % evaluate convex SOS problem
         sol = call(obj.sossolver, args);
@@ -48,14 +49,17 @@ function argout = call(obj,argin)
                 % set initial guess and finally parameter; 
                 % sos constraint reads  delta x = f(x0) + df/dx(x0)*(x-x0);
                 % where delta x = xi_k+1 - xi_k hence xi_k+1 = delta_x + xi_k 
-                xi_plus   = sol{1} + xi_k;
-    
+
+                % xi_plus   = sol{1} + xi_k;
+                xi_plus = obj.plusFun(sol{1},xi_k);
+
                 dual_plus = sol{5};
                 
                 % constraint_vio = sqrt(full(casadi.DM( pnorm2( obj.constraintFun(xi_plus,p0) - sol{3} ) )));
                  
-                delta_constraint = obj.constraintFun(xi_plus,p0) - sol{3} ;
-                constraint_vio  = full(casadi.DM( dot( delta_constraint, delta_constraint ) ));
+                % delta_constraint = obj.constraintFun(xi_plus,p0) - sol{3} ;
+                % constraint_vio  = full(casadi.DM( dot( delta_constraint, delta_constraint ) ));
+                constraint_vio  = full(casadi.DM(obj.norm2FunVio(xi_plus,p0,sol{3})));
                 cost            = double(sol{2});
 
             case UnifiedReturnStatus.SOLVER_RET_UNKNOWN
@@ -134,10 +138,17 @@ function argout = call(obj,argin)
            Filter(i,2) = constraint_vio;
         end
     
-
         
-        % check convergence
-        if i > 1 
+        if i == 1
+             % set current solution as previous solution for next iteration
+             xi_k    = xi_plus;
+             dual_k  = dual_plus;
+             sol_old = sol;
+             continue
+        end
+
+
+       
 
                 % select an algorithm to perform the linesearch
                 switch(obj.opts.line_search) 
@@ -166,16 +177,22 @@ function argout = call(obj,argin)
                 end
 
                 % update primal and dual solution
-                xi_k1    = dopt*xi_plus    + (1-dopt)*xi_k;
-                duals_k1 = dopt*dual_plus  + (1-dopt)*dual_k;
+                [xi_k1, dual_k1] = obj.updateLineSearch(xi_k, xi_plus, dual_k, dual_plus, dopt );
+                % xi_k1    = dopt*xi_plus    + (1-dopt)*xi_k;
+                % duals_k1 = dopt*dual_plus  + (1-dopt)*dual_k;
                  
             
             % check convergence or if maximum number of iterations are reached    
-            delta_xi    = xi_k1    - xi_k;
-            delta_dual  = duals_k1 - dual_k;
+            [delta_xi, delta_dual] = obj.deltaOptVar(xi_k,xi_k1,dual_k,dual_k1);
+            % delta_xi    = xi_k1    - xi_k;
+            % delta_dual  = dual_k1 - dual_k;
 
-            delta_xi_double   = full( casadi.DM( (dot(delta_xi,delta_xi)) ) );
-            delta_dual_double = full( casadi.DM( (dot(delta_dual,delta_dual))) );
+            % delta_xi_double   = full( casadi.DM( (dot(delta_xi,delta_xi)) ) );
+            % delta_dual_double = full( casadi.DM( (dot(delta_dual,delta_dual))) );
+            
+            [delta_xi,delta_dual] = obj.norm2FunOptVar(delta_xi,delta_xi,delta_dual,delta_dual);
+            delta_xi_double   = full( casadi.DM(delta_xi));
+            delta_dual_double = full( casadi.DM(delta_dual) );
 
              if obj.opts.verbose 
                 printf(obj.log,'debug','%-15d%-15f%-20e%-20e%-20e%-20.4f\n',...
@@ -185,7 +202,7 @@ function argout = call(obj,argin)
 
             if i == obj.opts.max_iter || ...
                delta_xi_double      < obj.opts.tolerance_abs && ...
-               delta_dual_double    < obj.opts.tolerance_rel*full( casadi.DM(  (dot(duals_k1,duals_k1)) ) )  
+               delta_dual_double    < obj.opts.tolerance_rel*full( casadi.DM(  (dot(dual_k1,dual_k1)) ) )  
                % full( casadi.DM( pnorm2()) )       < obj.opts.tolerance_abs && ...
                % full( casadi.DM( pnorm2(duals_k1 - dual_k) ) ) < obj.opts.tolerance_rel*full( casadi.DM( pnorm2( duals_k1 ) ) ) 
               
@@ -195,7 +212,7 @@ function argout = call(obj,argin)
         
                 % adjust last solution similar to iteration i.e. overwrite optimization solution 
                 sol{1} = xi_k1;
-                sol{5} = duals_k1;
+                sol{5} = dual_k1;
         
                 argout = sol;
                 printf(obj.log,'debug','---------------------------------------------------------------------------------\n');
@@ -208,17 +225,8 @@ function argout = call(obj,argin)
 
             % set current solution as previous solution for next iteration
             xi_k      = xi_k1;
-            dual_k    = duals_k1;
+            dual_k    = dual_k1;
             sol_old   = sol;
-
-        else % first iteration
-    
-             % set current solution as previous solution for next iteration
-             xi_k    = xi_plus;
-             dual_k  = dual_plus;
-             sol_old = sol;
-
-        end % end-if distinguish between first or all other iterations
     
     
     end % end for-loop sequential sos

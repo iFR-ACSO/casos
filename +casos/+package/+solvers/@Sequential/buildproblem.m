@@ -61,7 +61,9 @@ obj.monom_gs = monomials_in(obj.sossolver,7);
 
 
 %% setup Merit-function
-lam_gs = casos.PS.sym('lam_gs',obj.monom_gs);
+lam_gs    =  casos.PS.sym('lam_gs',obj.monom_gs);
+dual_k    =  casos.PS.sym('lam_gs',obj.monom_gs);
+dual_plus =  casos.PS.sym('lam_gs',obj.monom_gs);
 
 % Langrange function
 L = casos.Function('f',{sos.x,lam_gs,p0}, {nlsos.f - dot(lam_gs,nlsos.g)});
@@ -87,7 +89,25 @@ obj.lineSearch = casos.sossol('S', ...
                               'sedumi', ...
                               poly_lineSearch,...
                               struct('Kc',struct('sos',0),'Kx',struct('lin',1)));
-       
-         
+
+
+%% work around for efficient computations in sequential-call
+obj.plusFun       = casos.Function('f',{sos.x,xi_k }, {sos.x + xi_k });
+obj.vertcatFun    = casos.Function('f',{p0,xi_k }, {[p0;xi_k]});
+
+obj.norm2FunOptVar   = casos.Function('f',{xi_k,xi_plus,dual_k, dual_plus}, {dot(xi_k,xi_plus),dot(dual_k,dual_plus) });
+
+glin_sol    = casos.PS.sym('glin',basis(sos.g));
+
+obj.norm2FunVio      = casos.Function('f',{xi_plus,p0,glin_sol}, { dot(obj.constraintFun(xi_plus,p0) - glin_sol,obj.constraintFun(xi_plus,p0) - glin_sol)});
+
+dopt = casos.PS.sym('d');
+obj.updateLineSearch  = casos.Function('f',{xi_k, xi_plus, dual_k, dual_plus, dopt }, ...
+                                           {dopt*xi_plus    + (1-dopt)*xi_k, ...
+                                            dopt*dual_plus  + (1-dopt)*dual_k});
+
+obj.deltaOptVar =  casos.Function('f',{xi_k, xi_plus, dual_k, dual_plus}, ...
+                                      {xi_plus-xi_k, dual_plus-dual_k});
+
 
 end

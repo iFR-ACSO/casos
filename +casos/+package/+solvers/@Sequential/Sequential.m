@@ -12,7 +12,14 @@ properties (Access=private)
     nabla_x_fun;
     nabla_lam_fun;
 
-     log;
+    plusFun;
+    vertcatFun;
+    updateLineSearch
+    deltaOptVar;
+    norm2FunOptVar
+    norm2FunVio
+
+    log;
 
     info = struct('iter',[]);
     status = casos.package.UnifiedReturnStatus.SOLVER_RET_UNKNOWN;
