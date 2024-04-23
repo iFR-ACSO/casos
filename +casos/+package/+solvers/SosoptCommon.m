@@ -120,11 +120,11 @@ methods
         sz = [size(get_monomials_in(obj,i),2) 1];
     end
 
-    function val = get_default_in(~,i)
+    function val = get_default_in(obj,i)
         % Defaults of inputs.
         switch (i)
-            case {2 5}, val = casos.PS(-inf);
-            case {3 6}, val = casos.PS(+inf);
+            case {2 5}, val = casos.PS(get_monomials_in(obj,i),-inf);
+            case {3 6}, val = casos.PS(get_monomials_in(obj,i),+inf);
             otherwise, val = casos.PS(0);
         end
     end
