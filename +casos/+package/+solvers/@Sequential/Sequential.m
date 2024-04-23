@@ -4,10 +4,12 @@ classdef Sequential < casos.package.solvers.SosoptCommon
 properties (Access=private)
     sossolver;
     lineSearch;
+    projCon;
+    idxNonlinCon;
         
     Merit;
-    constraintFun
-    cost_fun
+    constraintFun;
+    cost_fun;
     
     nabla_x_fun;
     nabla_lam_fun;
@@ -20,6 +22,7 @@ properties (Access=private)
     norm2FunVio
 
     log;
+    signCost;
 
     info = struct('iter',[]);
     status = casos.package.UnifiedReturnStatus.SOLVER_RET_UNKNOWN;
@@ -94,7 +97,7 @@ methods
         if ~isfield(obj.opts,'max_iter'), obj.opts.max_iter = 1000; end
         if ~isfield(obj.opts,'tolerance_abs'), obj.opts.tolerance_abs = 1e-3; end
         if ~isfield(obj.opts,'tolerance_rel'), obj.opts.tolerance_rel = 1e-3; end
-        if ~isfield(obj.opts,'line_search'), obj.opts.line_search = 'bisection'; end
+        if ~isfield(obj.opts,'line_search'), obj.opts.line_search = 'fminbnd'; end
        
         % set up logger
         if ~isfield(obj.opts,'verbose') || ~obj.opts.verbose

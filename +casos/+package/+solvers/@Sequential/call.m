@@ -59,7 +59,18 @@ function argout = call(obj,argin)
                  
                 % delta_constraint = obj.constraintFun(xi_plus,p0) - sol{3} ;
                 % constraint_vio  = full(casadi.DM( dot( delta_constraint, delta_constraint ) ));
-                constraint_vio  = full(casadi.DM(obj.norm2FunVio(xi_plus,p0,sol{3})));
+                % constraint_vio  = full(casadi.DM(obj.norm2FunVio(xi_plus,p0,sol{3})));
+                
+                sos_g = sol{3};
+                
+                % solve projection problem to get constraint violation
+                % try 
+                sol_proj = obj.projCon('p',sos_g(obj.idxNonlinCon));
+          
+                constraint_vio  = double(sol_proj.f);
+                % catch
+                    % constraint_vio  = full(casadi.DM(obj.norm2FunVio(xi_plus,p0,sol{3})));
+                % end
                 cost            = double(sol{2});
 
             case UnifiedReturnStatus.SOLVER_RET_UNKNOWN
@@ -71,7 +82,7 @@ function argout = call(obj,argin)
                 
                 % constraint_vio = sqrt(full(casadi.DM( pnorm2( obj.constraintFun(xi_plus,p0) - sol{3} ) )));
                  
-                delta_constraint = obj.constraintFun(xi_plus,p0) - sol{3} ;
+                % delta_constraint = obj.constraintFun(xi_plus,p0) - sol{3} ;
                 constraint_vio  = full(casadi.DM( dot( delta_constraint, delta_constraint ) ));
                 cost            = double(sol{2});
                 
@@ -131,11 +142,23 @@ function argout = call(obj,argin)
 
         %% Filter
         if i == 1
+           % initialize
            Filter = [cost , constraint_vio];
                 
         else
-           Filter(i,1) = cost;
-           Filter(i,2) = constraint_vio;
+           
+       
+           List_cost   = Filter(:,1);
+           List_conVia = Filter(:,2);
+                
+                % check if any point in the list dominates the new iterate
+                if any(List_cost < cost) && any(List_conVia < constraint_vio)
+                    FilterAccept = 0;
+                else
+                    FilterAccept = 1;
+                    Filter(i,1) = cost ;
+                    Filter(i,2) = constraint_vio;
+                end
         end
     
         
@@ -148,32 +171,34 @@ function argout = call(obj,argin)
         end
 
 
-       
+               % perform linesearch if curren iterate is not accepted to
+               % filter
+               if ~FilterAccept
+                    % select an algorithm to perform the linesearch
+                    switch(obj.opts.line_search) 
+                        case 'fminbnd'
+                                dopt = line_search_fminbnd(obj, ...
+                                                           p0,...
+                                                           xi_k, ...
+                                                           xi_plus, ...
+                                                           dual_plus );
+                        case 'bisection'
+                                dopt = bisection_minimization(obj, ...
+                                                              p0,...
+                                                              xi_k, ...
+                                                              xi_plus, ...
+                                                              dual_plus );
+                        case 'polySolver'
+                                sol = obj.lineSearch('p',[xi_k; xi_plus; dual_plus],...
+                                                     'lbx',0.1,...
+                                                     'ubx',1);
+    
+                                dopt = double(sol.x);
+    
+                    end
+               else
 
-                % select an algorithm to perform the linesearch
-                switch(obj.opts.line_search) 
-                    case 'fminbnd'
-                            dopt = line_search_fminbnd(obj, ...
-                                                       p0,...
-                                                       xi_k, ...
-                                                       xi_plus, ...
-                                                       dual_plus );
-                    case 'bisection'
-                            dopt = bisection_minimization(obj, ...
-                                                          p0,...
-                                                          xi_k, ...
-                                                          xi_plus, ...
-                                                          dual_plus );
-                    case 'polySolver'
-                            sol = obj.lineSearch('p',[xi_k; xi_plus; dual_plus],...
-                                                 'lbx',0.1,...
-                                                 'ubx',1);
-
-                            dopt = double(sol.x);
-
-
-                    case 'none'
-                        dopt = 1;
+                     dopt = 1;
                 end
 
                 % update primal and dual solution

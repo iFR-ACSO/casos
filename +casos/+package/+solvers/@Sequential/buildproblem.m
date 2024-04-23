@@ -24,7 +24,14 @@ sos.p = nlsos.p;
 
 % store user parameter
 p0 = sos.p;
-        
+   
+if is_symbolic(sos.f)     
+    obj.signCost = 1;
+else
+    obj.signCost = -1;
+end
+
+
 % for each decision variable generate a parameter (which is the current solution)
 % naming is not important since this is only for internal 
 base_x = basis(sos.x);
@@ -43,6 +50,7 @@ sos.f = linearize(nlsos.f,nlsos.x,xi_k);
 
 
 obj.cost_fun = casos.Function('f',{sos.x}, {nlsos.f});
+
 % SOS options
 sosopt    = opts.sossol_options;
 sosopt.Kx = struct('lin',Nl,'sos',Ns);
@@ -76,7 +84,7 @@ d = casos.PS.sym('d');
 Psi_d = L(xi_plus*d + (1-d)*xi_k , lam_gs,p0) - 1e-15*d^2; % see bisos implementation
 
 % % define SOS problem:   min_d Psi(d) s.t. 0 \leq d \leq 1 
-poly_lineSearch = struct('x',d, ...
+sos_lineSearch = struct('x',d, ...
                         'f',Psi_d, ...
                         'g',[], ... % 0 <= d <= 1  is set in call
                         'p',[xi_k; xi_plus; lam_gs]);
@@ -87,27 +95,48 @@ obj.constraintFun = casos.Function('f',{sos.x,p0}, {nlsos.g});
 % solve by relaxation to SDP
 obj.lineSearch = casos.sossol('S', ...
                               'sedumi', ...
-                              poly_lineSearch,...
+                              sos_lineSearch,...
                               struct('Kc',struct('sos',0),'Kx',struct('lin',1)));
 
 
+%% setup projection
+% identify nonlinear constraints
+
+idx = 1:length(nlsos.g);
+I = arrayfun(@(i) ~is_linear(nlsos.g,nlsos.x,idx==i), idx);
+
+% Gram decision variable
+s    = casos.PS.sym('q',basis(nlsos.g,I));
+gsym = casos.PS.sym('gsym',basis(nlsos.g,I));
+
+% store indices of nonlinear constraints
+obj.idxNonlinCon = I;
+
+% projection error
+e = s - gsym;
+
+% define Q-SOS problem parameterized nonlinear constraints
+%   min ||s-p||^2  s.t. s is SOS
+proj_sos = struct('x',s,'f',dot(e,e),'g',s,'p',gsym);
+
+obj.projCon =  casos.sossol('S','mosek',proj_sos,struct('Kc',struct('sos',length(s))));
+
 %% work around for efficient computations in sequential-call
-obj.plusFun       = casos.Function('f',{sos.x,xi_k }, {sos.x + xi_k });
-obj.vertcatFun    = casos.Function('f',{p0,xi_k }, {[p0;xi_k]});
+obj.plusFun        = casos.Function('f',{sos.x,xi_k }, {sos.x + xi_k });
+obj.vertcatFun     = casos.Function('f',{p0,xi_k }, {[p0;xi_k]});
+obj.norm2FunOptVar = casos.Function('f',{xi_k,xi_plus,dual_k, dual_plus}, ...
+                     {dot(xi_k,xi_plus),dot(dual_k,dual_plus) });
 
-obj.norm2FunOptVar   = casos.Function('f',{xi_k,xi_plus,dual_k, dual_plus}, {dot(xi_k,xi_plus),dot(dual_k,dual_plus) });
-
-glin_sol    = casos.PS.sym('glin',basis(sos.g));
-
-obj.norm2FunVio      = casos.Function('f',{xi_plus,p0,glin_sol}, { dot(obj.constraintFun(xi_plus,p0) - glin_sol,obj.constraintFun(xi_plus,p0) - glin_sol)});
+glin_sol         = casos.PS.sym('glin',basis(sos.g));
+obj.norm2FunVio  = casos.Function('f',{xi_plus,p0,glin_sol}, ...
+                  { dot(obj.constraintFun(xi_plus,p0) - glin_sol,obj.constraintFun(xi_plus,p0) - glin_sol)});
 
 dopt = casos.PS.sym('d');
 obj.updateLineSearch  = casos.Function('f',{xi_k, xi_plus, dual_k, dual_plus, dopt }, ...
-                                           {dopt*xi_plus    + (1-dopt)*xi_k, ...
-                                            dopt*dual_plus  + (1-dopt)*dual_k});
+                        {dopt*xi_plus    + (1-dopt)*xi_k, dopt*dual_plus  + (1-dopt)*dual_k});
 
 obj.deltaOptVar =  casos.Function('f',{xi_k, xi_plus, dual_k, dual_plus}, ...
-                                      {xi_plus-xi_k, dual_plus-dual_k});
+                   {xi_plus-xi_k, dual_plus-dual_k});
 
 
 end
