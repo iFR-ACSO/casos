@@ -69,7 +69,3 @@ sol1 = S1('x0',[Vinit ; 1; x'*x ; 1], ...
           'ubx',[Vub;s1ub;s2ub;gub]);
 toc
 
-% show solution 
-sol1.f
-sol1.x
-

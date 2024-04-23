@@ -115,7 +115,7 @@ p = x'*x*1e2;
 V = casos.PS.sym('v',monomials(x,2));
 
 % SOS multiplier
-s1 = casos.PS.sym('s1',monomials(x,0));
+s1 = casos.PS.sym('s1',monomials(x,2));
 s2 = casos.PS.sym('s2',monomials(x,4));
 
 % enforce positivity
@@ -149,15 +149,15 @@ s1lb = casos.PS(basis(s1),-inf);
 s1ub = casos.PS(basis(s1),+inf);
 s2lb = casos.PS(basis(s2),-inf);
 s2ub = casos.PS(basis(s2),+inf);
-glb  = casos.PS(basis(b),-inf);
-gub  = casos.PS(basis(b),+inf);
+glb  = casos.PS(basis(b),-10);
+gub  = casos.PS(basis(b),0);
 
 tic
 S1 = casos.nlsossol('S1','sequential',sos1,opts);
 toc
 
 tic
-sol1 = S1('x0' ,[Vinit; 1; (x'*x)^2; 1], ...
+sol1 = S1('x0' ,[Vinit; 1; (x'*x)^2; 2.7], ...
           'lbx',[Vlb;s1lb;s2lb;glb], ...
           'ubx',[Vub;s1ub;s2ub;gub]);
 

@@ -230,13 +230,13 @@ prob_v_step.('g') = [s1;   s2;
                      s3;   s4;
                      s51; s52; s61; s62;
                      s7;   s8;  s9; sp;
+                     s9*X1_tilde_sym - subs(V,t,t0);                
+                     s7*Omegasym    - subs(V,t,T);
+                     s8*subs(V,t,T) - X1_tilde_sym;
                      s1*V           - s2*hT - nabla(V,t) - nabla(V,x)*(f + gx*K); 
                      s3*V           - s4*hT - Xs;
                      K              - umin  + s51*V   - s61*hT  ; 
-                     umax           - K     + s52*V   - s62*hT  ; 
-                     s7*Omegasym    - subs(V,t,T);
-                     s8*subs(V,t,T) - X1_tilde_sym;
-                     s9*X1_tilde_sym - subs(V,t,t0);
+                     umax           - K     + s52*V   - s62*hT  
                      sp*(p-b) -  subs(V,t,t0)
                      ]; 
 
