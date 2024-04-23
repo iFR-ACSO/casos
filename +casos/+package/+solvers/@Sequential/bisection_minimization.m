@@ -19,7 +19,7 @@ function min_dtry = bisection_minimization(obj,p0, xk, xk1, dual_plus )
         % Calculate function values at end points and mid-point
         f_lower = double(obj.Merit(xk.*(1-lower_bound) + xk1.*lower_bound, dual_plus,p0));% f(lower_bound);
         f_mid   = double(obj.Merit(xk.*(1-mid_point) + xk1.*mid_point, dual_plus,p0));% f(mid_point);
-        f_upper =double(obj.Merit(xk.*(1-upper_bound) + xk1.*upper_bound, dual_plus,p0));%  f(upper_bound);
+        f_upper = double(obj.Merit(xk.*(1-upper_bound) + xk1.*upper_bound, dual_plus,p0));%  f(upper_bound);
         
         % Check signs of function values
         if (f_mid * f_lower) < 0
