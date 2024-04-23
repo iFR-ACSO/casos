@@ -41,7 +41,7 @@ function argout = call(obj,argin)
         info{i} = obj.sossolver.stats;
     
     
-        % check solution
+        %% check solution status from conic optimization
         switch (info{i}.UNIFIED_RETURN_STATUS)
             case UnifiedReturnStatus.SOLVER_RET_SUCCESS
                 
@@ -56,10 +56,48 @@ function argout = call(obj,argin)
                  
                 delta_constraint = obj.constraintFun(xi_plus,p0) - sol{3} ;
                 constraint_vio  = full(casadi.DM( dot( delta_constraint, delta_constraint ) ));
-                cost      = double(sol{2});
+                cost            = double(sol{2});
+
+            case UnifiedReturnStatus.SOLVER_RET_UNKNOWN
+                 % problem seems feasible, but but solution is not
+
+                xi_plus   = sol{1} + xi_k;
+    
+                dual_plus = sol{5};
                 
-  
-            otherwise  
+                % constraint_vio = sqrt(full(casadi.DM( pnorm2( obj.constraintFun(xi_plus,p0) - sol{3} ) )));
+                 
+                delta_constraint = obj.constraintFun(xi_plus,p0) - sol{3} ;
+                constraint_vio  = full(casadi.DM( dot( delta_constraint, delta_constraint ) ));
+                cost            = double(sol{2});
+                
+            case UnifiedReturnStatus.SOLVER_RET_INFEASIBLE
+
+                 % if underlying conic problem is infeasible go to restoration phase   
+                 if i > 1
+    
+                   % store iteration info
+                   info(i+1:end) = [];
+                   obj.info.iter = info;
+                    
+                   % take solution from previous iteration
+                   argout = sol_old;
+
+                    printf(obj.log,'error','Convex optimization is infeasible.');
+                    assert(~obj.opts.error_on_fail,'Convex optimization run into numerical errors.')
+    
+                  return
+    
+                else
+    
+                    % error: failed
+                    obj.status = UnifiedReturnStatus.SOLVER_RET_NAN;
+                    assert(~obj.opts.error_on_fail,'Problem is primal and/or dual infeasible or unbounded.')   
+    
+                end
+
+            otherwise   % problem status unknown or ill-posed
+                
     
                 if i > 1
     
@@ -87,96 +125,99 @@ function argout = call(obj,argin)
         end
     
 
-            % filter
-            if i == 1
-                Filter = [cost , constraint_vio];
+        %% Filter
+        if i == 1
+           Filter = [cost , constraint_vio];
                 
-            else
-                Filter(i,1) = cost;
-                Filter(i,2) = constraint_vio;
+        else
+           Filter(i,1) = cost;
+           Filter(i,2) = constraint_vio;
+        end
+    
+
+        
+        % check convergence
+        if i > 1 
+
+                % select an algorithm to perform the linesearch
+                switch(obj.opts.line_search) 
+                    case 'fminbnd'
+                            dopt = line_search_fminbnd(obj, ...
+                                                       p0,...
+                                                       xi_k, ...
+                                                       xi_plus, ...
+                                                       dual_plus );
+                    case 'bisection'
+                            dopt = bisection_minimization(obj, ...
+                                                          p0,...
+                                                          xi_k, ...
+                                                          xi_plus, ...
+                                                          dual_plus );
+                    case 'polySolver'
+                            sol = obj.lineSearch('p',[xi_k; xi_plus; dual_plus],...
+                                                 'lbx',0.1,...
+                                                 'ubx',1);
+
+                            dopt = double(sol.x);
+
+
+                    case 'none'
+                        dopt = 1;
+                end
+
+                % update primal and dual solution
+                xi_k1    = dopt*xi_plus    + (1-dopt)*xi_k;
+                duals_k1 = dopt*dual_plus  + (1-dopt)*dual_k;
+                 
+            
+            % check convergence or if maximum number of iterations are reached    
+            delta_xi    = xi_k1    - xi_k;
+            delta_dual  = duals_k1 - dual_k;
+
+            delta_xi_double   = full( casadi.DM( (dot(delta_xi,delta_xi)) ) );
+            delta_dual_double = full( casadi.DM( (dot(delta_dual,delta_dual))) );
+
+             if obj.opts.verbose 
+                fprintf('%-10d%-15.4f%-15.4f%-15.4f\n',...
+                        i, cost ,...
+                        delta_xi_double, delta_dual_double  );
             end
     
-            % check convergence
-            if i > 1 
 
-                    % select an algorithm to perform the linesearch
-                    switch(obj.opts.line_search) 
-                        case 'fminbnd'
-                                dopt = line_search_fminbnd(obj, ...
-                                                           p0,...
-                                                           xi_k, ...
-                                                           xi_plus, ...
-                                                           dual_plus );
-                        case 'bisection'
-                                dopt = bisection_minimization(obj, ...
-                                                              p0,...
-                                                              xi_k, ...
-                                                              xi_plus, ...
-                                                              dual_plus );
-                        case 'polySolver'
-                                sol = obj.lineSearch('p',[xi_k; xi_plus; dual_plus],...
-                                                     'lbx',0.1,...
-                                                     'ubx',1);
-
-                                dopt = double(sol.x);
-
-
-                        case 'none'
-                            dopt = 1;
-                    end
-
-                    % update primal and dual solution
-                    xi_k1    = dopt*xi_plus    + (1-dopt)*xi_k;
-                    duals_k1 = dopt*dual_plus  + (1-dopt)*dual_k;
-                     
-                
-                % check convergence or if maximum number of iterations are reached    
-                delta_xi    = xi_k1 - xi_k;
-                delta_dual  = duals_k1 - dual_k;
-
-                delta_xi_double   = full( casadi.DM( (dot(delta_xi,delta_xi)) ) );
-                delta_dual_double = full( casadi.DM( (dot(delta_dual,delta_dual))) );
-                 if obj.opts.verbose 
-                    fprintf('%-10d%-15.4f%-15.4f%-15.4f\n',...
-                            i, cost ,...
-                            delta_xi_double, delta_dual_double  );
-                end
-    
-
-                if i == obj.opts.max_iter || ...
-                   delta_xi_double      < obj.opts.tolerance_abs && ...
-                   delta_dual_double    < obj.opts.tolerance_rel*full( casadi.DM(  (dot(duals_k1,duals_k1)) ) )  
-                   % full( casadi.DM( pnorm2()) )       < obj.opts.tolerance_abs && ...
-                   % full( casadi.DM( pnorm2(duals_k1 - dual_k) ) ) < obj.opts.tolerance_rel*full( casadi.DM( pnorm2( duals_k1 ) ) ) 
-                  
-                   % store iteration info
-                   info(i+1:end) = [];
-                   obj.info.iter = info;
-            
-                    % adjust last solution similar to iteration i.e. overwrite optimization solution 
-                    sol{1} = xi_k1;
-                    sol{5} = duals_k1;
-            
-                    argout = sol;
-            
-                    % terminate
-                    return
+            if i == obj.opts.max_iter || ...
+               delta_xi_double      < obj.opts.tolerance_abs && ...
+               delta_dual_double    < obj.opts.tolerance_rel*full( casadi.DM(  (dot(duals_k1,duals_k1)) ) )  
+               % full( casadi.DM( pnorm2()) )       < obj.opts.tolerance_abs && ...
+               % full( casadi.DM( pnorm2(duals_k1 - dual_k) ) ) < obj.opts.tolerance_rel*full( casadi.DM( pnorm2( duals_k1 ) ) ) 
+              
+               % store iteration info
+               info(i+1:end) = [];
+               obj.info.iter = info;
         
-                end % end-if 
+                % adjust last solution similar to iteration i.e. overwrite optimization solution 
+                sol{1} = xi_k1;
+                sol{5} = duals_k1;
+        
+                argout = sol;
+        
+                % terminate
+                return
+        
+            end % end-if convergence check
 
-                % set current solution as previous solution for next iteration
-                xi_k      = xi_k1;
-                dual_k    = duals_k1;
-                sol_old = sol;
+            % set current solution as previous solution for next iteration
+            xi_k      = xi_k1;
+            dual_k    = duals_k1;
+            sol_old   = sol;
 
-            else % first iteration
+        else % first iteration
     
-                 % set current solution as previous solution for next iteration
-                 xi_k = xi_plus;
-                 dual_k = dual_plus;
-                 sol_old = sol;
+             % set current solution as previous solution for next iteration
+             xi_k    = xi_plus;
+             dual_k  = dual_plus;
+             sol_old = sol;
 
-            end % end-if
+        end % end-if distinguish between first or all other iterations
     
     
     end % end for-loop sequential sos
