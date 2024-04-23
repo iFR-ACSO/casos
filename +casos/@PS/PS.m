@@ -163,9 +163,10 @@ methods
         tf = all(size(obj) == 1);
     end
 
-    function tf = is_symbolic(obj)
+    function [tf,cf] = is_symbolic(obj)
         % Check if polynomial has symbolic coefficients.
-        tf = is_symbolic(obj.coeffs);
+        cf = obj.coeffs(find(sparsity(obj.coeffs)));
+        tf = is_symbolic(cf);
     end
 
     function tf = is_symexpr(obj)
