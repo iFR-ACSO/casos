@@ -22,7 +22,7 @@ function argout = call(obj,argin)
     if obj.opts.verbose 
         % disp('Start sequential SOS...')
         printf(obj.log,'debug','%-15s%-15s%-20s%-20s%-20s%-20s\n', 'Iteration', 'cost', 'squared_L2_pr', 'squared_L2_du', 'squared_L2_vio','alpha');
-        printf(obj.log,'debug','-----------------------------------------------------------------------------------------------\n');
+        printf(obj.log,'debug','------------------------------------------------------------------------------------------------\n');
     end
 
     % solve nonconvex SOS problem via sequence of convex SOS problem
@@ -34,7 +34,12 @@ function argout = call(obj,argin)
         % set parameter to convex problem
         % args{2}  = [p0; xi_k];
         args{2} = obj.vertcatFun(p0, xi_k);
-    
+
+        % adjust bounds
+        args{3}  = argin{3}-xi_k;
+        args{4}  = argin{4}-xi_k;
+        % args{5}  = argin{5}-xi_k(end);
+
         % evaluate convex SOS problem
         sol = call(obj.sossolver, args);
   
@@ -65,13 +70,14 @@ function argout = call(obj,argin)
                 
                 % solve projection problem to get constraint violation
                 % try 
-                sol_proj = obj.projCon('p',sos_g(obj.idxNonlinCon));
+                sol_proj = calcProj(obj,sos_g,obj.idxNonlinCon);
+                % sol_proj = obj.projCon('p',sos_g(obj.idxNonlinCon));
           
                 constraint_vio  = double(sol_proj.f);
                 % catch
                     % constraint_vio  = full(casadi.DM(obj.norm2FunVio(xi_plus,p0,sol{3})));
                 % end
-                cost            = double(sol{2});
+                cost            = double(obj.cost_fun(xi_plus));
 
             case UnifiedReturnStatus.SOLVER_RET_UNKNOWN
                  % problem seems feasible, but but solution is not
@@ -80,10 +86,9 @@ function argout = call(obj,argin)
     
                 dual_plus = sol{5};
                 
-                % constraint_vio = sqrt(full(casadi.DM( pnorm2( obj.constraintFun(xi_plus,p0) - sol{3} ) )));
-                 
-                % delta_constraint = obj.constraintFun(xi_plus,p0) - sol{3} ;
-                constraint_vio  = full(casadi.DM( dot( delta_constraint, delta_constraint ) ));
+                sol_proj = obj.projCon('p',sos_g(obj.idxNonlinCon));
+                
+                constraint_vio  = double(sol_proj.f);
                 cost            = double(sol{2});
                 
             case UnifiedReturnStatus.SOLVER_RET_INFEASIBLE
@@ -142,24 +147,40 @@ function argout = call(obj,argin)
 
         %% Filter
         if i == 1
-           % initialize
+
+           % initialize filter in first iteration
            Filter = [cost , constraint_vio];
-                
-        else
            
-       
-           List_cost   = Filter(:,1);
-           List_conVia = Filter(:,2);
+        else
+         
+            % setup logical array; 
+            dom_logi_arr = Filter <= [cost, constraint_vio]; 
+              
+            % if both entries are 1 (sum = 2) than domination, otherwise accept
+            if all(sum(dom_logi_arr,2) < 2) 
+
                 
-                % check if any point in the list dominates the new iterate
-                if any(List_cost < cost) && any(List_conVia < constraint_vio)
-                    FilterAccept = 0;
-                else
-                    FilterAccept = 1;
-                    Filter(i,1) = cost ;
-                    Filter(i,2) = constraint_vio;
-                end
+                % Remove all pairs in filter that are dominated by the current pair; 
+                % if both entries are zero means both are smaller than list entry
+                Filter(sum(dom_logi_arr,2) == 0 ,:) = [];
+                
+                % add new accepted pair from current iteration
+                Filter       = vertcat(Filter, [cost , constraint_vio]);
+
+                % set flag for further globalization
+                FilterAccept = true;
+
+            else
+
+                % set flag for further globalization
+                FilterAccept = false;
+
+            end
+            
+            
         end
+
+
     
         
         if i == 1
@@ -167,6 +188,8 @@ function argout = call(obj,argin)
              xi_k    = xi_plus;
              dual_k  = dual_plus;
              sol_old = sol;
+           
+
              continue
         end
 
@@ -201,10 +224,10 @@ function argout = call(obj,argin)
                      dopt = 1;
                 end
 
-                % update primal and dual solution
-                [xi_k1, dual_k1] = obj.updateLineSearch(xi_k, xi_plus, dual_k, dual_plus, dopt );
-                % xi_k1    = dopt*xi_plus    + (1-dopt)*xi_k;
-                % duals_k1 = dopt*dual_plus  + (1-dopt)*dual_k;
+            % update primal and dual solution
+            [xi_k1, dual_k1] = obj.updateLineSearch(xi_k, xi_plus, dual_k, dual_plus, dopt );
+            % xi_k1    = dopt*xi_plus    + (1-dopt)*xi_k;
+            % duals_k1 = dopt*dual_plus  + (1-dopt)*dual_k;
                  
             
             % check convergence or if maximum number of iterations are reached    
@@ -216,6 +239,7 @@ function argout = call(obj,argin)
             % delta_dual_double = full( casadi.DM( (dot(delta_dual,delta_dual))) );
             
             [delta_xi,delta_dual] = obj.norm2FunOptVar(delta_xi,delta_xi,delta_dual,delta_dual);
+
             delta_xi_double   = full( casadi.DM(delta_xi));
             delta_dual_double = full( casadi.DM(delta_dual) );
 
@@ -240,8 +264,8 @@ function argout = call(obj,argin)
                 sol{5} = dual_k1;
         
                 argout = sol;
-                printf(obj.log,'debug','---------------------------------------------------------------------------------\n');
-                printf(obj.log,'debug','Solution status: Optimal solution found\n'); 
+                printf(obj.log,'debug','------------------------------------------------------------------------------------------------\n');
+                printf(obj.log,'debug','Solution status: Converged\n'); 
 
                 % terminate
                 return

@@ -119,7 +119,13 @@ e = s - gsym;
 %   min ||s-p||^2  s.t. s is SOS
 proj_sos = struct('x',s,'f',dot(e,e),'g',s,'p',gsym);
 
-obj.projCon =  casos.sossol('S','mosek',proj_sos,struct('Kc',struct('sos',length(s))));
+opts = [];
+opts.Kc      = struct('sos', length(s));
+% opts.verbose = 1;
+opts.error_on_fail = 0;
+obj.projCon =  casos.sossol('S','mosek',proj_sos,opts);
+
+
 
 %% work around for efficient computations in sequential-call
 obj.plusFun        = casos.Function('f',{sos.x,xi_k }, {sos.x + xi_k });
