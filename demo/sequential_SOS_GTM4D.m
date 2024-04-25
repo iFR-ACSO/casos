@@ -115,8 +115,8 @@ p = x'*x*1e2;
 V = casos.PS.sym('v',monomials(x,2));
 
 % SOS multiplier
-s1 = casos.PS.sym('s1',monomials(x,2));
-s2 = casos.PS.sym('s2',monomials(x,4));
+s1 = casos.PS.sym('s1',monomials(x,0));
+s2 = casos.PS.sym('s2',monomials(x,2:4));
 
 % enforce positivity
 l = 1e-6*(x'*x);
@@ -142,28 +142,32 @@ sos1.('g') = [s1;
 opts.Kx      = struct('lin', 4);
 opts.Kc      = struct('sos', 5);
 opts.verbose = 1;
-    
+opts.sossol_options.sdpsol_options.error_on_fail = 0;
+
+
 Vlb  = casos.PS(basis(V),-inf);
 Vub  = casos.PS(basis(V),+inf);
 s1lb = casos.PS(basis(s1),-inf);
 s1ub = casos.PS(basis(s1),+inf);
 s2lb = casos.PS(basis(s2),-inf);
 s2ub = casos.PS(basis(s2),+inf);
-glb  = casos.PS(basis(b),-10);
-gub  = casos.PS(basis(b),0);
+blb  = casos.PS(basis(b),-inf);
+bub  = casos.PS(basis(b),+inf);
 
-tic
+% tic
+profile on -historysize 5000000
 S1 = casos.nlsossol('S1','sequential',sos1,opts);
-toc
+% toc
 
-tic
-sol1 = S1('x0' ,[Vinit; 1; (x'*x)^2; 2.7], ...
-          'lbx',[Vlb;s1lb;s2lb;glb], ...
-          'ubx',[Vub;s1ub;s2ub;gub]);
+% tic
+% [Vinit; (x'*x); (x'*x)^2; 1]
+sol1 = S1('x0' ,[Vinit; 1; (x'*x); 1], ...
+          'lbx',[Vlb;s1lb;s2lb;blb], ...
+          'ubx',[Vub;s1ub;s2ub;bub]);
 
-toc
+% toc
 sol1.x(end)
-
+profile viewer
 
 %% plotting
 import casos.toolboxes.sosopt.pcontour

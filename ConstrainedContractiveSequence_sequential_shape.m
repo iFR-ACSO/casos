@@ -52,9 +52,9 @@ Xs = 3*x(2)^2 + x(1)^2 -1;
 p = x'*x*10;
 
 %% Define all polynmoials
-T = 2;
-dt = 0.4;
-N = T/dt;
+T  = 10;
+dt = 1;
+N  = T/dt;
 
 
 t0 = 0;
@@ -65,7 +65,7 @@ hT = (t-t0)*(T-t);
 % Lyapunov function candidate
 V    = casos.PS.sym('v',monomials([x;t],0:4));
 Vsym = casos.PS.sym('vsym',monomials([x;t],0:4));
-K    = casos.PS.sym('K',monomials(x,1));
+K    = casos.PS.sym('K',monomials(x,0:2));
 
 
 % SOS multiplier
@@ -93,7 +93,7 @@ disp('Setup solver ...')
 tic
 
 
-prob_s_step = struct('x',[K;s1;s2;s3;s4;s51;s52;s61;s62;s7;s8], ...   % decision variables
+prob_s_step = struct('x',[K;s1;s2;s3;s4;s51;s52;s61;s62;s8;s7], ...   % decision variables
                      'p',Vsym);                                 % parameter
 
 prob_s_step.('g') = [s1*Vsym - s2*hT - nabla(Vsym,t) - nabla(Vsym,x)*(f + gx*K); 
@@ -149,7 +149,7 @@ cost    = 1/Nsample*sum( ( Vfun0(casadi.SX(samples))  ) );
 prob_v_step = struct('x',V, ...                % decision variables
                      'f',cost,...
                      'p',[Ksym;s1sym;s2sym;s3sym;s4sym;s51sym;s52sym; ... % parameter
-                          s61sym;s62sym;s7sym;s8sym]); 
+                          s61sym;s62sym;s8sym;s7sym]); 
 
 prob_v_step.('g') = [s1sym*V - s2sym*hT - nabla(V,t) - nabla(V,x)*(f + gx*Ksym); 
                      s3sym*V - s4sym*hT - Xs;
@@ -212,8 +212,8 @@ s52 = casos.PS.sym('s52',monomials([x;t],0:2));
 s61 = casos.PS.sym('s61',monomials([x;t],0:2));
 s62 = casos.PS.sym('s62',monomials([x;t],2));
 
-s7 = casos.PS.sym('s7',monomials(x,0:2));
-s8 = casos.PS.sym('s8',monomials(x,0:4));
+% s7 = casos.PS.sym('s7',monomials(x,0:2));
+s8 = casos.PS.sym('s8',monomials(x,0:2));
 s9 = casos.PS.sym('s9',monomials(x,0:4));
 
 sp = casos.PS.sym('sp',monomials(x,0:1));
@@ -222,22 +222,20 @@ X1_tilde_sym = casos.PS.sym('xsym',basis(V));
 Omegasym     = casos.PS.sym('omegasym',basis(subs(V,t,T)));
 
 
-prob_v_step = struct('x',[V;K;s1;s2;s3;s4;s51;s52;s61;s62;s7;s8;s9;sp;b], ...  % decision variables
-                     'f',-b,...
+prob_v_step = struct('x',[V;K;s1;s2;s3;s4;s51;s52;s61;s62;s8;s9], ...  % decision variables
+                     'f',[],...
                      'p',[X1_tilde_sym; Omegasym]); % parameter
 
 prob_v_step.('g') = [s1;   s2;
                      s3;   s4;
-                     s51; s52; s61; s62;
-                     s7;   s8;  s9; sp;
-                     s9*X1_tilde_sym - subs(V,t,t0);                
-                     s7*Omegasym    - subs(V,t,T);
-                     s8*subs(V,t,T) - X1_tilde_sym;
+                     s51; s52; s61; s62; s8;  s9;
                      s1*V           - s2*hT - nabla(V,t) - nabla(V,x)*(f + gx*K); 
                      s3*V           - s4*hT - Xs;
                      K              - umin  + s51*V   - s61*hT  ; 
-                     umax           - K     + s52*V   - s62*hT  
-                     sp*(p-b) -  subs(V,t,t0)
+                     umax           - K     + s52*V   - s62*hT;           
+                     s8*subs(V,t,T) - X1_tilde_sym;
+                     s9*X1_tilde_sym - subs(V,t,t0);     
+                     % sp*(p-b) -  subs(V,t,t0)
                      ]; 
 
 % states + constraint are SOS cones
@@ -251,7 +249,7 @@ solver_v_step = casos.nlsossol('S1','sequential',prob_v_step,opts);
 toc
 
 blb = casos.PS(basis(b),-inf);
-bub = 0;%casos.PS(basis(b),+inf);
+bub = casos.PS(basis(b),+inf);
 
 Klb = casos.PS(basis(K),-inf);
 Kub = casos.PS(basis(K),+inf);
@@ -283,8 +281,8 @@ s61ub = casos.PS(basis(s61),+inf);
 s62lb = casos.PS(basis(s62),-inf);
 s62ub = casos.PS(basis(s62),+inf);
 
-s7lb  = casos.PS(basis(s7),-inf);
-s7ub  = casos.PS(basis(s7),+inf);
+% s7lb  = casos.PS(basis(s7),-inf);
+% s7ub  = casos.PS(basis(s7),+inf);
 
 s8lb  = casos.PS(basis(s8),-inf);
 s8ub  = casos.PS(basis(s8),+inf);
@@ -295,8 +293,8 @@ s9ub  = casos.PS(basis(s9),+inf);
 splb  = casos.PS(basis(sp),-inf);
 spub  = casos.PS(basis(sp),+inf);
 
-lbx = [Vlb; Klb; s1lb; s2lb; s3lb; s4lb; s51lb; s52lb; s61lb; s62lb; s7lb; s8lb; s9lb; splb; blb];
-ubx = [Vub; Kub; s1ub; s2ub; s3ub; s4ub; s51ub; s52ub; s61ub; s62ub; s7ub; s8ub; s9ub; spub; bub];
+lbx = [Vlb; Klb; s1lb; s2lb; s3lb; s4lb; s51lb; s52lb; s61lb; s62lb; s8lb; s9lb]; %splb; blb];
+ubx = [Vub; Kub; s1ub; s2ub; s3ub; s4ub; s51ub; s52ub; s61ub; s62ub; s8ub; s9ub];% spub; bub];
 
 [~,s9_mon] = poly2basis(s9);
 s9_0       = ones(length(s9_mon),1)'*s9_mon;
@@ -304,7 +302,7 @@ s9_0       = ones(length(s9_mon),1)'*s9_mon;
 [~,sp_mon] = poly2basis(sp);
 sp_0       = ones(length(sp_mon),1)'*sp_mon;
 
-b0 = 0.5;
+b0 = -0.5;
 
 kstep        = 0;
 NstepStorage = sol_v_step.x;
@@ -325,7 +323,7 @@ for k = 1:N
         % generate initial guess for decision variables using solution from
         % previous iteration
         if k == 1
-            x0 = [sol_v_step.x;sol_s_step.x;s9_0;sp_0;b0];
+            x0 = [sol_v_step.x;sol_s_step.x(1:end-1);s9_0];%sp_0;b0];
         else
             x0 = sol_v_step.x;
         end
@@ -339,23 +337,19 @@ for k = 1:N
         Omega_prev = subs(sol_v_step.x(1),t,T);
         X1_tilde   = subs(sol_v_step.x(1),t,0);
 
-    % store computations in array
-    kstep        = [kstep; k];
-    NstepStorage = [NstepStorage; sol_v_step.x(1)];
-    NstepConSet  = [NstepConSet;  subs(sol_v_step.x(1),t,0)];
-    NstepTermSet = [NstepTermSet; subs(sol_v_step.x(1),t,T)];
-    
-    % plotting of controllable sets
-    figure(1)
-    % pcontour(Omega0,0,[-1 1 -1 1],'b')
-    % hold on
-    % pcontour(Xs,0,[-1 1 -1 1],'k--')
-    pcontour(subs(sol_v_step.x(1),t,0),0,[-1 1 -1 1],'g')
-    pause(0.01)
-    
-    disp(['Reachable Set for T: ' num2str(k*T) ' successfully computed'])
+        % store computations in array
+        kstep        = [kstep; k];
+        NstepStorage = [NstepStorage; sol_v_step.x(1)];
+        NstepConSet  = [NstepConSet;  subs(sol_v_step.x(1),t,0)];
+        NstepTermSet = [NstepTermSet; subs(sol_v_step.x(1),t,T)];
+        
+        % plotting of controllable sets
+        figure(1)
+        pcontour(subs(sol_v_step.x(1),t,0),0,[-1 1 -1 1],'g')
+        pause(0.01)
+        
+        disp(['Reachable Set for T: ' num2str(k*T) ' successfully computed'])
 end
-% toc
 
 
 profile viewer
