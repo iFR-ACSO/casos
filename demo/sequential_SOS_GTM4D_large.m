@@ -112,10 +112,10 @@ Vinit = x'*P*x;
 p = x'*x*1e2;
 
 % Lyapunov function candidate
-V = casos.PS.sym('v',monomials(x,2));
+V = casos.PS.sym('v',monomials(x,2:4));
 
 % SOS multiplier
-s1 = casos.PS.sym('s1',monomials(x,0));
+s1 = casos.PS.sym('s1',monomials(x,0:2));
 s2 = casos.PS.sym('s2',monomials(x,2:4));
 
 % enforce positivity

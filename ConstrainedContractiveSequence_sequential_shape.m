@@ -216,26 +216,26 @@ s62 = casos.PS.sym('s62',monomials([x;t],2));
 s8 = casos.PS.sym('s8',monomials(x,0:2));
 s9 = casos.PS.sym('s9',monomials(x,0:4));
 
-sp = casos.PS.sym('sp',monomials(x,0:1));
+sp = casos.PS.sym('sp',monomials(x,0:2));
 
 X1_tilde_sym = casos.PS.sym('xsym',basis(V));
 Omegasym     = casos.PS.sym('omegasym',basis(subs(V,t,T)));
 
 
-prob_v_step = struct('x',[V;K;s1;s2;s3;s4;s51;s52;s61;s62;s8;s9], ...  % decision variables
-                     'f',[],...
+prob_v_step = struct('x',[V;K;s1;s2;s3;s4;s51;s52;s61;s62;s8;s9;sp;b], ...  % decision variables
+                     'f',-b,...
                      'p',[X1_tilde_sym; Omegasym]); % parameter
 
 prob_v_step.('g') = [s1;   s2;
                      s3;   s4;
-                     s51; s52; s61; s62; s8;  s9;
+                     s51; s52; s61; s62; s8;  s9;sp;
                      s1*V           - s2*hT - nabla(V,t) - nabla(V,x)*(f + gx*K); 
                      s3*V           - s4*hT - Xs;
                      K              - umin  + s51*V   - s61*hT  ; 
                      umax           - K     + s52*V   - s62*hT;           
                      s8*subs(V,t,T) - X1_tilde_sym;
                      s9*X1_tilde_sym - subs(V,t,t0);     
-                     % sp*(p-b) -  subs(V,t,t0)
+                     sp*(p-b) -  subs(V,t,t0)
                      ]; 
 
 % states + constraint are SOS cones
@@ -248,8 +248,8 @@ tic
 solver_v_step = casos.nlsossol('S1','sequential',prob_v_step,opts);
 toc
 
-blb = casos.PS(basis(b),-inf);
-bub = casos.PS(basis(b),+inf);
+blb = 0;casos.PS(basis(b),-inf);
+bub = 1; casos.PS(basis(b),+inf);
 
 Klb = casos.PS(basis(K),-inf);
 Kub = casos.PS(basis(K),+inf);
@@ -293,8 +293,8 @@ s9ub  = casos.PS(basis(s9),+inf);
 splb  = casos.PS(basis(sp),-inf);
 spub  = casos.PS(basis(sp),+inf);
 
-lbx = [Vlb; Klb; s1lb; s2lb; s3lb; s4lb; s51lb; s52lb; s61lb; s62lb; s8lb; s9lb]; %splb; blb];
-ubx = [Vub; Kub; s1ub; s2ub; s3ub; s4ub; s51ub; s52ub; s61ub; s62ub; s8ub; s9ub];% spub; bub];
+lbx = [Vlb; Klb; s1lb; s2lb; s3lb; s4lb; s51lb; s52lb; s61lb; s62lb; s8lb; s9lb; splb; blb];
+ubx = [Vub; Kub; s1ub; s2ub; s3ub; s4ub; s51ub; s52ub; s61ub; s62ub; s8ub; s9ub; spub; bub];
 
 [~,s9_mon] = poly2basis(s9);
 s9_0       = ones(length(s9_mon),1)'*s9_mon;
@@ -323,7 +323,7 @@ for k = 1:N
         % generate initial guess for decision variables using solution from
         % previous iteration
         if k == 1
-            x0 = [sol_v_step.x;sol_s_step.x(1:end-1);s9_0];%sp_0;b0];
+            x0 = [sol_v_step.x;sol_s_step.x(1:end-1);s9_0;sp_0;0.1];%sp_0;b0];
         else
             x0 = sol_v_step.x;
         end

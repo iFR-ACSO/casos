@@ -10,6 +10,10 @@ properties (Access=private)
     Merit;
     constraintFun;
     cost_fun;
+    conFunRed;
+
+    projConPara;
+    newIterate
     
     nabla_x_fun;
     nabla_lam_fun;
@@ -21,8 +25,8 @@ properties (Access=private)
     norm2FunOptVar
     norm2FunVio
 
+    dLdx
     log;
-    signCost;
 
     info = struct('iter',[]);
     status = casos.package.UnifiedReturnStatus.SOLVER_RET_UNKNOWN;
