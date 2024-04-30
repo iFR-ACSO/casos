@@ -17,6 +17,7 @@ properties (Access=private)
     
     nabla_x_fun;
     nabla_lam_fun;
+    langrangeLinear
 
     plusFun;
     vertcatFun;
@@ -27,6 +28,7 @@ properties (Access=private)
 
     dLdx
     log;
+    sizeHess;
 
     info = struct('iter',[]);
     status = casos.package.UnifiedReturnStatus.SOLVER_RET_UNKNOWN;
@@ -41,7 +43,7 @@ properties (Constant,Access=protected)
          'tolerance_abs' , 'Absolute tolerance for stopping criterion.'
          'tolerance_rel' , 'Relative tolerance for stopping criterion.'
          'verbose'       , 'Turn on/off iteration display.'
-         'line_search'   , 'Select an algorithm to solve the linesearch problem.'}
+         'globalization'   , 'Select an algorithm for globalization strategy.'}
     ];
 end
 
@@ -101,7 +103,7 @@ methods
         if ~isfield(obj.opts,'max_iter'), obj.opts.max_iter = 1000; end
         if ~isfield(obj.opts,'tolerance_abs'), obj.opts.tolerance_abs = 1e-3; end
         if ~isfield(obj.opts,'tolerance_rel'), obj.opts.tolerance_rel = 1e-3; end
-        if ~isfield(obj.opts,'line_search'), obj.opts.line_search = 'fminbnd'; end
+        if ~isfield(obj.opts,'line_search'), obj.opts.globalization = 'filter_linesearch_simple'; end %
        
         % set up logger
         if ~isfield(obj.opts,'verbose') || ~obj.opts.verbose

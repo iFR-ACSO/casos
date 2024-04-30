@@ -39,14 +39,27 @@ base_x = basis(sos.x);
 xi_k    = casos.PS.sym('xi_k',base_x);
 xi_plus = casos.PS.sym('xi_plus',base_x);
 
-% extend parameter vector
-sos.p = [p0; xi_k];
+
 
 % Taylor Approximation constraints and evaluate at current solution
 sos.g = linearize(nlsos.g,nlsos.x,xi_k);
 
 % Taylor Approximation cost and evaluate at current solution
-sos.f = linearize(nlsos.f,nlsos.x,xi_k);
+
+% sos.f = linearize(nlsos.f,nlsos.x,xi_k);
+
+% parameterize cost in hessian
+H    = casos.PS.sym('h',[length(poly2basis(xi_k)),length(poly2basis(xi_k))]);
+
+obj.sizeHess = size(H);
+% needed because we have a parameter vector
+H = H(:);
+
+% quadratic cost approximation; refactor hessian vector to symmetric matrix
+sos.f =  1/2*poly2basis(sos.x)'* reshape(H,[length(poly2basis(xi_k)),length(poly2basis(xi_k))]) *poly2basis(sos.x) + jacobian(sos.f,sos.x)*poly2basis(sos.x)
+
+% extend parameter vector
+sos.p = [p0; xi_k;H];
 
 % casos function for nonlinear cost and nonlinear constraints
 obj.cost_fun      = casos.Function('f',{sos.x}, {nlsos.f});
@@ -79,7 +92,9 @@ L = casos.Function('f',{sos.x,lam_gs,p0}, {nlsos.f - dot(lam_gs,nlsos.g)});
 
 obj.Merit = L;
 
-obj.dLdx = casos.Function('f',{sos.x,lam_gs,p0}, { jacobian(nlsos.f + dot(lam_gs,nlsos.g),sos.x)  });
+obj.dLdx = casos.Function('f',{sos.x,lam_gs,p0}, { jacobian(nlsos.f + dot(lam_gs,nlsos.g),sos.x)'  });
+
+obj.langrangeLinear = casos.Function('f',{sos.x,xi_k,p0,lam_gs,H}, {jacobian(sos.f + dot(lam_gs,sos.g),sos.x)'}); 
 
 %% setup line search
 d = casos.PS.sym('d');

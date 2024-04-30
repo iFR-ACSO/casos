@@ -25,7 +25,9 @@ function argout = call(obj,argin)
     printf(obj.log,'debug','----------------------------------------------------------------------------------------------------------------------\n');
 
     SDP_inf_flag = 0;
+    counter = 0;
 
+    B = eye(obj.sizeHess(1));
     tic
     % solve nonconvex SOS problem via sequence of convex SOS problem
     for i = 1:obj.opts.max_iter
@@ -34,8 +36,8 @@ function argout = call(obj,argin)
         args{1} = xi_k;
     
         % set parameter to convex problem
-        % args{2}  = [p0; xi_k];
-        args{2} = obj.vertcatFun(p0, xi_k);
+        args{2}  = [p0; xi_k; B(:)];
+        % args{2} = obj.vertcatFun(p0, xi_k);
 
         % adjust bounds
         args{3}  = argin{3}-xi_k;
@@ -47,7 +49,8 @@ function argout = call(obj,argin)
   
         % store iteration info
         info{i} = obj.sossolver.stats;
-    
+        
+     
     
         %% check solution status from conic optimization
         switch (info{i}.UNIFIED_RETURN_STATUS)
@@ -61,7 +64,9 @@ function argout = call(obj,argin)
                 xi_plus = obj.plusFun(sol{1},xi_k);
                 
                 dual_plus = sol{5};
-                
+
+                % norm(full(casadi.DM((poly2basis(sol{2} + dot(sol{5},sol{3}))))))
+                % casadi.DM(obj.langrangeLinear(sol{1},xi_k,p0,dual_plus,B))
      
 
             case UnifiedReturnStatus.SOLVER_RET_UNKNOWN
@@ -81,28 +86,7 @@ function argout = call(obj,argin)
 
 
                  SDP_inf_flag = 1;
-                %  % if underlying conic problem is infeasible go to restoration phase   
-                %  if i > 1
-                % 
-                %    % store iteration info
-                %    info(i+1:end) = [];
-                %    obj.info.iter = info;
-                % 
-                %    % take solution from previous iteration
-                %    argout = sol_old;
-                % 
-                %     printf(obj.log,'error','Convex optimization is infeasible.');
-                %     assert(~obj.opts.error_on_fail,'Convex optimization run into numerical errors.')
-                % 
-                %   return
-                % 
-                % else
-                % 
-                %     % error: failed
-                %     % obj.status = UnifiedReturnStatus.SOLVER_RET_NAN;
-                %     % assert(~obj.opts.error_on_fail,'Problem is primal and/or dual infeasible or unbounded.')   
-                % 
-                % end
+
 
             otherwise   % problem status unknown or ill-posed
                 
@@ -137,65 +121,31 @@ function argout = call(obj,argin)
            
         end
 
-       
+       switch(obj.opts.globalization)
+           
+           % naive implementation of simple linesearch with a filter
+           case 'filter_linesearch_simple'
             
-        %% backtracking line search filter (simple)
-        alpha            = 1;
-        rho              = 0.9;
-        FilterAccept     = 0;  
-        maxIter          = 0;
-        Linesearch_stall = 0;
-		
-        while ~FilterAccept 
-                
-            % update primal and dual solution with alpha from linesearch
-            [xi_k1, dual_k1] = obj.updateLineSearch(xi_k, xi_plus, dual_k, dual_plus, alpha);
+            [xi_k1, dual_k1, Filter, Linesearch_stall,alpha,predictedcost,predictedConVio] = ...
+                lineSearchFilterSimple(obj,p0,Filter,xi_k,xi_plus,dual_k,dual_plus); 
 
-            % Check predicted cost and predicted constraint violation
-            solPara_proj = obj.projConPara('p',[xi_k1;p0]);
+           case 'fminbnd'
+              Linesearch_stall = 0;
+              alpha =  line_search_fminbnd(obj, p0, xi_k, xi_plus, dual_plus );
 
-            predictedConVio = double(solPara_proj.f);
-            predictedcost   = double(obj.cost_fun(xi_k1));
-        
-            % setup logical array; 
-            dom_logi_arr = Filter <= [predictedcost, predictedConVio]; 
-              
-            % if both entries are 1 (sum = 2) than domination, otherwise accept
-            if ~all(dom_logi_arr,2)
+            xi_k1   = xi_k   + alpha*(xi_plus-xi_k);
+            dual_k1 = dual_k + alpha*(dual_plus-dual_k);
 
-                
-                % Remove all pairs in filter that are dominated by the current pair; 
-                % if both entries are zero means both are smaller than list entry
-                Filter(~all(dom_logi_arr,2) ,:) = [];
-                
-                % add new accepted pair from current iteration
-                Filter       = vertcat(Filter, [predictedcost, predictedConVio]);
+            predictedcost            = double(obj.cost_fun(xi_k1));
 
-                FilterAccept = true;
-
-            else
-                alpha = alpha*rho;
-                FilterAccept = false;
-            end
-            
-
-            maxIter = maxIter  + 1;
-            
-            if maxIter >= 20 || alpha <= 1e-6 
-                
-                Linesearch_stall = 1;
-                break
-            end
-        end
+       end
 
 
         % Prepare display output    
-        % [delta_xi, delta_dual] = obj.deltaOptVar(xi_k,xi_k1,dual_k,dual_k1);
-
         [delta_xi,delta_dual] = obj.norm2FunOptVar(xi_k,xi_k1,dual_k,dual_k1);
 
-        delta_xi_double   = sqrt(full( casadi.DM(delta_xi))); 
-        delta_dual_double = sqrt(full( casadi.DM(delta_dual) ));
+        delta_xi_double   = (full( casadi.DM(delta_xi))); 
+        delta_dual_double = (full( casadi.DM(delta_dual) ));
 
 
       printf(obj.log,'debug','%-15d%-15f%-20e%-20e%-20e%-15.4f%-18e\n',...
@@ -203,22 +153,31 @@ function argout = call(obj,argin)
     
         
         % compute convergence flags
-        optimality_flag = ~Linesearch_stall && norm(predictedConVio)                      <= 1e-2 && ...
-                                               norm(double(obj.dLdx(xi_k1,dual_k1,p0)))   <= 1e-2 && ...
-                                               norm(predictedcost - oldcost)                       <= 1e-4 && ...
-                                               delta_xi_double                            <= 1e-2 && ...
-                                               delta_dual_double                          <= 1e-2;
+        optimality_flag = ~Linesearch_stall && norm(predictedConVio)                      <= 1e-4 && ...
+                                               norm(double(obj.dLdx(xi_k1,dual_k1,p0)))   <= 1e-3 && ...
+                                               norm(predictedcost - oldcost)              <= 1e-4 && ...
+                                               delta_xi_double                            <= 1e-4 && ...
+                                               delta_dual_double                          <= 1e-4;
 
-        converged_flag  =  ~Linesearch_stall  && norm(double(obj.dLdx(xi_k1,dual_k1,p0)))   > 1e-2 && ...
+
+        if optimality_flag
+            counter = 0;
+        end
+
+        converged_flag  =  ~Linesearch_stall  && norm(double(obj.dLdx(xi_k1,dual_k1,p0)))   > 1e-3 && ...
                                                              norm(predictedConVio)         <= 1e-4 && ...
-                                                             norm(predictedcost-oldcost)            <= 1e-4 && ...
-                                                             delta_xi_double               <= 1e-2 && ...
-                                                             delta_dual_double             <= 1e-2;
+                                                             norm(predictedcost-oldcost)   <= 1e-4 && ...
+                                                             delta_xi_double               <= 1e-4 && ...
+                                                             delta_dual_double             <= 1e-4;
+
+        if converged_flag
+            counter = counter +1;
+        end
 
 
-        stall_flag  =  Linesearch_stall  || norm(double(obj.dLdx(xi_k1,dual_k1,p0)))   > 1e-2 && ...
-                                            norm(predictedConVio)                      > 1e-2 && ...
-                                            norm(predictedcost-oldcost)                        <= 1e-4 && ...
+        stall_flag  =  Linesearch_stall  || norm(double(obj.dLdx(xi_k1,dual_k1,p0)))  > 1e-2 && ...
+                                            norm(predictedConVio)                     > 1e-4 && ...
+                                            norm(predictedcost-oldcost)               <= 1e-2 && ...
                                             delta_xi_double                           <= 1e-2 && ...
                                             delta_dual_double                         <= 1e-2;
 
@@ -241,7 +200,7 @@ function argout = call(obj,argin)
             % terminate
             return
 
-        elseif i ~= obj.opts.max_iter && converged_flag
+        elseif i ~= obj.opts.max_iter && converged_flag 
 
                            % store iteration info
            info(i+1:end) = [];
@@ -275,7 +234,7 @@ function argout = call(obj,argin)
             if Linesearch_stall
                 stall_string = 'Filter linesearch could not find a feasible solution ';
             elseif stall_flag && ~Linesearch_stall
-                stall_string = 'Filter linesearch could not find a feasible solution ';
+                stall_string = 'could not find a feasible solution ';
             else
                 stall_string = 'Filter linesearch could not find a feasible solution and no progess ';
             end
@@ -313,22 +272,50 @@ function argout = call(obj,argin)
                     
                    % take solution from previous iteration
                    argout = sol_old;
-                   if UnifiedReturnStatus.SOLVER_RET_INFEASIBLE
+
+                   % if UnifiedReturnStatus.SOLVER_RET_INFEASIBLE
                        printf(obj.log,'debug','Problem is primal and/or dual infeasible or unbounded.\n'); 
                        printf(obj.log,'debug',['Solution time: ' num2str(toc) ' s\n']); 
-                   else
-                        printf(obj.log,'debug','Convex optimization run into numerical errors.\n'); 
-                        printf(obj.log,'debug',['Solution time: ' num2str(toc) ' s\n']); 
-                   end
+          
+            return
    
         end % end-if convergence check
         
+      
+        % Damped BFGS; see Nocedal p. 536/537 and/or Biegler  page 44 and pages 102/103
+        s = poly2basis(xi_k1 - xi_k);
+        y = obj.dLdx(xi_k1,dual_k1,p0) - obj.dLdx(xi_k,dual_k1,p0);
+
+        % calculate damping parameter; Nocedal eq. (18.15)
+        if double(s'*y - 0.2*s'*B*s) >= 0
+            theta = 1;
+        else
+            theta = (0.8*s'*B*s)/(s'*B*s-s'*y);
+        end
+        
+        % Powell damping
+        r = theta*y+(1-theta)*B*s;
+
+        % check skip condition eq. (3.19) from Nocedal; adapted to damped
+        % version
+        % if double(s'*r) >= full(casadi.DM(s'*s))
+           B = B + (r*r')/(s'*r) - (B*s*s'*B)/(s'*B*s);
+        % else
+            % skip current iteration; take old Hessian
+            % skip = 1;
+        % end
+       
+
+        if any(eig(double(B)) <= 0)
+            disp('Hessian not positive definite')
+        end
 
         % set current solution as previous solution for next iteration
         xi_k      = xi_k1;
         dual_k    = dual_k1;
         oldcost   = predictedcost;
         sol_old   = sol;
+
     
  end % end for-loop sequential sos
 end % end of function
