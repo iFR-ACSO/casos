@@ -4,10 +4,10 @@
 clear
 close all
 clc
-
+profile off
 
 % system states
-x = casos.PS('x',2,1);
+x = casos.PS('x',4,1);
 
 %% Polynomial Dynamics
 f1 = @(V,alpha,q,theta,eta,F) +1.233e-8*V.^4.*q.^2         + 4.853e-9.*alpha.^3.*F.^3    + 3.705e-5*V.^3.*alpha.*q      ...
@@ -71,7 +71,6 @@ delta0  = 14.33;   % percent
 x0 = [v0; alpha0; q0; theta0];
 u0 = [eta0; delta0];
 
-
 % get trim point 
 f = @(x,u) [
                     f1(x(1,:),x(2,:),x(3,:),x(4,:),u(1,:),u(2,:))
@@ -80,20 +79,11 @@ f = @(x,u) [
                     f4(x(1,:),x(2,:),x(3,:),x(4,:),u(1,:),u(2,:))
 ];
 
-% find more accurate trim values  
 [x0, u0] = findtrim(f,x0, u0);
 
-% short period
-f = @(x,u) [
-                    f2(x0(1),x(1),x(2),x0(4),u0(1),u0(2))
-                    f3(x0(1),x(1),x(2),x0(4),u0(1),u0(2))
-];
-
-
 % set up dynamic system
-f = f(x+[x0(2);x0(3)],u0(1));
+f = f(x+x0,[Kq*x(3); 0]+u0);
 
-% scaling
 d = ([
           convvel(20, 'm/s', 'm/s')  %range.tas.lebesgue.get('ft/s')
           convang(20, 'deg', 'rad')  %range.gamma.lebesgue.get('rad')
@@ -102,31 +92,31 @@ d = ([
 ]);
 
 
-D = diag(d(2:3))^-1;
+D = diag(d)^-1;
+
 f = D*subs(f, x, D^-1*x);
 
-
-f = cleanpoly(f,1e-6,0:5);
+f = cleanpoly(f,1e-6,1:5);
 
 % use scaled dynamics to compute initial guess for lyapunov function
 A = nabla(f,x);
 
-A0 = double(subs(A,x,zeros(2,1))); 
+A0 = double(subs(A,x,zeros(4,1))); 
 
-P = lyap(A0',eye(2));
+P = lyap(A0',0.1*eye(4));
 
 % initial Lyapunov function
 Vinit = x'*P*x;
 
 % polynomial shape
-p = x'*x;
+p = x'*x*1e2;
 
 % Lyapunov function candidate
-V = casos.PS.sym('v',monomials(x,2));
+V = casos.PS.sym('v',monomials(x,2:4));
 
 % SOS multiplier
-s1 = casos.PS.sym('s1',monomials(x,0));
-s2 = casos.PS.sym('s2',monomials(x,2));
+s1 = casos.PS.sym('s1',monomials(x,0:2));
+s2 = casos.PS.sym('s2',monomials(x,2:4));
 
 % enforce positivity
 l = 1e-6*(x'*x);
@@ -134,52 +124,79 @@ l = 1e-6*(x'*x);
 % level of stability
 b = casos.PS.sym('b');
 
-
-%% setup solver
-profile on
 % options
 opts = struct('sossol','mosek');
-opts.verbose = 1;
 
-sos1 = struct('x',[V; s1; s2; b],...
-              'f',-b, ...
+
+gam = 1;
+
+g = Vinit-0.8; 
+
+g = Vinit-0.8; 
+
+cost = dot(g - (V-gam), g - (V-gam));
+
+
+
+%% setup solver
+sos1 = struct('x',[V; s2],...
+              'f',cost, ...
               'p',[]);
 
-sos1.('g') = [s1; 
-              s2; 
+sos1.('g') = [s2; 
               V-l; 
-              s2*(V-1)-nabla(V,x)*f-l; 
-              s1*(p-b) + 1 - V];
+              s2*(V-gam)-nabla(V,x)*f-l];
 
 % states + constraint are SOS cones
-opts.Kx = struct('lin', 4);
-opts.Kc = struct('sos', 5);
+opts.Kx      = struct('lin', 2);
+opts.Kc      = struct('sos', 3);
+opts.verbose = 1;
+opts.sossol_options.sdpsol_options.error_on_fail = 0;
 
-    
+
 Vlb  = casos.PS(basis(V),-inf);
 Vub  = casos.PS(basis(V),+inf);
 s1lb = casos.PS(basis(s1),-inf);
 s1ub = casos.PS(basis(s1),+inf);
 s2lb = casos.PS(basis(s2),-inf);
 s2ub = casos.PS(basis(s2),+inf);
-glb  = casos.PS(basis(b),-inf);
-gub  = casos.PS(basis(b),+inf);
+blb  = casos.PS(basis(b),-inf);
+bub  = casos.PS(basis(b),+inf);
 
-tic
+opts.Sequential_Algorithm = 'SQP';
+
+% tic
+profile on -historysize 5000000
 S1 = casos.nlsossol('S1','sequential',sos1,opts);
-toc
+% toc
 
-tic
 
-%% solve
-sol1 = S1('x0',[Vinit ; 1;  (x'*x) ; 1], ...
-          'lbx',[Vlb;s1lb;s2lb;glb], ...
-          'ubx',[Vub;s1ub;s2ub;gub]);
-toc
+sol1 = S1('x0' ,[Vinit; (x'*x)^2], ...
+          'lbx',[Vlb;s2lb], ...
+          'ubx',[Vub;s2ub]);
+
 
 profile viewer
 
-% show solution 
-% sol1.f
-% sol1.x(end)
 
+% for k =  1:length(sol1.g)
+%     solChecker(sol1.g(k));
+% end
+
+
+%% plotting
+import casos.toolboxes.sosopt.pcontour
+
+xD = D*x;
+V = subs(sol1.x(1),[x(1);x(4)],zeros(2,1));
+V = subs(V,[x(2);x(3)],xD(2:3));
+
+
+g = subs(g,[x(1);x(4)],zeros(2,1));
+g = subs(g,[x(2);x(3)],xD(2:3));
+
+figure(1)
+clf
+pcontour(g, 0, [-1 1 -4 4], 'k--');
+hold on
+pcontour(V, gam, [-1 1 -4 4], 'b-');

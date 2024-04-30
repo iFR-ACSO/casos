@@ -15,13 +15,12 @@ P = lyap(A',0.1*eye(2));
 Vinit = x'*P*x;
 
 
-
 % Lyapunov function candidate
-V = casos.PS.sym('v',monomials(x,2:6));
+V = casos.PS.sym('v',basis(cleanpoly(sol1.x(1),1e-5)));
 
 % SOS multiplier
 s1 = casos.PS.sym('s1',monomials(x,2));
-s2 = casos.PS.sym('s2',monomials(x,2:4));
+s2 = casos.PS.sym('s2',basis(cleanpoly(sol1.x(1),1e-5)));
 s3 = casos.PS.sym('s3',monomials(x,2));
 
 % enforce positivity
@@ -35,22 +34,22 @@ opts = struct('sossol','mosek');
 
 g = 3*x(2)^2 + x(1)^2 -1; 
 
-cost = dot(g - (V-b),g - (V-b)) ;
+cost = dot(g - (V-1),g - (V-1)) ;
 
 %% setup solver
 % solver 1: gamma-step
-sos1 = struct('x',[V; s2; s3;b],...
+sos1 = struct('x',[V; s2; s3],...
               'f',cost, ...
               'p',[]);
 
 sos1.('g') = [s2; 
               s3;
               V-l; 
-              s2*(V-b)-nabla(V,x)*f-l;
-              s3*(V-b) - g];
+              s2*(V-1)-nabla(V,x)*f-l;
+              s3*(V-1) - g];
 
 % states + constraint are SOS cones
-opts.Kx = struct('lin', 4);
+opts.Kx = struct('lin', 3);
 opts.Kc = struct('sos', 5);
 opts.verbose = 1;
     
@@ -72,13 +71,13 @@ toc
 
 tic
 % solve
-sol1 = S1('x0',[Vinit^2 ; x'*x; x'*x;1], ...
-          'lbx',[Vlb;s2lb;s3lb;blb], ...
-          'ubx',[Vub;s2ub;s3ub;bub]);
+sol1 = S1('x0',[Vinit ; x'*x; x'*x], ...
+          'lbx',[Vlb;s2lb;s3lb], ...
+          'ubx',[Vub;s2ub;s3ub]);
 toc
 
 figure()
 pcontour(g,0,[-1 1 -1 1],'k--')
 hold on
-pcontour(sol1.x(1),double(sol1.x(end)),[-1 1 -1 1])
+pcontour(sol1.x(1),1,[-1 1 -1 1])
 

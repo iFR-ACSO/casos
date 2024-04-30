@@ -137,18 +137,17 @@ cost = dot(g - (V-gam), g - (V-gam));
 
 
 %% setup solver
-sos1 = struct('x',[V; s1; s2],...
+sos1 = struct('x',[V; s2],...
               'f',cost, ...
               'p',[]);
 
-sos1.('g') = [s1; 
-              s2; 
+sos1.('g') = [s2; 
               V-l; 
               s2*(V-gam)-nabla(V,x)*f-l];
 
 % states + constraint are SOS cones
-opts.Kx      = struct('lin', 3);
-opts.Kc      = struct('sos', 4);
+opts.Kx      = struct('lin', 2);
+opts.Kc      = struct('sos', 3);
 opts.verbose = 1;
 opts.sossol_options.sdpsol_options.error_on_fail = 0;
 
@@ -170,9 +169,9 @@ S1 = casos.nlsossol('S1','sequential',sos1,opts);
 % toc
 
 
-sol1 = S1('x0' ,[Vinit; (x'*x); (x'*x)^2], ...
-          'lbx',[Vlb;s1lb;s2lb], ...
-          'ubx',[Vub;s1ub;s2ub]);
+sol1 = S1('x0' ,[Vinit; (x'*x)^2], ...
+          'lbx',[Vlb;s2lb], ...
+          'ubx',[Vub;s2ub]);
 
 
 profile viewer

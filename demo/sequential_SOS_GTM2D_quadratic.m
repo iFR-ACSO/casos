@@ -147,18 +147,17 @@ profile on
 opts = struct('sossol','mosek');
 opts.verbose = 1;
 
-sos1 = struct('x',[V; s1; s2; b],...
+sos1 = struct('x',[V; s2; b],...
               'f',cost, ...
               'p',[]);
 
-sos1.('g') = [s1; 
-              s2; 
+sos1.('g') = [s2; 
               V-l; 
               s2*(V-b)-nabla(V,x)*f-l];
 
 % states + constraint are SOS cones
-opts.Kx = struct('lin', 4);
-opts.Kc = struct('sos', 4);
+opts.Kx = struct('lin', 3);
+opts.Kc = struct('sos', 3);
 
     
 Vlb  = casos.PS(basis(V),-inf);
@@ -179,9 +178,9 @@ toc
 tic
 
 %% solve
-sol1 = S1('x0',[Vinit ; 1;  (x'*x) ; 1], ...
-          'lbx',[Vlb;s1lb;s2lb;glb], ...
-          'ubx',[Vub;s1ub;s2ub;gub]);
+sol1 = S1('x0',[Vinit ;  (x'*x) ; 1], ...
+          'lbx',[Vlb;s2lb;glb], ...
+          'ubx',[Vub;s2ub;gub]);
 toc
 
 profile viewer
