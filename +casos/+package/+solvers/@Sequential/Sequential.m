@@ -12,6 +12,8 @@ properties (Access=private)
     cost_fun;
     conFunRed;
 
+    delta_search
+
     projConPara;
     newIterate
     
@@ -25,7 +27,9 @@ properties (Access=private)
     deltaOptVar;
     norm2FunOptVar
     norm2FunVio
-
+    BFGS_fun
+    base_x
+    
     dLdx
     log;
     sizeHess;
@@ -43,7 +47,8 @@ properties (Constant,Access=protected)
          'tolerance_abs' , 'Absolute tolerance for stopping criterion.'
          'tolerance_rel' , 'Relative tolerance for stopping criterion.'
          'verbose'       , 'Turn on/off iteration display.'
-         'globalization'   , 'Select an algorithm for globalization strategy.'}
+         'globalization'   , 'Select an algorithm for globalization strategy.'
+         'Sequential_Algorithm','Selecte between SLP and SQP like algorithms.'}
     ];
 end
 
@@ -103,7 +108,8 @@ methods
         if ~isfield(obj.opts,'max_iter'), obj.opts.max_iter = 1000; end
         if ~isfield(obj.opts,'tolerance_abs'), obj.opts.tolerance_abs = 1e-3; end
         if ~isfield(obj.opts,'tolerance_rel'), obj.opts.tolerance_rel = 1e-3; end
-        if ~isfield(obj.opts,'line_search'), obj.opts.globalization = 'filter_linesearch_simple'; end %
+        if ~isfield(obj.opts,'Sequential_Algorithm'), obj.opts.Sequential_Algorithm = 'SLP'; end
+        if ~isfield(obj.opts,'line_search'), obj.opts.globalization = 'filter_linesearch_simple'; end % filter_linesearch_simple
        
         % set up logger
         if ~isfield(obj.opts,'verbose') || ~obj.opts.verbose

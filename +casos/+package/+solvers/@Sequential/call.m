@@ -26,8 +26,13 @@ function argout = call(obj,argin)
 
     SDP_inf_flag = 0;
     counter = 0;
-
-    B = eye(obj.sizeHess(1));
+    
+    if strcmp(obj.opts.Sequential_Algorithm,'SLP')
+        B = [];
+    else
+         B = eye(obj.sizeHess(1));
+    end
+   
     tic
     % solve nonconvex SOS problem via sequence of convex SOS problem
     for i = 1:obj.opts.max_iter
@@ -36,6 +41,7 @@ function argout = call(obj,argin)
         args{1} = xi_k;
     
         % set parameter to convex problem
+        
         args{2}  = [p0; xi_k; B(:)];
         % args{2} = obj.vertcatFun(p0, xi_k);
 
@@ -99,14 +105,14 @@ function argout = call(obj,argin)
         %% Linesearch-Filter method 
         if i == 1
             
-                 sos_g     = sol{3};
+                sos_g     = sol{3};
                 
                 % solve projection problem to get constraint violation
                 sol_proj = calcProj(obj,sos_g,obj.idxNonlinCon);
           
                 predictedConVio  = double(sol_proj.f);
   
-                predictedcost            = double(obj.cost_fun(xi_plus));
+                predictedcost    = double(obj.cost_fun(xi_plus));
 
            % initialize filter in first iteration
             Filter = [predictedcost , predictedConVio];
@@ -133,11 +139,15 @@ function argout = call(obj,argin)
               Linesearch_stall = 0;
               alpha =  line_search_fminbnd(obj, p0, xi_k, xi_plus, dual_plus );
 
-            xi_k1   = xi_k   + alpha*(xi_plus-xi_k);
-            dual_k1 = dual_k + alpha*(dual_plus-dual_k);
+            xi_k1   = xi_k   + alpha*(xi_plus - xi_k);
+            dual_k1 = dual_k + alpha*(dual_plus - dual_k);
 
-            predictedcost            = double(obj.cost_fun(xi_k1));
+            solPara_proj = obj.projConPara('p',[xi_k1;p0]);
 
+            predictedConVio = double(solPara_proj.f);
+
+            predictedcost   = double(obj.cost_fun(xi_k1));
+        
        end
 
 
@@ -153,11 +163,11 @@ function argout = call(obj,argin)
     
         
         % compute convergence flags
-        optimality_flag = ~Linesearch_stall && norm(predictedConVio)                      <= 1e-4 && ...
+        optimality_flag = ~Linesearch_stall && norm(predictedConVio)                      <= 1e-5 && ...
                                                norm(double(obj.dLdx(xi_k1,dual_k1,p0)))   <= 1e-3 && ...
-                                               norm(predictedcost - oldcost)              <= 1e-4 && ...
-                                               delta_xi_double                            <= 1e-4 && ...
-                                               delta_dual_double                          <= 1e-4;
+                                               norm(predictedcost - oldcost)              <= 1e-6 && ...
+                                               delta_xi_double                            <= 1e-6 && ...
+                                               delta_dual_double                          <= 1e-6;
 
 
         if optimality_flag
@@ -165,21 +175,21 @@ function argout = call(obj,argin)
         end
 
         converged_flag  =  ~Linesearch_stall  && norm(double(obj.dLdx(xi_k1,dual_k1,p0)))   > 1e-3 && ...
-                                                             norm(predictedConVio)         <= 1e-4 && ...
-                                                             norm(predictedcost-oldcost)   <= 1e-4 && ...
-                                                             delta_xi_double               <= 1e-4 && ...
-                                                             delta_dual_double             <= 1e-4;
+                                                             norm(predictedConVio)         <= 1e-5 && ...
+                                                             norm(predictedcost-oldcost)   <= 1e-6 && ...
+                                                             delta_xi_double               <= 1e-6 && ...
+                                                             delta_dual_double             <= 1e-6;
 
         if converged_flag
             counter = counter +1;
         end
 
 
-        stall_flag  =  Linesearch_stall  || norm(double(obj.dLdx(xi_k1,dual_k1,p0)))  > 1e-2 && ...
-                                            norm(predictedConVio)                     > 1e-4 && ...
-                                            norm(predictedcost-oldcost)               <= 1e-2 && ...
-                                            delta_xi_double                           <= 1e-2 && ...
-                                            delta_dual_double                         <= 1e-2;
+        stall_flag  =  Linesearch_stall  || norm(double(obj.dLdx(xi_k1,dual_k1,p0)))  > 1e-3 && ...
+                                            norm(predictedConVio)                     > 1e-5 && ...
+                                            norm(predictedcost-oldcost)               <= 1e-6 && ...
+                                            delta_xi_double                           <= 1e-6 && ...
+                                            delta_dual_double                         <= 1e-6;
 
 
         if i ~= obj.opts.max_iter && optimality_flag
@@ -283,33 +293,13 @@ function argout = call(obj,argin)
         
       
         % Damped BFGS; see Nocedal p. 536/537 and/or Biegler  page 44 and pages 102/103
-        s = poly2basis(xi_k1 - xi_k);
-        y = obj.dLdx(xi_k1,dual_k1,p0) - obj.dLdx(xi_k,dual_k1,p0);
-
-        % calculate damping parameter; Nocedal eq. (18.15)
-        if double(s'*y - 0.2*s'*B*s) >= 0
-            theta = 1;
-        else
-            theta = (0.8*s'*B*s)/(s'*B*s-s'*y);
+        if strcmp(obj.opts.Sequential_Algorithm,'SQP')
+            s = casadi.DM(casadi.SX(obj.delta_search(xi_k1,xi_k))); 
+            y = casadi.DM(casadi.SX(obj.dLdx(xi_k1,dual_k1,p0) - obj.dLdx(xi_k,dual_k1,p0)));
+    
+            B = dampedBFGS(obj,B,s,y);
         end
-        
-        % Powell damping
-        r = theta*y+(1-theta)*B*s;
-
-        % check skip condition eq. (3.19) from Nocedal; adapted to damped
-        % version
-        % if double(s'*r) >= full(casadi.DM(s'*s))
-           B = B + (r*r')/(s'*r) - (B*s*s'*B)/(s'*B*s);
-        % else
-            % skip current iteration; take old Hessian
-            % skip = 1;
-        % end
        
-
-        if any(eig(double(B)) <= 0)
-            disp('Hessian not positive definite')
-        end
-
         % set current solution as previous solution for next iteration
         xi_k      = xi_k1;
         dual_k    = dual_k1;

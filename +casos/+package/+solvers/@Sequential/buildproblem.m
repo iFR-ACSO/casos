@@ -25,41 +25,45 @@ sos.p = nlsos.p;
 % store user parameter
 p0 = sos.p;
    
-% if is_symbolic(sos.f)     
-%     obj.signCost = 1;
-% else
-%     obj.signCost = -1;
-% end
-
 
 % for each decision variable generate a parameter (which is the current solution)
 % naming is not important since this is only for internal 
 base_x = basis(sos.x);
 
+obj.base_x = base_x;
 xi_k    = casos.PS.sym('xi_k',base_x);
 xi_plus = casos.PS.sym('xi_plus',base_x);
-
-
 
 % Taylor Approximation constraints and evaluate at current solution
 sos.g = linearize(nlsos.g,nlsos.x,xi_k);
 
 % Taylor Approximation cost and evaluate at current solution
 
-% sos.f = linearize(nlsos.f,nlsos.x,xi_k);
+if strcmp(obj.opts.Sequential_Algorithm,'SLP')
+    sos.f = linearize(nlsos.f,nlsos.x,xi_k);
+    
+    % extend parameter vector
+    sos.p = [p0; xi_k];
+     
+
+    obj.sizeHess =  0;
+else
 
 % parameterize cost in hessian
 H    = casos.PS.sym('h',[length(poly2basis(xi_k)),length(poly2basis(xi_k))]);
 
 obj.sizeHess = size(H);
+
 % needed because we have a parameter vector
 H = H(:);
 
 % quadratic cost approximation; refactor hessian vector to symmetric matrix
-sos.f =  1/2*poly2basis(sos.x)'* reshape(H,[length(poly2basis(xi_k)),length(poly2basis(xi_k))]) *poly2basis(sos.x) + jacobian(sos.f,sos.x)*poly2basis(sos.x)
+sos.f =  1/2*poly2basis(sos.x)'* reshape(H,[length(poly2basis(xi_k)),length(poly2basis(xi_k))]) * poly2basis(sos.x) + linearize(nlsos.f,nlsos.x,xi_k);
 
 % extend parameter vector
 sos.p = [p0; xi_k;H];
+
+end
 
 % casos function for nonlinear cost and nonlinear constraints
 obj.cost_fun      = casos.Function('f',{sos.x}, {nlsos.f});
@@ -87,14 +91,30 @@ lam_gs    =  casos.PS.sym('lam_gs',obj.monom_gs);
 dual_k    =  casos.PS.sym('lam_gs',obj.monom_gs);
 dual_plus =  casos.PS.sym('lam_gs',obj.monom_gs);
 
+
+if ~strcmp(obj.opts.Sequential_Algorithm,'SLP')
+
+    % B =  reshape(H,[length(poly2basis(xi_k)),length(poly2basis(xi_k))]);
+    % s =  casos.PS.sym('s',[length(poly2basis(sos.x)),1]);
+    % r =  casos.PS.sym('r',[length(poly2basis(sos.x)) 1]);
+
+
+        import casadi.*
+        s = MX.sym('s',[length(poly2basis(sos.x)),1]);
+        r = MX.sym('s',[length(poly2basis(sos.x)),1]);
+        B = MX.sym('B',[length(poly2basis(sos.x)),length(poly2basis(sos.x))]);
+
+     obj.BFGS_fun =  Function('f',{B,r,s}, {B + (r*r')/(s'*r) - (B*(s*s')*B)/(s'*B*s)});
+
+end
 % Langrange function
-L = casos.Function('f',{sos.x,lam_gs,p0}, {nlsos.f - dot(lam_gs,nlsos.g)});
+L = casos.Function('f',{sos.x,lam_gs,p0}, {nlsos.f + dot(lam_gs,nlsos.g)});
 
 obj.Merit = L;
 
 obj.dLdx = casos.Function('f',{sos.x,lam_gs,p0}, { jacobian(nlsos.f + dot(lam_gs,nlsos.g),sos.x)'  });
 
-obj.langrangeLinear = casos.Function('f',{sos.x,xi_k,p0,lam_gs,H}, {jacobian(sos.f + dot(lam_gs,sos.g),sos.x)'}); 
+% obj.langrangeLinear = casos.Function('f',{sos.x,xi_k,p0,lam_gs,H}, {jacobian(sos.f + dot(lam_gs,sos.g),sos.x)'}); 
 
 %% setup line search
 d = casos.PS.sym('d');
@@ -149,8 +169,6 @@ obj.plusFun        = casos.Function('f',{sos.x,xi_k }, {sos.x + xi_k });
 
 obj.vertcatFun     = casos.Function('f',{p0,xi_k }, {[p0;xi_k]});
 
-% obj.norm2FunOptVar = casos.Function('f',{xi_k,xi_plus,dual_k, dual_plus}, ...
-%                      { dot(xi_k,xi_plus),dot(dual_k,dual_plus) });
 
 obj.norm2FunOptVar = casos.Function('f',{xi_k,xi_plus,dual_k, dual_plus}, ...
                      { pnorm2(xi_k-xi_plus),pnorm2(dual_k-dual_plus) });
@@ -169,7 +187,9 @@ obj.updateLineSearch  = casos.Function('f',{xi_k, xi_plus, dual_k, dual_plus, do
 
 
 obj.deltaOptVar =  casos.Function('f',{xi_k, xi_plus, dual_k, dual_plus}, ...
-                   {xi_plus-xi_k, dual_plus-dual_k});
+                       {xi_plus-xi_k, dual_plus-dual_k});
 
 
+
+obj.delta_search = casos.Function('f',{xi_plus,xi_k}, {poly2basis(xi_plus - xi_k,base_x)});
 end
