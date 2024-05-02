@@ -5,18 +5,13 @@ function c = times(a,b)
 sza = size(a);
 szb = size(b);
 
-% prepare error message for incompatible sizes
-errsz = 'Polynomials have incompatible sizes for this operation ([%s] vs. [%s]).';
-
-% compare dimensions
-I = (sza == szb);
 % find zero dimension
 I0 = (sza == 0) | (szb == 0);
-% find one dimension
-I1 = (sza == 1) | (szb == 1);
 
-% dimensions are compatible if equal or one factor is row/column
-assert(all(I | I1), errsz, size2str(a), size2str(b))
+% dimensions are compatible if equal or one summand is row/column
+if ~check_sz_comptbl(a,b)
+    throw(casos.package.core.IncompatibleSizesError.basic(a,b));
+end
 
 % dimensions of element-wise product
 sz = max(sza,szb);
