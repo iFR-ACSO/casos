@@ -43,7 +43,7 @@ function [xi_k1, dual_k1, Filter, Linesearch_stall,alpha,predictedcost,predicted
 
             maxIter = maxIter  + 1;
             
-            if maxIter >= 20 || alpha <= 0.01
+            if maxIter >= 20 || alpha <= 0.001
                 
                 Linesearch_stall = 1;
                 break

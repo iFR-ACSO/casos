@@ -1,5 +1,6 @@
 % Estimate region of attraction by V-s-iteration and bisection.
 
+import casos.toolboxes.sosopt.*
 % system states
 x = casos.PS('x',2,1);
 
@@ -13,9 +14,13 @@ P = lyap(A',eye(2));
 
 Vinit = x'*P*x;
 
+pcontour(Vinit,1,[-1 1 -1 1])
+hold on
+pcontour(Vinit,0.5,[-1 1 -1 1])
+
 % Lyapunov function candidate
 p = x'*x;
-
+g = 3*x(2)^2 + x(1)^2 -1; 
 % Lyapunov function candidate
 V = casos.PS.sym('v',monomials(x,2));
 
@@ -68,4 +73,9 @@ sol1 = S1('x0',[Vinit ; 1; x'*x ; 1], ...
           'lbx',[Vlb;s1lb;s2lb;glb], ...
           'ubx',[Vub;s1ub;s2ub;gub]);
 toc
+
+figure()
+pcontour(g,0,[-1 1 -1 1],'k--')
+hold on
+pcontour(sol1.x(1),1,[-1 1 -1 1])
 
