@@ -1,5 +1,20 @@
 function B = sum(A,dim)
-% Return sum of array elements.
+%SUM Overloads Matlabs internal sum function to work with polynomials of type casos.PS
+% Inputs:
+%   A: Polynomial matrix of arbitrary size
+%   dim (default='all'): Defines wether columns, rows or all elements are summed up
+%       dim = 1: sum along first dimension (rows)
+%       dim = 2: sum along second dimension (columns)
+%       dim = 'all': sum all elements
+% Outputs:
+%   B: matrix of polynomials
+%
+% Example with matrix of polynomials:
+% p1, p2, p3, p4 are casos.PS polynomials (with symbolic or numeric coefficients)
+% A = [p1 p2; p3 p4];
+% sum(A,'all')      outputs i.e.                    [p1+p2+p3+p4]
+% sum(A,1)          outputs sum along columns i.e.  [p1+p3, p2+p4]
+% sum(A,2)          outputs sum along row i.e.      [p1+p2; p3+p4]
 
 if nargin > 1
     % nothing to do
