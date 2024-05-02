@@ -27,21 +27,3 @@ S.matdim = size(S1);
 S = set_coefficients(S,coeffs);
 
 end
-
-function C = times_coeffs(A,B)
-    % Multiply coefficient matrices.
-
-    if isa(A,'casadi.Sparsity')
-        % intersect sparsity
-        C = intersect(A,B);
-
-    else
-        % multiply coefficients element-wise
-        C = times(A,B);
-    end
-end
-
-function D = times_degmat(A,B)
-    % Multiply degree matrices
-    D = plus(A,B);
-end
