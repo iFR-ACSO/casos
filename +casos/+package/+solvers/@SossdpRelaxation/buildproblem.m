@@ -33,15 +33,16 @@ Qgram_g = casadi.SX.sym('Q',sum(Ksdp_g_s.^2),1);
 % replace sum-of-squares constraints by equality
 gdiff = (sos.g - [zeros(Ml,1); casos.PS(Zgram_g,Qgram_g)]);
 % handle (new) equality constraints
-[Qdiff_g,Zdiff_g] = poly2basis(gdiff);
+[Qdiff_g,Zdiff_g] = poly2basis(gdiff,[],[],false);
 
 % handle linear decision variables
-[Qlin_x,Zlin_x] = poly2basis(sos.x,~Is);
+[Qlin_x,Zlin_x] = poly2basis(sos.x,[],~Is,false);
+
 % handle parameter
-[Qlin_p,Zlin_p] = poly2basis(sos.p);
+[Qlin_p,Zlin_p] = poly2basis(sos.p,[],[],false);
 
 % get cost function
-[Qlin_f,Zlin_f] = poly2basis(sos.f);
+[Qlin_f,Zlin_f] = poly2basis(sos.f,[],[],false);
 
 % build SDP problem
 sdp.x = [Qlin_x; Qgram_x; Qgram_g];
