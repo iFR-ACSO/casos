@@ -222,7 +222,7 @@ function argout = call(obj,argin)
         
             argout = sol;
             printf(obj.log,'debug','----------------------------------------------------------------------------------------------------------------------\n');
-            printf(obj.log,'debug','Solution status: Converged\n'); 
+            printf(obj.log,'debug','Solution status: Solved to acceptable level!\n'); 
             printf(obj.log,'debug',['Solution time: ' num2str(toc) ' s\n']); 
             
             % terminate
