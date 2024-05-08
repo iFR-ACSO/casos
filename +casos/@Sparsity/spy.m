@@ -19,7 +19,7 @@ out = cell(size(obj));
 % set per-element output (sparse zero = ., constant = *, degree = k)
 out(~Lnz) = {'.'};
 out(Lnz & maxdeg == 0) = {'*'};
-out(maxdeg > 0) = compose('%d',full(maxdeg(maxdeg > 1)));
+out(maxdeg > 0) = compose('%d',full(maxdeg(maxdeg > 0)));
 
 % print output to command line
 disp(cell2mat(out))
