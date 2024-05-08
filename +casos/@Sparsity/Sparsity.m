@@ -275,6 +275,7 @@ methods (Access={?casos.package.core.PolynomialInterface})
 
     % protected interface for operations
     [S,coeffs] = coeff_repmat(obj,coeffs,varargin);
+    [S,cf1,cf2] = coeff_expand(S1,S2,coeff1,coeff2);
     [S,coeffs] = coeff_plus(S1,S2,coeff1,coeff2);
     [S,coeffs] = coeff_times(S1,S2,coeff1,coeff2);
     [S,coeffs] = coeff_mtimes(S1,S2,coeffs1,coeff2);

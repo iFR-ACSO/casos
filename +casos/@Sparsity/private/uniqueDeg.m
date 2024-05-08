@@ -1,4 +1,4 @@
-function [coeffs,degmat] = uniqueDeg(coeffs,degmat)
+function [coeffs,degmat,I] = uniqueDeg(coeffs,degmat)
 % Make degree matrix unique and return corresponding coefficients.
 %
 % This function ensures that the monomials are in graded REVERSE
@@ -7,11 +7,22 @@ function [coeffs,degmat] = uniqueDeg(coeffs,degmat)
 nt = size(coeffs,1);
 nv = size(coeffs,2);
 
+if iscell(degmat)
+    % undocumented: get indices
+    [id,ic] = degmat{:};
+
+else
+
 % sort by ascending degree
 degsum = sum(degmat,2);
 
 % make degree matrix unique
 [degmat2,id,ic] = unique([degsum fliplr(degmat)],'rows','sorted');
+
+% reverse order of degrees
+degmat = fliplr(degmat2(:,2:end));
+
+end
 
 if isa(coeffs,'casadi.Sparsity')
     % take union of repeated coefficients
@@ -24,7 +35,9 @@ else
     coeffs = (summat*coeffs);
 end
 
-% reverse order of degrees
-degmat = fliplr(degmat2(:,2:end));
+if nargout > 2
+    % undocumented: return indices
+    I = {id ic};
+end
 
 end
