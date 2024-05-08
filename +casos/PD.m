@@ -58,6 +58,11 @@ methods
         % Element-wise multiplication
         c = times@casos.package.core.Polynomial(casos.PD(a),casos.PD(b));
     end
+
+    function c = mtimes(a,b)
+        % Matrix multiplication
+        c = mtimes@casos.package.core.Polynomial(casos.PD(a),casos.PD(b));
+    end
 end
 
 end
