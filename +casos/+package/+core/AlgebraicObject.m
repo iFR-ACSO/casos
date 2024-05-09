@@ -14,6 +14,11 @@ methods
         args = cellfun(@(v) casos.package.polynomial(v), varargin, 'UniformOutput',false);
         t = cat(N,args{:});
     end
+
+    function b = ctranspose(a)
+        % Conjugate transpose.
+        b = transpose(a);
+    end
 end
 
 methods (Static)

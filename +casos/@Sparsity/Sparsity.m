@@ -174,6 +174,9 @@ methods
         z = build_monomials(obj.degmat,obj.indets);
     end
 
+    function obj = transpose(obj), end % nothing to do
+    function obj = ctranspose(obj), end % nothing to do
+
     %% Conversion & matrix Sparsity interface
     function S = reshape(obj,varargin)
         % Reshape polynomial matrix.
@@ -275,6 +278,7 @@ methods (Access={?casos.package.core.PolynomialInterface})
 
     % protected interface for operations
     [S,coeffs] = coeff_repmat(obj,coeffs,varargin);
+    [S,coeffs] = coeff_transpose(obj,coeffs);
     [S,cf1,cf2] = coeff_expand(S1,S2,coeff1,coeff2);
     [S,coeffs] = coeff_plus(S1,S2,coeff1,coeff2);
     [S,coeffs] = coeff_times(S1,S2,coeff1,coeff2);
