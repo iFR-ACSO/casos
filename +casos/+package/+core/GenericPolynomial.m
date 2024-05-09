@@ -62,7 +62,7 @@ methods
 
     function x = indeterminates(obj)
         % Return indeterminate variables of polynomial.
-        x = casos.Indeterminates(obj.poly_sparsity);
+        x = indeterminates(obj.poly_sparsity);
     end
 
     function tf = isrow(obj)
