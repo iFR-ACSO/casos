@@ -26,6 +26,10 @@ properties (Dependent=true)
 %     matrix_nnz; % number of nonzero components
 end
 
+properties (Dependent=true, Access=protected)
+    degsum;     % total degree of each monomial
+end
+
 methods
     %% Public constructor
     function obj = Sparsity(varargin)
@@ -74,14 +78,19 @@ methods
         n = size(obj.degmat,1);
     end
 
+    function d = get.degsum(obj)
+        % Total degrees of each monomial.
+        d = full(sum(obj.degmat,2));
+    end
+
     function d = get.mindeg(obj)
         % Minimum degree of polynomial.
-        d = full(min(sum(obj.degmat,2)));
+        d = min(obj.degsum);
     end
 
     function d = get.maxdeg(obj)
         % Maximum degree of polynomial.
-        d = full(max(sum(obj.degmat,2)));
+        d = max(obj.degsum);
     end
 
     function n = nnz(obj)
@@ -212,7 +221,7 @@ methods
     function idx = matrix_find(obj)
         % Return indices of nonzero elements.
         idx = find(sum1(obj.coeffs));
-    end
+    end 
 
     %% Display output
     function matrix_spy(obj)

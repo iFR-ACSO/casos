@@ -18,10 +18,10 @@ function [degrees,L] = get_degree(S,I)
 % Returns ordered vector of degrees in the polynomial expression `p(I)`,
 % if `S` is the pattern of `p`.
 
-degsum = sum(S.degmat,2);
+degsum = obj.degsum;
 
 % vector of degrees
-degrees = full(unique(degsum'));
+degrees = unique(degsum');
 
 % get logical map of degrees
 [~,Ldegmat] = get_degmat(S);
