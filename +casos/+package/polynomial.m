@@ -11,7 +11,7 @@ end
 switch class(a)
     case {'double' 'casadi.DM'}
         % double polynomial
-        p = casos.PS(a);
+        p = casos.PD(a);
 
     case 'casadi.SX'
         % symbolic polynomial
