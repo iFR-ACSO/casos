@@ -1,21 +1,35 @@
-function p = polynomial(a)
+function p = polynomial(a,varargin)
 % Convert algebraic input to polynomial.
 
 if isa(a,'casos.package.core.AlgebraicObject')
     % nothing to do
+    assert(nargin < 2,'Too many input arguments.')
+
     p = a;
     return
+
+elseif isa(a,'casos.Sparsity')
+    % first input is sparsity pattern
+    assert(nargin > 1,'Not enough input arguments.')
+    assert(nargin < 3,'Too many input arguments.')
+
+    S = {a};
+    a = varargin{1};
+
+else
+    % single input
+    S = {};
 end
 
-% else
+% choose suitable polynomial type
 switch class(a)
     case {'double' 'casadi.DM'}
         % double polynomial
-        p = casos.PD(a);
+        p = casos.PD(S{:},a);
 
     case 'casadi.SX'
         % symbolic polynomial
-        p = casos.PS(a);
+        p = casos.PS(S{:},a);
 
     case 'casadi.MX'
         % symbolic matrix polynomial
