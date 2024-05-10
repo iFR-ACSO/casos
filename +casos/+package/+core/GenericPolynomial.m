@@ -1,5 +1,5 @@
-classdef (Abstract) GenericPolynomial < casos.package.core.AlgebraicObject ...
-        & casos.package.core.PolynomialInterface
+classdef (Abstract) GenericPolynomial ...
+        < casos.package.core.AlgebraicObject & casos.package.core.PolynomialInterface
 % Base class for all polynomial objects.
 
 properties (Access=private)
@@ -90,9 +90,19 @@ methods
         tf = is_zerodegree(obj.poly_sparsity);
     end
 
+    function tf = is_homogeneous(obj,varargin)
+        % Check if polynomial is homogeneous.
+        tf = is_homogeneous(obj.poly_sparsity,varargin{:});
+    end
+
     function S = sparsity(obj)
         % Return (copy of) sparsity pattern.
         S = casos.Sparsity(obj.poly_sparsity);
+    end
+
+    function casos.Indeterminates(~)
+        % Convert to indeterminates.
+        error('Notify the developers.')
     end
 
     function Z = monomials(obj,deg)

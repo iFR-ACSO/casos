@@ -1,4 +1,5 @@
-classdef (InferiorClasses = {?casadi.DM}) PD < casos.package.core.Polynomial
+classdef (InferiorClasses = {?casadi.DM, ?casos.Indeterminates}) ...
+        PD < casos.package.core.Polynomial
 % Polynomial with constant coefficients of type casadi.DM.
 
 methods (Static,Access=protected)
@@ -44,6 +45,14 @@ methods (Static)
     function p = eye(varargin)
         % Identity matrix.
         p = casos.PD(casadi.DM.eye(varargin{:}));
+    end
+end
+
+methods (Access=protected)
+    %% Protected interface
+    function tf = is_coeff_one(obj)
+        % Check if nonzero coefficients are one.
+        tf = is_one(obj.coeffs(coeff_find(get_sparsity(obj))));
     end
 end
 

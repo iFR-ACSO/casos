@@ -23,6 +23,10 @@ methods (Static, Abstract)
     p = eye(varargin);
 end
 
+methods (Abstract, Access=protected)
+    tf = is_coeff_one(obj);
+end
+
 methods
     %% Public constructor
     function obj = Polynomial(varargin)
@@ -49,8 +53,9 @@ methods
 
         elseif ischar(varargin{1}) || isa(varargin{1},'casos.Indeterminates')
             % indeterminate (pvar / mpvar syntax)
-            psparsity = casos.Sparsity(varargin{:});
-            coeffs = obj.new_coeff(coeff_sparsity(psparsity),1); % TODO
+            [vars,I] = sort(casos.Indeterminates(varargin{:}));
+            psparsity = to_vector(casos.Sparsity(vars),I);
+            coeffs = obj.new_coeff(coeff_sparsity(psparsity),1);
 
         else
             % zero-degree polynomial (casadi syntax)
@@ -78,14 +83,26 @@ methods
         tf = (is_zerodegree(obj) && is_zero(obj.coeffs));
     end
 
+    function tf = is_one(obj)
+        % Check if polynomial is equal to identity.
+        tf = (is_zerodegree(obj) && is_coeff_one(obj));
+    end
+
     function tf = is_constant(obj)
         % Check if polynomial is constant.
         tf = (is_zerodegree(obj) && ~is_symexpr(obj));
     end
 
-    function tf = is_indet(obj)
-        % Check if polynomial is a vector indeterminates.
-        error('Not implemented.')
+    function [tf,I] = is_monom(obj)
+        % Check if polynomial is vector of monomials (legacy).
+        [tf0,I] = is_monom(obj.get_sparsity);
+        tf = (tf0 && is_coeff_one(obj));
+    end
+
+    function [tf,I] = is_indet(obj)
+        % Check if polynomial is a vector of indeterminates.
+        [tf0,I] = is_monom(obj);
+        tf = (tf0 && is_homogeneous(obj,1));
     end
 end
 
@@ -106,6 +123,18 @@ methods
         % Repeat polynomial matrix.
         [S,obj.coeffs] = coeff_repmat(obj.get_sparsity,obj.coeffs,varargin{:});
         obj = obj.set_sparsity(S);
+    end
+
+    function v = casos.Indeterminates(obj)
+        % Convert to indeterminates.
+        [tf,I] = is_indet(obj);
+
+        assert(tf,'Polynomial must be a vector of indeterminates.')
+
+        % get indeterminate variables
+        vars = indeterminates(obj);
+        % return variables in order
+        v = vars(I);
     end
 
     %% Unary operators
