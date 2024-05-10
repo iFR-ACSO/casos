@@ -72,6 +72,15 @@ methods
         % Matrix multiplication
         c = mtimes@casos.package.core.Polynomial(casos.PD(a),casos.PD(b));
     end
+
+    function b = cat(dim,varargin)
+        % Concatenation.
+        if nargin == 3
+            b = cat@casos.package.core.Polynomial(dim,casos.PD(varargin{1}),casos.PD(varargin{2}));
+        else
+            b = cat@casos.package.core.Polynomial(dim,varargin{:});
+        end
+    end
 end
 
 end

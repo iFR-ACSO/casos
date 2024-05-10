@@ -186,6 +186,16 @@ methods
     function obj = transpose(obj), end % nothing to do
     function obj = ctranspose(obj), end % nothing to do
 
+    function S = horzcat(varargin)
+        % Horizontal concatenation.
+        S = cat(2,varargin{:});
+    end
+
+    function S = vertcat(varargin)
+        % Vertical concatenation.
+        S = cat(1,varargin{:});
+    end
+
     %% Conversion & matrix Sparsity interface
     function S = reshape(obj,varargin)
         % Reshape polynomial matrix.
@@ -289,6 +299,7 @@ methods (Access={?casos.package.core.PolynomialInterface})
     [S,coeffs] = coeff_repmat(obj,coeffs,varargin);
     [S,coeffs] = coeff_transpose(obj,coeffs);
     [S,cf1,cf2] = coeff_expand(S1,S2,coeff1,coeff2);
+    [S,coeffs] = coeff_cat(S1,S2,coeff1,coeff2,dim);
     [S,coeffs] = coeff_plus(S1,S2,coeff1,coeff2);
     [S,coeffs] = coeff_times(S1,S2,coeff1,coeff2);
     [S,coeffs] = coeff_mtimes(S1,S2,coeffs1,coeff2);
