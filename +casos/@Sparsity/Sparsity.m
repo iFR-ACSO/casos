@@ -297,6 +297,7 @@ methods (Access={?casos.package.core.PolynomialInterface})
 
     % protected interface for operations
     [S,coeffs] = coeff_repmat(obj,coeffs,varargin);
+    [S,coeffs] = coeff_subsref(obj,coeffs,varargin);
     [S,coeffs] = coeff_transpose(obj,coeffs);
     [S,cf1,cf2] = coeff_expand(S1,S2,coeff1,coeff2);
     [S,coeffs] = coeff_cat(S1,S2,coeff1,coeff2,dim);
@@ -308,9 +309,21 @@ methods (Access={?casos.package.core.PolynomialInterface})
     out = str_monoms(obj,flag);
 
     % protected interface for subsref getters
-    [monoms,L] = get_monoms(S,I);
-    [degree,L] = get_degree(S,I);
-    [indets,L] = get_indets(S,I);
+    [monoms,L] = get_monoms(obj,I);
+    [degree,L] = get_degree(obj,I);
+    [indets,L] = get_indets(obj,I);
+
+    function nv = get_nvars(obj,I)
+        % Get number of variables.
+        [~,L] = get_indets(obj);
+        nv = nnz(any(L(I,:),1));
+    end
+
+    function nt = get_nterm(obj,I)
+        % Get number of terms.
+        [~,L] = get_degmat(obj);
+        nt = nnz(any(L(I,:),1));
+    end
 end
 
 end

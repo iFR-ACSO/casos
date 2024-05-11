@@ -31,6 +31,6 @@ if nargin > 1
     indets = indets(any(L(I,:),1));
 end
 
-x = casos.PS(indets);
+x = casos.Indeterminates(indets);
 
 end

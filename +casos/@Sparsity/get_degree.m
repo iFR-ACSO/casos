@@ -18,7 +18,7 @@ function [degrees,L] = get_degree(S,I)
 % Returns ordered vector of degrees in the polynomial expression `p(I)`,
 % if `S` is the pattern of `p`.
 
-degsum = obj.degsum;
+degsum = S.degsum;
 
 % vector of degrees
 degrees = unique(degsum');
@@ -29,9 +29,16 @@ degrees = unique(degsum');
 % map degrees to entries
 L = logical(Ldegmat*(degsum == degrees));
 
-if nargin > 1
+if nargin < 2
+    % nothing to do
+
+elseif nnz(I) > 0
     % find degrees that appear in subsref
     degrees = degrees(any(L(I,:),1));
+
+else
+    % ensure result is nonempty
+    degrees = 0;
 end
 
 end
