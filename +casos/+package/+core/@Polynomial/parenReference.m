@@ -8,7 +8,7 @@ idx = indexOp(1);
 I = logical(sparse(size(obj,1),size(obj,2)));
 I.(idx) = true;
 
-if length(indexOp) > 1 && indexOp(2).Type == "Dot"
+if length(indexOp) > 1
     % handle getters on referenced polynomial
     [varargout{1:nargout}] = parenReference@casos.package.core.GenericPolynomial(obj,indexOp);
     return
@@ -25,12 +25,7 @@ if nnz(I) > 0
     p = set_sparsity(p,S);
 end
 
-if length(indexOp) > 1
-    % forward reference
-    [varargout{1:nargout}] = p.(indexOp(2:end));
-
-else
-    varargout = {p};
-end
+% return
+varargout = {p};
 
 end

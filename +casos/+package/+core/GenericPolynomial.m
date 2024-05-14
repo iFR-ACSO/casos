@@ -133,35 +133,39 @@ methods (Access=protected)
         I = logical(sparse(size(obj,1),size(obj,2)));
         I.(indexOp(1)) = true;
 
-        if length(indexOp) > 1 && indexOp(2).Type == "Dot"
-            % handle dot reference
-            switch (indexOp(2).Name)
-                case 'mindeg'
-                    res = min(get_degree(obj.poly_sparsity,I));
-                case 'maxdeg'
-                    res = max(get_degree(obj.poly_sparsity,I));
-                case 'nvars'
-                    res = get_nvars(obj.poly_sparsity,I);
-                case 'nterm'
-                    res = get_nterm(obj.poly_sparsity,I);
-                case 'indeterminates'
-                    res = get_indets(obj.poly_sparsity,I);
-                case 'monomials'
-                    res = get_monoms(obj.poly_sparsity,I);
-                otherwise
-                    % getter not supported
-                    p = obj(indexOp(1));
-                    [varargout{1:nargout}] = p.(indexOp(2:end));
-                    return
-            end
+        assert(length(indexOp) > 1, 'Notify the developers.')
 
-            if length(indexOp) > 2
-                [varargout{1:nargout}] = res.(indexOp(3:end));
-            else
-                varargout = {res};
-            end
+        if indexOp(2).Type == "Dot"
+            name = indexOp(2).Name;
         else
-            error('Notify the developers.')
+            name = '';
+        end
+
+        % handle dot reference
+        switch (name)
+            case 'mindeg'
+                res = min(get_degree(obj.poly_sparsity,I));
+            case 'maxdeg'
+                res = max(get_degree(obj.poly_sparsity,I));
+            case 'nvars'
+                res = get_nvars(obj.poly_sparsity,I);
+            case 'nterm'
+                res = get_nterm(obj.poly_sparsity,I);
+            case 'indeterminates'
+                res = get_indets(obj.poly_sparsity,I);
+            case 'monomials'
+                res = get_monoms(obj.poly_sparsity,I);
+            otherwise
+                % getter not supported
+                p = obj.(indexOp(1));
+                [varargout{1:nargout}] = p.(indexOp(2:end));
+                return
+        end
+
+        if length(indexOp) > 2
+            [varargout{1:nargout}] = res.(indexOp(3:end));
+        else
+            varargout = {res};
         end
     end
 
