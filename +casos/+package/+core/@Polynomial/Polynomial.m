@@ -125,6 +125,16 @@ methods
         obj = obj.set_sparsity(S);
     end
 
+    function obj = project(obj,S)
+        % Project onto sparsity pattern.
+        if ~check_sz_equal(obj,S)
+            throw(casos.package.core.IncompatibleSizesError.other(obj,S));
+        end
+
+        [S,obj.coeffs] = coeff_project(obj.get_sparsity,obj.coeffs,casos.Sparsity(S));
+        obj = obj.set_sparsity(S);
+    end
+
     function v = casos.Indeterminates(obj)
         % Convert to indeterminates.
         [tf,I] = is_indet(obj);
