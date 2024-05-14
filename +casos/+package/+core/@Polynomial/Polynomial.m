@@ -166,8 +166,8 @@ methods (Access=protected)
 
     % protected RedefinesParen interface
     obj = parenAssign(obj,idx,varargin);
-    obj = parenDelete(obj,idx);
-%     n = parenListLength(obj,idx,context);
+    % obj = parenDelete(obj,idx);
+    % n = parenListLength(obj,idx,context);
     varargout = parenReference(obj,index);
 end
 

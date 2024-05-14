@@ -52,6 +52,11 @@ methods (Access=protected)
         % Return length of indexing operation into algebraic object.
         if length(indexOp) < 2, n = 1; else, n = listLength(obj,indexOp(2:end),context); end
     end
+
+    function varargout = parenDelete(~,varargin) %#ok<STOUT>
+        % Overwriting matlab.mixin.indexing.RedefinesParen.parenDelete
+        error('Not supported.')
+    end
 end
 
 end
