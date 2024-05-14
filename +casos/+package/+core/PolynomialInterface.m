@@ -23,6 +23,15 @@ methods (Access=protected)
         tf = all(I | I1);
     end
 
+    function tf = check_sz_assign(a,b)
+        % Check if sizes are compatible for matrix assignment.
+        sza = size(a);
+        szb = size(b);
+
+        % dimensions are compatible if equal or right side is row/column
+        tf = all(sza == szb | szb == 1);
+    end
+
     function tf = check_sz_mtimes(a,b)
         % Check if sizes are compatible for matrix multiplication.
         tf = size(a,2) == size(b,1);

@@ -297,7 +297,8 @@ methods (Access={?casos.package.core.PolynomialInterface})
 
     % protected interface for operations
     [S,coeffs] = coeff_repmat(obj,coeffs,varargin);
-    [S,coeffs] = coeff_subsref(obj,coeffs,varargin);
+    [S,coeffs] = coeff_subsref(obj,coeffs,ii,sz);
+    [S,coeffs] = coeff_subsasgn(obj,S2,coeffs,coeff2,ii);
     [S,coeffs] = coeff_transpose(obj,coeffs);
     [S,cf1,cf2] = coeff_expand(S1,S2,coeff1,coeff2);
     [S,coeffs] = coeff_cat(S1,S2,coeff1,coeff2,dim);

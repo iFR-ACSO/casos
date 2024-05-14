@@ -164,6 +164,22 @@ methods (Access=protected)
             error('Notify the developers.')
         end
     end
+
+    function obj = parenAssign(obj,indexOp,varargin)
+        % Handle forwarded assignments to subreference.
+        idx = indexOp(1);
+        
+        if length(indexOp) > 1
+            % perform parantheses reference
+            p = obj.(idx);
+            % forward assign
+            [p.(indexOp(2:end))] = varargin{:};
+            % re-assign modified element
+            obj.(idx) = p;
+        else
+            error('Notify the developers.')
+        end
+    end
 end
 
 end
