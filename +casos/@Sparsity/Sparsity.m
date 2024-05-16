@@ -186,6 +186,11 @@ methods
     function obj = transpose(obj), end % nothing to do
     function obj = ctranspose(obj), end % nothing to do
 
+    function S = T(obj)
+        % Return sparsity pattern of transpose.
+        S = coeff_transpose(obj,obj.coeffs);
+    end
+
     function S = horzcat(varargin)
         % Horizontal concatenation.
         S = cat(2,varargin{:});
