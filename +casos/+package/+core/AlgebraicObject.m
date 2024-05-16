@@ -34,15 +34,13 @@ methods
         % Multiply algebraic objects (matrix product).
         c = mtimes(casos.package.polynomial(a),casos.package.polynomial(b));
     end
-end
 
-methods (Static)
     %% Common indeterminate variables interface
     function z = monomials(obj,varargin)
         % Return monomial sparsity pattern.
         assert(is_indet(obj), 'First input must be indeterminate variables.')
 
-        z = casos.Sparsity.scalar(obj,varargin);
+        z = casos.Sparsity.scalar(obj,varargin{:});
     end
 end
 

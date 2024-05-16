@@ -60,7 +60,7 @@ function [coeffs,degmat] = removeCoeffs(coeffs,degmat)
         coeffs = project(coeffs(nr,:),S);
     end
 
-    if isempty(i0)
+    if isempty(ii)
         % only zero coefficients
         degmat = sparse(1,size(degmat,2));
     else

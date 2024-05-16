@@ -196,6 +196,11 @@ methods
         S = cat(1,varargin{:});
     end
 
+    function S = blockcat(S1,S2,S3,S4)
+        % Block concatenation.
+        S = coeff_blkcat(S1,S2,S3,S4,S1.coeffs,S2.coeffs,S3.coeffs,S4.coeffs);
+    end
+
     %% Conversion & matrix Sparsity interface
     function S = reshape(obj,varargin)
         % Reshape polynomial matrix.

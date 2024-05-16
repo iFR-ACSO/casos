@@ -115,9 +115,26 @@ methods
             Z = monomials(obj.poly_sparsity);
         end
     end
+
+    %% Concatenation
+    function p = cat(dim,varargin)
+        % Generic concatenation.
+        p = cat@casos.package.core.PolynomialInterface(dim,varargin{:});
+    end
+
+    function p = vertcat(varargin)
+        % Vertical concatenation.
+        p = vertcat@casos.package.core.PolynomialInterface(varargin{:});
+    end
+
+    function p = horzcat(varargin)
+        % Horizontal concatenation.
+        p = horzcat@casos.package.core.PolynomialInterface(varargin{:});
+    end
 end
 
 methods (Access=protected)
+    %% Protected interface
     function obj = set_sparsity(obj,sparsity)
         % Set polynomial sparsity pattern.
         obj.poly_sparsity = sparsity;

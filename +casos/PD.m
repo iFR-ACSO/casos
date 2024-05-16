@@ -81,6 +81,11 @@ methods
             b = cat@casos.package.core.Polynomial(dim,varargin{:});
         end
     end
+
+    function p = blockcat(a,b,c,d)
+        % Block concatenation.
+        p = blockcat@casos.package.core.Polynomial(casos.PD(a),casos.PD(b),casos.PD(c),casos.PD(d));
+    end
 end
 
 end
