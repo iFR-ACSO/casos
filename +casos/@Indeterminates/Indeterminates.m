@@ -88,6 +88,12 @@ methods
         % Display indeterminates as matrix.
         disp_matrix(obj,'()');
     end
+
+    % Cell-like interface
+    function [tf,loc] = ismember(obj,x)
+        % Check if the indeterminate variables include x.
+        [tf,loc] = ismember(obj.variables,x.variables);
+    end
 end
 
 methods (Access=protected)
