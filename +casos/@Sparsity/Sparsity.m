@@ -209,6 +209,16 @@ methods
         S = coeff_blkcat(S1,S2,S3,S4,S1.coeffs,S2.coeffs,S3.coeffs,S4.coeffs);
     end
 
+    function S = sum1(S)
+        % Sum along first dimension.
+        S = coeff_sum(S,S.coeffs,1);
+    end
+
+    function S = sum2(S)
+        % Sum along second dimension.
+        S = coeff_sum(S,S.coeffs,2);
+    end
+
     %% Conversion & matrix Sparsity interface
     function S = reshape(obj,varargin)
         % Reshape polynomial matrix.
@@ -321,6 +331,10 @@ methods (Access={?casos.package.core.PolynomialInterface})
     [S,coeffs] = coeff_mtimes(S1,S2,coeffs1,coeff2);
     [S,coeffs] = coeff_int(S,coeffs,x,range);
     [S,coeffs] = coeff_nabla(S,coeffs,x);
+    [S,coeffs] = coeff_sum(S,coeffs,dim);
+
+    % prepare for matrix operations
+    [S,coeffs] = prepareMatrixOp(S,coeffs,dim);
 
     % protected interface for display output
     out = str_monoms(obj,flag);
