@@ -167,6 +167,9 @@ methods (Static)
 end
 
 methods
+    % check well-posedness
+    tf = is_wellposed(obj);
+
     %% Polynomial Sparsity interface
     function idx = find(obj)
         % Return indices of nonzero elements.

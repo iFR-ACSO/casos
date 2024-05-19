@@ -121,6 +121,11 @@ methods
         end
     end
 
+    function tf = is_wellposed(obj)
+        % Check if polynomial is well posed.
+        tf = is_wellposed(obj.poly_sparsity);
+    end
+
     %% Concatenation
     function p = cat(dim,varargin)
         % Generic concatenation.

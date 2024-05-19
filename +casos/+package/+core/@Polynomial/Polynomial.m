@@ -107,6 +107,9 @@ methods
 end
 
 methods
+    % check well-posedness
+    tf = is_wellposed(obj);
+
     % public RedefinesParen interface
     p = cat(dim,varargin);
 
