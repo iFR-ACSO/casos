@@ -26,7 +26,7 @@ switch (dim)
         %   D = |  :       :       :       :  |
         %       | aM1 ... aMN ... zM1 ... zMN |
         %
-        coeffs = reshape(coeffs',sz(1),sz(2)*nt);
+        coeffs = reshape(T(coeffs),sz(1),sz(2)*nt);
 
     case 2
         % Matrix operation along second dimension; return

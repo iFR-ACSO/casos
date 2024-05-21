@@ -27,7 +27,7 @@ switch (dim)
         % input is
         %
         %   D = | a1 ... aN ... z1 ... zN |
-        coeffs = reshape(coeffs,prod(sz),ne/sz(2))';
+        coeffs = T(reshape(coeffs,prod(sz),ne/sz(2)));
 
     case 2
         % Matrix operation along second dimension (column vector)
