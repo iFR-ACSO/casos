@@ -5,26 +5,7 @@ sz = sizeofMatrixOp(S,dim);
 
 if isa(coeffs,'casadi.Sparsity')
     % compute sparsity pattern
-    [it,ind] = get_triplet(coeffs);
-    % convert linear indices to subindices
-    [ii,jj] = ind2sub(size(S),ind+1);
-
-    % project coefficients along dimension
-    switch (dim)
-        case 1
-            ii = ones(size(jj));
-
-        case 2
-            jj = ones(size(ii));
-
-        otherwise
-            error('Invalid dimension input.')
-    end
-
-    % convert subindices back to linear indices
-    ind = sub2ind(sz,ii,jj);
-
-    coeffs = casadi.Sparsity.triplet(S.nterm,prod(sz),it,ind-1);
+    coeffs = sparsity_sum(coeffs,size(S),dim);
 
 else
     % prepare for operation on coefficients

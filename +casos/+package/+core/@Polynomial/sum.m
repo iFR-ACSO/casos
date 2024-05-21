@@ -23,7 +23,7 @@ end
 % else
 B = A.new_poly;
 
-% finish operation on coefficients
+% compute sum of coefficients
 [S,B.coeffs] = coeff_sum(A.get_sparsity,A.coeffs,dim);
 
 % set sparsity
