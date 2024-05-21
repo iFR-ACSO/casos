@@ -219,6 +219,16 @@ methods
         S = coeff_sum(S,S.coeffs,2);
     end
 
+    function S = prod1(S)
+        % Product along first dimension.
+        S = coeff_prod(S,S.coeffs,1);
+    end
+
+    function S = prod2(S)
+        % Product along second dimension.
+        S = coeff_prod(S,S.coeffs,2);
+    end
+
     %% Conversion & matrix Sparsity interface
     function S = reshape(obj,varargin)
         % Reshape polynomial matrix.
