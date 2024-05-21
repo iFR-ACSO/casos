@@ -1,4 +1,4 @@
-function coeffs = finishMatrixOp(S,coeffs,dim)
+function coeffs = finishMatrixOp(coeffs,sz,dim)
 % Finish after matrix operation along specified dimension.
 %
 % This function reshapes the coefficient matrix C after applying
@@ -20,7 +20,6 @@ end
 
 % else:
 ne = size(coeffs,3-dim);
-sz = size(S);
 
 switch (dim)
     case 1

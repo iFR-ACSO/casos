@@ -1,5 +1,7 @@
 function [S,coeffs] = coeff_sum(S,coeffs,dim)
-% Compute (finish) sum of polynomial coefficient matrix.
+% Compute sum of polynomial coefficient matrix.
+
+sz = sizeofMatrixOp(S,dim);
 
 if isa(coeffs,'casadi.Sparsity')
     % compute sparsity pattern
@@ -19,21 +21,27 @@ if isa(coeffs,'casadi.Sparsity')
             error('Invalid dimension input.')
     end
 
-    % set dimensions of output
-    S.matdim(dim) = 1;
     % convert subindices back to linear indices
-    ind = sub2ind(size(S),ii,jj);
+    ind = sub2ind(sz,ii,jj);
 
-    coeffs = casadi.Sparsity.triplet(S.nterm,numel(S),it,ind-1);
+    coeffs = casadi.Sparsity.triplet(S.nterm,prod(sz),it,ind-1);
 
 else
+    % prepare for operation on coefficients
+    cfa = prepareMatrixOp(S,coeffs,dim);
+
+    % sum coefficients
+    cfb = evalMatrixOp(cfa,@sum,dim);
+    
     % finish operation on coefficients
-    coeffs = finishMatrixOp(S,coeffs,dim);
+    coeffs = finishMatrixOp(cfb,sz,dim);
 
     % remove zero terms
     [coeffs,S.degmat,S.indets] = removeZero(coeffs,S.degmat,S.indets);
 end
 
+% set dimensions of output
+S.matdim = sz;
 % store coefficients
 S = set_coefficients(S,coeffs);
 

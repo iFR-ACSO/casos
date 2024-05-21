@@ -14,23 +14,17 @@ else
     dim = 1;
 end
 
-% prepare for operation on coefficients
-[S,coeffs] = prepareMatrixOp(A.get_sparsity,A.coeffs,dim);
-
 if isempty(A)
     % sum of empty matrix is zero
-    B = A.new_poly(size(S));
+    B = A.zeros(sizeofMatrixOp(A.get_sparsity,dim));
     return
 end
 
 % else
 B = A.new_poly;
 
-% sum coefficients
-cfb = evalMatrixOp(coeffs,@sum,dim);
-
 % finish operation on coefficients
-[S,B.coeffs] = coeff_sum(S,cfb,dim);
+[S,B.coeffs] = coeff_sum(A.get_sparsity,A.coeffs,dim);
 
 % set sparsity
 B = set_sparsity(B,S);

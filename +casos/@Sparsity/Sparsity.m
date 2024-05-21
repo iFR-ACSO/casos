@@ -332,9 +332,11 @@ methods (Access={?casos.package.core.PolynomialInterface})
     [S,coeffs] = coeff_int(S,coeffs,x,range);
     [S,coeffs] = coeff_nabla(S,coeffs,x);
     [S,coeffs] = coeff_sum(S,coeffs,dim);
+    [S,coeffs] = coeff_prod(S,coeffs,dim);
 
-    % prepare for matrix operations
-    [S,coeffs] = prepareMatrixOp(S,coeffs,dim);
+    % protected interface for matrix operations
+    coeffs = prepareMatrixOp(S,coeffs,dim);
+    sz = sizeofMatrixOp(S,dim);
 
     % protected interface for display output
     out = str_monoms(obj,flag);

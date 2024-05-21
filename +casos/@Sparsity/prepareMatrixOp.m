@@ -1,4 +1,4 @@
-function [S,coeffs] = prepareMatrixOp(S,coeffs,dim)
+function coeffs = prepareMatrixOp(S,coeffs,dim)
 % Prepare for matrix operation along specified dimension.
 %
 % This function returns the coefficient matrix C of a matrix polynomial in
@@ -18,8 +18,6 @@ sz = S.size;
 switch (dim)
     case 'all'
         % Matrix operation over all elements; return C 
-        % result is scalar
-        sz = [1 1];
 
     case 1
         % Matrix operation along first dimension; return
@@ -29,9 +27,6 @@ switch (dim)
         %       | aM1 ... aMN ... zM1 ... zMN |
         %
         coeffs = reshape(coeffs',sz(1),sz(2)*nt);
-        
-        % result is row vector
-        sz(1) = 1;
 
     case 2
         % Matrix operation along second dimension; return
@@ -46,13 +41,8 @@ switch (dim)
         %
         coeffs = reshape(coeffs,sz(1)*nt,sz(2));
 
-        % result is column vector
-        sz(2) = 1;
-
     otherwise
         error('Invalid dimension input.')
 end
-
-S.matdim = sz;
 
 end
