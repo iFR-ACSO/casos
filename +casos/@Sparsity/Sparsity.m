@@ -339,6 +339,7 @@ methods (Access={?casos.package.core.PolynomialInterface})
     [S,coeffs] = coeff_plus(S1,S2,coeff1,coeff2);
     [S,coeffs] = coeff_times(S1,S2,coeff1,coeff2);
     [S,coeffs] = coeff_mtimes(S1,S2,coeffs);
+    [S,coeffs] = coeff_power(S,coeffs,deg);
     [S,coeffs] = coeff_int(S,coeffs,x,range);
     [S,coeffs] = coeff_nabla(S,coeffs,x);
     [S,coeffs] = coeff_sum(S,coeffs,dim);
