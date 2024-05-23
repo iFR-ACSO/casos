@@ -65,7 +65,7 @@ else
     % prepare powers of degree matrix
     D = cell(1,n_max);
     D(1) = {sparse(1,nva)};
-    D(2) = {dga};
+    D(2) = {S.degmat};
 
     % compute powers up to maximal degree
     [C,D] = powers(C,D,n_max,nta);
@@ -87,7 +87,7 @@ else
                 [ii,ji] = get_triplet(cfi);
             end
             I = (ji == i-1);
-            Si = casadi.Sparsity(mi,ni,ii(I),ji(I));
+            Si = casadi.Sparsity.triplet(mi,ni,ii(I),ji(I));
             if ~isa(cfi,'casadi.Sparsity')
                 Cd{i} = project(cfi, Si);
             else
