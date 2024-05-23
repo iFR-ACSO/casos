@@ -336,6 +336,11 @@ methods (Access={?casos.package.core.PolynomialInterface})
         idx = find(obj.coeffs);
     end
 
+    function cfs = coeff_repterms(S,coeffs,nt)
+        % Repeat terms.
+        cfs = repmat(coeffs,nt/S.nterm,1);
+    end
+
     % protected interface for operations
     [S,coeffs] = coeff_project(obj,coeffs,S);
     [S,coeffs] = coeff_repmat(obj,coeffs,varargin);
@@ -353,6 +358,7 @@ methods (Access={?casos.package.core.PolynomialInterface})
     [S,coeffs] = coeff_sum(S,coeffs,dim);
     [S,coeffs] = coeff_prod(S,coeffs,dim);
     [S,coeffs] = coeff_subs(S1,coeff1,x,S2,coeff2)
+    [S,coeffs] = coeff_update(S,coeffs,sz,dim);
 
     % protected interface for matrix operations
     coeffs = prepareMatrixOp(S,coeffs,dim);

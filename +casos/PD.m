@@ -48,6 +48,16 @@ methods (Static)
     end
 end
 
+methods
+    %% Conversion
+    function d = casadi.DM(p)
+        % Convert to double matrix.
+        assert(is_zerodegree(p), 'Can only convert polynomial of degree zero.')
+
+        d = reshape(p.coeffs,size(p));
+    end
+end
+
 methods (Access=protected)
     %% Protected interface
     function tf = is_coeff_one(obj)
@@ -76,6 +86,26 @@ methods
     function c = mtimes(a,b)
         % Matrix multiplication
         c = mtimes@casos.package.core.Polynomial(casos.PD(a),casos.PD(b));
+    end
+
+    function c = ldivide(a,b)
+        % Element-wise left division.
+        c = ldivide@casos.package.core.Polynomial(casos.PD(a),casos.PD(b));
+    end
+
+    function c = rdivide(a,b)
+        % Element-wise right division.
+        c = rdivide@casos.package.core.Polynomial(casos.PD(a),casos.PD(b));
+    end
+
+    function c = mldivide(a,b)
+        % Matrix left division.
+        c = mldivide@casos.package.core.Polynomial(casos.PD(a),casos.PD(b));
+    end
+
+    function c = mrdivide(a,b)
+        % Matrix right division.
+        c = mrdivide@casos.package.core.Polynomial(casos.PD(a),casos.PD(b));
     end
 
     function b = cat(dim,varargin)
