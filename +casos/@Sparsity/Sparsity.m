@@ -229,6 +229,14 @@ methods
         S = coeff_prod(S,S.coeffs,2);
     end
 
+    function S = subs(S1,x,S2)
+        % Substitute indeterminate variables.
+        assert(is_indet(x),'Second argument must be vector of indeterminate variables.')
+        assert(numel(x) == numel(S2),'Second and third argument have incompatible sizes.')
+
+        S = coeff_subs(S1,S1.coeffs,x,S2,S2.coeffs);
+    end
+
     %% Conversion & matrix Sparsity interface
     function S = reshape(obj,varargin)
         % Reshape polynomial matrix.
@@ -344,6 +352,7 @@ methods (Access={?casos.package.core.PolynomialInterface})
     [S,coeffs] = coeff_nabla(S,coeffs,x);
     [S,coeffs] = coeff_sum(S,coeffs,dim);
     [S,coeffs] = coeff_prod(S,coeffs,dim);
+    [S,coeffs] = coeff_subs(S1,coeff1,x,S2,coeff2)
 
     % protected interface for matrix operations
     coeffs = prepareMatrixOp(S,coeffs,dim);

@@ -91,6 +91,11 @@ methods
         % Block concatenation.
         p = blockcat@casos.package.core.Polynomial(casos.PD(a),casos.PD(b),casos.PD(c),casos.PD(d));
     end
+
+    function c = subs(a,x,b)
+        % Substitution.
+        c = subs@casos.package.core.Polynomial(casos.PD(a),x,casos.PD(b));
+    end
 end
 
 end
