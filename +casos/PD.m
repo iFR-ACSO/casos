@@ -9,11 +9,6 @@ methods (Static,Access=protected)
         c = casadi.DM(varargin{:});
     end
 
-    function sym_coeff(varargin)
-        % Symbolic coefficients.
-        error('Not implemented.')
-    end
-
     function p = new_poly(varargin)
         % New polynomial.
         p = casos.PD(varargin{:});
@@ -22,9 +17,9 @@ end
 
 methods (Static)
     %% Static constructors
-    function sym(varargin)
+    function p = sym(varargin) %#ok<STOUT>
         % Symbolic variable.
-        error('Not implemented for PD.');
+        error('Symbolics not implemented for PD.');
     end
 
     function p = empty(varargin)
@@ -55,6 +50,27 @@ methods
         assert(is_zerodegree(p), 'Can only convert polynomial of degree zero.')
 
         d = reshape(p.coeffs,size(p));
+    end
+
+    %% Getter & symbolic framework
+    function tf = is_equal(obj,p)
+        % Check if polynomials are equal.
+        tf = is_equal@casos.package.core.Polynomial(casos.PD(obj),casos.PD(p));
+    end
+
+    function tf = is_linear(obj,p) %#ok<STOUT,INUSD>
+        % Check if polynomial is linear.
+        error('Symbolics not implemented for PD.')
+    end
+
+    function c = linearize(a,x,b) %#ok<STOUT,INUSD>
+        % Symbolic linearization.
+        error('Symbolics not implemented for PD.')
+    end
+
+    function c = mtaylor(a,x,b,varargin) %#ok<STOUT,INUSD>
+        % Symbolic Taylor expansion.
+        error('Symbolics not implemented for PD.')
     end
 end
 

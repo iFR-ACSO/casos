@@ -100,6 +100,11 @@ methods
         tf = is_homogeneous(obj.poly_sparsity,varargin{:});
     end
 
+    function tf = is_equal(obj,p)
+        % Check if polynomials are equal.
+        tf = is_equal(obj.poly_sparsity,p.poly_sparsity);
+    end
+
     function S = sparsity(obj)
         % Return (copy of) sparsity pattern.
         S = casos.Sparsity(obj.poly_sparsity);

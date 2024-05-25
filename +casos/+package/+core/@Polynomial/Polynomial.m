@@ -9,8 +9,6 @@ end
 
 methods (Static, Abstract, Access=protected)
     c = new_coeff(varargin);
-    s = sym_coeff(varargin);
-
     p = new_poly(varargin);
 end
 
@@ -70,7 +68,7 @@ methods
     %% Getter
     function tf = is_symbolic(obj)
         % Check if polynomial has symbolic coefficients.
-        tf = is_symbolic(obj.coeffs);
+        tf = is_symbolic(poly2basis(obj));
     end
 
     function tf = is_symexpr(obj)
@@ -103,6 +101,12 @@ methods
         % Check if polynomial is a vector of indeterminates.
         [tf0,I] = is_monom(obj);
         tf = (tf0 && is_homogeneous(obj,1));
+    end
+
+    function tf = is_equal(obj,p)
+        % Check if polynomials are equal.
+        tf = is_equal@casos.package.core.GenericPolynomial(obj,p) ...
+            && is_equal(obj.coeffs,p.coeffs);
     end
 end
 
@@ -148,7 +152,7 @@ methods
         % copy sparsity pattern
         S = sparsity(obj);
         % select nonzero coefficients
-        c = obj.coeffs(coeff_find(S));
+        c = reshape(obj.coeffs(coeff_find(S)),nnz(obj),1);
     end
 
     function v = casos.Indeterminates(obj)

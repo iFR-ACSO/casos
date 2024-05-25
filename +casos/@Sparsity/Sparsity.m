@@ -147,6 +147,14 @@ methods
         % Check if sparsity pattern is null.
         tf = is_null(obj.coeffs);
     end
+
+    function tf = is_equal(obj,S)
+        % Check if sparsity patterns are equal.
+        tf = is_equal(obj.indets,S.indets) ...
+            && isequal(obj.degmat,S.degmat) ...
+            && is_equal(obj.coeffs,S.coeffs) ...
+            && isequal(obj.matdim,S.matdim);
+    end
 end
 
 methods (Static)

@@ -62,6 +62,11 @@ methods
         [varargout{1:nargout}] = size(sparse(1,obj.nvars),varargin{:});
     end
 
+    function tf = is_equal(obj,var)
+        % Check if indeterminate variables are equal.
+        tf = isequal(obj.variables,var.variables);
+    end
+
     function out = str(obj)
         % Return string representation.
         out = obj.variables;
