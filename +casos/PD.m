@@ -142,6 +142,11 @@ methods
         % Substitution.
         c = subs@casos.package.core.Polynomial(casos.PD(a),x,casos.PD(b));
     end
+
+    function c = ptaylor(a,x,b,deg)
+        % Polynomial Taylor expansion.
+        c = ptaylor@casos.package.core.Polynomial(casos.PD(a),x,casos.PD(b),deg);
+    end
 end
 
 end
