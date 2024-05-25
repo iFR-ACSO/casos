@@ -4,6 +4,9 @@ function [S,coeffs] = coeff_update(S,coeffs,sz,dim)
 if nargin > 3
     % finish after matrix operation
     coeffs = finishMatrixOp(coeffs,sz,dim);
+elseif nargin < 3
+    % matrix dimensions do not change
+    sz = size(S);
 end
 
 assert(all(size(coeffs) == [S.nterm prod(sz)]),'Notify the developers.')
