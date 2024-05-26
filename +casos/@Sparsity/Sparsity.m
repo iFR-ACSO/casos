@@ -37,10 +37,8 @@ methods
         if nargin == 0
             % nothing to do (null)
 
-        elseif isa(varargin{1},'casos.Sparsity')
+        elseif isa(varargin{1},'casos.Sparsity') && nargin < 2
             % copy sparsity pattern
-            assert(nargin == 1,'Too many arguments.')
-            
             obj.coeffs = casadi.Sparsity(varargin{1}.coeffs);
             obj.degmat = varargin{1}.degmat;
             obj.indets = varargin{1}.indets;
@@ -58,6 +56,27 @@ methods
             obj.coeffs = casadi.Sparsity.dense(N,1);
             obj.degmat = speye(N);
             obj.matdim = [1 1];
+
+        elseif nargin == 2 && isa(varargin{2},'casos.Sparsity')
+            % apply sparsity pattern to (vector of) monomials
+            S = casadi.Sparsity(varargin{1});
+            w = varargin{2};
+
+            if isscalar(w)
+                % repeat monomials
+                obj.coeffs = repmat(reshape(S,1,S.numel),w.nterm,1);
+            else
+                % assign monomials to nonzeros
+                assert(nnz(S) == numel(w),'Dimension mismatch.')
+
+                idx = find(S);
+                [ii,jj] = coeff_triplet(w);
+                obj.coeffs = casadi.Sparsity.triplet(w.nterm,S.numel,ii,idx(jj+1)-1);
+            end
+
+            obj.degmat = w.degmat;
+            obj.indets = w.indets;
+            obj.matdim = size(S);
 
         else
             % zero-degree sparsity (casadi syntax)
@@ -161,16 +180,29 @@ methods (Static)
     %% Static constructors
     S = scalar(varargin);
 
-    function S = diag(varargin)
-        % Create diagonal matrix pattern.
-        S = casos.Sparsity(casadi.Sparsity.diag(varargin{:}));
+    S = diag(varargin);
+    S = dense(varargin);
+
+    function S = band(n,p,varargin)
+        % Create band sparsity pattern.
+        S = casos.Sparsity(casadi.Sparsity.band(n,p),varargin{:});
     end
 
-    function S = dense(varargin)
-        % Create dense matrix pattern.
-        S = casos.Sparsity(casadi.Sparsity.dense(varargin{:}));
+    function S = banded(n,p,varargin)
+        % Create banded sparsity pattern.
+        S = casos.Sparsity(casadi.Sparsity.banded(n,p),varargin{:});
     end
 
+    function S = nonzeros(n,m,idx,varargin)
+        % Create sparsity pattern with nonzeros.
+        S = casos.Sparsity(casadi.Sparsity.nonzeros(n,m,idx),varargin{:});
+    end
+
+    function S = triplet(n,m,i,j,varargin)
+        % Create sparsity pattern with triplets.
+        S = casos.Sparsity(casadi.Sparsity.triplet(n,m,i,j),varargin{:});
+    end
+    
     % to be completed
 end
 
