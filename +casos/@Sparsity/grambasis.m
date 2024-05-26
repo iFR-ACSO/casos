@@ -70,7 +70,7 @@ Lz(reshape(any(Irem,2),lz,lp)') = false;
 I = any(Lz,1);
 Lz(:,~I) = [];
 degmat = z.degmat(I,:);
-z = to_vector(build_monomials(degmat,z.indets)); % do we need this?
+z = (build_monomials(degmat,z.indets)); % do we need this?
 
 % dimension K(i) of Gram basis for p(i)
 K = full(sum(Lz,2));
@@ -109,9 +109,21 @@ coeffs = casadi.Sparsity.triplet(nT,lp,i-1,j-1);
 
 % set output
 Z = casos.Sparsity;
-[Z.coeffs,Z.degmat,~,Mp] = uniqueDeg(coeffs,D);
+[Z.coeffs,Z.degmat,Iuni] = uniqueDeg(coeffs,D);
 Z.indets = z.indets;
 Z.matdim = [lp 1];
+
+% compute primal mapping
+[id,ic] = Iuni{:};
+% logical map for output Z
+% -> Luni(i,j) is true iff Z(i) has degree(j)
+Luni = L(:,id); 
+% enumerate nonzero elements in L'
+[il,jl] = find(Luni');
+Innz = sparse(il,jl,1:nnz(Luni),length(id),lp);
+% create mapping from nonzero elements of L to nonzero elements Luni
+ii = sub2ind(size(Luni'),ic(i),j);
+Mp = sparse(Innz(ii),1:nnz(L),1,nnz(Luni),nnz(L));
 
 % return adjoint inverse
 Md = sum(Mp,2).\Mp;

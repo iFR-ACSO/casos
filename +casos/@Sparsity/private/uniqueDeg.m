@@ -1,4 +1,4 @@
-function [coeffs,degmat,I,M] = uniqueDeg(coeffs,degmat)
+function [coeffs,degmat,I] = uniqueDeg(coeffs,degmat)
 % Make degree matrix unique and return corresponding coefficients.
 %
 % This function ensures that the monomials are in graded REVERSE
@@ -38,7 +38,6 @@ end
 if nargout > 2
     % undocumented: return indices
     I = {id ic};
-    M = sparse(ic,1:nt,1,length(id),nt);
 end
 
 end
