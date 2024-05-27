@@ -392,6 +392,7 @@ methods (Access={?casos.package.core.PolynomialInterface})
     [S,coeffs] = coeff_plus(S1,S2,coeff1,coeff2);
     [S,coeffs] = coeff_times(S1,S2,coeff1,coeff2);
     [S,coeffs] = coeff_mtimes(S1,S2,coeffs);
+    [S,coeffs] = coeff_kron(S1,S2,coeff1,coeff2);
     [S,coeffs] = coeff_power(S,coeffs,deg);
     [S,coeffs] = coeff_int(S,coeffs,x,range);
     [S,coeffs] = coeff_nabla(S,coeffs,x);
@@ -399,6 +400,7 @@ methods (Access={?casos.package.core.PolynomialInterface})
     [S,coeffs] = coeff_prod(S,coeffs,dim);
     [S,coeffs] = coeff_subs(S1,coeff1,x,S2,coeff2)
     [S,coeffs] = coeff_update(S,coeffs,sz,dim);
+    r = coeff_properint(S,coeffs);
 
     % protected interface for matrix operations
     coeffs = prepareMatrixOp(S,coeffs,dim);

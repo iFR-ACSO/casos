@@ -93,12 +93,12 @@ end
 methods
     %% Algebraic operations
     function c = plus(a,b)
-        % Addition
+        % Addition.
         c = plus@casos.package.core.Polynomial(casos.PD(a),casos.PD(b));
     end
 
     function c = times(a,b)
-        % Element-wise multiplication
+        % Element-wise multiplication.
         c = times@casos.package.core.Polynomial(casos.PD(a),casos.PD(b));
     end
 
@@ -108,8 +108,13 @@ methods
     end
 
     function c = mtimes(a,b)
-        % Matrix multiplication
+        % Matrix multiplication.
         c = mtimes@casos.package.core.Polynomial(casos.PD(a),casos.PD(b));
+    end
+
+    function c = kron(a,b)
+        % Kronecker product.
+        c = kron@casos.package.core.Polynomial(casos.PD(a),casos.PD(b));
     end
 
     function c = ldivide(a,b)
