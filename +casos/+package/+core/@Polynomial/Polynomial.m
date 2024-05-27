@@ -43,11 +43,10 @@ methods
 
         elseif isa(varargin{1},'casos.Sparsity')
             % sparsity pattern syntax
-            assert(nargin > 1,'Not enough arguments.')
             assert(nargin < 3,'Too many arguments.')
 
             psparsity = casos.Sparsity(varargin{1});
-            coeffs = obj.new_coeff(coeff_sparsity(psparsity),varargin{2});
+            coeffs = obj.new_coeff(coeff_sparsity(psparsity),varargin{2:end});
 
         elseif ischar(varargin{1}) || isa(varargin{1},'casos.Indeterminates')
             % indeterminate (pvar / mpvar syntax)

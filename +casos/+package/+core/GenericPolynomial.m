@@ -110,11 +110,6 @@ methods
         S = casos.Sparsity(obj.poly_sparsity);
     end
 
-    function casos.Indeterminates(~)
-        % Convert to indeterminates.
-        error('Notify the developers.')
-    end
-
     function l = list_of_degree(obj)
         % Return a list of degrees.
         l = list_of_degree(obj.poly_sparsity);
@@ -139,6 +134,26 @@ methods
     function tf = is_wellposed(obj)
         % Check if polynomial is well posed.
         tf = is_wellposed(obj.poly_sparsity);
+    end
+
+    %% Conversion
+    function v = casos.Indeterminates(obj) %#ok<STOUT,MANU>
+        % Convert to indeterminates.
+        error('Notify the developers.')
+    end
+
+    function f = to_sxfunction(obj,varargin)
+        % Return casadi.Function object using SX.
+        X = casadi.SX.sym('x',obj.nvars,1);
+        p = subs(obj,indeterminates(obj),casos.package.polynomial(X));
+        f = casadi.Function('p',{X},{casadi.SX(p)},varargin{:});
+    end
+
+    function f = to_mxfunction(obj,varargin)
+        % Return casadi.Function object using MX.
+        X = casadi.MX.sym('x',obj.nvars,1);
+        p = subs(obj,indeterminates(obj),casos.package.polynomial(X));
+        f = casadi.Function('p',{X},{casadi.MX(p)},varargin{:});
     end
 
     %% Concatenation
