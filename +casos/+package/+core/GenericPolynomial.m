@@ -223,4 +223,34 @@ methods (Access=protected)
     end
 end
 
+methods (Static,Access=protected)
+    %% Static protected interface
+    function S = sym_pattern(w,sz,type)
+        % Return a sparsity pattern for symbolic polynomials.
+        if nargin < 1
+            % default syntax
+            S = casos.Sparsity.scalar;
+        elseif isnumeric(w)
+            % constant polynomial
+            assert(nargin < 2, 'Undefined syntax.')
+            S = casos.Sparsity.dense(w);
+        elseif nargin < 2
+            % sparsity pattern
+            S = casos.Sparsity(w);
+        elseif ischar(sz)
+            % type given
+            assert(nargin < 3, 'Undefined syntax.')
+            assert(isequal(sz,'gram'), 'Type "%s" undefined.', sz)
+            S = gram(casos.Sparsity(w));
+        elseif nargin < 3
+            % monomials and size given
+            S = casos.Sparsity.dense(sz,w);
+        else
+            assert(nargin < 4, 'Undefined syntax.')
+            assert(isequal(type,'gram'), 'Type "%s" undefined.', sz)
+            S = gram(casos.Sparsity.dense(sz,w));
+        end
+    end
+end
+
 end
