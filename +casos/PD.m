@@ -63,6 +63,14 @@ methods
         error('Symbolics not implemented for PD.')
     end
 
+    function varargout = jacobian(f,x) %#ok<INUSD,STOUT>
+        % Symbolic Jacobian.
+        if isa(x,'casos.package.core.AlgebraicObject') && is_indet(x)
+            error('Use NABLA for the polynomial Jacobian.')
+        end
+        error('Symbolics not implemented for PD.')
+    end
+
     function c = linearize(a,x,b) %#ok<STOUT,INUSD>
         % Symbolic linearization.
         error('Symbolics not implemented for PD.')
