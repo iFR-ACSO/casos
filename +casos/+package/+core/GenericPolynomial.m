@@ -115,6 +115,16 @@ methods
         error('Notify the developers.')
     end
 
+    function l = list_of_degree(obj)
+        % Return a list of degrees.
+        l = list_of_degree(obj.poly_sparsity);
+    end
+
+    function l = list_of_indets(obj)
+        % Return a list of indeterminate variables.
+        l = list_of_indets(obj.poly_sparsity);
+    end
+
     function Z = monomials(obj,deg)
         % Return monomial sparsity pattern.
         if nargin > 1

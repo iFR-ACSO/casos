@@ -210,6 +210,16 @@ methods
     % check well-posedness
     tf = is_wellposed(obj);
 
+    function l = list_of_degree(obj)
+        % Return a list of degrees.
+        l = arrayfun(@(i) full(obj.degmat(i,:)),1:obj.nterm,'UniformOutput',false);
+    end
+
+    function l = list_of_indets(obj)
+        % Return a list of indeterminate variables.
+        l = str(obj.indets);
+    end
+
     %% Polynomial Sparsity interface
     function idx = find(obj)
         % Return indices of nonzero elements.
@@ -379,6 +389,11 @@ methods (Access={?casos.package.core.PolynomialInterface})
     function cfs = coeff_repterms(S,coeffs,nt)
         % Repeat terms.
         cfs = repmat(coeffs,nt/S.nterm,1);
+    end
+
+    function l = coeff_list(S,coeffs)
+        % Return list of coefficients.
+        l = arrayfun(@(i) reshape(coeffs(i,:),size(S)),1:S.nterm,'UniformOutput',false);
     end
 
     % protected interface for operations

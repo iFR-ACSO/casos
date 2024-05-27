@@ -108,6 +108,11 @@ methods
         tf = is_equal@casos.package.core.GenericPolynomial(obj,p) ...
             && is_equal(obj.coeffs,p.coeffs);
     end
+
+    function l = list_of_coeffs(obj)
+        % Return a list of coefficients.
+        l = coeff_list(obj.get_sparsity,obj.coeffs);
+    end
 end
 
 methods
