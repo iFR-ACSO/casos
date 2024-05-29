@@ -1,4 +1,4 @@
-function [G,zi,zo] = jacobian(f,x)
+function D = jacobian(f,x)
 % Compute symbolic Jacobian matrix of vector polynomial expression.
 %
 % Use of JACOBIAN for the polynomial Jacobian matrix is not allowed. 
@@ -21,6 +21,7 @@ assert(is_symbolic(x),'Second argument must be symbolic polynomial.')
 % G is jacobian of coefficients
 G = jacobian(F,X);
 
-% TODO: return operator
+% return operator
+D = casos.package.operator(G,zi,zo);
 
 end

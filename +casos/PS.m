@@ -77,9 +77,9 @@ methods
         tf = is_linear@casos.package.core.Polynomial(casos.PS(obj),casos.PS(p));
     end
 
-    function [G,zi,zo] = jacobian(f,x)
+    function D = jacobian(f,x)
         % Symbolic Jacobian.
-        [G,zi,zo] = jacobian@casos.package.core.Polynomial(casos.PS(f),casos.PS(x));
+        D = jacobian@casos.package.core.Polynomial(casos.PS(f),casos.PS(x));
     end
 
     function c = linearize(a,x,b)
