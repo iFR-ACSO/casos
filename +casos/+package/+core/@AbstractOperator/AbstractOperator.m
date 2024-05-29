@@ -188,6 +188,15 @@ methods
     end
 end
 
+methods (Static)
+    %% Static conversion
+    function op = from_primal(p)
+        % Convert from polynomial p such that dot(op,x) = dot(p,x).
+        [P,Z] = poly2basis(p);
+        op = casos.package.operator(P',Z);
+    end
+end
+
 methods
     %% Algebraic operations
     function c = mtimes(a,b)
@@ -211,7 +220,7 @@ methods
 
     %% Conversion
     function p = to_polynomial(obj)
-        % Convert to polynomial p such that = dot(op,1).
+        % Convert to polynomial p such that p = dot(op,1).
         assert(is_polynomial(obj), 'Conversion to polynomial not possible.')
         p = casos.package.polynomial(obj.sparsity_out,obj.matrix');
     end
