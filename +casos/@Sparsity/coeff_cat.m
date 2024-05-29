@@ -62,8 +62,8 @@ if isa(coeff1,'casadi.Sparsity')
 
 else
     % extend coefficient matrices
-    cf1 = feval(class(coeff1),S1_coeffs,coeff1(coeff_find(S1)));
-    cf2 = feval(class(coeff2),S2_coeffs,coeff2(coeff_find(S2)));
+    cf1 = sparsity_cast(coeff1,S1_coeffs);
+    cf2 = sparsity_cast(coeff2,S2_coeffs);
     % concatenate coefficients
     coeffs = vertcat(cf1,cf2);
 end

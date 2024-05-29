@@ -21,7 +21,7 @@ if isa(coeff1,'casadi.Sparsity')
 else
     % extend coefficient matrices
     cf1 = project(coeff1,S1_coeffs);
-    cf2 = feval(class(coeff2),S2_coeffs,coeff2(coeff_find(S2)));
+    cf2 = sparsity_cast(coeff2,S2_coeffs);
     % assigment
     coeffs = vertcat(cf1,cf2);
 end
