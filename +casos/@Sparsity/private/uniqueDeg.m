@@ -5,13 +5,7 @@ function [coeffs,degmat,I] = uniqueDeg(coeffs,degmat)
 % lexicographic order.
 
 nt = size(coeffs,1);
-nv = size(coeffs,2);
-
-if iscell(degmat)
-    % undocumented: get indices
-    [id,ic] = degmat{:};
-
-else
+ne = size(coeffs,2);
 
 % sort by ascending degree
 degsum = sum(degmat,2);
@@ -22,12 +16,10 @@ degsum = sum(degmat,2);
 % reverse order of degrees
 degmat = fliplr(degmat2(:,2:end));
 
-end
-
 if isa(coeffs,'casadi.Sparsity')
     % take union of repeated coefficients
     [ii,jj] = get_triplet(coeffs);
-    coeffs = casadi.Sparsity.triplet(length(id),nv,ic(ii+1)-1,jj);
+    coeffs = casadi.Sparsity.triplet(length(id),ne,ic(ii+1)-1,jj);
 
 else
     % sum repeated coefficients
@@ -35,9 +27,7 @@ else
     coeffs = (summat*coeffs);
 end
 
-if nargout > 2
-    % undocumented: return indices
-    I = {id ic};
-end
+% undocumented: return indices
+I = {id ic};
 
 end
