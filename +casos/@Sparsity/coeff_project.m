@@ -4,7 +4,7 @@ function [S,coeffs] = coeff_project(obj,coeffs,S)
 assert(~isa(coeffs,'casadi.Sparsity'),'Notify the developers.')
 
 % expand coefficients to match degrees
-[S,S_coeffs,coeffs] = coeff_expand(S,obj,S.coeffs,coeffs);
+[S_coeffs,coeffs,degmat,indets] = expand_internal(S,obj,S.coeffs,coeffs);
 
 if isa(coeffs,'casadi.DM') && ~is_regular(coeffs)
     % handle irregular coefficients (inf, nan)
@@ -17,8 +17,11 @@ end
 coeffs = project(coeffs,S_coeffs);
 
 % remove zero terms
-[coeffs,S.degmat,S.indets] = removeZero(coeffs,S.degmat,S.indets);
+[coeffs,degmat,indets] = removeZero(coeffs,degmat,indets);
 
+% update sparsity pattern
+S.degmat = degmat;
+S.indets = indets;
 % store coefficients
 S = set_coefficients(S,coeffs);
 

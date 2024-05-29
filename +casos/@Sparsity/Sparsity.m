@@ -396,13 +396,13 @@ methods (Access={?casos.package.core.PolynomialInterface})
         l = arrayfun(@(i) reshape(coeffs(i,:),size(S)),1:S.nterm,'UniformOutput',false);
     end
 
-    % protected interface for operations
+    % protected interface for polynomial operations
     [S,coeffs] = coeff_project(obj,coeffs,S);
     [S,coeffs] = coeff_repmat(obj,coeffs,varargin);
     [S,coeffs] = coeff_subsref(obj,coeffs,ii,sz);
     [S,coeffs] = coeff_subsasgn(obj,S2,coeffs,coeff2,ii);
     [S,coeffs] = coeff_transpose(obj,coeffs);
-    [S,cf1,cf2] = coeff_expand(S1,S2,coeff1,coeff2);
+    [cf1,cf2] = coeff_expand(S1,S2,coeff1,coeff2);
     [S,coeffs] = coeff_cat(S1,S2,coeff1,coeff2,dim);
     [S,coeffs] = coeff_plus(S1,S2,coeff1,coeff2);
     [S,coeffs] = coeff_times(S1,S2,coeff1,coeff2);
@@ -420,6 +420,10 @@ methods (Access={?casos.package.core.PolynomialInterface})
     % protected interface for matrix operations
     coeffs = prepareMatrixOp(S,coeffs,dim);
     sz = sizeofMatrixOp(S,dim);
+
+    % protected interface for linear operators
+    [S,I1,I2] = op_intersect(S1,S2);
+    [S,I1,I2] = op_join(S1,S2);
 
     % protected interface for display output
     out = str_monoms(obj,flag);
