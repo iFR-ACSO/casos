@@ -49,12 +49,19 @@ Z.matdim = [lp 1];
 % logical map for output Z
 % -> Luni(i,j) is true iff Z(i) has degree(j)
 Luni = L(:,id); 
-% enumerate nonzero elements in L'
-[il,jl] = find(Luni');
-Innz = sparse(il,jl,1:nnz(Luni),length(id),lp);
+% enumerate nonzero elements in L' relative to nonzeros of Luni'
+% NOTE: We use an internal MATLAB function here for speed-up 
+% since the result of find is already sorted.
+idx = ismembc2(sub2ind(size(Luni'),ic(i),j), find(Luni'));
 % create mapping from nonzero elements of L to nonzero elements Luni
-ii = sub2ind(size(Luni'),ic(i),j);
-Mp = sparse(Innz(ii),1:nnz(L),1,nnz(Luni),nnz(L));
+Mp = sparse(idx,1:nnz(L),1,nnz(Luni),nnz(L));
+
+% enumerate nonzero elements in L'
+% [il,jl] = find(Luni');
+% Innz = sparse(il,jl,1:nnz(Luni),length(id),lp);
+% create mapping from nonzero elements of L to nonzero elements Luni
+% ii = sub2ind(size(Luni'),ic(i),j);
+% Mp = sparse(Innz(ii),1:nnz(L),1,nnz(Luni),nnz(L));
 
 % return adjoint inverse
 Md = sum(Mp,2).\Mp;
