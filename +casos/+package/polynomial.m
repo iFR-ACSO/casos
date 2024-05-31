@@ -1,11 +1,16 @@
 function p = polynomial(a,varargin)
 % Convert algebraic input to polynomial.
 
-if isa(a,'casos.package.core.AlgebraicObject')
+if isa(a,'casos.package.core.GenericPolynomial')
     % nothing to do
     assert(nargin < 2,'Too many input arguments.')
 
     p = a;
+    return
+
+elseif isa(a,'casos.Indeterminates')
+    % indeterminate variables
+    p = casos.PD(a);
     return
 
 elseif isa(a,'casos.Sparsity')
