@@ -43,7 +43,7 @@ methods
 
         elseif length(arg) <= 2
             % syntax Indeterminates('x',m,n)
-            N = numel(zeros(arg{:}));
+            N = numel(zeros(arg{:},1));
             obj.variables = compose('%s_%d',var,1:N);
 
         else
