@@ -88,6 +88,11 @@ methods
     % AlgebraicObject interface
     function tf = is_indet(~), tf = true; end
 
+    function z = mpower(obj,deg)
+        % Return monomial.
+        z = mpower(casos.package.polynomial(obj),deg);
+    end
+
     % Display
     function disp(obj)
         % Display indeterminates as matrix.
