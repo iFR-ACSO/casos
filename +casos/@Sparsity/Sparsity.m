@@ -325,11 +325,6 @@ methods
     end 
 
     %% Display output
-    function s = signature(obj)
-        % Return a signature representation of sparsity pattern.
-        s = str(obj);
-    end
-
     function matrix_spy(obj)
         % Print matrix sparsity pattern.
         spy(matrix_sparsity(obj));

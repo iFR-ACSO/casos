@@ -15,15 +15,17 @@ methods (Abstract)
     % inputs
     n = get_n_in(obj);
     s = get_name_in(obj,i);
-    z = get_monomials_in(obj,i);
-%     v = get_default_in(obj,i);
-    s = get_size_in(obj,i);
+    z = get_sparsity_in(obj,i);
+%    z = get_monomials_in(obj,i);
+%    v = get_default_in(obj,i);
+%    s = get_size_in(obj,i);
     i = get_index_in(obj,str);
     % outputs
     n = get_n_out(obj);
+    z = get_sparsity_out(obj,i);
     s = get_name_out(obj,i);
-    z = get_monomials_out(obj,i);
-    s = get_size_out(obj,i);
+%    z = get_monomials_out(obj,i);
+%    s = get_size_out(obj,i);
     i = get_index_out(obj,str);
 end
 
@@ -34,9 +36,29 @@ methods
         obj.name = name;
     end
 
-    function val = get_default_in(obj,i)
+    function z = get_monomials_in(obj,i)
+        % Return monomials of input arguments.
+        z = monomials(get_sparsity_in(obj,i));
+    end
+
+    function val = get_default_in(obj,i) %#ok<INUSD>
         % Return default values of input arguments.
         val = 0;
+    end
+
+    function sz = get_size_in(obj,i)
+        % Return size of input arguments.
+        sz = size(get_sparsity_in(obj,i));
+    end
+
+    function z = get_monomials_out(obj,i)
+        % Return monomials of output arguments.
+        z = monomials(get_sparsity_out(obj,i));
+    end
+
+    function sz = get_size_out(obj,i)
+        % Return size of output arguments.
+        sz = size(get_sparsity_out(obj,i));
     end
 
     function s = get_stats(~)

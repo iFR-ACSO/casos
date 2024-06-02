@@ -1,7 +1,7 @@
 function type = parse_argument(expr)
 % Return type of expression.
 
-if isdouble(expr) || isa(expr,'casadi.DM')
+if isnumeric(expr) || isa(expr,'casadi.DM')
     type = casos.package.functions.FunctionArgumentType.DM;
 
 elseif isa(expr,'casadi.SX')

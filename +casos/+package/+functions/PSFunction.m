@@ -1,14 +1,11 @@
 classdef PSFunction < casos.package.functions.FunctionInterface
-% Polynomial (PS) functionn interface.
+% Polynomial (PS) function interface.
 
 properties (Access=private)
     func;
 
-    monom_i;
-    monom_o;
-
-    size_i;
-    size_o;
+    sparsity_i;
+    sparsity_o;
 end
 
 properties (SetAccess=protected)
@@ -21,8 +18,8 @@ methods
         obj@casos.package.functions.FunctionInterface(name);
 
         % parse polynomial expressions
-        [sym_i,obj.monom_i,obj.size_i] = cellfun(@parse_expr, ex_i, 'UniformOutput', false);
-        [sym_o,obj.monom_o,obj.size_o] = cellfun(@parse_expr, ex_o, 'UniformOutput', false);
+        [sym_i,obj.sparsity_i] = cellfun(@parse_expr, ex_i, 'UniformOutput', false);
+        [sym_o,obj.sparsity_o] = cellfun(@parse_expr, ex_o, 'UniformOutput', false);
 
         % define function between coefficients
         obj.func = casadi.Function(name, sym_i, sym_o, name_i, name_o, varargin{:});
@@ -31,13 +28,13 @@ methods
     %% Implement FunctionInterface
     function argout = call(obj, argin)
         % Evaluate casadi function object.
-        in = cellfun(@(p,z) poly2basis(casos.PS(p),z), argin, obj.monom_i, 'UniformOutput', false);
+        in = cellfun(@(p,z) poly2basis(casos.package.polynomial(p),z), argin, obj.sparsity_i, 'UniformOutput', false);
 
         % call casadi function
         out = call(obj.func, in);
 
         % return result
-        argout = cellfun(@(c,z,sz) casos.PS(z,c,sz), out, obj.monom_o, obj.size_o, 'UniformOutput', false);
+        argout = cellfun(@(c,z) casos.package.polynomial(z,c), out, obj.sparsity_o, 'UniformOutput', false);
     end
 
     function n = get_n_in(obj)
@@ -50,14 +47,9 @@ methods
         str = name_in(obj.func,varargin{:});
     end
 
-    function z = get_monomials_in(obj,idx)
+    function z = get_sparsity_in(obj,idx)
         % Monomials of inputs.
-        z = obj.monom_i{idx+1};
-    end
-
-    function sz = get_size_in(obj,idx)
-        % Size of inputs.
-        sz = obj.size_i{idx+1};
+        z = obj.sparsity_i{idx+1};
     end
 
     function idx = get_index_in(obj,str)
@@ -75,14 +67,9 @@ methods
         str = name_out(obj.func,varargin{:});
     end
 
-    function z = get_monomials_out(obj,idx)
+    function z = get_sparsity_out(obj,idx)
         % Monomials of outputs.
-        z = obj.monom_o{idx+1};
-    end
-
-    function sz = get_size_out(obj,idx)
-        % Size of outputs.
-        sz = obj.size_o{idx+1};
+        z = obj.sparsity_o{idx+1};
     end
 
     function idx = get_index_out(obj,str)
@@ -93,10 +80,9 @@ end
 
 end
 
-function [coeffs,z,sz] = parse_expr(p)
+function [coeffs,z] = parse_expr(p)
 % Return coefficients, monomials, and size of polynomial expression.
 
     p = casos.PS(p);
     [coeffs,z] = poly2basis(p);
-    sz = size(p);
 end

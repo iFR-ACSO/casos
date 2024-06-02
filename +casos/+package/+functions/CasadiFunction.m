@@ -42,19 +42,14 @@ methods
         str = name_in(obj.func,varargin{:});
     end
 
-    function z = get_monomials_in(~,~)
+    function z = get_sparsity_in(obj,i)
         % All inputs are of degree zero.
-        z = monomials(casos.PS,0);
+        z = casos.Sparsity(sparsity_in(obj.func,i));
     end
 
     function val = get_default_in(obj,i)
         % Default inputs.
         val = default_in(obj.func,i);
-    end
-
-    function sz = get_size_in(obj,i)
-        % Size of inputs.
-        sz = size_in(obj.func,i);
     end
 
     function i = get_index_in(obj,str)
@@ -72,14 +67,9 @@ methods
         str = name_out(obj.func,varargin{:});
     end
 
-    function z = get_monomials_out(~,~)
+    function z = get_sparsity_out(obj,i)
         % All outputs are of degree zero.
-        z = monomials(casos.PS,0);
-    end
-
-    function sz = get_size_out(obj,i)
-        % Size of outputs.
-        sz = size_out(obj.func,i);
+        z = casos.Sparsity(sparsity_out(obj.func,i));
     end
 
     function i = get_index_out(obj,str)

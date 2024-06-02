@@ -55,6 +55,11 @@ methods
         nm = get_name_in(obj.wrap,varargin{:});
     end
 
+    function z = sparsity_in(obj,i)
+        % Return sparsity of inputs.
+        z = get_sparsity_in(obj.wrap,i);
+    end
+
     function z = monomials_in(obj,i)
         % Return monomials of inputs.
         z = get_monomials_in(obj.wrap,i);
@@ -83,6 +88,11 @@ methods
     function nm = name_out(obj,varargin)
         % Return name of outputs.
         nm = get_name_out(obj.wrap,varargin{:});
+    end
+
+    function z = sparsity_out(obj,i)
+        % Return sparsity of outputs.
+        z = get_sparsity_out(obj.wrap,i);
     end
 
     function z = monomials_out(obj,i)
