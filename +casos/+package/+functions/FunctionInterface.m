@@ -38,6 +38,7 @@ methods
 
     function z = get_monomials_in(obj,i)
         % Return monomials of input arguments.
+        warning('DEPRECATED. Use sparsity instead.')
         z = monomials(get_sparsity_in(obj,i));
     end
 
@@ -53,6 +54,7 @@ methods
 
     function z = get_monomials_out(obj,i)
         % Return monomials of output arguments.
+        warning('DEPRECATED. Use sparsity instead.')
         z = monomials(get_sparsity_out(obj,i));
     end
 
