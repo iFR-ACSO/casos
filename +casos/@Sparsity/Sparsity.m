@@ -1,5 +1,5 @@
-classdef (InferiorClasses = {?casadi.Sparsity}) Sparsity ...
-        < casos.package.core.PolynomialInterface
+classdef (InferiorClasses = {?casadi.Sparsity, ?casadi.DM, ?casadi.SX, ?casadi.MX}) ...
+    Sparsity < casos.package.core.PolynomialInterface
 % Polynomial sparsity class.
 
 properties (GetAccess=protected, SetAccess=private)
@@ -285,6 +285,17 @@ methods
         assert(numel(x) == numel(S2),'Second and third argument have incompatible sizes.')
 
         S = coeff_subs(S1,S1.coeffs,x,S2,S2.coeffs);
+    end
+
+    %% Polynomial interface for casadi matrix types
+    function varargout = poly2basis(M,S)
+        % Fall back to polynomial.
+        [varargout{1:nargout}] = poly2basis(casos.package.polynomial(M),S);
+    end
+
+    function p = project(M,S)
+        % Fall back to polynomial.
+        p = project(casos.package.polynomial(M),S);
     end
 
     %% Conversion & matrix Sparsity interface

@@ -28,7 +28,7 @@ methods
     %% Implement FunctionInterface
     function argout = call(obj, argin)
         % Evaluate casadi function object.
-        in = cellfun(@(p,z) poly2basis(casos.package.polynomial(p),z), argin, obj.sparsity_i, 'UniformOutput', false);
+        in = cellfun(@(p,z) poly2basis(p,z), argin, obj.sparsity_i, 'UniformOutput', false);
 
         % call casadi function
         out = call(obj.func, in);

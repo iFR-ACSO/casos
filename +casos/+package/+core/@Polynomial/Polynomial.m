@@ -146,19 +146,6 @@ methods
         obj = obj.set_sparsity(S);
     end
 
-    function [c,S] = poly2basis(obj,varargin)
-        % Return nonzero coefficients.
-        if nargin > 1
-            % project onto given sparsity pattern.
-            obj = project(obj,varargin{:});
-        end
-
-        % copy sparsity pattern
-        S = sparsity(obj);
-        % select nonzero coefficients
-        c = reshape(obj.coeffs(coeff_find(S)),nnz(obj),1);
-    end
-
     function v = casos.Indeterminates(obj)
         % Convert to indeterminates.
         [tf,I] = is_indet(obj);
