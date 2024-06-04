@@ -214,10 +214,14 @@ else
     acc_cost = [];
 end
 
+% options for Casadi functions
+% NOTE: As per Casadi v3.6.5, functions' input and output names 
+% must be mutually exclusive unless explicity permitted.
+fopt = struct('allow_duplicate_io_names',true);
 % return MOSEK prob structure
-obj.fhan = casadi.Function('f',struct2cell(obj.args_in),struct2cell(prob),fieldnames(obj.args_in),fieldnames(prob));
+obj.fhan = casadi.Function('f',struct2cell(obj.args_in),struct2cell(prob),fieldnames(obj.args_in),fieldnames(prob),fopt);
 % return bar values
-obj.barv = casadi.Function('v',struct2cell(obj.args_in),struct2cell(barv),fieldnames(obj.args_in),fieldnames(barv));
+obj.barv = casadi.Function('v',struct2cell(obj.args_in),struct2cell(barv),fieldnames(obj.args_in),fieldnames(barv),fopt);
 
 % build conic information
 Accs = [
