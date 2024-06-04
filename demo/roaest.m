@@ -71,7 +71,7 @@ for iter = 1:10
     % gamma step
     sol1 = S1('p',Vval);
 
-    gval = double(-sol1.f);
+    gval = -sol1.f;
     s1val = sol1.x;
 
     % beta step
@@ -85,5 +85,5 @@ for iter = 1:10
 
     Vval = sol3.x;
 
-    fprintf('Iteration %d: b = %g, g = %g.\n',iter,bval,gval);
+    fprintf('Iteration %d: b = %g, g = %g.\n',iter,full(bval),full(gval));
 end
