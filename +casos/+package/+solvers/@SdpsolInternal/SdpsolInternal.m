@@ -133,9 +133,13 @@ methods (Access={?casos.package.functions.FunctionCommon, ?casos.package.functio
         var_in{idx+1}  = expr_in; % CasADi uses 0-based index
         var_out{idx+1} = expr_out;
 
+        % NOTE: As per Casadi v3.6.5, functions' input and output names 
+        % must be mutually exclusive unless explicity permitted.
+        fopt = struct('allow_duplicate_io_names',true);
+
         % substitute
-        fhan = casadi.Function('f',var_in,call(obj.fhan,var_out),name_in(obj.fhan),name_out(obj.fhan));
-        S = casos.package.solvers.SdpsolInternal(obj,fhan);
+        fhan_new = casadi.Function('f',var_in,call(obj.fhan,var_out),name_in(obj.fhan),name_out(obj.fhan),fopt);
+        S = casos.package.solvers.SdpsolInternal(obj,fhan_new);
     end
 end
 
