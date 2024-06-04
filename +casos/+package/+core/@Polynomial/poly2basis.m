@@ -17,7 +17,7 @@ elseif isempty(obj) || (isscalar(obj) && isempty(S))
 elseif isscalar(obj) && ~isscalar(S)
     % repeat scalar inputs before projection
     [sp_rep,coeffs] = coeff_repmat(obj.get_sparsity,obj.coeffs,size(S));
-    coeffs = coeff_project(sp_rep,coeffs,S,true);
+    [~,coeffs] = coeff_project(sp_rep,coeffs,S,true);
 
 else
     % project onto given sparsity pattern.
