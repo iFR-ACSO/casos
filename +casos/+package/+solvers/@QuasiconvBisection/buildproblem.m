@@ -49,11 +49,11 @@ sosopt.error_on_fail = false;
 obj.sossolver = casos.package.solvers.SossolInternal('SOS',opts.sossol,sos,sosopt);
 
 % store basis
-obj.monom_xl = basis(qcsos.x,~Is);
-obj.monom_xs = basis(qcsos.x, Is);
-obj.monom_p  = basis(qcsos.p);
-obj.monom_f  = basis(qcsos.f);
-obj.monom_gl = basis(qcsos.g,~Js);
-obj.monom_gs = basis(qcsos.g, Js);
+obj.sparsity_xl = basis(qcsos.x,~Is);
+obj.sparsity_xs = basis(qcsos.x, Is);
+obj.sparsity_p  = sparsity(qcsos.p);
+obj.sparsity_f  = sparsity(qcsos.f);
+obj.sparsity_gl = basis(qcsos.g,~Js);
+obj.sparsity_gs = basis(qcsos.g, Js);
 
 end

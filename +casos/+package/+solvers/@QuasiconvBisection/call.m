@@ -41,7 +41,7 @@ for i=1:length(info)
     info{i} = obj.sossolver.stats;
 
     % set value
-    sol{2} = casos.PS(obj.qc_sign*ttry);
+    sol{2} = casos.PD(obj.qc_sign*ttry);
 
     % update confidence interval
     switch (info{i}.UNIFIED_RETURN_STATUS)
