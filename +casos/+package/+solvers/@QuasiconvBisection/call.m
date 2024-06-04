@@ -38,7 +38,7 @@ for i=1:length(info)
     sol = call(sossolver, args);
 
     % store iteration info
-    info{i} = obj.sossolver.stats;
+    info{i} = obj.sossolver.get_stats;
 
     % set value
     sol{2} = casos.PD(obj.qc_sign*ttry);

@@ -30,17 +30,14 @@ properties (Constant,Access=protected)
 end
 
 properties (Access=protected)
+    sparsity_x;
     sparsity_xl;
     sparsity_xs;
     sparsity_p;
     sparsity_f;
+    sparsity_g;
     sparsity_gl;
     sparsity_gs;
-end
-
-properties (Access=protected,Dependent)
-    sparsity_x;
-    sparsity_g;
 end
 
 methods (Static)
@@ -78,16 +75,6 @@ methods
     end
 
     %% Getter
-    function z = get.sparsity_x(obj)
-        % Sparsity of decision variables.
-        z = vertcat(obj.sparsity_xl,obj.sparsity_xs);
-    end
-
-    function z = get.sparsity_g(obj)
-        % Sparsity of constraints.
-        z = vertcat(obj.sparsity_gl,obj.sparsity_gs);
-    end
-
     function n = get_n_in(obj)
         % Number of inputs.
         n = length(obj.name_i);
