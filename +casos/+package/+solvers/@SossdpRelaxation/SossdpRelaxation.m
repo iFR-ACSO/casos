@@ -88,13 +88,13 @@ methods (Access={?casos.package.functions.FunctionCommon, ?casos.package.functio
 
         % project to basis
         [Qin,Zin] = poly2basis(expr_in);
-        Qout = poly2basis(expr_out,obj.monom_p);
+        Qout = poly2basis(expr_out,obj.sparsity_p);
 
         % substitute
         S = copy(obj);
         S.sdpsolver = substitute(obj.sdpsolver,idx,Qin,Qout);
         % store new basis
-        S.monom_p = Zin;
+        S.sparsity_p = Zin;
     end
 end
 
