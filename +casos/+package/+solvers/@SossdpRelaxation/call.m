@@ -24,8 +24,8 @@ sdpsol = call(obj.sdpsolver, args);
 sossol = call(obj.gram2sos,sdpsol);
 
 % build polynomial solution
-argout{1} = casos.package.polynomial(obj.sparsity_f,sossol.f);
-argout{2} = casos.package.polynomial(obj.sparsity_x,sossol.x);
+argout{1} = casos.package.polynomial(obj.sparsity_x,sossol.x);
+argout{2} = casos.package.polynomial(obj.sparsity_f,sossol.f);
 argout{3} = casos.package.polynomial(obj.sparsity_g,sossol.g);
 argout{4} = casos.package.polynomial(obj.sparsity_x,sossol.lam_x);
 argout{5} = casos.package.polynomial(obj.sparsity_g,sossol.lam_g);
