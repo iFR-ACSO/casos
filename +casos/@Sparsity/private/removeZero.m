@@ -12,14 +12,7 @@ if nargin > 2
 [degmat, indets] = removeDegVar(degmat, indets);
 end
 
-% handle empty coeffient and/or degree matrix
-if length(coeffs) < 1
-    % no nonzero coefficients left
-    error('Notify the developers')
-    coeffs = casadi.SX(1,nel);
-    degmat = sparse(1,0);
-
-elseif isempty(degmat)
+if isempty(degmat) || length(coeffs) < 1
     % constant polynomial
     coeffs = sum1(coeffs);
     degmat = sparse(1,0);
