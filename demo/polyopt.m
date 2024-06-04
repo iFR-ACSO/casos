@@ -14,8 +14,8 @@ sos = struct('x',g,'f',g,'g',f+g);
 opts = struct('Kc',struct('sos',1));
 
 % solve by relaxation to SDP
-S = casos.sossol('S','mosek',sos,opts);
+S = casos.sossol('S','sedumi',sos,opts);
 % evaluate
 sol = S();
 
-fprintf('Minimum is %g.\n', double(sol.f))
+fprintf('Minimum is %g.\n', full(sol.f))

@@ -158,6 +158,13 @@ methods
         v = vars(I);
     end
 
+    function M = full(obj)
+        % Convert to full matrix.
+        assert(is_zerodegree(obj), 'Can only convert polynomial of degree zero.')
+
+        M = full(reshape(obj.coeffs,size(obj)));
+    end
+
     %% Unary operators
     function p = uplus(p)
         % Unary plus.
