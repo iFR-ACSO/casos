@@ -16,13 +16,12 @@ end
 % project onto coefficient sparsity pattern
 coeffs = project(coeffs,S_coeffs);
 
-if nargin > 3 && keep_zeros
-    % keep zeros (terminate)
-    return
-end
+if nargin < 4 || ~keep_zeros
 
 % remove zero terms
 [coeffs,degmat,indets] = removeZero(coeffs,degmat,indets);
+
+end
 
 % update sparsity pattern
 S.degmat = degmat;
