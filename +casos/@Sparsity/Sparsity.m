@@ -137,6 +137,11 @@ methods
         x = casos.Indeterminates(obj.indets);
     end
 
+    function tf = isempty(obj)
+        % Check if pattern is empty.
+        tf = (numel(obj) == 0);
+    end
+
     function tf = isrow(obj)
         % Check if polynomial is a row vector.
         tf = (size(obj,1) == 1);
@@ -408,7 +413,7 @@ methods (Access={?casos.package.core.PolynomialInterface})
     end
 
     % protected interface for polynomial operations
-    [S,coeffs] = coeff_project(obj,coeffs,S);
+    [S,coeffs] = coeff_project(obj,coeffs,S,keep_zeros);
     [S,coeffs] = coeff_repmat(obj,coeffs,varargin);
     [S,coeffs] = coeff_subsref(obj,coeffs,ii,sz);
     [S,coeffs] = coeff_subsasgn(obj,S2,coeffs,coeff2,ii);

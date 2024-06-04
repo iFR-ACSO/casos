@@ -4,20 +4,27 @@ function [c,S] = poly2basis(obj,S)
 
 if nargin < 2
     % return nonzero coefficients (below)
+    S = sparsity(obj);
+    coeffs = obj.coeffs;
+
+elseif isempty(obj) || (isscalar(obj) && isempty(S))
+    % empty polynomial
+    assert(isempty(S),'Cannot project empty polynomial.')
+
+    c = sparse(0,1);
+    return
 
 elseif isscalar(obj) && ~isscalar(S)
     % repeat scalar inputs before projection
-    obj = project(repmat(obj,size(S)),S);
+    [sp_rep,coeffs] = coeff_repmat(obj.get_sparsity,obj.coeffs,size(S));
+    coeffs = coeff_project(sp_rep,coeffs,S,true);
 
 else
     % project onto given sparsity pattern.
-    obj = project(obj,S);
+    [~,coeffs] = coeff_project(obj.sparsity,obj.coeffs,S,true);
 end
 
-% copy sparsity pattern
-S = sparsity(obj);
-
 % select nonzero coefficients
-c = reshape(obj.coeffs(coeff_find(S)),nnz(obj),1);
+c = reshape(coeffs(coeff_find(S)),nnz(S),1);
 
 end

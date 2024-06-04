@@ -1,4 +1,4 @@
-function [S,coeffs] = coeff_project(obj,coeffs,S)
+function [S,coeffs] = coeff_project(obj,coeffs,S,keep_zeros)
 % Project polynomial coefficient matrix onto sparsity pattern.
 
 assert(~isa(coeffs,'casadi.Sparsity'),'Notify the developers.')
@@ -15,6 +15,11 @@ end
 
 % project onto coefficient sparsity pattern
 coeffs = project(coeffs,S_coeffs);
+
+if nargin > 3 && keep_zeros
+    % keep zeros (terminate)
+    return
+end
 
 % remove zero terms
 [coeffs,degmat,indets] = removeZero(coeffs,degmat,indets);
