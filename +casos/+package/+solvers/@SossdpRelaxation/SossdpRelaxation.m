@@ -4,13 +4,7 @@ classdef SossdpRelaxation < casos.package.solvers.SosoptCommon & matlab.mixin.Co
 properties (Access=private)
     sdpsolver;
 
-    gram_x;
-    gram_g;
-
-    basis_x_out;
-    basis_g_out;
-
-    basis_x_lam;
+    gram2sos;
 end
 
 properties (Constant,Access=protected)

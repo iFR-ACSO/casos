@@ -30,17 +30,17 @@ properties (Constant,Access=protected)
 end
 
 properties (Access=protected)
-    monom_xl;
-    monom_xs;
-    monom_p;
-    monom_f;
-    monom_gl;
-    monom_gs;
+    sparsity_xl;
+    sparsity_xs;
+    sparsity_p;
+    sparsity_f;
+    sparsity_gl;
+    sparsity_gs;
 end
 
 properties (Access=protected,Dependent)
-    monom_x;
-    monom_g;
+    sparsity_x;
+    sparsity_g;
 end
 
 methods (Static)
@@ -78,14 +78,14 @@ methods
     end
 
     %% Getter
-    function z = get.monom_x(obj)
-        % Monomials of decision variables.
-        z = blkdiag(obj.monom_xl,obj.monom_xs);
+    function z = get.sparsity_x(obj)
+        % Sparsity of decision variables.
+        z = vertcat(obj.sparsity_xl,obj.sparsity_xs);
     end
 
-    function z = get.monom_g(obj)
-        % Monomials of constraints.
-        z = blkdiag(obj.monom_gl,obj.monom_gs);
+    function z = get.sparsity_g(obj)
+        % Sparsity of constraints.
+        z = vertcat(obj.sparsity_gl,obj.sparsity_gs);
     end
 
     function n = get_n_in(obj)
@@ -100,32 +100,27 @@ methods
         end
     end
 
-    function z = get_monomials_in(obj,idx)
-        % Monomials of inputs.
+    function z = get_sparsity_in(obj,idx)
+        % Sparsity of inputs.
         switch (idx)
-            case 0, z = obj.monom_x;
-            case 1, z = obj.monom_p;
-            case {2 3}, z = obj.monom_xl;
-            case 4, z = obj.monom_xs;
-            case {5 6}, z = obj.monom_gl;
-            case 7, z = obj.monom_gs;
-            case 8, z = obj.monom_x;
-            case 9, z = obj.monom_g;
+            case 0, z = obj.sparsity_x;
+            case 1, z = obj.sparsity_p;
+            case {2 3}, z = obj.sparsity_xl;
+            case 4, z = obj.sparsity_xs;
+            case {5 6}, z = obj.sparsity_gl;
+            case 7, z = obj.sparsity_gs;
+            case 8, z = obj.sparsity_x;
+            case 9, z = obj.sparsity_g;
             otherwise, error('Index out of bound (%d).',idx);
         end
-    end
-
-    function sz = get_size_in(obj,i)
-        % Size of inputs.
-        sz = [size(get_monomials_in(obj,i),2) 1];
     end
 
     function val = get_default_in(~,i)
         % Defaults of inputs.
         switch (i)
-            case {2 5}, val = casos.PS(-inf);
-            case {3 6}, val = casos.PS(+inf);
-            otherwise, val = casos.PS(0);
+            case {2 5}, val = -inf;
+            case {3 6}, val = +inf;
+            otherwise, val = 0;
         end
     end
 
@@ -151,21 +146,16 @@ methods
         end
     end
 
-    function z = get_monomials_out(obj,idx)
-        % Monomials of outputs.
+    function z = get_sparsity_out(obj,idx)
+        % Sparsity of outputs.
         switch (idx)
-            case 0, z = obj.monom_x;
-            case 1, z = obj.monom_f;
-            case 2, z = obj.monom_g;
-            case 3, z = obj.monom_x;
-            case 4, z = obj.monom_g;
+            case 0, z = obj.sparsity_x;
+            case 1, z = obj.sparsity_f;
+            case 2, z = obj.sparsity_g;
+            case 3, z = obj.sparsity_x;
+            case 4, z = obj.sparsity_g;
             otherwise, error('Index out of bound (%d).',idx);
         end
-    end
-
-    function sz = get_size_out(obj,i)
-        % Size of outputs.
-        sz = [size(get_monomials_out(obj,i),2) 1];
     end
 
     function idx = get_index_out(obj,str)
