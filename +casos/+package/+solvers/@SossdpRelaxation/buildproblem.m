@@ -31,7 +31,7 @@ Qgram_x = casadi.SX.sym('P',sum(Ksdp_x_s.^2),1);
 Qgram_g = casadi.SX.sym('Q',sum(Ksdp_g_s.^2),1);
 
 % linear decision variables
-[Qlin_x,Zlin_x] = poly2basis(sos.x(~Is)); % TODO: internal
+[Qlin_x,Zlin_x] = poly2basis(sos.x,~Is); % TODO: internal
 % linear constraints
 Zlin_g = basis(sos.g,~Js);
 % handle parameters

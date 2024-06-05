@@ -7,11 +7,21 @@ if nargin < 2
     S = sparsity(obj);
     coeffs = obj.coeffs;
 
-elseif isempty(obj) || (isscalar(obj) && isempty(S))
-    % empty polynomial
-    assert(isempty(S),'Cannot project empty polynomial.')
+elseif isempty(obj) || (isscalar(obj) && isempty(S)) || (islogical(S) && all(~S))
+    % empty polynomial, selection, or projection
+    assert(~isempty(obj) || isempty(S),'Cannot project empty polynomial.')
 
     c = sparse(0,1);
+    S = casos.Sparsity(0,0);
+    return
+
+elseif islogical(S)
+    % nonzeros and basis of subreference
+    [i,j] = coeff_triplet(obj.get_sparsity);
+    tf = S(j+1);
+    idx = sub2ind(size(obj.coeffs),i(tf)+1,j(tf)+1);
+    c = reshape(obj.coeffs(idx),nnz(tf),1);
+    S = basis(obj,S);
     return
 
 elseif isscalar(obj) && ~isscalar(S)
