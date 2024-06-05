@@ -67,7 +67,7 @@ methods
     %% Getter
     function tf = is_symbolic(obj)
         % Check if polynomial has symbolic coefficients.
-        tf = is_symbolic(poly2basis(obj));
+        tf = is_symbolic(obj.coeffs(coeff_find(obj.get_sparsity)));
     end
 
     function tf = is_symexpr(obj)
