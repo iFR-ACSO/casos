@@ -55,22 +55,20 @@ nnz_gram_g = sum(Ksdp_g_s.^2);
 
 assert(length(Qvar) == (nnz_lin_x + nnz_sos_x), 'Sum-of-squares decision varibles must be in Gram form.')
 
-% replace sum-of-squares decision variables
-Df_x = jacobian(Qlin_f, Qvar);
-Dg_x = jacobian(Qcon,   Qvar);
-% map sum-of-squares decision variables to matrix variables
-Df_x_mapped = Df_x*blkdiag(speye(nnz_lin_x), Mp_x);
-Dg_x_mapped = Dg_x*blkdiag(speye(nnz_lin_x), Mp_x);
+% matrix decision variables
+Qsdp_x = [Qlin_x; Qgram_x];
 
-% constant objective / constraint
-f0 = mtaylor(Qlin_f, Qvar, 0, 0);
-g0 = mtaylor(Qcon, Qvar, 0, 0);
+% replace sum-of-squares decision variables
+sosprob = casadi.Function('sos',{Qvar},{Qlin_f Qcon},struct('allow_free',true));
+
+% map sum-of-squares decision variables to matrix variables
+map = blkdiag(speye(nnz_lin_x), Mp_x);
+[sdp_f,sdp_g] = sosprob(map*Qsdp_x);
 
 % build SDP problem
-sdp.x = [Qlin_x; Qgram_x; Qgram_g];
-sdp.f = f0 + Df_x_mapped*[Qlin_x; Qgram_x];
-sdp.g = g0 + Dg_x_mapped*[Qlin_x; Qgram_x] ...
-           - blkdiag(sparse(nnz_lin_g,0), Mp_g)*Qgram_g;
+sdp.x = [Qsdp_x; Qgram_g];
+sdp.f = sdp_f;
+sdp.g = sdp_g - blkdiag(sparse(nnz_lin_g,0), Mp_g)*Qgram_g;
 sdp.p = Qlin_p;
 % SDP options
 sdpopt = opts.sdpsol_options;
