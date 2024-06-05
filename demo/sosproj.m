@@ -24,5 +24,4 @@ S = casos.sossol('S','mosek',sos,opts);
 % evaluate
 sol = S();
 
-fprintf('Distance to SOS cone is %g.\n', double(sol.f))
-
+fprintf('Distance to SOS cone is %g.\n', full(sol.f))
