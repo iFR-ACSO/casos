@@ -64,11 +64,11 @@ methods
         % quadratic cost
         H = hessian(sdp.f, x);
         % linear cost
-        g = jacobian(simplify(sdp.f - x'*(H/2)*x), x);
+        g = jacobian(sdp.f, x);
         % linear constraint
         A = jacobian(sdp_g, x);
         % constant constraint
-        b = simplify(A*x - sdp_g);
+        b = -sdp_g;
         
         % get sparsity
         conic.h = sparsity(H);
@@ -78,6 +78,7 @@ methods
         obj.solver = casos.package.solvers.conicInternal([name '_conic'],solver,conic,opts);
 
         % conic problem data as function of p
+        % NOTE: When evaluating, we must set x = 0.
         data = casadi.Function('P',{x p},{H g A b});
 
         % SDP problem as function of p and x
