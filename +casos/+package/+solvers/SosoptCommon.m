@@ -1,4 +1,4 @@
-classdef (Abstract) SosoptCommon < casos.package.solvers.SolverCommon & casos.package.functions.FunctionInterface
+classdef (Abstract) SosoptCommon < casos.package.solvers.SolverCommon & casos.package.functions.FunctionInternal
 % Common superclass for sum-of-squares optimization problems.
 %
 % The generic sum-of-squares problem has the form
@@ -54,7 +54,7 @@ end
 
 methods
     function [obj,sos] = SosoptCommon(name,sos,varargin)
-        obj@casos.package.functions.FunctionInterface(name);
+        obj@casos.package.functions.FunctionInternal(name);
         obj@casos.package.solvers.SolverCommon(varargin{:});
 
         % problem size
@@ -153,6 +153,38 @@ methods
 
         % zero-based index
         idx = ii - 1;
+    end
+
+    function argout = call(obj,argin)
+        % Call function (override for efficiency).
+        
+        if ~obj.allow_eval_on_basis
+            % evaluate on polynomials
+            argout = eval(obj,argin); %#ok<EV2IN>
+            return
+        end
+
+        % else
+        in = cell(10,1);
+        
+        % project arguments to obtain SDP inputs
+        % only linear coefficients are handled (p, lbx, ubx, lbg, ubg)
+        in{2} = poly2basis(argin{2}, obj.sparsity_p);
+        in{3} = poly2basis(argin{3}, obj.sparsity_xl);
+        in{4} = poly2basis(argin{4}, obj.sparsity_xl);
+        in{6} = poly2basis(argin{6}, obj.sparsity_gl);
+        in{7} = poly2basis(argin{7}, obj.sparsity_gl);
+        
+        % evaluate on nonzero coordinates
+        out = eval_on_basis(obj,in);
+        
+        % build polynomial solution
+        argout{1} = casos.package.polynomial(obj.sparsity_x,out{1});
+        argout{2} = casos.package.polynomial(obj.sparsity_f,out{2});
+        argout{3} = casos.package.polynomial(obj.sparsity_g,out{3});
+        argout{4} = casos.package.polynomial(obj.sparsity_x,out{4});
+        argout{5} = casos.package.polynomial(obj.sparsity_g,out{5});
+        
     end
 end
 

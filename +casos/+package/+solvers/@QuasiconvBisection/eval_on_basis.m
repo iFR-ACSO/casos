@@ -1,20 +1,12 @@
-function argout = call(obj,argin)
-% Call bisection to solve quasiconvex SOS problem.
+function argout = eval_on_basis(obj,argin)
+% Evaluate bisection to solve quasiconvex SOS problem.
 
 import casos.package.UnifiedReturnStatus
 
 args = argin;
 
-% prepare quasiconvex parameter 
-if isscalar(argin{2})
-    qcpar = repmat(argin{2},get_size_in(obj,1));
-else
-    qcpar = argin{2};
-end
-
-% substitute quasiconvex parameter
-tvar = casos.PS.sym('t');
-sossolver = substitute(obj.sossolver,'p',tvar,[qcpar; tvar]);
+% prepare quasiconvex parameter
+qcpar = argin{2};
 
 % initialize confidence intervals
 interval = obj.qc_sign*obj.opts.conf_interval;
@@ -32,16 +24,16 @@ for i=1:length(info)
     ttry = mean(interval);
 
     % set parameter to convex problem
-    args{2} = ttry;
+    args{2} = [qcpar; ttry];
 
     % evaluate convex SOS problem
-    sol = call(sossolver, args);
+    sol = eval_on_basis(obj.sossolver, args);
 
     % store iteration info
     info{i} = obj.sossolver.get_stats;
 
     % set value
-    sol{2} = casos.PD(obj.qc_sign*ttry);
+    sol{2} = (obj.qc_sign*ttry);
 
     % update confidence interval
     switch (info{i}.UNIFIED_RETURN_STATUS)

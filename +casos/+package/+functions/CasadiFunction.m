@@ -1,12 +1,16 @@
-classdef CasadiFunction < casos.package.functions.FunctionInterface
+classdef CasadiFunction < casos.package.functions.FunctionInternal
 % Casadi function interface.
 
 properties (Access=private)
     func;
 end
 
-properties (Dependent,SetAccess=protected)
+properties (Dependent,SetAccess=private)
     class_name;
+end
+
+properties (Constant,Access=protected)
+    allow_eval_on_basis = false;
 end
 
 methods
@@ -21,7 +25,7 @@ methods
             func = casadi.Function(name, ex_i, ex_o, name_i, name_o, varargin{:});
         end
 
-        obj@casos.package.functions.FunctionInterface(name);
+        obj@casos.package.functions.FunctionInternal(name);
 
         obj.func = func;
     end

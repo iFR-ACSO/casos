@@ -11,9 +11,11 @@ properties (Constant,Access=protected)
     sossdp_options = [casos.package.solvers.SosoptCommon.sosopt_options
         {'sdpsol_options', 'Options to be passed to the SDP solver.'}
     ];
+
+    allow_eval_on_basis = true;
 end
 
-properties (SetAccess=protected)
+properties (SetAccess=private)
     class_name = 'SossdpRelaxation';
 end
 
@@ -24,9 +26,12 @@ methods (Static)
     end
 end
 
-methods
-    out = call(obj,in);
+methods (Access=protected)
+    % internal evaluation
+    out = eval_on_basis(obj,in);
+end
 
+methods
     function obj = SossdpRelaxation(name,solver,sos,varargin)
         obj@casos.package.solvers.SosoptCommon(name,sos,varargin{:});
 
