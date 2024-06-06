@@ -1,4 +1,4 @@
-classdef (Abstract) FunctionWrapper
+classdef (Abstract) FunctionWrapper < casos.package.core.Printable
 % Wrap a function interface.
     
 properties (Dependent)
@@ -21,7 +21,7 @@ properties (Dependent)
     stats;
 end
 
-properties (Access = private)
+properties (Access=private)
     wrap;
 end
 
@@ -35,103 +35,148 @@ methods
         f.wrap = wrap;
     end
 
+    function tf = is_null(obj)
+        % Check if function is null pointer.
+        tf = isempty(obj.wrap);
+    end
+
     function cls = get.class_name(obj)
         % Return function class.
+        assert(~is_null(obj), 'Notify the developers.')
+
         cls = obj.wrap.class_name;
     end
 
     function nm = get.name(obj)
         % Return function name.
+        assert(~is_null(obj), 'Notify the developers.')
+
         nm = obj.wrap.name;
     end
 
     function n = get.n_in(obj)
         % Return number of inputs.
+        assert(~is_null(obj), 'Notify the developers.')
+
         n = get_n_in(obj.wrap);
     end
 
     function nm = name_in(obj,varargin)
         % Return name of inputs.
+        assert(~is_null(obj), 'Notify the developers.')
+
         nm = get_name_in(obj.wrap,varargin{:});
     end
 
     function z = sparsity_in(obj,i)
         % Return sparsity of inputs.
+        assert(~is_null(obj), 'Notify the developers.')
+
         z = get_sparsity_in(obj.wrap,i);
     end
 
     function z = monomials_in(obj,i)
         % Return monomials of inputs.
+        assert(~is_null(obj), 'Notify the developers.')
+
         z = get_monomials_in(obj.wrap,i);
     end
 
     function val = default_in(obj,i)
         % Return default values for inputs.
+        assert(~is_null(obj), 'Notify the developers.')
+
         val = get_default_in(obj.wrap,i);
     end
 
     function sz = size_in(obj,i)
         % Return size of inputs.
+        assert(~is_null(obj), 'Notify the developers.')
+
         sz = get_size_in(obj.wrap,i);
     end
 
     function i = index_in(obj,str)
         % Return index of inputs.
+        assert(~is_null(obj), 'Notify the developers.')
+
         i = get_index_in(obj.wrap,str);
     end
 
     function n = get.n_out(obj)
         % Return number of outputs.
+        assert(~is_null(obj), 'Notify the developers.')
+
         n = get_n_out(obj.wrap);
     end
 
     function nm = name_out(obj,varargin)
         % Return name of outputs.
+        assert(~is_null(obj), 'Notify the developers.')
+
         nm = get_name_out(obj.wrap,varargin{:});
     end
 
     function z = sparsity_out(obj,i)
         % Return sparsity of outputs.
+        assert(~is_null(obj), 'Notify the developers.')
+
         z = get_sparsity_out(obj.wrap,i);
     end
 
     function z = monomials_out(obj,i)
         % Return monomials of outputs.
+        assert(~is_null(obj), 'Notify the developers.')
+
         z = get_monomials_out(obj.wrap,i);
     end
 
     function sz = size_out(obj,i)
         % Return size of outputs.
+        assert(~is_null(obj), 'Notify the developers.')
+
         sz = get_size_out(obj.wrap,i);
     end
 
     function i = index_out(obj,str)
         % Return index of outputs.
+        assert(~is_null(obj), 'Notify the developers.')
+
         i = get_index_out(obj.wrap,str);
     end
 
     function s = get.stats(obj)
         % Return stats.
+        assert(~is_null(obj), 'Notify the developers.')
+
         s = get_stats(obj.wrap);
     end
 
     function print_options(obj)
         % Print list of options.
+        assert(~is_null(obj), 'Notify the developers.')
+
         print_options(obj.wrap);
     end
 
     function print_option(obj,name)
         % Print information about an option.
+        assert(~is_null(obj), 'Notify the developers.')
+
         print_option(obj.wrap,name);
     end
 
     function tf = has_option(obj,name)
         % Check if option "name" exists.
+        assert(~is_null(obj), 'Notify the developers.')
+
         tf = has_option(obj.wrap,name);
     end
 
     function out = call(obj,args)
         % Evaluate function for given arguments.
+        assert(~is_null(obj), 'Notify the developers.')
+
         if iscell(args)
             assert(length(args) == obj.n_in, 'Incorrect number of inputs: Expected %d, got %d.', obj.n_in, length(args));
 
@@ -209,10 +254,20 @@ methods
     end
 end
 
+methods (Access=protected)
+    %% Protected interface
+    function obj = set_wrapped(obj,node)
+        % Set internal node.
+        obj.wrap = node;
+    end
+end
+
 methods (Access={?casos.package.functions.FunctionInterface})
     %% Friend interface
     function f = substitute(obj,varargin)
         % Substitute variables.
+        assert(~is_null(obj), 'Notify the developers.')
+
         f = obj;
         f.wrap = substitute(obj.wrap,varargin{:});
     end

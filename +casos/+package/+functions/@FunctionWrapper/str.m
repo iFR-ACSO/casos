@@ -1,5 +1,10 @@
-function disp(obj)
+function out = str(obj)
 % Display function signature.
+
+if isempty(obj.wrap)
+    out = {'NULL'};
+    return
+end
 
 args_i = cell(1,obj.n_in);
 args_o = cell(1,obj.n_out);
@@ -15,7 +20,7 @@ end
 args_i = join(args_i,',');
 args_o = join(args_o,',');
 
-fprintf('%s:(%s)->(%s) %s\n', obj.name, args_i{:}, args_o{:}, obj.class_name);
+out = compose('%s:(%s)->(%s) %s\n', obj.name, args_i{:}, args_o{:}, obj.class_name);
 
 end
 

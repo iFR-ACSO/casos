@@ -1,18 +1,12 @@
-classdef QcsossolInternal < casos.package.functions.FunctionWrapper
+function node = qcsossolInternal(name,solver,varargin)
 % Internal interface for quasiconvex sum-of-squares problems.
 
-methods
-    function obj = QcsossolInternal(name,solver,varargin)
-        % Create new sum-of-squares interface.
-        switch (solver)
-            case 'bisection'
-                wrap = casos.package.solvers.QuasiconvBisection(name,varargin{:});
-            otherwise
-                error('No such quasiconvex solver "%s".',solver)
-        end
+switch (solver)
+    case 'bisection'
+        node = casos.package.solvers.QuasiconvBisection(name,varargin{:});
 
-        obj@casos.package.functions.FunctionWrapper(wrap);
-    end
+    otherwise
+        error('No such quasiconvex solver "%s".',solver)
 end
 
 end

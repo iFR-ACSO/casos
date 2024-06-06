@@ -46,7 +46,7 @@ sosopt.Kc = struct('lin',Ml,'sos',Ms);
 sosopt.error_on_fail = false;
 
 % initialize convex SOS solver
-obj.sossolver = casos.package.solvers.SossdpRelaxation('SOS',opts.sossol,sos,sosopt);
+obj.sossolver = casos.package.solvers.sossolInternal('SOS',opts.sossol,sos,sosopt);
 
 % store basis
 obj.sparsity_x  = obj.sossolver.sparsity_x;

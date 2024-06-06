@@ -1,13 +1,6 @@
-classdef SossolInternal < casos.package.functions.FunctionWrapper
-% Internal interface for convex sum-of-squares problems.
+function node = sossolInternal(name,solver,sos,varargin)
+% Internal interface for sum-of-squares solvers.
 
-methods
-    function obj = SossolInternal(varargin)
-        % Create new sum-of-squares interface.
-        wrap = casos.package.solvers.SossdpRelaxation(varargin{:});
-
-        obj@casos.package.functions.FunctionWrapper(wrap);
-    end
-end
+node = casos.package.solvers.SossdpRelaxation(name,solver,sos,varargin{:});
 
 end
