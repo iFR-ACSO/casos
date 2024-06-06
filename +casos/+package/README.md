@@ -65,7 +65,7 @@ flowchart LR
     SossdpRelaxation -.-> SdpsolInternal
     qcsossolInternal -.-> QuasiconvBisection
     QuasiconvBisection --> SosoptCommon
-    QuasiconvBisection -.-> SossolInternal
+    QuasiconvBisection -.-> SossdpRelaxation
   end
   casos.Function --> FunctionWrapper
   casos.Function -.-> CasadiFunction
