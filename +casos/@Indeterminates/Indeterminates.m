@@ -4,6 +4,9 @@ classdef Indeterminates < casos.package.core.AlgebraicObject & casos.package.cor
 properties (GetAccess=protected, SetAccess=private)
     % cell array of strings {x1,...,xN}
     variables = {};
+
+    % transpose flag
+    transp = false;
 end
 
 properties (Dependent)
@@ -67,6 +70,16 @@ methods
         tf = isequal(obj.variables,var.variables);
     end
 
+    function tf = isrow(obj)
+        % Check if indeterminate variables have been transposed.
+        tf = isscalar(obj) || obj.transp;
+    end
+
+    function tf = iscolumn(obj)
+        % Check if indeterminate variables have not been transposed.
+        tf = isscalar(obj) || ~obj.transp;
+    end
+
     function out = str(obj)
         % Return string representation.
         out = obj.variables;
@@ -89,8 +102,13 @@ methods
     function tf = is_indet(~), tf = true; end
 
     function z = mpower(obj,deg)
-        % Return monomial.
-        z = mpower(casos.package.polynomial(obj),deg);
+        % Return monomial(s).
+        z = power(casos.package.polynomial(obj),deg);
+    end
+
+    function obj = transpose(obj)
+        % Toggle transpose flag.
+        obj.transp = ~obj.transp;
     end
 
     % Display

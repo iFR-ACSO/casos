@@ -7,7 +7,7 @@ assert(is_zerodegree(b),'Only division by constant or symbolic matrix possible.'
 
 if isscalar(b)
     % fall back to scalar division
-    c = ldivide(p,b);
+    c = rdivide(p,b);
     return
 end
 

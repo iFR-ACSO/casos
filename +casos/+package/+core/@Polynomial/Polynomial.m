@@ -51,7 +51,7 @@ methods
         elseif ischar(varargin{1}) || isa(varargin{1},'casos.Indeterminates')
             % indeterminate (pvar / mpvar syntax)
             [vars,I] = sort(casos.Indeterminates(varargin{:}));
-            psparsity = to_vector(casos.Sparsity(vars),I);
+            psparsity = to_vector(casos.Sparsity(vars),I,isrow(vars));
             coeffs = obj.new_coeff(coeff_sparsity(psparsity),1);
 
         else

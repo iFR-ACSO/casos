@@ -156,6 +156,12 @@ methods
         f = casadi.Function('p',{X},{casadi.MX(p)},varargin{:});
     end
 
+    function f = to_function(obj,varargin)
+        % Return casadi.Function object.
+        % Overload for default behaviour.
+        f = to_sxfunction(obj,varargin{:});
+    end
+
     %% Concatenation
     function p = cat(dim,varargin)
         % Generic concatenation.

@@ -35,6 +35,16 @@ methods
         c = mtimes(casos.package.polynomial(a),casos.package.polynomial(b));
     end
 
+    function b = uminus(a)
+        % Invert algebraic object.
+        b = uminus(casos.package.polynomial(a));
+    end
+
+    function b = uplus(a)
+        % Unary plus.
+        b = uplus(casos.package.polynomial(a));
+    end
+
     %% Common indeterminate variables interface
     function z = monomials(obj,varargin)
         % Return monomial sparsity pattern.
