@@ -61,12 +61,20 @@ methods
         % constraint function (vectorized)
         sdp_g = sdp.g(:);
 
+        if isfield(sdp,'derivatives')
+            % use pre-computed derivatives (undocumented)
+            H = sdp.derivatives.Hf;
+            g = sdp.derivatives.Jf;
+            A = sdp.derivatives.Jg;
+
+        else
         % quadratic cost
         H = hessian(sdp.f, x);
         % linear cost
         g = jacobian(sdp.f, x);
         % linear constraint
         A = jacobian(sdp_g, x);
+        end
         % constant constraint
         b = -sdp_g;
         

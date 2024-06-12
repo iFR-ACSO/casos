@@ -21,34 +21,34 @@ Is = [false(Nl,1); true(Ns,1)];
 Js = [false(Ml,1); true(Ms,1)];
 
 % obtain Gram basis for decision variables
-[Zgram_x,Ksdp_x_s,~,Mp_x,Md_x] = grambasis(sparsity(sos.x),Is);
+[Zvar_s,Ksdp_x_s,~,Mp_x,Md_x] = grambasis(sparsity(sos.x),Is);
 % obtain Gram basis for sum-of-squares constraints
-[Zgram_g,Ksdp_g_s,~,Mp_g,Md_g] = grambasis(sparsity(sos.g),Js);
+[Zcon_s,Ksdp_g_s,~,Mp_g,Md_g] = grambasis(sparsity(sos.g),Js);
 
 % matrix decision variables for variables
-Qgram_x = casadi.SX.sym('P',sum(Ksdp_x_s.^2),1);
+Qvar_G = casadi.SX.sym('P',sum(Ksdp_x_s.^2),1);
 % matrix decision variables for constraints
-Qgram_g = casadi.SX.sym('Q',sum(Ksdp_g_s.^2),1);
+Qcon_G = casadi.SX.sym('Q',sum(Ksdp_g_s.^2),1);
 
 % linear decision variables
-[Qlin_x,Zlin_x] = poly2basis(sos.x,~Is); % TODO: internal
+[Qvar_l,Zvar_l] = poly2basis(sos.x,~Is); % TODO: internal
 % linear constraints
-Zlin_g = basis(sos.g,~Js);
+Zcon_l = basis(sos.g,~Js);
 % handle parameters
-[Qlin_p,Zlin_p] = poly2basis(sos.p);
+[Qpar,Zpar] = poly2basis(sos.p);
 % get cost function
-[Qlin_f,Zlin_f] = poly2basis(sos.f);
+[Qobj,Zobj] = poly2basis(sos.f);
 
 % get combined variables / constraints
 [Qvar,Zvar] = poly2basis(sos.x);
-[Qcon,Zcon] = poly2basis(sos.g,[Zlin_g; Zgram_g]);
+[Qcon,Zcon] = poly2basis(sos.g,[Zcon_l; Zcon_s]);
 
 % number of linear variables / constraints
-nnz_lin_x = nnz(Zlin_x);
-nnz_lin_g = nnz(Zlin_g);
+nnz_lin_x = nnz(Zvar_l);
+nnz_lin_g = nnz(Zcon_l);
 % number of sum-of-squares variables / constraints
-nnz_sos_x = nnz(Zgram_x);
-nnz_sos_g = nnz(Zgram_g);
+nnz_sos_x = nnz(Zvar_s);
+nnz_sos_g = nnz(Zcon_s);
 % number of Gram variables / constraints
 nnz_gram_x = sum(Ksdp_x_s.^2);
 nnz_gram_g = sum(Ksdp_g_s.^2);
@@ -56,20 +56,31 @@ nnz_gram_g = sum(Ksdp_g_s.^2);
 assert(length(Qvar) == (nnz_lin_x + nnz_sos_x), 'Sum-of-squares decision varibles must be in Gram form.')
 
 % matrix decision variables
-Qsdp_x = [Qlin_x; Qgram_x];
+Qvar_sdp = [Qvar_l; Qvar_G];
 
 % replace sum-of-squares decision variables
-sosprob = casadi.Function('sos',{Qvar},{Qlin_f Qcon},struct('allow_free',true));
+% and pre-compute derivatives
+% gradient and hessian of objective
+sosprob_f = casadi.Function('sos_f',{Qvar},{hessian(Qobj,Qvar) jacobian(Qobj,Qvar) Qobj},struct('allow_free',true)); %hessian_old(sosprob,0,0);
+% jacobian of constraints
+sosprob_g = casadi.Function('sos_g',{Qvar},{jacobian(Qcon,Qvar) Qcon},struct('allow_free',true)); %jacobian_old(sosprob,0,1);
 
 % map sum-of-squares decision variables to matrix variables
 map = blkdiag(speye(nnz_lin_x), Mp_x);
-[sdp_f,sdp_g] = sosprob(map*Qsdp_x);
+Qvar_mapped = map*Qvar_sdp;
+% [sdp_f,sdp_g] = sosprob(Qvar_mapped);
+[sdp_Hf,sdp_Jf,sdp_f] = sosprob_f(Qvar_mapped);
+[sdp_Jg,sdp_g] = sosprob_g(Qvar_mapped);
 
 % build SDP problem
-sdp.x = [Qsdp_x; Qgram_g];
+sdp.x = [Qvar_sdp; Qcon_G];
 sdp.f = sdp_f;
-sdp.g = sdp_g - blkdiag(sparse(nnz_lin_g,0), Mp_g)*Qgram_g;
-sdp.p = Qlin_p;
+sdp.g = sdp_g - blkdiag(sparse(nnz_lin_g,0), Mp_g)*Qcon_G;
+sdp.p = Qpar;
+% store derivatives
+sdp.derivatives.Hf = blkdiag(map'*sdp_Hf*map, sparse(nnz_gram_g,nnz_gram_g));
+sdp.derivatives.Jf = horzcat(sdp_Jf*map, sparse(1,nnz_gram_g));
+sdp.derivatives.Jg = horzcat(sdp_Jg*map, -Mp_g);
 % SDP options
 sdpopt = opts.sdpsol_options;
 sdpopt.Kx = struct('lin', nnz_lin_x, 'psd', [Ksdp_x_s; Ksdp_g_s]);
@@ -80,13 +91,13 @@ obj.sdpsolver = casos.package.solvers.SdpsolInternal('SDP',solver,sdp,sdpopt);
 
 % store basis
 obj.sparsity_x  = Zvar;
-obj.sparsity_xl = Zlin_x;
-obj.sparsity_xs = Zgram_x;
-obj.sparsity_p  = Zlin_p;
-obj.sparsity_f  = Zlin_f;
+obj.sparsity_xl = Zvar_l;
+obj.sparsity_xs = Zvar_s;
+obj.sparsity_p  = Zpar;
+obj.sparsity_f  = Zobj;
 obj.sparsity_g  = Zcon;
-obj.sparsity_gl = Zlin_g;
-obj.sparsity_gs = Zgram_g;
+obj.sparsity_gl = Zcon_l;
+obj.sparsity_gs = Zcon_s;
 
 % map SDP solution to SOS solution
 % symbolic SDP solution
