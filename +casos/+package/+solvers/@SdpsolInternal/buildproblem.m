@@ -1,4 +1,4 @@
-function buildproblem(obj,prob,data,opts)
+function buildproblem(obj,prob,data,opts,args)
 % Convert SDP structure into conic problem description.
 %
 % The high-level SDP interface has the form
@@ -39,9 +39,12 @@ elseif ~isfield(opts.Kc,'lin')
     opts.Kc.lin = 0;
 end
 
-if ~isfield(opts, 'add_ubc')
-    opts.add_ubc = [];
-    opts.add_lbc = [];
+if isfield(args, 'dd_ubg')
+    dd_lbg = args.dd_lbg;
+    dd_ubg = args.dd_ubg;
+else
+    dd_lbg = [];
+    dd_ubg = [];
 end
 
 
@@ -67,8 +70,8 @@ x0 = casadi.MX.sym('x0',sz_x);
 lbx = casadi.MX.sym('lbx',Nx_l,1);
 ubx = casadi.MX.sym('ubx',Nx_l,1);
 cbx = casadi.MX.sym('cbx',Nx_c,1);
-lbg = casadi.MX.sym('lbg',Ng_l - length(opts.add_lbc),1);
-ubg = casadi.MX.sym('ubg',Ng_l - length(opts.add_lbc),1);
+lbg = casadi.MX.sym('lbg',Ng_l - length(dd_lbg),1);
+ubg = casadi.MX.sym('ubg',Ng_l - length(dd_ubg),1);
 cbg = casadi.MX.sym('cbg',Ng_c,1);
 lam_x0 = casadi.MX.sym('lam_x0',sz_x);
 lam_g0 = casadi.MX.sym('lam_g0',sz_g);
@@ -80,7 +83,7 @@ lam_x = casadi.MX.sym('lam_x',sz_x);
 % input function
 obj.fhan = casadi.Function('f', ...
             {x0 p lbx ubx cbx lbg ubg cbg lam_x0 lam_g0}, ...
-            {Hp gp Ap Bp{1}+[lbg;opts.add_lbc] Bp{1}+[ubg;opts.add_ubc] Bp{2}+cbg lbx ubx cbx x0 lam_x0 lam_g0}, ...
+            {Hp gp Ap Bp{1}+[lbg;dd_lbg] Bp{1}+[ubg;dd_ubg] Bp{2}+cbg lbx ubx cbx x0 lam_x0 lam_g0}, ...
             {'x0' 'p' 'lbx' 'ubx' 'cbx' 'lbg' 'ubg' 'cbg' 'lam_x0' 'lam_g0'}, ...
             {'h' 'g' 'a' 'lba' 'uba' 'cba' 'lbx' 'ubx' 'cbx' 'x0' 'lam_x0' 'lam_a0'} ...
 );
