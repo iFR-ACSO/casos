@@ -4,9 +4,7 @@ classdef (Abstract) SolverCommon < casos.package.functions.FunctionCommon
 properties (Constant,Access=protected)
     solver_options = [casos.package.functions.FunctionCommon.options
         {'Kx', 'Cone description for state constraints.'
-         'Kc', 'Cone description for constraint function.'
-         'add_lbc', 'something 1'
-         'add_ubc', 'something 2'}
+         'Kc', 'Cone description for constraint function.'}
     ];
 end
 
