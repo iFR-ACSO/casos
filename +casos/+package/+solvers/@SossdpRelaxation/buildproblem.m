@@ -78,7 +78,10 @@ sdp.f = sdp_f;
 sdp.g = sdp_g - blkdiag(sparse(nnz_lin_g,0), Mp_g)*Qcon_G;
 sdp.p = Qpar;
 % store derivatives
-sdp.derivatives.Hf = blkdiag(map'*sdp_Hf*map, sparse(nnz_gram_g,nnz_gram_g));
+sdp.derivatives.Hf = blockcat(map'*sdp_Hf*map, ...
+                              sparse(nnz_lin_x+nnz_gram_x,nnz_gram_g), ...
+                              sparse(nnz_gram_g,nnz_lin_x+nnz_gram_x), ...
+                              sparse(nnz_gram_g,nnz_gram_g));
 sdp.derivatives.Jf = horzcat(sdp_Jf*map, sparse(1,nnz_gram_g));
 sdp.derivatives.Jg = horzcat(sdp_Jg*map, -Mp_g);
 % SDP options
