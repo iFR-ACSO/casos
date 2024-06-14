@@ -1,18 +1,23 @@
 function [sdp,args,opts] = dd_reduce(obj, sdp, opts)
+% Reduce a DD cone program to a linear program.
 
+check_cone(obj.get_cones,opts.Kx,'lin');
+check_cone(obj.get_cones,opts.Kc,'lin');
+check_cone(obj.get_cones,opts.Kx,'dd');
+check_cone(obj.get_cones,opts.Kc,'dd');
+
+% initialize 
 args.dd_lbg = [];
 args.dd_ubg = [];
 
+% get dimensions of linear and DD cones
 Nl = get_dimension(obj.get_cones,opts.Kx,'lin');
 Ml = get_dimension(obj.get_cones,opts.Kc,'lin');
 Nd = get_dimension(obj.get_cones,opts.Kx,'dd');
 Md = get_dimension(obj.get_cones,opts.Kc,'dd');
 
 % Verify DD cones in the constraints and create slack DD variables
-if ~isempty(Md)
-    % get current number of constraints
-    n_g = length(sdp.g);
-    
+if isfield(opts.Kc,'dd')
     % loop to iterate over each DD cone in the constraints
     for i=1:length(Md)
         % locate set of DD constraints (start from the end)
@@ -45,12 +50,12 @@ if ~isempty(Md)
     Ml = Ml + sum(Md.^2);
     % add DD cones to decision variables
     Nd = [reshape(Nd,1,[]) reshape(Md,1,[])];
-        
+
     % remove DD cone from constraints
     opts.Kc = rmfield(opts.Kc, 'dd');
 end
 
-if ~isempty(Nd)
+if isfield(opts.Kx,'dd')
     % loop over each DD cone in the variables
     for i=1:length(Nd)
         % Extract the ddm elements from sdp.x
@@ -59,23 +64,25 @@ if ~isempty(Nd)
     
         % obtain diagonal elements of ddm_x
         ddm_x_diag = diag(dd_x);
+
+        % number of elements in upper triangle minus the diagonal
+        n_band = Nd(i)*(Nd(i)+1)/2 - Nd(i);
         
-        % create slack variables (only corresponding to the upper
-        % triangle except the diagonal elements
-        if Nd(i)*(Nd(i)+1)/2 - Nd(i) >= 1
-            dd_s = casadi.SX.sym(strjoin({'sx_', num2str(i)}, ''), Nd(i)*(Nd(i)+1)/2 - Nd(i), 1);
+        if n_band >= 1
+            % create slack variables 
+            dd_s = casadi.SX.sym(strjoin({'sx_', num2str(i)}, ''), n_band, 1);
             
             % create symmetric matrix with zero diagonal and upper and
             % bottom triangle equal to ddm_s            
             ind_s = triu(ones(Nd(i), Nd(i)),1); % extracts the upper triangle without the diagonal
             ind_d = ind_s + ind_s';
             
-            % by the order of ddm_s, subs the 1 in ind_s with ddm_s
-            s_matrix = casadi.SX(Nd(i)^2, 1);
-        
             % find indexes where ind_s is 1
-            s_matrix(find(ind_s(:))) = dd_s;
-            s_matrix = s_matrix.reshape(Nd(i), Nd(i));
+            S = casadi.Sparsity.nonzeros(Nd(i), Nd(i), find(ind_s));
+
+            % by the order of ddm_s, subs the 1 in ind_s with ddm_s
+            s_matrix = sparsity_cast(dd_s,S);
+            % symmetrize
             s_matrix = s_matrix + s_matrix';
         
             % add constraints of the type s_i - x_i >= 0 and s_i + x_i >= 0
@@ -95,6 +102,7 @@ if ~isempty(Nd)
             n_new_g = size(sdp.g,1) - n_new_g;
 
         else
+            % nothing to do
             dd_s = [];
             n_new_g = 0;
         end
@@ -112,7 +120,7 @@ if ~isempty(Nd)
         % upper bounds is always infinity
         args.dd_ubg = [args.dd_ubg; inf(n_new_g,1)];
     end
-    
+
     % remove dd field from decision variables
     opts.Kx = rmfield(opts.Kx, 'dd');
 end
