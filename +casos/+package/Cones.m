@@ -11,7 +11,7 @@ properties (Constant)
     LOR = {'lor' 'LIST' 'Lorentz (quadratic, second-order) cone.'};
     ROT = {'rot' 'LIST' 'Rotated Lorentz cone.'};
     PSD = {'psd' 'LIST' 'Cone of positive semidefinite matrices.'};
-    DDM = {'ddm' 'LIST' 'Cone of symmetric diagonally dominat matrices'};
+    DD  = {'dd'  'LIST' 'Cone of symmetric diagonally dominat matrices'};
     % Polynomial cones
     SOS = {'sos' 'NUM' 'Cone of sum-of-squares polynomials.'}
 end
@@ -107,7 +107,7 @@ methods
 
         % else
         switch (name)
-            case 'psd', l = sum(K.(name).^2);
+            case {'psd' 'dd'}, l = sum(K.(name).^2);
             otherwise,  l = sum(K.(name));
         end
     end

@@ -37,7 +37,7 @@ fprintf('solution with psd: %d \n', sol.f.full)
 
 % Solve with DD in the decision variables
 clear opts
-opts.Kx = struct('lin', 2, 'ddm', ndim);
+opts.Kx = struct('lin', 2, 'dd', ndim);
 opts.Kc = struct('lin', length(sdp.g));
 % initialize solver
 S = casos.sdpsol('S','sedumi',sdp,opts);

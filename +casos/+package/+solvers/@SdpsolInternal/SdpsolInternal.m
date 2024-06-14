@@ -1,6 +1,12 @@
 classdef SdpsolInternal < casos.package.solvers.SolverCallback & matlab.mixin.Copyable
 % Internal interface for convex cone (SDP) solvers.
 
+properties (Constant,Access=protected)
+    matrix_cones = casos.package.Cones([
+        casos.package.Cones.DD
+    ]);
+end
+
 properties (Access=private)
     solver;
 end
@@ -17,7 +23,10 @@ end
 methods (Static)
     function cones = get_cones
         % Return supported cones.
-        cones = casos.package.solvers.ConicSolver.get_cones;
+        cones = [
+            casos.package.solvers.ConicSolver.get_cones
+            casos.package.solvers.SdpsolInternal.matrix_cones
+        ];
     end
 end
 
@@ -49,14 +58,20 @@ methods
         if nargin < 4
             opts = struct;
         else
-            % convert everything that is psd into ddm
-            %if isfield(opts.Kx, 'psd')
-            %    opts.Kx.ddm = opts.Kx.psd;
-            %    opts.Kx = rmfield(opts.Kx, 'psd');
-            %end
+            % ensure cone has default value
+            if ~isfield(opts,'Kx')
+                opts.Kx.lin = numel(sdp.x);
+            elseif ~isfield(opts.Kx,'lin')
+                opts.Kx.lin = 0; 
+            end
+            if ~isfield(opts,'Kc')
+                opts.Kc.lin = numel(sdp.g);
+            elseif ~isfield(opts.Kc,'lin')
+                opts.Kc.lin = 0;
+            end
+
             % rebuild problem from DD to linear program
-            if (isfield(opts, 'Kx') && isfield(opts.Kx, 'ddm'))|| ...
-                    (isfield(opts, 'Kc') && isfield(opts.Kc, 'ddm'))
+            if isfield(opts.Kx,'dd') || isfield(opts.Kc,'dd')
                 [sdp,args,opts] = dd_reduce(obj, sdp, opts);
             else
                 args = struct;

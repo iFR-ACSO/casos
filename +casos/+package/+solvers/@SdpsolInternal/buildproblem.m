@@ -27,18 +27,7 @@ p = casadi.MX.sym('p',sz_p);
 
 sz_g = size(gx);
 
-% ensure cone has default value
-if ~isfield(opts,'Kx')
-    opts.Kx.lin = prod(sz_x);
-elseif ~isfield(opts.Kx,'lin')
-    opts.Kx.lin = 0; 
-end
-if ~isfield(opts,'Kc')
-    opts.Kc.lin = prod(sz_g);
-elseif ~isfield(opts.Kc,'lin')
-    opts.Kc.lin = 0;
-end
-
+% additional bounds from DD reduction
 if isfield(args, 'dd_ubg')
     dd_lbg = args.dd_lbg;
     dd_ubg = args.dd_ubg;
