@@ -1,5 +1,7 @@
 % Test and verify DD cone 
 
+rng(0)
+
 % dimension of SDP
 ndim = 5;
 
