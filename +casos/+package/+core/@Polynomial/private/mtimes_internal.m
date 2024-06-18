@@ -10,7 +10,7 @@ szb = size(S2);
 if isrow(S1) && isvector(S2)
     % inner vector product
     % (sum_a c_a'*x^a)*(sum_b c_b*x^b) = sum_a sum_b (c_a'*c_b)*(x^a*x^b)
-    coeffs = reshape(coeff1*T(coeff2),nta*ntb,1);
+    coeffs = reshape(coeff2*T(coeff1),nta*ntb,1);
 
 else
     % Vectorized code to compute coef matrix
