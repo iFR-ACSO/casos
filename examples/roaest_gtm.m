@@ -5,9 +5,7 @@
 x = casos.PS('x',4,1);
 
 % Polynomial Dynamics
-load GTM_scaled_dyn.mat
-
-f = gtmdyn(x(1),x(2),x(3),x(4));
+f = GTM_dynamics(x(1),x(2),x(3),x(4));
 
 % shape function
 p = x'*x*1e2;
