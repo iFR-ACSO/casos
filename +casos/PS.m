@@ -1,6 +1,6 @@
 classdef (InferiorClasses = {?casadi.DM, ?casadi.SX, ?casos.PD, ?casos.Indeterminates}) ...
         PS < casos.package.core.Polynomial
-% Polynomial with constant coefficients of type casadi.SX.
+% Polynomial with symbolic coefficients of type casadi.SX.
 
 methods (Static,Access=protected)
     %% Polynomial interface

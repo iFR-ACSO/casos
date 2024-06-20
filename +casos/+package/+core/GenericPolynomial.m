@@ -2,7 +2,7 @@ classdef (Abstract) GenericPolynomial ...
         < casos.package.core.AlgebraicObject & casos.package.core.PolynomialInterface
 % Base class for all polynomial objects.
 
-properties (Access=private)
+properties (Abstract, Access=protected)
     poly_sparsity;   % polynomial sparsity pattern
 end
 
@@ -14,16 +14,6 @@ properties (Dependent)
 end
 
 methods
-    %% Superclass constructor
-    function obj = GenericPolynomial(sparsity)
-        % Create a new object with sparsity pattern.
-        if nargin > 0
-            obj.poly_sparsity = sparsity;
-        else
-            obj.poly_sparsity = casos.Sparsity;
-        end
-    end
-
     %% Getter
     function n = get.nvars(obj)
         % Number of indeterminate variables.

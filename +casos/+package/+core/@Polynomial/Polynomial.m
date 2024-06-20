@@ -5,6 +5,9 @@ properties (Access=protected)
     % coefficient matrix
     % see casos.Sparsity for details
     coeffs = [];
+
+    % polynomial sparsity pattern
+    poly_sparsity;
 end
 
 methods (Static, Abstract, Access=protected)
