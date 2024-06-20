@@ -1,4 +1,4 @@
-classdef (Abstract) Printable
+classdef (Abstract,HandleCompatible) Printable
 % Base class for display.
 
 methods (Abstract)
@@ -13,8 +13,9 @@ methods
     end
 end
 
-methods (Access=protected)
+methods (Access=public)
     disp_matrix(obj,varargin);
+    c = to_char(obj);
 end
 
 end
