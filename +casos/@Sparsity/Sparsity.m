@@ -167,6 +167,11 @@ methods
         tf = (obj.maxdeg == 0);
     end
 
+    function tf = is_dense(obj)
+        % Check if sparsity pattern has no sparse coefficients.
+        tf = is_dense(obj.coeffs);
+    end
+
     function tf = is_null(obj)
         % Check if sparsity pattern is null.
         tf = is_null(obj.coeffs);

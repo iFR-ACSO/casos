@@ -90,6 +90,11 @@ methods
         tf = is_homogeneous(obj.poly_sparsity,varargin{:});
     end
 
+    function tf = is_dense(obj)
+        % Check if polynomial has no sparse coefficients.
+        tf = is_dense(obj.poly_sparsity);
+    end
+
     function tf = is_equal(obj,p)
         % Check if polynomials are equal.
         tf = is_equal(obj.poly_sparsity,p.poly_sparsity);
