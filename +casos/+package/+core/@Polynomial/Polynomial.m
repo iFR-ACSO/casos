@@ -149,6 +149,16 @@ methods
         obj = obj.set_sparsity(S);
     end
 
+    function obj = sparsity_cast(obj,S)
+        % Cast sparsity pattern onto polynomial.
+        assert(nnz(obj) == nnz(S), 'Mismatching number of nonzero coefficients.')
+
+        S = casos.Sparsity(S);
+
+        obj.coeffs = sparsity_cast(obj.coeffs,coeff_sparsity(S));
+        obj = obj.set_sparsity(S);
+    end
+
     function v = casos.Indeterminates(obj)
         % Convert to indeterminates.
         [tf,I] = is_indet(obj);

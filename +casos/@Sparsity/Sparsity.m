@@ -308,6 +308,11 @@ methods
         p = project(casos.package.polynomial(M),S);
     end
 
+    function p = sparsity_cast(M,S)
+        % Fall back to polynomial.
+        p = sparsity_cast(casos.package.polynomial(M),S);
+    end
+
     %% Conversion & matrix Sparsity interface
     function S = reshape(obj,varargin)
         % Reshape polynomial matrix.
