@@ -1,6 +1,35 @@
 classdef (InferiorClasses = {?casadi.DM, ?casos.Indeterminates}) ...
         PD < casos.package.core.Polynomial
 % Polynomial with constant coefficients of type casadi.DM.
+%
+% Constructor summary:
+%
+%   PD()
+%
+% create empty (0x0) polynomial.
+%
+%   PD(int,int)
+%
+% create all-sparse polynomial.
+%
+%   PD(double | DM)
+%
+% convert double matrix.
+%
+%   PD(Sparsity)
+%
+% create from list of monomials 
+% (all non-sparse coefficients equate to 1).
+%
+%   PX(Sparsity,scalar double | DM)
+%
+% create polynomial with constant coefficients 
+% (all non-sparse coefficients equate to the given value).
+%
+%   PX(Sparsity,vector double | DM)
+%
+% create polynomial with constant coefficients from vector of nonzeros.
+%
 
 methods (Static,Access=protected)
     %% Polynomial interface

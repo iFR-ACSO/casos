@@ -1,6 +1,48 @@
 classdef (InferiorClasses = {?casadi.DM, ?casadi.SX, ?casos.PD, ?casos.Indeterminates}) ...
         PS < casos.package.core.Polynomial
 % Polynomial with symbolic coefficients of type casadi.SX.
+%
+% Constructor summary:
+%
+%   PS()
+%
+% create empty (0x0) polynomial.
+%
+%   PS(int,int)
+%
+% create all-sparse polynomial.
+%
+%   PS(double | DM | SX)
+%
+% convert double or symbolic matrix.
+%
+%   PS(PD)
+%
+% convert polynomial with constant coefficients.
+%
+%   PS(Sparsity)
+%
+% create from list of monomials 
+% (all non-sparse coefficients equate to 1).
+%
+%   PX(Sparsity,scalar double | DM)
+%
+% create polynomial with constant coefficients 
+% (all non-sparse coefficients equate to the given value).
+%
+%   PX(Sparsity,scalar SX)
+%
+% create polynomial with symbolic coefficients
+% (all non-sparse coefficients equate to the given expression).
+%
+%   PX(Sparsity,vector double | DM)
+%
+% create polynomial with constant coefficients from vector of nonzeros.
+%
+%   PX(Sparsity,vector SX)
+%
+% create polynomial with symbolic coefficients from vector of nonzeros.
+%
 
 methods (Static,Access=protected)
     %% Polynomial interface
