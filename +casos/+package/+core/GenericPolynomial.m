@@ -105,6 +105,11 @@ methods
         S = casos.Sparsity(obj.poly_sparsity);
     end
 
+    function Z = grambasis(obj)
+        % Return a Gram basis for this polynomial.
+        Z = grambasis(obj.poly_sparsity);
+    end
+
     function l = list_of_degree(obj)
         % Return a list of degrees.
         l = list_of_degree(obj.poly_sparsity);
