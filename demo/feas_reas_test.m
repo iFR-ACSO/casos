@@ -135,9 +135,9 @@ l = 1e-6*(x'*x);
 % level of stability
 b = casos.PS.sym('b');
 
-g = Vinit-2; 
+g0 = Vinit-2; 
 
-cost = dot(g - (V-b),g - (V-b)) ;
+
 
 
 %% setup solver
@@ -146,25 +146,44 @@ cost = dot(g - (V-b),g - (V-b)) ;
 opts = struct('sossol','mosek');
 opts.verbose = 1;
 
-sos1 = struct('x',[V; s2; b],...
+g = [s2; 
+     V-l; 
+     s2*(V-1)-nabla(V,x)*f-l];
+
+s    = casos.PS.sym('q',grambasis(g(3)));
+
+
+[~,smon] = poly2basis(s);
+
+
+x0 = [Vinit;  x'*x; 
+        x'*x];
+
+cost = dot(s-g(3),s-g(3));
+
+sos1 = struct('x',[V; s2;s],...
               'f',cost, ...
               'p',[]);
 
-sos1.('g') = [s2; 
-              V-l; 
-              s2*(V-b)-nabla(V,x)*f-l];
+sos1.('g') = [g(1:2);s];
+
+
 
 % states + constraint are SOS cones
-opts.Kx = struct('lin', 3);
-opts.Kc = struct('sos', 3);
+opts.Kx = struct('lin', 2 + length(g(3)));
+opts.Kc = struct('sos', length(sos1.g));
 
 Vlb  = casos.PS(basis(V),-inf);
 Vub  = casos.PS(basis(V),+inf);
 s2lb = casos.PS(basis(s2),-inf);
 s2ub = casos.PS(basis(s2),+inf);
+
+slb = casos.PS(basis(s),-inf);
+sub = casos.PS(basis(s),+inf);
+
 glb  = casos.PS(basis(b),-inf);
 gub  = casos.PS(basis(b),+inf);
-
+opts.sossol_options.sdpsol_options.error_on_fail = 0;
 opts.Sequential_Algorithm = 'SQP';
 
 tic
@@ -173,9 +192,9 @@ toc
 
 
 %% solve
-sol1 = S1('x0',[Vinit ;  x'*x + 1 ; 1], ...
-          'lbx',[Vlb;s2lb;glb], ...
-          'ubx',[Vub;s2ub;gub]);
+sol1 = S1('x0',x0, ...
+          'lbx',[Vlb;s2lb;slb], ...
+          'ubx',[Vub;s2ub;sub]);
 
 
 % profile viewer
@@ -184,7 +203,7 @@ plotStats(S1.stats.iter);
 
 
 figure()
-pcontour(g,0,[-2 2 -2 2]*3,'k--')
+pcontour(g0,0,[-2 2 -2 2]*3,'k--')
 hold on
-pcontour(sol1.x(1),double(sol1.x(end)),[-2 2 -2 2]*3)
+pcontour(sol1.x(1),1,[-2 2 -2 2]*3)
 

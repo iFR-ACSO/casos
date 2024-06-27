@@ -21,6 +21,7 @@ l = (x-xc)'*eye(2)*2*(x-xc)-1-1e-6; % l(x) > 0
 xc = [2;-2];
 l =[l; (x-xc)'*eye(2)*2*(x-xc)-1-1e-6]; % l(x) > 0
 
+% l = [];
 
 % SOS multiplier
 s = casos.PS.sym('s',monomials(x,0),[length(g) 1]);
@@ -30,7 +31,7 @@ h = casos.PS.sym('h',monomials(x,0:6));
 
 % superellipsoid
 g0 = 0;
-n0 = 6;
+n0 = 50;
 for k = 1:2
 
     g0  = g0 + (x(k)^2/x_up(k)^2)^(n0/2) ;
@@ -53,7 +54,24 @@ tic
 opts = struct('sossol','mosek');
 
 
-cost = dot(g0 - (h-b),g0 - (h-b));
+cost_fun = to_function(  (g0-(h-b)).^2);
+keep_out_fun = to_function(l);
+keep_in_fun = to_function(g0);
+
+lower = -2.3;
+upper =  2.3;
+
+p = (upper-lower)*net(haltonset(2),1000)'+lower;
+
+l1_val = full(casadi.DM(keep_out_fun(casadi.SX(p))));
+g1_val = full(casadi.DM(keep_in_fun(casadi.SX(p))));
+
+idx = find(all(([( logical(l1_val > 0) )'  (logical(g1_val <= 0) )']),2));
+
+
+plot(p(1,idx),p(2,idx),'k*')
+
+cost = 1/length(idx)*sum(cost_fun(casadi.SX(p(:,idx))));
 
 % problem struct
 sos = struct('x',[h;s;r;b], ...
@@ -74,7 +92,7 @@ slb = casos.PS(basis(s), -inf);
 sub = casos.PS(basis(s), +inf);
 rlb = casos.PS(basis(r), -inf);
 rub = casos.PS(basis(r), +inf);
-blb = casos.PS(basis(b), 0);
+blb = casos.PS(basis(b), -inf);
 bub = casos.PS(basis(b), +inf);
 
 lbx = [hlb;slb;rlb;blb];

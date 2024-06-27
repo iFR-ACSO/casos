@@ -5,6 +5,8 @@ clear
 close all
 clc
 profile off
+import casos.toolboxes.sosopt.pcontour
+
 
 % system states
 x = casos.PS('x',4,1);
@@ -116,7 +118,7 @@ V = casos.PS.sym('v',monomials(x,2:4));
 
 % SOS multiplier
 s1 = casos.PS.sym('s1',monomials(x,0:2));
-s2 = casos.PS.sym('s2',monomials(x,2:4));
+s2 = casos.PS.sym('s2',monomials(x,4));
 
 % enforce positivity
 l = 1e-6*(x'*x);
@@ -130,13 +132,34 @@ opts = struct('sossol','mosek');
 
 gam = 1;
 
-g = Vinit-0.8; 
-
-g = Vinit-0.8; 
+g = Vinit-2; 
 
 cost = dot(g - (V-gam), g - (V-gam));
 
 
+% xD = D*x;
+% V = subs(Vinit,[x(1);x(4)],zeros(2,1));
+% V = subs(V,[x(2);x(3)],xD(2:3));
+% 
+% 
+% g = subs(g,[x(1);x(4)],zeros(2,1));
+% g = subs(g,[x(2);x(3)],xD(2:3));
+% 
+% figure(2)
+% clf
+% pcontour(g, 0, [-1 1 -4 4], 'k--');
+% hold on
+% pcontour(V, gam, [-1 1 -4 4], 'b-');
+
+
+gfun = to_function(g);
+
+a = -1;
+b = 1;
+
+
+r = (b-a).*rand(4,10000) + a;
+gval = full(gfun(r));
 
 %% setup solver
 sos1 = struct('x',[V; s2],...
@@ -152,38 +175,30 @@ opts.Kx      = struct('lin', 2);
 opts.Kc      = struct('sos', 3);
 opts.verbose = 1;
 opts.sossol_options.sdpsol_options.error_on_fail = 0;
-
+opts.Sampling_Point = r(:,full(gfun(r)) <= 0 );
 
 Vlb  = casos.PS(basis(V),-inf);
 Vub  = casos.PS(basis(V),+inf);
-s1lb = casos.PS(basis(s1),-inf);
-s1ub = casos.PS(basis(s1),+inf);
+
 s2lb = casos.PS(basis(s2),-inf);
 s2ub = casos.PS(basis(s2),+inf);
-blb  = casos.PS(basis(b),-inf);
-bub  = casos.PS(basis(b),+inf);
+
 
 opts.Sequential_Algorithm = 'SQP';
 
-% tic
-profile on -historysize 5000000
+
+% profile on -historysize 5000000000
+
 S1 = casos.nlsossol('S1','sequential',sos1,opts);
-% toc
 
 
-sol1 = S1('x0' ,[Vinit; (x'*x)^2], ...
+sol1 = S1('x0' ,[Vinit^2; (x'*x)^2], ...
           'lbx',[Vlb;s2lb], ...
           'ubx',[Vub;s2ub]);
 
 
-profile viewer
-
-
-% for k =  1:length(sol1.g)
-%     solChecker(sol1.g(k));
-% end
-
-
+% profile viewer
+plotStats(S1.stats.iter);
 %% plotting
 import casos.toolboxes.sosopt.pcontour
 
@@ -200,3 +215,4 @@ clf
 pcontour(g, 0, [-1 1 -4 4], 'k--');
 hold on
 pcontour(V, gam, [-1 1 -4 4], 'b-');
+

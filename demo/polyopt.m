@@ -19,3 +19,8 @@ S = casos.sossol('S','mosek',sos,opts);
 sol = S();
 
 fprintf('Minimum is %g.\n', double(sol.f))
+
+
+
+
+
