@@ -15,7 +15,7 @@ function [xi_k1, dual_k1, Filter, Linesearch_stall,alpha,predictedcost,predicted
             % Check predicted cost and predicted constraint violation
             solPara_proj = obj.projConPara('p',[xi_k1;p0]);
 
-            predictedConVio = double(solPara_proj.f);
+            predictedConVio = (double(solPara_proj.f));
 
             predictedcost   = double(obj.cost_fun(xi_k1));
         

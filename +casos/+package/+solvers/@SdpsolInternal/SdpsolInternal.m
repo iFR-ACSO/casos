@@ -8,6 +8,9 @@ end
 properties (Access=protected)
     fhan;
     ghan;
+
+    % debug
+    dLdx;
 end
 
 methods (Access=private)

@@ -87,6 +87,9 @@ obj.ghan = casadi.Function('g', ...
             {'x' 'f' 'g' 'lam_x' 'lam_g' 'lam_p'} ...
 );
 
+% debug: gradient of Lagrangian
+obj.dLdx = casadi.Function('dL',{x lam_x lam_a p},{jacobian(fx + lam_a'*gx + lam_x'*x,x)});
+
 % TODO:
 % Embed conic interface into (expr_in)->(expr_out).
 % f = obj.fhan;

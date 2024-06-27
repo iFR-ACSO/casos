@@ -21,6 +21,8 @@ end
 
 properties (SetAccess=protected)
     class_name = 'SossdpRelaxation';
+
+    dLdx;
 end
 
 methods (Static)

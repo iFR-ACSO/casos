@@ -6,21 +6,28 @@ properties (Access=private)
     lineSearch;
     projCon;
     idxNonlinCon;
+    solverSOC
+    socConstSoc
         
     Merit;
     constraintFun;
     cost_fun;
     conFunRed;
-
+    cost
+    delta_dual
     delta_search
-
+    FeasResPhase 
     projConPara;
     newIterate
     
+    nabla_f 
     nabla_x_fun;
     nabla_lam_fun;
     langrangeLinear
+    
+    samplingPoint_proj
 
+    % helper functions
     plusFun;
     vertcatFun;
     updateLineSearch
@@ -30,6 +37,7 @@ properties (Access=private)
     BFGS_fun
     base_x
     
+
     dLdx
     log;
     sizeHess;
@@ -47,8 +55,13 @@ properties (Constant,Access=protected)
          'tolerance_abs' , 'Absolute tolerance for stopping criterion.'
          'tolerance_rel' , 'Relative tolerance for stopping criterion.'
          'verbose'       , 'Turn on/off iteration display.'
+         'optimality_tol', 'Optimality tolerance'
+         'dual_tol', 'Dual variable tolerance'
+         'conVio_tol', 'Constraint violation tolerance'
          'globalization'   , 'Select an algorithm for globalization strategy.'
-         'Sequential_Algorithm','Selecte between SLP and SQP like algorithms.'}
+         'Sequential_Algorithm','Selecte between SLP and SQP like algorithms.'
+         'Sampling_Point', 'Sampling points to check constraint violation'
+         'FeasRes', 'Dummy Parameter to initialize and use FeasRes'}
     ];
 end
 
@@ -105,11 +118,14 @@ methods
         % default options
         if ~isfield(obj.opts,'sossol'), obj.opts.sossol = 'sedumi'; end
         if ~isfield(obj.opts,'sossol_options'), obj.opts.sossol_options = struct; end
-        if ~isfield(obj.opts,'max_iter'), obj.opts.max_iter = 1000; end
-        if ~isfield(obj.opts,'tolerance_abs'), obj.opts.tolerance_abs = 1e-3; end
-        if ~isfield(obj.opts,'tolerance_rel'), obj.opts.tolerance_rel = 1e-3; end
+        if ~isfield(obj.opts,'max_iter'), obj.opts.max_iter = 100; end
+        if ~isfield(obj.opts,'optimality_tol'), obj.opts.optimality_tol = 1e-3; end
+        if ~isfield(obj.opts,'conVio_tol'), obj.opts.conVio_tol = 1e-5; end
+        if ~isfield(obj.opts,'dual_tol'), obj.opts.dual_tol = 1e-5; end
         if ~isfield(obj.opts,'Sequential_Algorithm'), obj.opts.Sequential_Algorithm = 'SLP'; end
-        if ~isfield(obj.opts,'line_search'), obj.opts.globalization = 'filter_linesearch_simple'; end % filter_linesearch_simple
+        if ~isfield(obj.opts,'Sampling_Point'), obj.opts.Sampling_Point = zeros(2,1000); end
+        if ~isfield(obj.opts,'FeasRes'), obj.opts.FeasRes = 0; end
+        if ~isfield(obj.opts,'line_search'), obj.opts.globalization = 'filter_linesearch'; end % filter_linesearch_simple
        
         % set up logger
         if ~isfield(obj.opts,'verbose') || ~obj.opts.verbose

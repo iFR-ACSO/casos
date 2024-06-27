@@ -73,4 +73,9 @@ obj.basis_g_out = blkdiag(obj.monom_gl, obj.gram_g);
 % basis of dual variable
 obj.basis_x_lam = blkdiag(obj.monom_xl, adjoint_inverse(obj.gram_x));
 
+% debug: gradient of Lagrangian
+% lam_g = casos.PS.sym('lam_g',obj.monom_g);
+% lam_x = casos.PS.sym('lam_x',obj.basis_x_lam);
+% obj.dLdx = casos.Function('dL',{sos.x lam_x lam_g sos.p},{jacobian(sos.f + dot(lam_g,sos.g) + dot(lam_x,sos.x),sos.x)});
+
 end
