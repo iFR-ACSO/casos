@@ -19,7 +19,9 @@ if nva == 0 ... % base polynomial is a constant
         % copy pattern
         coeffs = casadi.Sparsity(coeffs);
     end
-    S.degmat = n.*S.degmat;
+    if nva > 0
+        S.degmat = n.*S.degmat;
+    end
     % store coefficients
     S = set_coefficients(S,coeffs);
     return
