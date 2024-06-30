@@ -1,7 +1,12 @@
 function c = mtimes(a,b)
 % Matrix multiplication of two polynomials.
 
-if isscalar(a) || isscalar(b)
+if isempty(a) || isempty(b)
+    % empty multiplication
+    c = a.new_poly(size(a,1),size(b,2));
+    return
+
+elseif isscalar(a) || isscalar(b)
     % fall back to scalar multiplication
     c = times(a,b);
     return
