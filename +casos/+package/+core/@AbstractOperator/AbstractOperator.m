@@ -225,6 +225,16 @@ methods
         b = a.new_operator(a.matrix',a.sparsity_out,a.sparsity_in);
     end
 
+    function b = uminus(a)
+        % Negate operator.
+        b = a.new_operator(uminus(a.matrix),a.sparsity_in,a.sparsity_out);
+    end
+
+    function c = minus(a,b)
+        % Substract two operators.
+        c = plus(a,uminus(b));
+    end
+
     %% Conversion
     function p = to_polynomial(obj)
         % Convert to polynomial p such that p = dot(op,1).
