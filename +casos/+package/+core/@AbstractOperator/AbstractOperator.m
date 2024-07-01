@@ -26,18 +26,18 @@ end
 
 methods
     %% Public constructor
-    function obj = AbstractOperator(M,Zi,Zo)
+    function obj = AbstractOperator(M,Si,So)
         % New operator.
         if nargin < 1
             % empty operator
-            Zi = casos.Sparsity(0,0);
-            Zo = casos.Sparsity(0,0);
+            Si = casos.Sparsity(0,0);
+            So = casos.Sparsity(0,0);
             M = [];
 
         elseif isa(M,'casos.package.core.AbstractOperator')
             % copy or convert operator
-            Zi = casos.Sparsity(M.sparsity_in);
-            Zo = casos.Sparsity(M.sparsity_out);
+            Si = casos.Sparsity(M.sparsity_in);
+            So = casos.Sparsity(M.sparsity_out);
             M = M.matrix;
         % Note: Conversion from polynomial is ambiguous
         % elseif isa(M,'casos.package.core.GenericPolynomial')
@@ -48,29 +48,29 @@ methods
 
         elseif nargin < 2
             % matrix multiplication
-            Zi = casos.Sparsity.dense(size(M,2),1);
-            Zo = casos.Sparsity.dense(size(M,1),1);
+            Si = casos.Sparsity.dense(size(M,2),1);
+            So = casos.Sparsity.dense(size(M,1),1);
 
         elseif nargin < 3
             % dual operator
-            Zi = casos.Sparsity(Zi);
-            Zo = casos.Sparsity.dense(size(M,1),1);
+            Si = casos.Sparsity(Si);
+            So = casos.Sparsity.dense(size(M,1),1);
 
         elseif nargin < 4
             % construct operator
-            Zi = casos.Sparsity(Zi);
-            Zo = casos.Sparsity(Zo);
+            Si = casos.Sparsity(Si);
+            So = casos.Sparsity(So);
 
         else
             error('Undefined syntax.')
         end
 
-        assert(size(M,2) == nnz(Zi), 'Input dimensions mismatch.')
-        assert(size(M,1) == nnz(Zo), 'Output dimensions mismatch.')
+        assert(size(M,2) == nnz(Si), 'Input dimensions mismatch.')
+        assert(size(M,1) == nnz(So), 'Output dimensions mismatch.')
 
         obj.matrix = obj.new_matrix(M);
-        obj.sparsity_in = Zi;
-        obj.sparsity_out = Zo;
+        obj.sparsity_in = Si;
+        obj.sparsity_out = So;
     end
 
     %% Getter
@@ -177,6 +177,13 @@ methods
     function tf = is_dual(obj)
         % Check if operator is a linear form (dual).
         tf = (is_zerodegree(obj.sparsity_out) && obj.numel_out == 1);
+    end
+
+    function tf = is_equal(obj,op)
+        % Check if operators are equal.
+        tf = is_equal(obj.sparsity_in,op.sparsity_in) ...
+            && is_equal(obj.sparsity_out,op.sparsity_out) ...
+            && is_equal(obj.matrix,op.matrix);
     end
 
     function tf = is_wellposed(obj)
