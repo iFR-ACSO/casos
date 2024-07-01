@@ -1,4 +1,4 @@
-classdef PSFunction < casos.package.functions.FunctionInterface
+classdef PSFunction < casos.package.functions.FunctionInternal
 % Polynomial (PS) function interface.
 
 properties (Access=private)
@@ -8,14 +8,18 @@ properties (Access=private)
     sparsity_o;
 end
 
-properties (SetAccess=protected)
+properties (SetAccess=private)
     class_name = 'PSFunction';
+end
+
+properties (Constant,Access=protected)
+    allow_eval_on_basis = true;
 end
 
 methods
     function obj = PSFunction(name, ex_i, ex_o, name_i, name_o, varargin)
         % Create new casadi function object.
-        obj@casos.package.functions.FunctionInterface(name);
+        obj@casos.package.functions.FunctionInternal(name);
 
         % parse polynomial expressions
         [sym_i,obj.sparsity_i] = cellfun(@parse_expr, ex_i, 'UniformOutput', false);
@@ -25,18 +29,7 @@ methods
         obj.func = casadi.Function(name, sym_i, sym_o, name_i, name_o, varargin{:});
     end
 
-    %% Implement FunctionInterface
-    function argout = call(obj, argin)
-        % Evaluate casadi function object.
-        in = cellfun(@(p,z) poly2basis(p,z), argin, obj.sparsity_i, 'UniformOutput', false);
-
-        % call casadi function
-        out = call(obj.func, in);
-
-        % return result
-        argout = cellfun(@(c,z) casos.package.polynomial(z,c), out, obj.sparsity_o, 'UniformOutput', false);
-    end
-
+    %% Implement FunctionInternal
     function n = get_n_in(obj)
         % Number of inputs.
         n = n_in(obj.func);
@@ -75,6 +68,14 @@ methods
     function idx = get_index_out(obj,str)
         % Index of outputs.
         idx = index_out(obj.func,str);
+    end
+end
+
+methods (Access=protected)
+    %% Internal evaluation
+    function argout = eval_on_basis(obj, argin)
+        % Evaluate function on nonzero coordinates.
+        argout = call(obj.func, argin);
     end
 end
 

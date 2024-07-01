@@ -35,7 +35,7 @@ methods
         cls = obj.func.class_name;
     end
 
-    %% Implement FunctionInterface
+    %% Implement FunctionInternal
     function n = get_n_in(obj)
         % Number of inputs.
         n = n_in(obj.func);

@@ -262,7 +262,7 @@ methods (Access=protected)
     end
 end
 
-methods (Access={?casos.package.functions.FunctionInterface})
+methods (Access={?casos.package.functions.FunctionInternal})
     %% Friend interface
     function f = substitute(obj,varargin)
         % Substitute variables.
