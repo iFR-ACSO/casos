@@ -4,25 +4,37 @@ function varargout = parenReference(obj,indexOp)
 % perform parenthesis reference
 idx = indexOp(1);
 
-% select referenced elements
-I = logical(sparse(size(obj,1),size(obj,2)));
-I.(idx) = true;
-
 if length(indexOp) > 1
     % handle getters on referenced polynomial
     [varargout{1:nargout}] = parenReference@casos.package.core.GenericPolynomial(obj,indexOp);
     return
+
+elseif isequal(idx.Indices,{':'})
+    % handle vectorization
+    varargout = {reshape(obj,numel(obj),1)};
+    return
+
+elseif isequal(idx.Indices,{':' ':'})
+    % nothing to do
+    varargout = {obj};
+    return
 end
 
-% new polynomial
-p = obj.new_poly;
+% select referenced elements
+I = reshape(1:numel(obj),size(obj));
+ii = I.(idx);
 
-if nnz(I) > 0
+if ~isempty(ii)
+    % new polynomial
+    p = obj.new_poly;
     % reference coefficients
-    [S,p.coeffs] = coeff_subsref(obj.get_sparsity,obj.coeffs,find(I),size(I.(idx)));
+    [S,p.coeffs] = coeff_subsref(obj.get_sparsity,obj.coeffs,ii,size(ii));
 
     % set sparsity
     p = set_sparsity(p,S);
+else
+    % empty reference
+    p = obj.zeros(size(ii));
 end
 
 % return
