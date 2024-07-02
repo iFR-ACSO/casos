@@ -3,7 +3,7 @@ function c = mtimes(a,b)
 
 if isempty(a) || isempty(b)
     % empty multiplication
-    c = a.new_poly(size(a,1),size(b,2));
+    c = a.zeros(size(a,1),size(b,2));
     return
 
 elseif isscalar(a) || isscalar(b)

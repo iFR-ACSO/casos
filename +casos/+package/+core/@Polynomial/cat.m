@@ -16,8 +16,8 @@ p2 = varargin{2};
 switch (dim)
     case 0
         % block diagonal
-        ul = p1.new_poly(size(p1,1),size(p2,2));
-        rl = p1.new_poly(size(p2,1),size(p1,2));
+        ul = p1.zeros(size(p1,1),size(p2,2));
+        rl = p1.zeros(size(p2,1),size(p1,2));
 
         % concatenate all blocks
         p = blockcat(p1,ul,rl,p2);

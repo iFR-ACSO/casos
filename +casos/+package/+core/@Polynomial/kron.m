@@ -5,7 +5,7 @@ function c = kron(a,b)
 if isempty(a) || isempty(b)
     % product with empty polynomial is empty
 
-    c = a.new_poly(size(a).*size(b));
+    c = a.zeros(size(a).*size(b));
     return
 end
 
