@@ -1,8 +1,6 @@
-# CaΣoS: _CasADi-based sum-of-squares optimization suite_[^1]
+# CaΣoS, the nonlinear sum-of-squares optimization suite
 
-CaΣoS provides a symbolic framework for convex and nonconvex sum-of-squares problems, making use of the [CasADi](https://web.casadi.org) software for symbolic expressions, automatic differentiation, and numerical optimization.
-
-[^1]: CaΣoS has been neither supported nor endorsed by CasADi or any of its affilitiates.
+CaΣoS provides tools for symbolic polynomial expressions as well as parametrized convex and nonconvex sum-of-squares optimization problems, making use of the [CasADi](https://web.casadi.org) software for symbolic expressions, automatic differentiation, and numerical optimization.
 
 ### Install
 
