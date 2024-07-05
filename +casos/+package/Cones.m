@@ -11,7 +11,7 @@ properties (Constant)
     LOR = {'lor' 'LIST' 'Lorentz (quadratic, second-order) cone.'};
     ROT = {'rot' 'LIST' 'Rotated Lorentz cone.'};
     PSD = {'psd' 'LIST' 'Cone of positive semidefinite matrices.'};
-    DD  = {'dd'  'LIST' 'Cone of symmetric diagonally dominat matrices'};
+    DD  = {'dd'  'LIST' 'Cone of symmetric diagonally dominant matrices'};
     % Polynomial cones
     SOS = {'sos' 'NUM' 'Cone of sum-of-squares polynomials.'}
 end
@@ -60,10 +60,10 @@ methods
         str = obj.entries.description{name};
     end
 
-    function check(obj,K)
+    function check(obj,K,varargin)
         % Check cone structure.
         fn_cone = fieldnames(K);
-        % check if cones exist
+        % check cones
         cellfun(@(fn) check_cone(obj,K,fn), fn_cone);
     end
 

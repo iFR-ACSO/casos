@@ -123,19 +123,60 @@ methods
         s = obj.solver.stats;
     end
 
+    %% Options & Cones
     function print_options(obj)
         % Print list of options.
         print_options(obj.solver);
+        % also print matrix cones
+        print_matrix_cones(obj);
     end
 
     function print_option(obj,name)
         % Print information about an option.
-        print_option(obj.solver,name);
+        names = split(name,'.');
+
+        if length(names) > 1 && ismember(names{1},{'Kx' 'Kc'}) && has(obj.matrix_cones,names{2})
+            % print option
+            print_one(obj.solver.get_options,names{1});
+            % print matrix cone
+            print_one(obj.matrix_cones,names{2});
+        else
+            % print option & cones
+            print_option(obj.solver,name);
+
+            if isscalar(names) && ismember(names{1},{'Kx' 'Kc'})
+                % print matrix cones
+                print_matrix_cones(obj);
+            end
+        end
     end
 
-    function has_option(obj,name)
+    function tf = has_option(obj,name)
         % Check if option "name" exists.
-        has_option(obj.solver,name);
+        tf = has_option(obj.solver,name);
+    end
+
+    function print_cones(obj)
+        % Print list of supported cones.
+        print_cones(obj.solver);
+        % also print matrix cones
+        print_matrix_cones(obj);
+    end
+
+    function print_cone(obj,name)
+        % Print information about a cone.
+        if has(obj.matrix_cones,name)
+            % print matrix cone
+            print_one(obj.matrix_cones,name);
+        else
+            % print cone from solver
+            print_cone(obj.solver,name);
+        end
+    end
+
+    function tf = has_cone(obj,name)
+        % Check if cone "name" is supported.
+        tf = has(obj.matrix_cones,name) || has_cone(obj.solver,name);
     end
 end
 
@@ -146,6 +187,12 @@ methods (Access=protected)
     function S = copyElement(obj)
         % Use copy constructor.
         S = casos.package.solvers.SdpsolInternal(obj);
+    end
+
+    function print_matrix_cones(obj)
+        % Print list of supported matrix cones.
+        disp('Supported Matrix Cones:')
+        print_all(obj.matrix_cones);
     end
 end
 

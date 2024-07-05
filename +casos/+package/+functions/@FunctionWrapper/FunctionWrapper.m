@@ -35,6 +35,7 @@ methods
         f.wrap = wrap;
     end
 
+    %% Getter
     function cls = get.class_name(obj)
         % Return function class.
         cls = obj.wrap.class_name;
@@ -105,6 +106,7 @@ methods
         s = get_stats(obj.wrap);
     end
 
+    %% Options & Cones
     function print_options(obj)
         % Print list of options.
         print_options(obj.wrap);
@@ -120,6 +122,22 @@ methods
         tf = has_option(obj.wrap,name);
     end
 
+    function print_cones(obj)
+        % Print list of supported cones.
+        print_cones(obj.wrap);
+    end
+
+    function print_cone(obj,name)
+        % Print information about a cone.
+        print_cone(obj.wrap,name);
+    end
+
+    function tf = has_cone(obj,name)
+        % Check if cone "name" is supported.
+        tf = has_cone(obj.wrap,name);
+    end
+
+    %% Function evaluation
     function out = call(obj,args)
         % Evaluate function for given arguments.
         if iscell(args)
