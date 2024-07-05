@@ -35,6 +35,49 @@ methods
         cls = obj.func.class_name;
     end
 
+    %% Options & Cones
+    function print_options(obj)
+        % Print list of options.
+        print_options(obj.func);
+    end
+
+    function print_option(obj,name)
+        % Print information about an option.
+        print_option(obj.func,name);
+    end
+
+    function tf = has_option(obj,name)
+        % Check if option "name" exists.
+        tf = has_option(obj.func,name);
+    end
+
+    function print_cones(obj)
+        % Print list of supported cones.
+        if isa(obj.func,'casos.package.functions.FunctionCommon')
+            print_cones(obj.func);
+        else
+            error('Not implemented for class %s.',obj.class_name)
+        end
+    end
+
+    function print_cone(obj,name)
+        % Print information about a cone.
+        if isa(obj.func,'casos.package.functions.FunctionCommon')
+            print_cone(obj.func,name);
+        else
+            error('Not implemented for class %s.',obj.class_name)
+        end
+    end
+
+    function tf = has_cone(obj,name)
+        % Check if cone "name" is supported.
+        if isa(obj.func,'casos.package.functions.FunctionCommon')
+            tf = has_cone(obj.func,name);
+        else
+            error('Not implemented for class %s.',obj.class_name)
+        end
+    end
+
     %% Implement FunctionInternal
     function n = get_n_in(obj)
         % Number of inputs.
