@@ -29,7 +29,7 @@ if isempty(u0)
 end
    
 % Evaluate function at trim
-f0 = double(subs(f,[x;u],[x0(:); u0(:)]));
+f0 = full(subs(f,[x;u],[x0(:); u0(:)]));
 
 % State matrix 
 fx = nabla(f,x);
@@ -38,10 +38,10 @@ fx = nabla(f,x);
 % otherwise convert to double
 if any(ismember(fx.indeterminates.str,x.str))
 
-    A = double(subs(fx,x,x0));
+    A = full(subs(fx,x,x0));
 
 else
-    A = double(fx);
+    A = full(fx);
 end
 
 % Control matrix
@@ -52,10 +52,10 @@ if ~isempty(u)
     % evaluate it at trim point; otherwise convert to double
     if any(ismember(fu.indeterminates.str,u.str))
       
-        B = double(subs(fu,u,u0));
+        B = full(subs(fu,u,u0));
 
     else
-        B = double(fu);
+        B = full(fu);
     end
 else
     B = [];
