@@ -14,10 +14,6 @@ fprintf(['\n\n----------------------------------------------------\n' ...
     '         Checking installed toolboxes\n' ...
     '----------------------------------------------------\n\n'])
 
-% get MatLab path
-%path = path();
-
-
 %% Check for Casos in path
 % get path of this script
 scriptPath = mfilename('fullpath');
@@ -29,40 +25,42 @@ casosPath = fileparts(fileparts(scriptPath));
 casosExists = exist('casos.PS', 'class');
 
 if ~casosExists
-    fprintf( ...
-        "\n --- casos.PS class not available. Adding casos root folder to path\n")
+    warning( ...
+        "\n --- casos.PS class not available. Adding casos root folder to path ---\n")
+    
+    % check for casos root folder
+    if ~endsWith(casosPath, 'casos')
+        error("Could not find casos root folder. Please add to path manually\n")
+    end
+
+    % add casos to path
+    fprintf("--- Adding casos root folder to path ---\n")
     addpath(casosPath);
     savepath();
-    fprintf("check --- casos root folder was added to path ---\n")
+
+    % check if adding Casos to path worked
+    if ~exist('casos.PS', 'class')
+        error("Unable to add Casos to path. Please add manually\n");
+    end
+
+    fprintf("--- Casos was added to path ---\n")
 else
-    fprintf("\ncheck --- Casos already installed ---\n")
+    fprintf("\n--- Casos already installed ---\n")
 end
 
-% 
-% %% check for casadi
-% 
-% % check if casadi is installed
-% casadiStr = which('casadiMEX.mexw64'); 
-% 
-% if isempty(casadiStr)
-%     error('CasADi is not installed! Please install first')
-% else
-%     % fprintf('CasADi is installed\n')
-% 
-%     % check if it is also on the path
-%     CasadiIsInPath = contains(path, 'casadi');
-%     if  CasadiIsInPath
-%         % fprintf('CasADi is also in matlab path.\n')
-%     else
-%         warning('CasADi is not in matlab path. It will be added now!')
-%         % find mosek main folder
-%         casadiPath = erase(casadiStr,"\casadiMEX.mexw64");
-% 
-%         % add mosek to path and save path
-%         addpath(genpath(casadiPath))
-%         savepath();
-%     end
-% end
+
+%% check for casadi
+% check if casadi is installed
+casadiStr = which('casadiMEX.mexw64'); 
+
+if isempty(casadiStr) | ~exist('casadi.SX', 'class')
+    warning('--- CasADi is not installed! Please install first ---\n')
+    casadiInstalled = false;
+else
+    fprintf('--- CasADi is installed ---\n')
+    casadiInstalled = true;
+end
+
 % 
 % %% check for solver; check for the function that actually calls the optimizer
 % % mosek
@@ -120,3 +118,9 @@ end
 % if CasosIsInPath && CasadiIsInPath && (MosekIsInPath || SedumiIsInPath)
 %     fprintf('CaSos is ready for use!\n')
 % end
+
+% print table
+software = ["Casos"; "Casadi"; "Mosek"; "Sedumi"];
+installed = [true; true; true; true];
+
+installationOverview = table(software, installed)
