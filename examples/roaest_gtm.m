@@ -2,7 +2,7 @@
 % See Chakraborty et al. 2011 (CEP) for details.
 
 % system states
-x = casos.PS('x',4,1);
+x = casos.Indeterminates('x',4);
 
 % Polynomial Dynamics
 f = GTM_dynamics(x(1),x(2),x(3),x(4));
@@ -89,3 +89,14 @@ for iter = 1:10
     Vval = sol3.x;
 
 end
+
+%% plot stable level set
+
+figure
+Vfun = to_function(Vval);
+pfun = to_function(p);
+fcontour(@(x,y) full(Vfun(x,y,0,0)), [-1 1], 'b-', 'LevelList', full(gval))
+hold on
+fcontour(@(x,y) full(pfun(x,y,0,0)), [-1 1], 'r-', 'LevelList', full(bval))
+hold off
+legend('Lyapunov function','shape function')
