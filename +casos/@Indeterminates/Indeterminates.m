@@ -106,6 +106,11 @@ methods
         z = power(casos.package.polynomial(obj),deg);
     end
 
+    function z = power(obj,deg)
+        % Return monomial(s).
+        z = power(casos.package.polynomial(obj),deg);
+    end
+
     function obj = transpose(obj)
         % Toggle transpose flag.
         obj.transp = ~obj.transp;
