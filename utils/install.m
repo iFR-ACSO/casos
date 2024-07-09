@@ -16,6 +16,7 @@ fprintf(['\n\n----------------------------------------------------\n' ...
 
 %% Check for Casos in path
 % get path of this script
+fprintf("--- Checking Casos Installation ---\n")
 scriptPath = mfilename('fullpath');
 
 % grandparent folder
@@ -26,7 +27,7 @@ casosExists = exist('casos.PS', 'class');
 
 if ~casosExists
     warning( ...
-        "\n --- casos.PS class not available. Adding casos root folder to path ---\n")
+        " -- casos.PS class not available. Adding casos root folder to path --\n")
     
     % check for casos root folder
     if ~endsWith(casosPath, 'casos')
@@ -34,7 +35,7 @@ if ~casosExists
     end
 
     % add casos to path
-    fprintf("--- Adding casos root folder to path ---\n")
+    fprintf(" -- Adding casos root folder to path --\n")
     addpath(casosPath);
     savepath();
 
@@ -43,29 +44,30 @@ if ~casosExists
         error("Unable to add Casos to path. Please add manually\n");
     end
 
-    fprintf("--- Casos was added to path ---\n")
+    fprintf(" -- Casos was added to path ---\n")
 else
-    fprintf("\n--- Casos already installed ---\n")
+    fprintf(" -- Casos already installed --\n")
 end
 
 
 %% check for casadi
 % check if casadi is installed
+fprintf("\n--- Checking CasADi installation ---\n")
 casadiStr = which('casadiMEX.mexw64'); 
 
 if isempty(casadiStr) | ~exist('casadi.SX', 'class')
-    warning('--- CasADi is not installed! Please install first ---\n')
+    warning(' -- CasADi is not installed! Please install first --\n')
     casadiInstalled = false;
 else
-    fprintf('--- CasADi is installed ---\n')
+    fprintf(' -- CasADi is installed --\n')
     casadiInstalled = true;
 end
 
 
-%% check for solver; check for the function that actually calls the optimizer
+%% Check for solvers
 % mosek
 
-fprintf("\n\n--- Checking Mosek Installation ---\n")
+fprintf("\n--- Checking Mosek Installation ---\n")
 
 mosekStr = which('mosekopt');
 
@@ -74,46 +76,40 @@ if isempty(mosekStr)
     warning('Mosek is not installed')
     mosekInstalled = false;
 else
-    fprintf('Mosek is installed\n')
+    fprintf(' -- Mosek is installed --\n')
 end
 
 
-% 
-% 
-% % sedumi
-% sedumiStr = which('sedumi');
-% 
-% if isempty(sedumiStr)
-%     warning('Sedumi is not installed')
-% else
-%     % fprintf('Sedumi is installed\n')
-% 
-%     % check if it is also on the path
-%     SedumiIsInPath = contains(path, 'sedumi');
-% 
-%     if  SedumiIsInPath
-%         % fprintf('Mosek is also in matlab path.')
-%     else
-%         warning('Mosek is not in matlab path. It will be added now!')
-%         % find sedumi folder
-%         SedumiPath = erase(sedumiStr,"sedumi.m");
-%         % add sedumi to path and save path
-%         addpath(genpath(SedumiPath))
-%         savepath();
-%     end
-% end
-% 
-% 
-% if isempty(sedumiStr) && isempty(mosekStr)
-%     error('No solver is currently installed! Please install one first')
-% end
-% 
-% if CasosIsInPath && CasadiIsInPath && (MosekIsInPath || SedumiIsInPath)
-%     fprintf('CaSos is ready for use!\n')
-% end
 
-% print table
-software = ["Casos"; "Casadi"; "Mosek"; "Sedumi"];
-installed = [true; true; mosekInstalled; true];
 
+% SeDuMi
+fprintf("\n--- Checking SeDuMi Installation ---\n")
+
+sedumiStr = which('sedumi');
+
+sedumiInstalled = true;
+if isempty(sedumiStr)
+    warning('SeDuMi is not installed')
+    sedumiInstalled = false;
+else
+    fprintf(' -- SeDuMi is installed --\n')
+end
+
+%% Final results
+% Print overview table
+software = ["Casos"; "Casadi"; "Mosek"; "SeDuMi"];
+installed = [true; casadiInstalled; mosekInstalled; sedumiInstalled];
 installationOverview = table(software, installed)
+
+% error if CasADi is not installed
+if ~casadiInstalled
+    error('CasADi needs to be installed.')
+end
+
+% error if no solver is installed
+if ~mosekInstalled && ~sedumiInstalled
+    error('No solver is currently installed! Install at least one solver')
+end
+
+fprintf('--- Casos is ready to be used ---\n')
+
