@@ -61,30 +61,23 @@ else
     casadiInstalled = true;
 end
 
-% 
-% %% check for solver; check for the function that actually calls the optimizer
-% % mosek
-% mosekStr = which('mosekopt'); 
-% 
-% if isempty(mosekStr)
-%     warning('Mosek is not installed')
-% else
-%     % fprintf('Mosek is installed\n')
-% 
-%     % check if it is also on the path
-%     MosekIsInPath = contains(path, 'mosek');
-%     if  MosekIsInPath
-%         % fprintf('Mosek is also in matlab path.\n')
-%     else
-%         warning('Mosek is not in matlab path. It will be added now!')
-%         % find mosek main folder
-%         MosekPath = erase(mosekStr,"\10.1\toolbox\r2017a\mosekopt.mexw64");
-% 
-%         % add mosek to path and save path
-%         addpath(genpath(MosekPath))
-%         savepath();
-%     end
-% end
+
+%% check for solver; check for the function that actually calls the optimizer
+% mosek
+
+fprintf("\n\n--- Checking Mosek Installation ---\n")
+
+mosekStr = which('mosekopt');
+
+mosekInstalled = true;
+if isempty(mosekStr)
+    warning('Mosek is not installed')
+    mosekInstalled = false;
+else
+    fprintf('Mosek is installed\n')
+end
+
+
 % 
 % 
 % % sedumi
@@ -121,6 +114,6 @@ end
 
 % print table
 software = ["Casos"; "Casadi"; "Mosek"; "Sedumi"];
-installed = [true; true; true; true];
+installed = [true; true; mosekInstalled; true];
 
 installationOverview = table(software, installed)
