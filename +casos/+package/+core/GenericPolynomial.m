@@ -146,14 +146,14 @@ methods
         % Return casadi.Function object using SX.
         X = casadi.SX.sym('x',obj.nvars,1);
         p = subs(obj,indeterminates(obj),casos.package.polynomial(X));
-        f = casadi.Function('p',{X},{casadi.SX(p)},varargin{:});
+        f = casadi.Function('f',num2cell(X),{casadi.SX(p)},str(obj.indeterminates),{'poly'},varargin{:});
     end
 
     function f = to_mxfunction(obj,varargin)
         % Return casadi.Function object using MX.
         X = casadi.MX.sym('x',obj.nvars,1);
         p = subs(obj,indeterminates(obj),casos.package.polynomial(X));
-        f = casadi.Function('p',{X},{casadi.MX(p)},varargin{:});
+        f = casadi.Function('f',num2cell(X),{casadi.MX(p)},str(obj.indeterminates),{'poly'},varargin{:});
     end
 
     function f = to_function(obj,varargin)
