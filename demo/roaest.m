@@ -1,7 +1,7 @@
 % Estimate region of attraction by V-s-iteration and bisection.
 
 % system states
-x = casos.PS('x',2,1);
+x = casos.Indeterminates('x',2);
 
 % system dynamics
 f = [-x(2); x(1) + (x(1)^2 - 1)*x(2)];

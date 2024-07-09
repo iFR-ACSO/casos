@@ -1,7 +1,7 @@
 % Polynomial optimization.
 
 % indeterminate variable
-x = casos.PS('x');
+x = casos.Indeterminates('x');
 % some polynomial
 f = x^4 + 10*x;
 % scalar decision variable

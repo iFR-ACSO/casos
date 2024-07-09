@@ -1,7 +1,7 @@
 % Validate stability with LF candidate.
 
 % system states
-x = casos.PS('x',2,1);
+x = casos.Indeterminates('x',2);
 % system dynamics
 f = [-x(2); x(1) + (x(1)^2 - 1)*x(2)];
 % Lyapunov function candidate
@@ -54,4 +54,4 @@ S = casos.qcsossol('S','bisection',qcsos,opts);
 % evaluate
 sol = S();
 
-fprintf('Minimum is %g.\n', double(sol.f))
+fprintf('Minimum is %g.\n', full(sol.f))
