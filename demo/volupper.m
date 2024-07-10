@@ -8,7 +8,7 @@ x = casos.Indeterminates('x', 2);
 % polynomial tha defines the bounded set K
 k = 1-x'*x;
 
-% K contained in B = [0 1] x [-0.4 0.4]
+% K contained in B = [-1 1] x [-1 1]
 B = [-1 1; -1 1];
 
 % indicator-like function
