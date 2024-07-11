@@ -1,4 +1,4 @@
-classdef (Abstract) SosoptCommon < casos.package.solvers.SolverCommon & casos.package.functions.FunctionInterface
+classdef (Abstract) SosoptCommon < casos.package.solvers.SolverCommon & casos.package.functions.FunctionInternal
 % Common superclass for sum-of-squares optimization problems.
 %
 % The generic sum-of-squares problem has the form
@@ -30,17 +30,14 @@ properties (Constant,Access=protected)
 end
 
 properties (Access=protected)
-    monom_xl;
-    monom_xs;
-    monom_p;
-    monom_f;
-    monom_gl;
-    monom_gs;
-end
-
-properties (Access=protected,Dependent)
-    monom_x;
-    monom_g;
+    sparsity_x;
+    sparsity_xl;
+    sparsity_xs;
+    sparsity_p;
+    sparsity_f;
+    sparsity_g;
+    sparsity_gl;
+    sparsity_gs;
 end
 
 methods (Static)
@@ -57,7 +54,7 @@ end
 
 methods
     function [obj,sos] = SosoptCommon(name,sos,varargin)
-        obj@casos.package.functions.FunctionInterface(name);
+        obj@casos.package.functions.FunctionInternal(name);
         obj@casos.package.solvers.SolverCommon(varargin{:});
 
         % problem size
@@ -78,16 +75,6 @@ methods
     end
 
     %% Getter
-    function z = get.monom_x(obj)
-        % Monomials of decision variables.
-        z = blkdiag(obj.monom_xl,obj.monom_xs);
-    end
-
-    function z = get.monom_g(obj)
-        % Monomials of constraints.
-        z = blkdiag(obj.monom_gl,obj.monom_gs);
-    end
-
     function n = get_n_in(obj)
         % Number of inputs.
         n = length(obj.name_i);
@@ -100,32 +87,27 @@ methods
         end
     end
 
-    function z = get_monomials_in(obj,idx)
-        % Monomials of inputs.
+    function z = get_sparsity_in(obj,idx)
+        % Sparsity of inputs.
         switch (idx)
-            case 0, z = obj.monom_x;
-            case 1, z = obj.monom_p;
-            case {2 3}, z = obj.monom_xl;
-            case 4, z = obj.monom_xs;
-            case {5 6}, z = obj.monom_gl;
-            case 7, z = obj.monom_gs;
-            case 8, z = obj.monom_x;
-            case 9, z = obj.monom_g;
+            case 0, z = obj.sparsity_x;
+            case 1, z = obj.sparsity_p;
+            case {2 3}, z = obj.sparsity_xl;
+            case 4, z = obj.sparsity_xs;
+            case {5 6}, z = obj.sparsity_gl;
+            case 7, z = obj.sparsity_gs;
+            case 8, z = obj.sparsity_x;
+            case 9, z = obj.sparsity_g;
             otherwise, error('Index out of bound (%d).',idx);
         end
-    end
-
-    function sz = get_size_in(obj,i)
-        % Size of inputs.
-        sz = [size(get_monomials_in(obj,i),2) 1];
     end
 
     function val = get_default_in(~,i)
         % Defaults of inputs.
         switch (i)
-            case {2 5}, val = casos.PS(-inf);
-            case {3 6}, val = casos.PS(+inf);
-            otherwise, val = casos.PS(0);
+            case {2 5}, val = -inf;
+            case {3 6}, val = +inf;
+            otherwise, val = 0;
         end
     end
 
@@ -151,21 +133,16 @@ methods
         end
     end
 
-    function z = get_monomials_out(obj,idx)
-        % Monomials of outputs.
+    function z = get_sparsity_out(obj,idx)
+        % Sparsity of outputs.
         switch (idx)
-            case 0, z = obj.monom_x;
-            case 1, z = obj.monom_f;
-            case 2, z = obj.monom_g;
-            case 3, z = obj.monom_x;
-            case 4, z = obj.monom_g;
+            case 0, z = obj.sparsity_x;
+            case 1, z = obj.sparsity_f;
+            case 2, z = obj.sparsity_g;
+            case 3, z = obj.sparsity_x;
+            case 4, z = obj.sparsity_g;
             otherwise, error('Index out of bound (%d).',idx);
         end
-    end
-
-    function sz = get_size_out(obj,i)
-        % Size of outputs.
-        sz = [size(get_monomials_out(obj,i),2) 1];
     end
 
     function idx = get_index_out(obj,str)
@@ -176,6 +153,38 @@ methods
 
         % zero-based index
         idx = ii - 1;
+    end
+
+    function argout = call(obj,argin)
+        % Call function (override for efficiency).
+        
+        if ~obj.allow_eval_on_basis
+            % evaluate on polynomials
+            argout = eval(obj,argin); %#ok<EV2IN>
+            return
+        end
+
+        % else
+        in = cell(10,1);
+        
+        % project arguments to obtain SDP inputs
+        % only linear coefficients are handled (p, lbx, ubx, lbg, ubg)
+        in{2} = poly2basis(argin{2}, obj.sparsity_p);
+        in{3} = poly2basis(argin{3}, obj.sparsity_xl);
+        in{4} = poly2basis(argin{4}, obj.sparsity_xl);
+        in{6} = poly2basis(argin{6}, obj.sparsity_gl);
+        in{7} = poly2basis(argin{7}, obj.sparsity_gl);
+        
+        % evaluate on nonzero coordinates
+        out = eval_on_basis(obj,in);
+        
+        % build polynomial solution
+        argout{1} = casos.package.polynomial(obj.sparsity_x,out{1});
+        argout{2} = casos.package.polynomial(obj.sparsity_f,out{2});
+        argout{3} = casos.package.polynomial(obj.sparsity_g,out{3});
+        argout{4} = casos.package.polynomial(obj.sparsity_x,out{4});
+        argout{5} = casos.package.polynomial(obj.sparsity_g,out{5});
+        
     end
 end
 

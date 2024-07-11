@@ -3,12 +3,12 @@
 rng(0)
 
 % indeterminate variable
-x = casos.PS('x');
+x = casos.Indeterminates('x');
 % some random polynomial
-p = casos.PS(monomials(x,0:4),randn(5,1));
+p = casos.PD(monomials(x,0:4),randn(5,1));
 
 % Gram decision variable
-s = casos.PS.sym('q',monomials(x,0:2),'gram');
+s = casos.PS.sym('q',grambasis(p));
 
 % projection error
 e = s - p;
@@ -24,5 +24,4 @@ S = casos.sossol('S','mosek',sos,opts);
 % evaluate
 sol = S();
 
-fprintf('Distance to SOS cone is %g.\n', double(sol.f))
-
+fprintf('Distance to SOS cone is %g.\n', full(sol.f))
