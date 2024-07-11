@@ -16,10 +16,10 @@ k = x(1)^3-x(1)^4-x(2)^2;
 B = [0 1; -0.4 0.4];
 
 % indicator-like function
-v = casos.PS.sym('v',monomials(x,0:5),'gram');
+v = casos.PS.sym('v',monomials(x,0:7),'gram');
 
 % SOS multiplier
-s = casos.PS.sym('q',monomials(x,0:5),'gram');
+s = casos.PS.sym('q',monomials(x,0:10),'gram');
 
 % obtain cost
 cost = int(v*f,  x(1), B(1,1), B(1,2));
@@ -39,5 +39,5 @@ S = casos.sossol('S','mosek',sos,opts);
 % evaluate
 sol = S();
 
-% the result should be a value slightly above pi
+% the result should be a value above 0.18162
 fprintf('int_K f(x) dx = %d\n', full(sol.f)); 
