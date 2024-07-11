@@ -171,7 +171,7 @@ A sum-of-squares problem is affine if $F$ is a linear (or quadratic) form in $\x
 ```
 S = casos.sossol('S','solver',struct('x',xi,'f',F,'g',G,'p',pi),opts)
 ```
-initializes the SOS solver named `'S'` by relaxation to a convex optimization problem using the convex solver `'solver'`. See [Convex optimization](#convex-optimization) for supported solvers. Options are provided as structure `opts` including optional fields `opts.Kx` and `opts.Kg` describing, respectively, the cones $\mathcal K_x$ and $\mathcal K_c$. See [Polynomial cones](#polynomial-cones) for details.
+initializes the SOS solver named `'S'` by relaxation to a convex optimization problem using the convex solver `'solver'`. See [Convex optimization](#convex-optimization) for supported solvers. Options are provided as structure `opts` including optional fields `opts.Kx` and `opts.Kc` describing, respectively, the cones $\mathcal K_x$ and $\mathcal K_c$. See [Polynomial cones](#polynomial-cones) for details.
 
 ```
 sol = S('lbx',lbx,'ubx',ubx,'lbg',lbg,'ubg',ubg)
@@ -194,7 +194,7 @@ where $t$ enters affinely into $G = (G_\mathrm{l}, G_\mathrm{c})$ and $G(t, \xi,
 ```
 S = casos.qcsossol('S','bisection',struct('x',xi,'f',±t,'g',G,'p',pi),opts)
 ```
-initializes the quasiconvex SOS solver named `'S'` by bisection over convex sum-of-squares optimization problems. The options structure `opts` includes optional fields `opts.Kx` and `opts.Kg` describing $\mathcal K_x$ and $\mathcal K_c$, respectively. See [Polynomial cones](#polynomial-cones) for details.
+initializes the quasiconvex SOS solver named `'S'` by bisection over convex sum-of-squares optimization problems. The options structure `opts` includes optional fields `opts.Kx` and `opts.Kc` describing $\mathcal K_x$ and $\mathcal K_c$, respectively. See [Polynomial cones](#polynomial-cones) for details.
 
 #### Polynomial cones
 
