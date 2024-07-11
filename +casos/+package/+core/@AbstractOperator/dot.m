@@ -24,7 +24,7 @@ elseif isa(b,'casos.package.core.AbstractOperator')
     % composite operators
     C = a.matrix(:,I1)*b.matrix(I2,:);
     % return new operator
-    c = a.new_operator(C,a.sparsity_out,b.sparsity_in);
+    c = a.new_operator(C,b.sparsity_in,a.sparsity_out);
 
 else
     error('Function "dot" not defined for input %s.',class(b))
