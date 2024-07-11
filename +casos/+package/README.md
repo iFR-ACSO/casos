@@ -12,21 +12,29 @@ flowchart LR
     casos.PD[PD]
     casos.PS[PS]
     casos.Sparsity[Sparsity] -.-> casos.Indeterminates[Indeterminates]
+    casos.PDOperator[PDOperator]
+    casos.PSOperator[PSOperator]
   end
   subgraph casos.package.core
     Polynomial --> GenericPolynomial
     GenericPolynomial --> AlgebraicObject
     GenericPolynomial --> PolynomialInterface
     PolynomialInterface --> Printable
+    AbstractOperator --> PolynomialInterface
   end
   casos.PD --> Polynomial
   casos.PD -.-> casadi.DM
   casos.PS --> Polynomial
   casos.PS -.-> casadi.SX
+  casos.PDOperator --> AbstractOperator
+  casos.PDOperator -.-> casadi.DM
+  casos.PSOperator --> AbstractOperator
+  casos.PSOperator -.-> casadi.SX
   casos.Sparsity --> PolynomialInterface
   casos.Sparsity -.-> casadi.Sparsity
   casos.Indeterminates --> AlgebraicObject
   GenericPolynomial -.-> casos.Sparsity
+  AbstractOperator -.-> casos.Sparsity
 ```
 
 ## Functions & Solvers
