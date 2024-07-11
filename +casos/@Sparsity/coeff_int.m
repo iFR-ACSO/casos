@@ -31,7 +31,7 @@ else
     indets = indets(~tf);
 
     if ~isa(coeffs,'casadi.Sparsity')
-        % integral(c_A*x^A, r1, r2) = c_A*(r2^A - r1^A)
+        % integral(c_A*x^A, r1, r2) = prod_i c_A*[r2(i)^A(i) - r1(i)^A(i)]
         deg0 = dgf(:,tf)';
     
         % select range expressions
@@ -39,11 +39,11 @@ else
         r = range(I,:);
     
         % compute exponents
-        R1 = casadi_prod(r(:,1).^deg0,1);
-        R2 = casadi_prod(r(:,2).^deg0,1);
+        % prod_i [r2(i)^A(i) - r1(i)^A(i)]
+        R = casadi_prod(r(:,2).^deg0 - r(:,1).^deg0,1);
     
-        % coefficients of sum_A c_A*(r2^A - r1^A)
-        coeffs = scale.\coeffs.*(R2 - R1)';
+        % coefficients of sum_A prod_i c_A*[r2(i)^A(i) - r1(i)^A(i)]
+        coeffs = scale.\coeffs.*R';
     end
 
     % make degree matrix unique
