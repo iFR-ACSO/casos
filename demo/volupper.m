@@ -21,11 +21,10 @@ divkw = sum(nabla(k*w,x));
 % SOS multiplier
 s = casos.PS.sym('q',monomials(x,0:10),'gram');
 
-% obtain cost
-cost = int(v,    x(1), B(1,1), B(1,2));
-cost = int(cost, x(2), B(2,1), B(2,2));
+% define integral cost
+cost = int(v,x,B(:,1),B(:,2));
 
-% define SOS feasibility
+% define SOS problem
 sos = struct('x', [w; s; v], 'f', cost, 'g', -s*k+v+divkw-1);
 
 % constraint is scalar SOS cone

@@ -16,16 +16,15 @@ k = x(1)^3-x(1)^4-x(2)^2;
 B = [0 1; -0.4 0.4];
 
 % indicator-like function
-v = casos.PS.sym('v',monomials(x,0:7),'gram');
+v = casos.PS.sym('v',monomials(x,0:5),'gram');
 
 % SOS multiplier
-s = casos.PS.sym('q',monomials(x,0:10),'gram');
+s = casos.PS.sym('q',monomials(x,0:5),'gram');
 
-% obtain cost
-cost = int(v*f,  x(1), B(1,1), B(1,2));
-cost = int(cost, x(2), B(2,1), B(2,2));
+% define integral cost
+cost = int(v*f, x, B(:,1), B(:,2));
 
-% define SOS feasibility
+% define SOS problem
 sos = struct('x', [s; v], 'f', cost, 'g', -s*k+v-1);
 
 % constraint is scalar SOS cone
