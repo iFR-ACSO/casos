@@ -27,11 +27,13 @@ casosExists = exist('casos.PS', 'class');
 
 if ~casosExists
     warning( ...
-        " -- casos.PS class not available. Adding casos root folder to path --\n")
+        " -- casos.PS class not available. Adding casos root folder " + ...
+        "to path --\n")
     
     % check for casos root folder
     if ~endsWith(casosPath, 'casos')
-        error("Could not find casos root folder. Please add to path manually\n")
+        error("Could not find casos root folder. Please add to " + ...
+            "path manually\n")
     end
 
     % add casos to path
@@ -53,14 +55,24 @@ end
 %% check for casadi
 % check if casadi is installed
 fprintf("\n--- Checking CasADi installation ---\n")
-casadiStr = which('casadiMEX.mexw64'); 
+casadiStr = which('casadiMEX.mexw64');
+
+casadiVersionCorrect = true;
 
 if isempty(casadiStr) | ~exist('casadi.SX', 'class')
     warning(' -- CasADi is not installed! Please install first --\n')
     casadiInstalled = false;
 else
-    fprintf(' -- CasADi is installed --\n')
     casadiInstalled = true;
+    fprintf(' -- CasADi is installed --\n')
+    fprintf(' -- Checking CasADi version --\n')
+    % check if casadi.DM.sparsity_cast is available
+    casadi.DM; % load
+    casadiVersionStr = which('sparsity_cast');
+    if isempty(casadiVersionStr)
+        warning('CasADi version is not up to date')
+        casadiVersionCorrect = false;
+    end
 end
 
 
@@ -111,5 +123,10 @@ if ~mosekInstalled && ~sedumiInstalled
     error('No solver is currently installed! Install at least one solver')
 end
 
+% error if CasADi version is too old
+if ~casadiVersionCorrect
+    error(['Your installation of CasADi is too old. Casos might not ' ...
+        'run correctly'])
+end
 fprintf('--- Casos is ready to be used ---\n')
 
