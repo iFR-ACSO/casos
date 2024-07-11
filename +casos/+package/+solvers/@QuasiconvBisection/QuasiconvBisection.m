@@ -22,9 +22,11 @@ properties (Constant,Access=protected)
          'tolerance_rel', 'Relative tolerance for stopping criterion.'
          'verbose', 'Turn on/off iteration display.'}
     ];
+
+    allow_eval_on_basis = true;
 end
 
-properties (SetAccess=protected)
+properties (SetAccess=private)
     class_name = 'QuasiconvBisection';
 end
 
@@ -35,9 +37,12 @@ methods (Static)
     end
 end
 
-methods
-    out = call(obj,in);
+methods (Access=protected)
+    % internal evaluation
+    argout = eval_on_basis(obj,argin);
+end
 
+methods
     function obj = QuasiconvBisection(name,sos,varargin)
         obj@casos.package.solvers.SosoptCommon(name,sos,varargin{:});
     
