@@ -12,8 +12,11 @@ properties (Constant)
     ROT = {'rot' 'LIST' 'Rotated Lorentz cone.'};
     PSD = {'psd' 'LIST' 'Cone of positive semidefinite matrices.'};
     DD  = {'dd'  'LIST' 'Cone of symmetric diagonally dominant matrices'};
+    SDD = {'sdd' 'LIST' 'Cone of symmetric scaled diagonally dominant matrices'};
     % Polynomial cones
-    SOS = {'sos' 'NUM' 'Cone of sum-of-squares polynomials.'}
+    SOS   = {'sos' 'NUM' 'Cone of sum-of-squares polynomials.'}
+    DSOS  = {'dsos' 'NUM' 'Cone of diagonally dominant sum-of-squares polynomials.'}
+    SDSOS = {'sdsos' 'NUM' 'Cone of scaled diagonally dominant sum-of-squares polynomials.'}
 end
 
 methods
