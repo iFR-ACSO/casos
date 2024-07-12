@@ -23,6 +23,8 @@ properties (Constant,Access=protected)
     sosopt_cones = casos.package.Cones([
         casos.package.Cones.LIN
         casos.package.Cones.SOS
+        casos.package.Cones.DSOS
+        casos.package.Cones.SDSOS
     ]);
 
     name_i = {'x0' 'p' 'lbx' 'ubx' 'cbx' 'lbg' 'ubg' 'cbg' 'lam_x0' 'lam_g0'};
