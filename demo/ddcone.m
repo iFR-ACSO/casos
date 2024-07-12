@@ -32,10 +32,13 @@ S = casos.sdpsol('S','sedumi',sdp,opts);
 % solve with equality constraints
 tic
 sol = S('lbg', zeros(ndim^2,1),'ubg',zeros(ndim^2,1),'lbx',-inf,'ubx',+inf);
-fprintf('time with psd: %d \n', toc);
-
-disp(S.stats.UNIFIED_RETURN_STATUS);
-fprintf('solution with psd: %d \n', sol.f.full)
+elapsed_time = toc;
+if S.stats.UNIFIED_RETURN_STATUS == "SOLVER_RET_SUCCESS"
+    fprintf('Elasped time with psd: %d \n',elapsed_time);
+    fprintf('Solution with psd: %d \n', sol.f.full);
+else
+    fprintf('Feasibility issues while solving with psd');
+end
 
 % Solve with DD in the decision variables
 clear opts
@@ -47,9 +50,14 @@ S = casos.sdpsol('S','sedumi',sdp,opts);
 % solve with equality constraints
 tic
 sol = S('lbg', zeros(ndim^2,1),'ubg',zeros(ndim^2,1),'lbx',-inf,'ubx',+inf);
-fprintf('time with dd in the decision variables: %d \n', toc);
-disp(S.stats.UNIFIED_RETURN_STATUS);
-fprintf('solution with dd: %d \n', sol.f.full)
+elapsed_time = toc;
+if S.stats.UNIFIED_RETURN_STATUS == "SOLVER_RET_SUCCESS"
+    fprintf('Elapsed time with dd: %d \n', elapsed_time);
+    fprintf('Solution with dd: %d \n', sol.f.full);
+else
+    fprintf('Feasibility issues while solving with dd');
+end
+
 
 
 %% plot the set of feasible solutions
