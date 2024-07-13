@@ -16,6 +16,10 @@ properties (Access=protected)
     ghan;
 end
 
+properties (Access=public)
+    map;
+end
+
 methods (Access=private)
     buildproblem(obj,prob,data,opts,args);
 end
@@ -71,10 +75,15 @@ methods
             end
 
             % rebuild problem from DD to linear program
+            flag = 0;
             if isfield(opts.Kx,'dd') || isfield(opts.Kc,'dd')
-                [sdp,args,opts] = dd_reduce(obj, sdp, opts);
+                flag = 1; % temporary
+                [sdp, args, map, opts] = dd_reduce(obj, sdp, opts);
+                obj.map = map;
             else
                 args = struct;
+                obj.map.x = speye(length(sdp.x));
+                obj.map.g = speye(length(sdp.g));
             end
         end
 
@@ -89,19 +98,18 @@ methods
         % constraint function (vectorized)
         sdp_g = sdp.g(:);
 
-        if isfield(sdp,'derivatives')
+        if isfield(sdp,'derivatives') && (flag == 0)
             % use pre-computed derivatives (undocumented)
             H = sdp.derivatives.Hf;
             g = sdp.derivatives.Jf;
             A = sdp.derivatives.Jg;
-
         else
-        % quadratic cost
-        H = hessian(sdp.f, x);
-        % linear cost
-        g = jacobian(sdp.f, x);
-        % linear constraint
-        A = jacobian(sdp_g, x);
+            % quadratic cost
+            H = hessian(sdp.f, x);
+            % linear cost
+            g = jacobian(sdp.f, x);
+            % linear constraint
+            A = jacobian(sdp_g, x);
         end
         % constant constraint
         b = -sdp_g;
@@ -191,7 +199,9 @@ end
 
 methods (Access=protected)
     % reduce DD constraints to LPs
-    [sdp,args,opts] = dd_reduce(obj,sdp,opts);
+    [sdp,args,map,opts] = dd_reduce(obj,sdp,opts);
+    % reduce SDD constraints to SOCP
+    [sdp,args,map,opts] = sdd_reduce(obj,sdp,opts);
 
     function S = copyElement(obj)
         % Use copy constructor.
