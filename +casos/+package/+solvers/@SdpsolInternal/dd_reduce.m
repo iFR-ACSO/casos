@@ -1,4 +1,4 @@
-function [sdp,args,opts] = dd_reduce(obj, sdp, opts)
+function [sdp,args,map,opts] = dd_reduce(obj, sdp, opts)
 % Reduce a DD cone program to a linear program.
 
 check_cone(obj.get_cones,opts.Kx,'lin');
@@ -15,6 +15,10 @@ Nl = get_dimension(obj.get_cones,opts.Kx,'lin');
 Ml = get_dimension(obj.get_cones,opts.Kc,'lin');
 Nd = get_dimension(obj.get_cones,opts.Kx,'dd');
 Md = get_dimension(obj.get_cones,opts.Kc,'dd');
+
+% temporarily save sdp.x (original)
+x_original = sdp.x;
+g_original = sdp.g;
 
 % Verify DD cones in the constraints and create slack DD variables
 if isfield(opts.Kc,'dd')
@@ -129,4 +133,14 @@ end
 opts.Kx = setfield(opts.Kx,'lin',Nl);
 opts.Kc = setfield(opts.Kc,'lin',Ml);
 
+% map from new sdp.x to old
+map.x = jacobian(x_original, sdp.x);
+
+map.g = [speye(length(g_original)), sparse(length(g_original), length(sdp.g)-length(g_original))];
+
 end
+
+
+
+
+
