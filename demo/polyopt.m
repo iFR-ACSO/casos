@@ -1,9 +1,9 @@
 % Polynomial optimization.
-
+%% Sum-of-squares cone
 % indeterminate variable
 x = casos.Indeterminates('x');
 % some polynomial
-f = x^4 + 10*x;
+f = x^4 + 1*x;
 % scalar decision variable
 g = casos.PS.sym('g');
 
@@ -18,4 +18,16 @@ S = casos.sossol('S','sedumi',sos,opts);
 % evaluate
 sol = S();
 
-fprintf('Minimum is %g.\n', full(sol.f))
+fprintf('SOS: Minimum is %g.\n', full(sol.f))
+
+%% Diagonally dominant sum-of-squares cone
+
+% constraint is scalar DSOS cone
+opts = struct('Kc',struct('dsos',1));
+
+% solve by relaxation to SDP
+S = casos.sossol('S','mosek',sos,opts);
+% evaluate
+sol = S();
+
+fprintf('DSOS: Minimum is %g.\n', full(sol.f))
