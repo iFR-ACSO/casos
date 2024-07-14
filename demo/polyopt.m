@@ -31,3 +31,15 @@ S = casos.sossol('S','sedumi',sos,opts);
 sol = S();
 
 fprintf('DSOS: Minimum is %g.\n', full(sol.f))
+
+%% Scaled diagonally dominant sum-of-squares cone
+
+% constraint is scalar SDSOS cone
+opts = struct('Kc',struct('sdsos',1));
+
+% solve by relaxation to SDP
+S = casos.sossol('S','sedumi',sos,opts);
+% evaluate
+sol = S();
+
+fprintf('SDSOS: Minimum is %g.\n', full(sol.f))
