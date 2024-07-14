@@ -3,7 +3,8 @@ classdef SdpsolInternal < casos.package.solvers.SolverCallback & matlab.mixin.Co
 
 properties (Constant,Access=protected)
     matrix_cones = casos.package.Cones([
-        casos.package.Cones.DD
+        casos.package.Cones.DD;
+        casos.package.Cones.SDD
     ]);
 end
 
@@ -85,6 +86,19 @@ methods
                 obj.map.x = speye(length(sdp.x));
                 obj.map.g = speye(length(sdp.g));
             end
+
+            % rebuild problem from SDD to SOCP
+            if isfield(opts.Kx,'sdd') || isfield(opts.Kc,'sdd')
+                flag = 1; % temporary
+                [sdp, args, map, opts] = sdd_reduce(obj, sdp, opts);
+                obj.map = map;
+            else
+                args = struct;
+                obj.map.x = speye(length(sdp.x));
+                obj.map.g = speye(length(sdp.g));
+            end
+
+
         end
 
         % decision variables
