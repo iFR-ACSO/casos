@@ -77,8 +77,8 @@ tic
 sol = S('lbg', zeros(ndim^2,1),'ubg',zeros(ndim^2,1),'lbx',-inf,'ubx',+inf);
 elapsed_time = toc;
 if S.stats.UNIFIED_RETURN_STATUS == "SOLVER_RET_SUCCESS"
-    fprintf('Elapsed time with dd: %d \n', elapsed_time);
-    fprintf('Solution with dd: %d \n', sol.f.full);
+    fprintf('Elapsed time with sdd: %d \n', elapsed_time);
+    fprintf('Solution with sdd: %d \n', sol.f.full);
 else
     fprintf('Feasibility issues while solving with sdd');
 end
