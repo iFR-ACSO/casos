@@ -76,28 +76,23 @@ methods
             end
 
             % rebuild problem from DD to linear program
-            flag = 0;
+            args = struct;
             if isfield(opts.Kx,'dd') || isfield(opts.Kc,'dd')
-                flag = 1; % temporary
                 [sdp, args, map, opts] = dd_reduce(obj, sdp, opts);
                 obj.map = map;
-            else
-                args = struct;
-                obj.map.x = speye(length(sdp.x));
-                obj.map.g = speye(length(sdp.g));
             end
 
             % rebuild problem from SDD to SOCP
             if isfield(opts.Kx,'sdd') || isfield(opts.Kc,'sdd')
-                flag = 1; % temporary
                 [sdp, args, map, opts] = sdd_reduce(obj, sdp, opts);
                 obj.map = map;
-            else
-                args = struct;
+            end
+
+            % if no DD/SDD was present create an identity map
+            if isempty(fieldnames(args))
                 obj.map.x = speye(length(sdp.x));
                 obj.map.g = speye(length(sdp.g));
             end
-
 
         end
 
@@ -112,7 +107,7 @@ methods
         % constraint function (vectorized)
         sdp_g = sdp.g(:);
 
-        if isfield(sdp,'derivatives') && (flag == 0)
+        if isfield(sdp,'derivatives') && isempty(fieldnames(args))
             % use pre-computed derivatives (undocumented)
             H = sdp.derivatives.Hf;
             g = sdp.derivatives.Jf;
