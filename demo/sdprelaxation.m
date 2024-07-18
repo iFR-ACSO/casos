@@ -7,7 +7,7 @@ rng(0)
 ndim = 5;
 
 % decision variables
-x = casadi.SX.sym('x', 2, 1);
+x = casadi.SX.sym('x', 4, 1);
 
 % create random SDP data
 A = randn(ndim, ndim);
@@ -18,14 +18,14 @@ B = B+B';
 % define SDP problem
 sdp.f = x(1);
 sdp.g = eye(ndim) + x(1)*A + x(2)*B;
-sdp.g = sdp.g(:);
+sdp.g = [sdp.g(:)];
 sdp.x = x;
 
 opts = struct;
 
 %% Solve SDP with psd constraint
 % define cones
-opts.Kx = struct('lin', 2);
+opts.Kx = struct('lin', 4);
 opts.Kc = struct('psd', ndim);
 
 % initialize solver
@@ -46,7 +46,7 @@ end
 %% Solve SDP with relaxation to DD 
 
 % define cones
-opts.Kx = struct('lin', 2);
+opts.Kx = struct('lin', 4);
 opts.Kc = struct('dd', ndim);
 
 % initialize solver
@@ -67,7 +67,7 @@ end
 %% Solve SDP with relaxation to SDD
 
 % define cones
-opts.Kx = struct('lin', 2);
+opts.Kx = struct('lin', 4);
 opts.Kc = struct('sdd', ndim);
 
 % initialize solver
@@ -88,8 +88,8 @@ end
 %% plot the set of feasible solutions for the SDP with PSD, DD and SDD
 
 % create grid 
-xp = -0.5:0.002:0.5;
-yp = -0.5:0.002:0.5;
+xp = -0.5:0.01:0.5;
+yp = -0.5:0.01:0.5;
 [xp, yp] = meshgrid(xp,yp);
 xp = xp(:);
 yp = yp(:);
