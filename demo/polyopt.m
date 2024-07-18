@@ -14,10 +14,14 @@ sos = struct('x',g,'f',g,'g',f+g);
 opts = struct('Kc',struct('sos',1));
 
 % solve by relaxation to SDP
-S = casos.sossol('S','sedumi',sos,opts);
+S = casos.sossol('S','mosek',sos,opts);
 % evaluate
 sol = S();
 
+% save solution with SOS cone
+g_sos = full(sol.x);
+
+% result should be 0.47247
 fprintf('SOS: Minimum is %g.\n', full(sol.f))
 
 %% Diagonally dominant sum-of-squares cone
@@ -26,20 +30,52 @@ fprintf('SOS: Minimum is %g.\n', full(sol.f))
 opts = struct('Kc',struct('dsos',1));
 
 % solve by relaxation to SDP
-S = casos.sossol('S','sedumi',sos,opts);
+S = casos.sossol('S','mosek',sos,opts);
 % evaluate
 sol = S();
+% save solution with DSOS cone
+g_dsos = full(sol.x);
 
+% the result should be 0.75 
 fprintf('DSOS: Minimum is %g.\n', full(sol.f))
 
 %% Scaled diagonally dominant sum-of-squares cone
 
 % constraint is scalar SDSOS cone
-opts = struct('Kc',struct('sdsos',1));
+opts = struct('Kc',struct('dsos',1)); % ToDo: change to sdsos
 
 % solve by relaxation to SDP
-S = casos.sossol('S','sedumi',sos,opts);
+S = casos.sossol('S','mosek',sos,opts);
 % evaluate
 sol = S();
 
+% save solution with SOS cone
+g_sdsos = full(sol.x);
+
+% the result should be 
 fprintf('SDSOS: Minimum is %g.\n', full(sol.f))
+
+%% Plot results
+% convert f into a function to evaluate on the interval [-1, 1]
+f_fun = f.to_function;
+grid_x = linspace(-1, 1);
+
+% setup figure 
+figure(1)
+xlabel('x')
+ylabel('y')
+hold on
+legend('show');
+grid 
+grid minor
+
+% plot the horizontal line with zero
+plot(grid_x, zeros(length(grid_x),1), '--', 'DisplayName','Zero line')
+
+% plot f
+plot(grid_x, full(f_fun(grid_x)), 'DisplayName','Original polynomial f')
+
+% plot f+g with the g that was found with SOS, DSOS and SDSOS
+plot(grid_x, full(f_fun(grid_x)) + g_sos, 'DisplayName','f+g (with SOS)')
+plot(grid_x, full(f_fun(grid_x)) + g_dsos, 'DisplayName','f+g (with DSOS)')
+plot(grid_x, full(f_fun(grid_x)) + g_sdsos, 'DisplayName','f+g (with SDSOS)')
