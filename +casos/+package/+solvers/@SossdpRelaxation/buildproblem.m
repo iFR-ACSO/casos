@@ -20,12 +20,12 @@ Ms   = get_dimension(obj.get_cones,opts.Kc,'sos');
 Mds  = get_dimension(obj.get_cones,opts.Kc,'dsos');
 Msds = get_dimension(obj.get_cones,opts.Kc,'sdsos');
 
-assert(n == (Nl + Ns + Nds), 'Dimension of Kx must be equal to number of variables (%d).', n);
-assert(m == (Ml + Ms + Mds), 'Dimension of Kc must be equal to number of constraints (%d).', m)
+assert(n == (Nl + Ns + Nds + Nsds), 'Dimension of Kx must be equal to number of variables (%d).', n);
+assert(m == (Ml + Ms + Mds + Msds), 'Dimension of Kc must be equal to number of constraints (%d).', m)
 
 % select sum-of-squares variables and constraints
-Is = [false(Nl,1); true(Ns,1); true(Nds,1)];
-Js = [false(Ml,1); true(Ms,1); true(Mds,1)];
+Is = [false(Nl,1); true(Ns,1); true(Nds,1); true(Nsds)];
+Js = [false(Ml,1); true(Ms,1); true(Mds,1); true(Msds)];
 
 % obtain Gram basis for decision variables
 [Zvar_s,Ksdp_x_s,~,Mp_x,Md_x] = grambasis(sparsity(sos.x),Is);
@@ -93,7 +93,23 @@ sdp.derivatives.Jf = horzcat(sdp_Jf*map, sparse(1,nnz_gram_g));
 sdp.derivatives.Jg = horzcat(sdp_Jg*map, -Mp_g);
 % SDP options
 sdpopt = opts.sdpsol_options;
-sdpopt.Kx = struct('lin', nnz_lin_x, 'psd', [Ksdp_x_s(1:Ns); Ksdp_g_s(1:Ms)], 'dd', [Ksdp_x_s(Ns+1:end); Ksdp_g_s(Ns+1:end)] );
+
+% define the cones in the sdp level
+% -------------------------------------------------------------------------
+% RL: temporary approach
+if Ns==0 && Ms==0
+    % sdpopt.Kx = struct('lin', nnz_lin_x);
+    if Nds~=0 || Mds~=0
+        sdpopt.Kx = struct('lin', nnz_lin_x, 'dd', [Ksdp_x_s(Ns+1:end); Ksdp_g_s(Ns+1:end)] );
+    else 
+        sdpopt.Kx = struct('lin', nnz_lin_x, 'sdd', [Ksdp_x_s(Ns+1:end); Ksdp_g_s(Ns+1:end)] );
+    end
+    %sdpopt.Kx = struct('lin', nnz_lin_x, 'psd', [Ksdp_x_s(1:Ns); Ksdp_g_s(1:Ms)], 'dd', [Ksdp_x_s(Ns+1:end); Ksdp_g_s(Ns+1:end)] );
+else
+    sdpopt.Kx = struct('lin', nnz_lin_x, 'psd', [Ksdp_x_s; Ksdp_g_s]);
+end
+% -------------------------------------------------------------------------
+
 sdpopt.Kc = struct('lin', nnz_lin_g + nnz_sos_g);
 
 % initialize SDP solver
@@ -111,24 +127,24 @@ obj.sparsity_gs = Zcon_s;
 
 % map SDP solution to SOS solution
 % symbolic SDP solution
-sdpsol.x = casadi.SX.sym('sol_x',size(sdp.x));
+sdpsol.x = casadi.SX.sym('sol_x',size(obj.sdpsolver.map.x,2));
 sdpsol.f = casadi.SX.sym('sol_f');
-sdpsol.g = casadi.SX.sym('sol_g',size(sdp.g));
-sdpsol.lam_x = casadi.SX.sym('sol_lam_x',size(sdp.x));
-sdpsol.lam_g = casadi.SX.sym('sol_lam_g',size(sdp.g));
+sdpsol.g = casadi.SX.sym('sol_g',size(obj.sdpsolver.map.g,2));
+sdpsol.lam_x = casadi.SX.sym('sol_lam_x',size(obj.sdpsolver.map.x,2));
+sdpsol.lam_g = casadi.SX.sym('sol_lam_g',size(obj.sdpsolver.map.g,2));
 sdpsol.lam_p = casadi.SX.sym('sol_lam_p',size(sdp.p));
 
-% coordinates of SOS solution
-sossol.x = blkdiag(speye(nnz_lin_x), Mp_x, sparse(0,nnz_gram_g))*sdpsol.x;
+% % coordinates of SOS solution
+sossol.x = blkdiag(speye(nnz_lin_x), Mp_x, sparse(0,nnz_gram_g))*obj.sdpsolver.map.x*sdpsol.x;
 sossol.f = sdpsol.f;
 sossol.g = [
-    blkdiag(speye(nnz_lin_g), sparse(0,nnz_sos_g))*sdpsol.g
-    blkdiag(sparse(0,nnz_lin_x+nnz_gram_x),  Mp_g)*sdpsol.x
+    blkdiag(speye(nnz_lin_g), sparse(0,nnz_sos_g))*obj.sdpsolver.map.g*sdpsol.g
+    blkdiag(sparse(0,nnz_lin_x+nnz_gram_x),  Mp_g)*obj.sdpsolver.map.x*sdpsol.x
 ];
-sossol.lam_x = blkdiag(speye(nnz_lin_x), Md_x, sparse(0,nnz_gram_g))*sdpsol.lam_x;
+sossol.lam_x = blkdiag(speye(nnz_lin_x), Md_x, sparse(0,nnz_gram_g))*obj.sdpsolver.map.x*sdpsol.lam_x;
 sossol.lam_g = [
-    blkdiag(speye(nnz_lin_g), sparse(0,nnz_sos_g))*sdpsol.lam_g
-    blkdiag(sparse(0,nnz_lin_x+nnz_gram_x),  Md_g)*sdpsol.lam_x
+    blkdiag(speye(nnz_lin_g), sparse(0,nnz_sos_g))*obj.sdpsolver.map.g*sdpsol.lam_g
+    blkdiag(sparse(0,nnz_lin_x+nnz_gram_x),  Md_g)*obj.sdpsolver.map.x*sdpsol.lam_x
 ];
 
 % options for Casadi functions
