@@ -10,6 +10,9 @@ g = casos.PS.sym('g');
 % define SOS problem:
 %   min g s.t. (f + g) is SOS
 sos = struct('x',g,'f',g,'g',f+g);
+
+%% Sum-of-squares cone
+
 % constraint is scalar SOS cone
 opts = struct('Kc',struct('sos',1));
 
@@ -42,7 +45,7 @@ fprintf('DSOS: Minimum is %g.\n', full(sol.f))
 %% Scaled diagonally dominant sum-of-squares cone
 
 % constraint is scalar SDSOS cone
-opts = struct('Kc',struct('dsos',1)); % ToDo: change to sdsos
+opts = struct('Kc',struct('sdsos',1)); 
 
 % solve by relaxation to SDP
 S = casos.sossol('S','mosek',sos,opts);
