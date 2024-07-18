@@ -1,143 +1,187 @@
 function [sdp,args,map,opts] = dd_reduce(obj, sdp, opts)
-% Reduce a DD cone program to a linear program.
+% Reduce a DD cone program to LP 
 
+% check cones
 check_cone(obj.get_cones,opts.Kx,'lin');
 check_cone(obj.get_cones,opts.Kc,'lin');
 check_cone(obj.get_cones,opts.Kx,'dd');
 check_cone(obj.get_cones,opts.Kc,'dd');
 
 % initialize 
+% ToDo: due to ordering, create a map for this 
 args.dd_lbg = [];
 args.dd_ubg = [];
+args.dd_lbx = [];
+args.dd_ubx = [];
 
-% get dimensions of linear and DD cones
-Nl = get_dimension(obj.get_cones,opts.Kx,'lin');
-Ml = get_dimension(obj.get_cones,opts.Kc,'lin');
-Nd = get_dimension(obj.get_cones,opts.Kx,'dd');
-Md = get_dimension(obj.get_cones,opts.Kc,'dd');
+% get dimensions of cones in the program decision variables
+Nlin = get_dimension(obj.get_cones,opts.Kx,'lin');
+Nlor = get_dimension(obj.get_cones,opts.Kx,'lor');
+Nrot = get_dimension(obj.get_cones,opts.Kx,'rot');
+Npsd = get_dimension(obj.get_cones,opts.Kx,'psd');
+Ndd  = get_dimension(obj.get_cones,opts.Kx,'dd');
+Nsdd = get_dimension(obj.get_cones,opts.Kx,'sdd');
+
+% get dimensions of cones in the program constraints
+Mlin = get_dimension(obj.get_cones,opts.Kc,'lin');
+Mlor = get_dimension(obj.get_cones,opts.Kc,'lor');
+Mrot = get_dimension(obj.get_cones,opts.Kc,'rot');
+Mpsd = get_dimension(obj.get_cones,opts.Kc,'psd');
+Mdd  = get_dimension(obj.get_cones,opts.Kc,'dd');
+Msdd = get_dimension(obj.get_cones,opts.Kc,'sdd');
 
 % temporarily save sdp.x (original)
 x_original = sdp.x;
 g_original = sdp.g;
 
+% add linear constraint to guarantee DD
+Mconstr_selector = sparse([1, 2, 3, 4, 1, 2, 3, 4],   ...
+                          [1, 1, 2, 2, 3, 3, 3, 3],   ...
+                          [1, 1, 1, 1, -1, 1, -1, 1], ...
+                          4, 3);
+
 % Verify DD cones in the constraints and create slack DD variables
 if isfield(opts.Kc,'dd')
+    
     % loop to iterate over each DD cone in the constraints
-    for i=1:length(Md)
+    eq_constraints   = cell(length(Mdd),1);
+    ineq_constraints = cell(length(Mdd),1);
+    M = cell(length(Mdd),1);
+
+    for i=1:length(Mdd)
         % locate set of DD constraints (start from the end)
-        dd_g = sdp.g(end - Md(end-i+1)^2+1:end);
-    
-        % create slack variables that need to be DD
-        dd_s = casadi.SX.sym(strjoin({'sg_', num2str(i)}, ''), Md(end-i+1)^2, 1);
-    
-        % rewrite constraints and add to linear constraints
-        dd_g = dd_g - dd_s;
-    
-        % add new constraints to the place of the linear
-        % constraints
-        sdp.g = [sdp.g(1:opts.Kc.lin); dd_g; sdp.g(opts.Kc.lin+1:end)];
-    
-        % remove the last constraints
-        sdp.g = sdp.g(1: end - Md(end-i+1)^2);
-    
-        % update lower and upper bound on the linear constraints
-        % lower bounds is always zero
-        args.dd_lbg = [args.dd_lbg; zeros(Md(i)^2, 1)];
-        % upper bounds is always infinity
-        args.dd_ubg = [args.dd_ubg; zeros(Md(i)^2, 1)];
-    
-        % update decision variables
-        sdp.x = [sdp.x; dd_s];
-    end
+        dd_g = sdp.g(end - Mdd(end-i+1)^2+1:end);
         
-    % add linear cones to constraints
-    Ml = Ml + sum(Md.^2);
-    % add DD cones to decision variables
-    Nd = [reshape(Nd,1,[]) reshape(Md,1,[])];
+        % matrix dimension
+        n = Mdd(end-i+1);
+
+        % Total number of pairs
+        numPairs = (n-1)*n/2;
+
+        % create map from M to vec(Y)
+        vecY = map_M_to_Y(n, numPairs);
+
+        % create casadi.SX.sym for the M
+        M{i} = casadi.SX.sym(['M_g' num2str(i)], 3*numPairs, 1);
+
+        % equality constraints
+        eq_constraints{i} = dd_g-vecY*M{i};  
+
+        % inequality constraints
+        ineq_constraints{i} = kron(speye(numPairs), Mconstr_selector)*M{i};
+    end
+
+    % remove previous constraints related to dd from sdp.g
+    sdp.g = sdp.g(1:end-sum(Mdd.^2));
+
+    % add new constraints to the place of the linear constraints
+    sdp.g = [sdp.g; vertcat(eq_constraints{:}); vertcat(ineq_constraints{:})];
+
+    num_eq   = length(vertcat(eq_constraints{:}));
+    num_ineq = length(vertcat(ineq_constraints{:}));
+
+    % update lower and upper bound on the linear constraints
+    % lower bounds is always zero
+    args.dd_lbg = [zeros(num_eq, 1); zeros(num_ineq, 1)];
+    
+    % upper bounds is always infinity
+    args.dd_ubg = [zeros(num_eq, 1); inf(num_ineq,1)];
+
+    % update decision variables
+    sdp.x = [sdp.x; vertcat(M{:})];
 
     % remove DD cone from constraints
     opts.Kc = rmfield(opts.Kc, 'dd');
 end
 
-if isfield(opts.Kx,'dd')
-    % loop over each DD cone in the variables
-    for i=1:length(Nd)
-        % Extract the ddm elements from sdp.x
-        dd_x = sdp.x(size(sdp.x,1)- Nd(i)^2+1:end);
-        dd_x = dd_x.reshape(Nd(i), Nd(i)); % matrix of the form (n_ddm x n_ddm)
-    
-        % obtain diagonal elements of ddm_x
-        ddm_x_diag = diag(dd_x);
 
-        % number of elements in upper triangle minus the diagonal
-        n_band = Nd(i)*(Nd(i)+1)/2 - Nd(i);
-        
-        if n_band >= 1
-            % create slack variables 
-            dd_s = casadi.SX.sym(strjoin({'sx_', num2str(i)}, ''), n_band, 1);
-            
-            % create symmetric matrix with zero diagonal and upper and
-            % bottom triangle equal to ddm_s            
-            ind_s = triu(ones(Nd(i), Nd(i)),1); % extracts the upper triangle without the diagonal
-            ind_d = ind_s + ind_s';
-            
-            % find indexes where ind_s is 1
-            S = casadi.Sparsity.nonzeros(Nd(i), Nd(i), find(ind_s));
-
-            % by the order of ddm_s, subs the 1 in ind_s with ddm_s
-            s_matrix = sparsity_cast(dd_s,S);
-            % symmetrize
-            s_matrix = s_matrix + s_matrix';
-        
-            % add constraints of the type s_i - x_i >= 0 and s_i + x_i >= 0
-            dd_g1 = s_matrix - ind_d.*dd_x;
-            dd_g2 = s_matrix + ind_d.*dd_x;
-            
-            % create new constrains according to Gershgorin's circle theorem.
-            dd_g3 = ddm_x_diag - sum(s_matrix,1)';
-            
-            % create constraints for symmetry of ddm_x
-            dd_g4 = dd_x - dd_x';
-            dd_g5 = dd_x' - dd_x;
-        
-            % new sdp.g
-            n_new_g = size(sdp.g,1);
-            sdp.g = [sdp.g(:); dd_g1(:); dd_g2(:); dd_g3(:); dd_g4(:); dd_g5(:)];
-            n_new_g = size(sdp.g,1) - n_new_g;
-
-        else
-            % nothing to do
-            dd_s = [];
-            n_new_g = 0;
-        end
+% Verify DD cones in decision variables
+if isfield(opts.Kx, 'dd')
     
-        % new sdp.x
-        sdp.x = [sdp.x; dd_s];
+    % loop to iterate over each DD cone decision variables
+    eq_constraints   = cell(length(Ndd),1);
+    ineq_constraints = cell(length(Ndd),1);
+    M = cell(length(Ndd),1);
+
+    for i=1:length(Ndd)
+        % locate set of DD constraints (start from the end)
+        dd_x = sdp.x(end - Ndd(end-i+1)^2+1:end);
         
-        % define size of new linear cones
-        Nl = Nl + Nd(i)^2 + size(dd_s,1); 
-        Ml = Ml + n_new_g;
-    
-        % add new bounds
-        % lower bounds is always zero
-        args.dd_lbg = [args.dd_lbg; zeros(n_new_g,1)];
-        % upper bounds is always infinity
-        args.dd_ubg = [args.dd_ubg; inf(n_new_g,1)];
+        % matrix dimension
+        n = Ndd(end-i+1);
+
+        % Total number of pairs
+        numPairs = (n-1)*n/2;
+
+        % create map from M to vec(Y)
+        vecY = map_M_to_Y(n, numPairs);
+
+        % create casadi.SX.sym for the M
+        M{i} = casadi.SX.sym(['M_x' num2str(i)], 3*numPairs, 1);
+
+        % method by equality constraints and casadi
+        eq_constraints{i} = dd_x-vecY*M{i};
+
+        % save variables and constraints
+        ineq_constraints{i} = kron(speye(numPairs), Mconstr_selector)*M{i};
     end
 
-    % remove dd field from decision variables
+    % add new constraints to the place of the linear constraints
+    sdp.g = [sdp.g; vertcat(eq_constraints{:}); vertcat(ineq_constraints{:})];
+
+    % number of new equality and cone constainemnt constraints
+    num_eq   = length(vertcat(eq_constraints{:}));
+    num_ineq = length(vertcat(ineq_constraints{:}));
+
+    % update lower and upper bound on the linear constraints
+    args.dd_lbg = [args.dd_lbg; zeros(num_eq, 1); zeros(num_ineq, 1)];
+
+    % upper bounds is always infinity
+    args.dd_ubg = [args.dd_ubg; zeros(num_eq, 1); inf(num_ineq,1)];
+
+    % update decision variables
+    sdp.x = [sdp.x; vertcat(M{:})];
+
+    % remove DD cone from constraints
     opts.Kx = rmfield(opts.Kx, 'dd');
 end
 
+
+% add linear cones to constraints
+Mlin = length(sdp.g);
+
+% add the variables M to sdp.x
+Nlin = length(sdp.x);
+
 % update linear variables and constraints
-opts.Kx = setfield(opts.Kx,'lin',Nl);
-opts.Kc = setfield(opts.Kc,'lin',Ml);
+opts.Kx = setfield(opts.Kx,'lin',Nlin);
+opts.Kc = setfield(opts.Kc,'lin',Mlin);
 
 % map from new sdp.x to old
 map.x = jacobian(x_original, sdp.x);
-
 map.g = [speye(length(g_original)), sparse(length(g_original), length(sdp.g)-length(g_original))];
 
+end
+
+
+
+function vecY = map_M_to_Y(n, numPairs)
+    % build vectorized Y
+    M_selector = sparse([1, 4, 2, 3], [1, 2, 3, 3], [1, 1, 1, 1], 4, 3);
+
+    % build indexes for T and S
+    i_pair = ceil((2*n - 1 - sqrt((2*n - 1)^2 - 8*(1:numPairs))) / 2);
+    j_pair = (1:numPairs) - (i_pair-1).*n + i_pair.*(i_pair-1)./ 2 + i_pair;
+
+    % Avoid using this for loop
+    T = arrayfun(@(k) sparse([1, 2], [i_pair(k), j_pair(k)], [1, 1], 2, n), 1:numPairs, 'UniformOutput', false);
+    S = arrayfun(@(k) sparse([i_pair(k), j_pair(k)], [1, 2], [1, 1], n, 2), 1:numPairs, 'UniformOutput', false);
+
+    % selects from [M1 M3; M3 M2] where to put in matrix vec(Y)
+    kronY = cell2mat(arrayfun(@(k) kron(T{k}', S{k}), 1:numPairs, 'UniformOutput', false));
+
+    % obtain vec(Y)
+    vecY = kronY*kron(speye(numPairs),M_selector); %*M;
 end
 
 
