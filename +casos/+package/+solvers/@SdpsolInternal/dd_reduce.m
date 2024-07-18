@@ -50,7 +50,10 @@ if isfield(opts.Kc,'dd')
 
     for i=1:length(Mdd)
         % locate set of DD constraints (start from the end)
-        dd_g = sdp.g(end - Mdd(end-i+1)^2+1:end);
+        ind = [length(sdp.g)+1-sum(Mdd(end-i+1:end).^2); length(sdp.g)-sum(Mdd(end-i+2:end).^2)]; 
+
+        % locate set of DD constraints (start from the end)
+        dd_g = sdp.g(ind(1):ind(2));
         
         % matrix dimension
         n = Mdd(end-i+1);
@@ -81,7 +84,6 @@ if isfield(opts.Kc,'dd')
     num_ineq = length(vertcat(ineq_constraints{:}));
 
     % update lower and upper bound on the linear constraints
-    % lower bounds is always zero
     args.dd_lbg = [zeros(num_eq, 1); zeros(num_ineq, 1)];
     
     % upper bounds is always infinity
@@ -105,7 +107,10 @@ if isfield(opts.Kx, 'dd')
 
     for i=1:length(Ndd)
         % locate set of DD constraints (start from the end)
-        dd_x = sdp.x(end - Ndd(end-i+1)^2+1:end);
+        ind = [length(sdp.x)+1-sum(Ndd(end-i+1:end).^2); length(sdp.x)-sum(Ndd(end-i+2:end).^2)]; 
+
+        % locate set of DD constraints (start from the end)
+        dd_x = sdp.x(ind(1):ind(2));
         
         % matrix dimension
         n = Ndd(end-i+1);

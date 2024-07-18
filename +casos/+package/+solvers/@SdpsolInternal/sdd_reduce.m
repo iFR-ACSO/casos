@@ -41,9 +41,11 @@ if isfield(opts.Kc, 'sdd')
     M = cell(length(Msdd),1);
 
     for i=1:length(Msdd)
+        % locate set of SDD constraints (start from the end)
+        ind = [length(sdp.g)+1-sum(Msdd(end-i+1:end).^2); length(sdp.g)-sum(Msdd(end-i+2:end).^2)]; 
 
-        % locate set of DD constraints (start from the end)
-        dd_g = sdp.g(end - Msdd(end-i+1)^2+1:end);
+        % locate set of SDD constraints (start from the end)
+        dd_g = sdp.g(ind(1):ind(2));
         
         % matrix dimension
         n = Msdd(end-i+1);
@@ -62,7 +64,7 @@ if isfield(opts.Kc, 'sdd')
         M_selector = sparse([1, 2, 3, 4], [1, 3, 3, 2], [1, 1, 1, 1], 4, 3);
 
         % constraints on M to be PSD
-        ineq_constraints{i} = kron(speye(numPairs),M_selector)*M{i}; % all three in order shouldbelong to the psd
+        ineq_constraints{i} = kron(speye(numPairs),M_selector)*M{i};
     end
 
     % remove previous constraints related to dd from sdp.g
@@ -73,7 +75,6 @@ if isfield(opts.Kc, 'sdd')
 
     % get number of equality and inequality constraints
     num_eq   = length(vertcat(eq_constraints{:}));
-    num_ineq = length(vertcat(ineq_constraints{:}));
     
     % update lower and upper bound on the linear constraints
     args.dd_lbg = [args.dd_lbg; zeros(num_eq, 1)];
@@ -83,10 +84,6 @@ if isfield(opts.Kc, 'sdd')
     
     % update decision variables
     sdp.x = [sdp.x; vertcat(M{:})];
-        
-    % add linear cones to constraints
-    %Mlin = Mlin + length(sdp.g);
-    %Nlin = Nlin + length(M);
 
     % remove DD cone from constraints
     opts.Kc = rmfield(opts.Kc, 'sdd');
@@ -101,8 +98,11 @@ if isfield(opts.Kx, 'sdd')
     M = cell(length(Nsdd),1);
 
     for i=1:length(Nsdd)
-        % locate set of DD constraints (start from the end)
-        dd_x = sdp.x(end - Nsdd(end-i+1)^2+1:end);
+        % locate set of SDD constraints (start from the end)
+        ind = [length(sdp.x)+1-sum(Nsdd(end-i+1:end).^2); length(sdp.x)-sum(Nsdd(end-i+2:end).^2)]; 
+
+        % locate set of SDD constraints (start from the end)
+        dd_x = sdp.x(ind(1):ind(2));
         
         % matrix dimension
         n = Nsdd(end-i+1);
@@ -131,7 +131,6 @@ if isfield(opts.Kx, 'sdd')
     
     % number of new equality and cone constainemnt constraints
     num_eq   = length(vertcat(eq_constraints{:}));
-    num_ineq = length(vertcat(ineq_constraints{:}));
 
     % update lower and upper bound on the linear constraints
     args.dd_lbg = [args.dd_lbg; zeros(num_eq, 1)];
@@ -141,15 +140,10 @@ if isfield(opts.Kx, 'sdd')
 
     % update decision variables
     sdp.x = [sdp.x; vertcat(M{:})];
-        
-    % add linear cones to constraints
-    %Mlin = Mlin + length(sdp.g);
-    %Nlin = Nlin + length(M);
 
     % remove DD cone from constraints
     opts.Kx = rmfield(opts.Kx, 'sdd');
 end
-
 
 % update linear variables and constraints
 opts.Kx = setfield(opts.Kx,'lin',length(sdp.x));
