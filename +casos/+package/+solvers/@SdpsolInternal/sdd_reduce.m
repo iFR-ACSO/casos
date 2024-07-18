@@ -10,103 +10,179 @@ check_cone(obj.get_cones,opts.Kc,'sdd');
 % initialize 
 args.dd_lbg = [];
 args.dd_ubg = [];
+args.dd_lbx = [];
+args.dd_ubx = [];
 
-% get dimensions of linear and SDD cones
-Nl = get_dimension(obj.get_cones,opts.Kx,'lin');
-Ml = get_dimension(obj.get_cones,opts.Kc,'lin');
-Nd = get_dimension(obj.get_cones,opts.Kx,'sdd');
-Md = get_dimension(obj.get_cones,opts.Kc,'sdd');
+% get dimensions of cones in the program decision variables
+Nlin = get_dimension(obj.get_cones,opts.Kx,'lin');
+Nlor = get_dimension(obj.get_cones,opts.Kx,'lor');
+Nrot = get_dimension(obj.get_cones,opts.Kx,'rot');
+Npsd = get_dimension(obj.get_cones,opts.Kx,'psd');
+Ndd  = get_dimension(obj.get_cones,opts.Kx,'dd');
+Nsdd = get_dimension(obj.get_cones,opts.Kx,'sdd');
+
+% get dimensions of cones in the program constraints
+Mlin = get_dimension(obj.get_cones,opts.Kc,'lin');
+Mlor = get_dimension(obj.get_cones,opts.Kc,'lor');
+Mrot = get_dimension(obj.get_cones,opts.Kc,'rot');
+Mpsd = get_dimension(obj.get_cones,opts.Kc,'psd');
+Mdd  = get_dimension(obj.get_cones,opts.Kc,'dd');
+Msdd = get_dimension(obj.get_cones,opts.Kc,'sdd');
 
 % temporarily save sdp.x (original)
 x_original = sdp.x;
 g_original = sdp.g;
 
-
-% transfer constraint on the x into the g
-if Nd>0
-    sdp.g = [sdp.g; sdp.x(end-Nd^2:end)];
-    Md = Nd;
-    Nd = 0;
-    Nl = Nl + Md^2;
-    opts.Kx = rmfield(opts.Kx, 'sdd');
-end
-
 % Verify SDD cones in the constraints and create slack SDD variables
-if Md >0
+if isfield(opts.Kc, 'sdd')
     % loop to iterate over each SDD cone in the constraints
-    for i=1:length(Md)
+    eq_constraints   = cell(length(Msdd),1);
+    ineq_constraints = cell(length(Msdd),1);
+    M = cell(length(Msdd),1);
+
+    for i=1:length(Msdd)
 
         % locate set of DD constraints (start from the end)
-        dd_g = sdp.g(end - Md(end-i+1)^2+1:end);
+        dd_g = sdp.g(end - Msdd(end-i+1)^2+1:end);
         
         % matrix dimension
-        n = Md(i);
+        n = Msdd(end-i+1);
 
         % Total number of pairs
         numPairs = (n-1)*n/2;
 
-        % build vectorized Y
-        M_selector = sparse([1, 2, 3, 4], [1, 3, 3, 2], [1, 1, 1, 1], 4, 3);
-
-        % build indexes for T and S
-        i_pair = ceil((2*n - 1 - sqrt((2*n - 1)^2 - 8*(1:numPairs))) / 2);
-        j_pair = (1:numPairs) - (i_pair-1).*n + i_pair.*(i_pair-1)./ 2 + i_pair;
-
-        % Avoid using this for loop
-        T = arrayfun(@(k) sparse([1, 2], [i_pair(k), j_pair(k)], [1, 1], 2, n), 1:numPairs, 'UniformOutput', false);
-        S = arrayfun(@(k) sparse([i_pair(k), j_pair(k)], [1, 2], [1, 1], n, 2), 1:numPairs, 'UniformOutput', false);
-
-        % selects from [M1 M3; M3 M2] where to put in matrix vec(Y)
-        kronY = cell2mat(arrayfun(@(k) kron(T{k}', S{k}), 1:numPairs, 'UniformOutput', false));
-
+        vecY = map_M_to_Y(n, numPairs);
+        
         % create casadi.SX.sym for the M
-        M = casadi.SX.sym('M', 3*numPairs, 1);
-
-        % obtain vec(Y)
-        vecY = kronY*kron(speye(numPairs),M_selector); %*M;
+        M{i} = casadi.SX.sym(['M_g' num2str(i)], 3*numPairs, 1);
 
         % method by equality constraints and casadi
-        % dd_g-vecY*M == 0
-        eq_constraints = dd_g-vecY*M;
+        eq_constraints{i} = dd_g-vecY*M{i};
+
+        M_selector = sparse([1, 2, 3, 4], [1, 3, 3, 2], [1, 1, 1, 1], 4, 3);
 
         % constraints on M to be PSD
-        ineq_constraints = kron(speye(numPairs),M_selector)*M; % all three in order shouldbelong to the psd
-        
-        % ToDo: 
-        % add new constraints to the place of the linear
-        % constraints
-        sdp.g = [eq_constraints; ineq_constraints];
-        %sdp.g = [sdp.g(1:opts.Kc.lin); dd_g; sdp.g(opts.Kc.lin+1:end)];
-    
-        % remove the last constraints
-        % sdp.g = sdp.g(1: end - Md(end-i+1)^2);
-    
-        % update lower and upper bound on the linear constraints
-        % lower bounds is always zero
-        args.dd_lbg = [args.dd_lbg; zeros(length(eq_constraints), 1)];
-        % upper bounds is always infinity
-        args.dd_ubg = [args.dd_ubg; zeros(length(eq_constraints), 1)];
-    
-        % update decision variables
-        sdp.x = [sdp.x; M];
+        ineq_constraints{i} = kron(speye(numPairs),M_selector)*M{i}; % all three in order shouldbelong to the psd
     end
+
+    % remove previous constraints related to dd from sdp.g
+    sdp.g = sdp.g(1:end-sum(Msdd.^2));
+
+    % add new constraints to the place of the linear constraints
+    sdp.g = [sdp.g; vertcat(eq_constraints{:}); vertcat(ineq_constraints{:})];
+
+    % get number of equality and inequality constraints
+    num_eq   = length(vertcat(eq_constraints{:}));
+    num_ineq = length(vertcat(ineq_constraints{:}));
+    
+    % update lower and upper bound on the linear constraints
+    args.dd_lbg = [args.dd_lbg; zeros(num_eq, 1)];
+    
+    % upper bounds is always infinity
+    args.dd_ubg = [args.dd_ubg; zeros(num_eq, 1)];
+    
+    % update decision variables
+    sdp.x = [sdp.x; vertcat(M{:})];
         
     % add linear cones to constraints
-    Ml = Ml + length(sdp.g);
-    Nl = Nl + length(M);
+    %Mlin = Mlin + length(sdp.g);
+    %Nlin = Nlin + length(M);
 
     % remove DD cone from constraints
     opts.Kc = rmfield(opts.Kc, 'sdd');
 end
 
+% Verify SDD cones in the decision variables
+if isfield(opts.Kx, 'sdd')
+
+    % loop to iterate over each SDD cone in the constraints
+    eq_constraints   = cell(length(Nsdd),1);
+    ineq_constraints = cell(length(Nsdd),1);
+    M = cell(length(Nsdd),1);
+
+    for i=1:length(Nsdd)
+        % locate set of DD constraints (start from the end)
+        dd_x = sdp.x(end - Nsdd(end-i+1)^2+1:end);
+        
+        % matrix dimension
+        n = Nsdd(end-i+1);
+
+        % Total number of pairs
+        numPairs = (n-1)*n/2;
+
+        % create map from M to vec(Y)
+        vecY = map_M_to_Y(n, numPairs);
+
+        % create casadi.SX.sym for the M
+        M{i} = casadi.SX.sym(['M_x' num2str(i)], 3*numPairs, 1);
+
+        % method by equality constraints and casadi
+        eq_constraints{i} = dd_x-vecY*M{i};
+
+        % build vectorized Y
+        M_selector = sparse([1, 2, 3, 4], [1, 3, 3, 2], [1, 1, 1, 1], 4, 3);
+
+        % constraints on M to be PSD
+        ineq_constraints{i} = kron(speye(numPairs),M_selector)*M{i}; 
+    end
+
+    % add new constraints to the place of the linear constraints
+    sdp.g = [sdp.g; vertcat(eq_constraints{:}); vertcat(ineq_constraints{:})];
+    
+    % number of new equality and cone constainemnt constraints
+    num_eq   = length(vertcat(eq_constraints{:}));
+    num_ineq = length(vertcat(ineq_constraints{:}));
+
+    % update lower and upper bound on the linear constraints
+    args.dd_lbg = [args.dd_lbg; zeros(num_eq, 1)];
+
+    % upper bounds is always infinity
+    args.dd_ubg = [args.dd_ubg; zeros(num_eq, 1)];
+
+    % update decision variables
+    sdp.x = [sdp.x; vertcat(M{:})];
+        
+    % add linear cones to constraints
+    %Mlin = Mlin + length(sdp.g);
+    %Nlin = Nlin + length(M);
+
+    % remove DD cone from constraints
+    opts.Kx = rmfield(opts.Kx, 'sdd');
+end
+
+
 % update linear variables and constraints
-opts.Kx = setfield(opts.Kx,'lin',Nl);
-opts.Kc = setfield(opts.Kc,'lin',length(eq_constraints));
-opts.Kc = setfield(opts.Kc,'psd',repmat(2, 1, numPairs));
+opts.Kx = setfield(opts.Kx,'lin',length(sdp.x));
+opts.Kc = setfield(opts.Kc,'lin', Mlin + length(vertcat(eq_constraints{:})));
+opts.Kc = setfield(opts.Kc,'psd', repmat(2, 1, numPairs));
 
 % map from new sdp.x to old
 map.x = jacobian(x_original, sdp.x);
 map.g = [speye(length(g_original)), sparse(length(g_original), length(sdp.g)-length(g_original))];
 
 end
+
+
+function vecY = map_M_to_Y(n, numPairs)
+    % build vectorized Y
+    M_selector = sparse([1, 2, 3, 4], [1, 3, 3, 2], [1, 1, 1, 1], 4, 3);
+
+    % build indexes for T and S
+    i_pair = ceil((2*n - 1 - sqrt((2*n - 1)^2 - 8*(1:numPairs))) / 2);
+    j_pair = (1:numPairs) - (i_pair-1).*n + i_pair.*(i_pair-1)./ 2 + i_pair;
+
+    % Avoid using this for loop
+    T = arrayfun(@(k) sparse([1, 2], [i_pair(k), j_pair(k)], [1, 1], 2, n), 1:numPairs, 'UniformOutput', false);
+    S = arrayfun(@(k) sparse([i_pair(k), j_pair(k)], [1, 2], [1, 1], n, 2), 1:numPairs, 'UniformOutput', false);
+
+    % selects from [M1 M3; M3 M2] where to put in matrix vec(Y)
+    kronY = cell2mat(arrayfun(@(k) kron(T{k}', S{k}), 1:numPairs, 'UniformOutput', false));
+
+    % obtain vec(Y)
+    vecY = kronY*kron(speye(numPairs),M_selector); %*M;
+end
+
+
+
+
 
