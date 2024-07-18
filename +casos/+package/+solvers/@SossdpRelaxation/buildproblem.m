@@ -24,8 +24,8 @@ assert(n == (Nl + Ns + Nds + Nsds), 'Dimension of Kx must be equal to number of 
 assert(m == (Ml + Ms + Mds + Msds), 'Dimension of Kc must be equal to number of constraints (%d).', m)
 
 % select sum-of-squares variables and constraints
-Is = [false(Nl,1); true(Ns,1); true(Nds,1); true(Nsds)];
-Js = [false(Ml,1); true(Ms,1); true(Mds,1); true(Msds)];
+Is = [false(Nl,1); true(Ns,1); true(Nds,1); true(Nsds,1)];
+Js = [false(Ml,1); true(Ms,1); true(Mds,1); true(Msds,1)];
 
 % obtain Gram basis for decision variables
 [Zvar_s,Ksdp_x_s,~,Mp_x,Md_x] = grambasis(sparsity(sos.x),Is);
@@ -91,6 +91,7 @@ sdp.derivatives.Hf = blockcat(map'*sdp_Hf*map, ...
                               sparse(nnz_gram_g,nnz_gram_g));
 sdp.derivatives.Jf = horzcat(sdp_Jf*map, sparse(1,nnz_gram_g));
 sdp.derivatives.Jg = horzcat(sdp_Jg*map, -Mp_g);
+
 % SDP options
 sdpopt = opts.sdpsol_options;
 
