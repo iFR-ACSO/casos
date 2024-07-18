@@ -17,6 +17,7 @@ properties (Access=protected)
     ghan;
 end
 
+% maps from the relaxed sdp and the orignal sdp
 properties (Access=public)
     map;
 end
@@ -75,16 +76,18 @@ methods
                 opts.Kc.lin = 0;
             end
 
-            % rebuild problem from DD to linear program
+            % relax problem to smaller easier cones (LP and SOCP)
             args = struct;
-            if isfield(opts.Kx,'dd') || isfield(opts.Kc,'dd')
-                [sdp, args, map, opts] = dd_reduce(obj, sdp, opts);
-                obj.map = map;
-            end
 
             % rebuild problem from SDD to SOCP
             if isfield(opts.Kx,'sdd') || isfield(opts.Kc,'sdd')
                 [sdp, args, map, opts] = sdd_reduce(obj, sdp, opts);
+                obj.map = map;
+            end
+
+            % rebuild problem from DD to LP
+            if isfield(opts.Kx,'dd') || isfield(opts.Kc,'dd')
+                [sdp, args, map, opts] = dd_reduce(obj, sdp, opts);
                 obj.map = map;
             end
 
@@ -209,6 +212,7 @@ end
 methods (Access=protected)
     % reduce DD constraints to LPs
     [sdp,args,map,opts] = dd_reduce(obj,sdp,opts);
+
     % reduce SDD constraints to SOCP
     [sdp,args,map,opts] = sdd_reduce(obj,sdp,opts);
 
