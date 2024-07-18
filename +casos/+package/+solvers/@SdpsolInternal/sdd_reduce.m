@@ -148,7 +148,7 @@ end
 % update linear variables and constraints
 opts.Kx = setfield(opts.Kx,'lin',length(sdp.x));
 opts.Kc = setfield(opts.Kc,'lin', Mlin + length(vertcat(eq_constraints{:})));
-opts.Kc = setfield(opts.Kc,'psd', repmat(2, 1, numPairs));
+opts.Kc = setfield(opts.Kc,'psd', [Mpsd, repmat(2, 1, length(vertcat(M{:}))/3)]);
 
 % map from new sdp.x to old
 map.x = jacobian(x_original, sdp.x);
