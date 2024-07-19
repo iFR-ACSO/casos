@@ -31,13 +31,9 @@ sz_g = size(gx);
 if isfield(args, 'dd_ubg')
     dd_lbg = args.dd_lbg;
     dd_ubg = args.dd_ubg;
-    dd_lbx = args.dd_lbx;
-    dd_ubx = args.dd_ubx;
 else
     dd_lbg = [];
     dd_ubg = [];
-    dd_lbx = [];
-    dd_ubx = [];
 end
 
 
