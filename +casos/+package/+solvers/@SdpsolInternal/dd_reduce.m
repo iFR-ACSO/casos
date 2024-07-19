@@ -148,7 +148,7 @@ if isfield(opts.Kx, 'dd')
 end
 
 % update decision variables
-sdp.x = [sdp.x; vertcat(M_g{:}); vertcat(M_x{:})];
+sdp.x = [sdp.x(1:Nlin); vertcat(M_g{:}); vertcat(M_x{:}); sdp.x(Nlin+1:end)];
 
 % add linear cones to constraints
 Mlin = Mlin + num_ineq_x + num_eq_x + num_eq_g + num_ineq_g;
