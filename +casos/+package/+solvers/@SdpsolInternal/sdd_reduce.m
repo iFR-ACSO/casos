@@ -10,8 +10,6 @@ check_cone(obj.get_cones,opts.Kc,'sdd');
 % initialize 
 args.dd_lbg = [];
 args.dd_ubg = [];
-args.dd_lbx = [];
-args.dd_ubx = [];
 
 % get dimensions of cones in the program decision variables
 Nlin = get_dimension(obj.get_cones,opts.Kx,'lin');
@@ -33,12 +31,12 @@ Msdd = get_dimension(obj.get_cones,opts.Kc,'sdd');
 x_original = sdp.x;
 g_original = sdp.g;
 
+M_g = cell(length(Msdd),1);
 % Verify SDD cones in the constraints and create slack SDD variables
 if isfield(opts.Kc, 'sdd')
     % loop to iterate over each SDD cone in the constraints
     eq_constraints   = cell(length(Msdd),1);
     ineq_constraints = cell(length(Msdd),1);
-    M = cell(length(Msdd),1);
 
     for i=1:length(Msdd)
         % locate set of SDD constraints (start from the end)
@@ -56,15 +54,15 @@ if isfield(opts.Kc, 'sdd')
         vecY = map_M_to_Y(n, numPairs);
         
         % create casadi.SX.sym for the M
-        M{i} = casadi.SX.sym(['M_g' num2str(i)], 3*numPairs, 1);
+        M_g{i} = casadi.SX.sym(['M_g' num2str(i)], 3*numPairs, 1);
 
         % method by equality constraints and casadi
-        eq_constraints{i} = dd_g-vecY*M{i};
+        eq_constraints{i} = dd_g-vecY*M_g{i};
 
         M_selector = sparse([1, 2, 3, 4], [1, 3, 3, 2], [1, 1, 1, 1], 4, 3);
 
         % constraints on M to be PSD
-        ineq_constraints{i} = kron(speye(numPairs),M_selector)*M{i};
+        ineq_constraints{i} = kron(speye(numPairs),M_selector)*M_g{i};
     end
 
     % remove previous constraints related to dd from sdp.g
@@ -83,19 +81,19 @@ if isfield(opts.Kc, 'sdd')
     args.dd_ubg = [args.dd_ubg; zeros(num_eq, 1)];
     
     % update decision variables
-    sdp.x = [sdp.x; vertcat(M{:})];
+    sdp.x = [sdp.x; vertcat(M_g{:})];
 
     % remove DD cone from constraints
     opts.Kc = rmfield(opts.Kc, 'sdd');
 end
 
 % Verify SDD cones in the decision variables
+M_x = cell(length(Nsdd),1);
 if isfield(opts.Kx, 'sdd')
 
     % loop to iterate over each SDD cone in the constraints
     eq_constraints   = cell(length(Nsdd),1);
     ineq_constraints = cell(length(Nsdd),1);
-    M = cell(length(Nsdd),1);
 
     for i=1:length(Nsdd)
         % locate set of SDD constraints (start from the end)
@@ -114,16 +112,16 @@ if isfield(opts.Kx, 'sdd')
         vecY = map_M_to_Y(n, numPairs);
 
         % create casadi.SX.sym for the M
-        M{i} = casadi.SX.sym(['M_x' num2str(i)], 3*numPairs, 1);
+        M_x{i} = casadi.SX.sym(['M_x' num2str(i)], 3*numPairs, 1);
 
         % method by equality constraints and casadi
-        eq_constraints{i} = dd_x-vecY*M{i};
+        eq_constraints{i} = dd_x-vecY*M_x{i};
 
         % build vectorized Y
         M_selector = sparse([1, 2, 3, 4], [1, 3, 3, 2], [1, 1, 1, 1], 4, 3);
 
         % constraints on M to be PSD
-        ineq_constraints{i} = kron(speye(numPairs),M_selector)*M{i}; 
+        ineq_constraints{i} = kron(speye(numPairs),M_selector)*M_x{i}; 
     end
 
     % add new constraints to the place of the linear constraints
@@ -139,16 +137,16 @@ if isfield(opts.Kx, 'sdd')
     args.dd_ubg = [args.dd_ubg; zeros(num_eq, 1)];
 
     % update decision variables
-    sdp.x = [sdp.x; vertcat(M{:})];
+    sdp.x = [sdp.x; vertcat(M_x{:})];
 
     % remove DD cone from constraints
     opts.Kx = rmfield(opts.Kx, 'sdd');
 end
 
 % update linear variables and constraints
-opts.Kx = setfield(opts.Kx,'lin',length(sdp.x));
+opts.Kx = setfield(opts.Kx,'lin', Nlin + sum(Nsdd.^2) + length(vertcat(M_g{:})) + length(vertcat(M_x{:})));
 opts.Kc = setfield(opts.Kc,'lin', Mlin + length(vertcat(eq_constraints{:})));
-opts.Kc = setfield(opts.Kc,'psd', [Mpsd, repmat(2, 1, length(vertcat(M{:}))/3)]);
+opts.Kc = setfield(opts.Kc,'psd', [Mpsd, repmat(2, 1, length(vertcat(M_g{:}))/3+length(vertcat(M_x{:}))/3)]);
 
 % map from new sdp.x to old
 map.x = jacobian(x_original, sdp.x);
