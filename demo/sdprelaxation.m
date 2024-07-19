@@ -88,8 +88,10 @@ end
 %% plot the set of feasible solutions for the SDP with PSD, DD and SDD
 
 % create grid 
-xp = -0.5:0.01:0.5;
-yp = -0.5:0.01:0.5;
+axisbounds = [-0.2 0.05 -0.2 0.1]; % [xmin xmax ymin ymax]
+xp = axisbounds(1):0.005:axisbounds(2);
+yp = axisbounds(3):0.005:axisbounds(4);
+
 [xp, yp] = meshgrid(xp,yp);
 xp = xp(:);
 yp = yp(:);
@@ -119,8 +121,13 @@ end
 % initialize figure
 figure(1)
 legend('show');
+grid
+grid minor
 xlabel('x_1'); ylabel('x_2')
 hold on
+
+% Set the axis limits
+axis(axisbounds);  % [xmin xmax ymin ymax]
 
 legend_names = {'PSD feasible set', 'DD feasible set', 'SDD feasible set'};
 % plot feasible set with psd, dd and sdd
@@ -195,7 +202,7 @@ function out = isSDD(A)
     end
 
     % Solve the linear programming problem
-    options = optimoptions('linprog', 'Display', 'none');
+    options = optimoptions('linprog', 'Algorithm', 'dual-simplex', 'Display', 'none');
     [~, ~, exitflag] = linprog(f, Aineq, bineq, Aeq, beq, lb, ub, options);
     out = (exitflag==1);
     
