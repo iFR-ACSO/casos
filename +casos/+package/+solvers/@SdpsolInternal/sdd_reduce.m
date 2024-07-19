@@ -69,7 +69,12 @@ if isfield(opts.Kc, 'sdd')
     sdp.g = sdp.g(1:end-sum(Msdd.^2));
 
     % add new constraints to the place of the linear constraints
-    sdp.g = [sdp.g; vertcat(eq_constraints{:}); vertcat(ineq_constraints{:})];
+    if Mlin~=0
+        sdp.g = [sdp.g(1:Mlin); vertcat(eq_constraints{:}); sdp.g(Mlin+1:end)];
+    else
+        sdp.g = [vertcat(eq_constraints{:}); sdp.g];
+    end
+    sdp.g = [sdp.g; vertcat(ineq_constraints{:})];
 
     % get number of equality and inequality constraints
     num_eq   = length(vertcat(eq_constraints{:}));
@@ -122,7 +127,12 @@ if isfield(opts.Kx, 'sdd')
     end
 
     % add new constraints to the place of the linear constraints
-    sdp.g = [sdp.g; vertcat(eq_constraints{:}); vertcat(ineq_constraints{:})];
+    if Mlin~=0
+        sdp.g = [sdp.g(1:Mlin); vertcat(eq_constraints{:}); sdp.g(Mlin+1:end)];
+    else
+        sdp.g = [vertcat(eq_constraints{:}); sdp.g];
+    end
+    sdp.g = [sdp.g; vertcat(ineq_constraints{:})];
     
     % number of new equality and cone constainemnt constraints
     num_eq   = length(vertcat(eq_constraints{:}));
