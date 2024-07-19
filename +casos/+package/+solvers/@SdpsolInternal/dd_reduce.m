@@ -38,13 +38,18 @@ Mconstr_selector = sparse([1, 2, 3, 4, 1, 2, 3, 4],   ...
                           [1, 1, 1, 1, -1, 1, -1, 1], ...
                           4, 3);
 
+% create zero initial 
+num_eq_g = 0;
+num_eq_x = 0;
+num_ineq_g = 0;
+num_ineq_x = 0;
+
 % Verify DD cones in the constraints and create slack DD variables
+M_g = cell(length(Mdd),1);
 if isfield(opts.Kc,'dd')
-    
     % loop to iterate over each DD cone in the constraints
-    eq_constraints   = cell(length(Mdd),1);
-    ineq_constraints = cell(length(Mdd),1);
-    M = cell(length(Mdd),1);
+    eq_constraints_g   = cell(length(Mdd),1);
+    ineq_constraints_g = cell(length(Mdd),1);
 
     for i=1:length(Mdd)
         % locate set of DD constraints (start from the end)
@@ -63,45 +68,41 @@ if isfield(opts.Kc,'dd')
         vecY = map_M_to_Y(n, numPairs);
 
         % create casadi.SX.sym for the M
-        M{i} = casadi.SX.sym(['M_g' num2str(i)], 3*numPairs, 1);
+        M_g{i} = casadi.SX.sym(['M_g' num2str(i)], 3*numPairs, 1);
 
         % equality constraints
-        eq_constraints{i} = dd_g-vecY*M{i};  
+        eq_constraints_g{i} = dd_g-vecY*M_g{i};  
 
         % inequality constraints
-        ineq_constraints{i} = kron(speye(numPairs), Mconstr_selector)*M{i};
+        ineq_constraints_g{i} = kron(speye(numPairs), Mconstr_selector)*M_g{i};
     end
 
     % remove previous constraints related to dd from sdp.g
     sdp.g = sdp.g(1:end-sum(Mdd.^2));
 
     % add new constraints to the place of the linear constraints
-    sdp.g = [sdp.g; vertcat(eq_constraints{:}); vertcat(ineq_constraints{:})];
+    sdp.g = [sdp.g; vertcat(eq_constraints_g{:}); vertcat(ineq_constraints_g{:})];
 
-    num_eq   = length(vertcat(eq_constraints{:}));
-    num_ineq = length(vertcat(ineq_constraints{:}));
+    num_eq_g   = length(vertcat(eq_constraints_g{:}));
+    num_ineq_g = length(vertcat(ineq_constraints_g{:}));
 
     % update lower and upper bound on the linear constraints
-    args.dd_lbg = [zeros(num_eq, 1); zeros(num_ineq, 1)];
+    args.dd_lbg = [zeros(num_eq_g, 1); zeros(num_ineq_g, 1)];
     
     % upper bounds is always infinity
-    args.dd_ubg = [zeros(num_eq, 1); inf(num_ineq,1)];
-
-    % update decision variables
-    sdp.x = [sdp.x; vertcat(M{:})];
+    args.dd_ubg = [zeros(num_eq_g, 1); inf(num_ineq_g,1)];
 
     % remove DD cone from constraints
     opts.Kc = rmfield(opts.Kc, 'dd');
 end
 
-
 % Verify DD cones in decision variables
+M_x = cell(length(Ndd),1);
 if isfield(opts.Kx, 'dd')
     
     % loop to iterate over each DD cone decision variables
-    eq_constraints   = cell(length(Ndd),1);
-    ineq_constraints = cell(length(Ndd),1);
-    M = cell(length(Ndd),1);
+    eq_constraints_x   = cell(length(Ndd),1);
+    ineq_constraints_x = cell(length(Ndd),1);
 
     for i=1:length(Ndd)
         % locate set of DD constraints (start from the end)
@@ -120,41 +121,40 @@ if isfield(opts.Kx, 'dd')
         vecY = map_M_to_Y(n, numPairs);
 
         % create casadi.SX.sym for the M
-        M{i} = casadi.SX.sym(['M_x' num2str(i)], 3*numPairs, 1);
+        M_x{i} = casadi.SX.sym(['M_x' num2str(i)], 3*numPairs, 1);
 
         % method by equality constraints and casadi
-        eq_constraints{i} = dd_x-vecY*M{i};
+        eq_constraints_x{i} = dd_x-vecY*M_x{i};
 
         % save variables and constraints
-        ineq_constraints{i} = kron(speye(numPairs), Mconstr_selector)*M{i};
+        ineq_constraints_x{i} = kron(speye(numPairs), Mconstr_selector)*M_x{i};
     end
 
     % add new constraints to the place of the linear constraints
-    sdp.g = [sdp.g; vertcat(eq_constraints{:}); vertcat(ineq_constraints{:})];
+    sdp.g = [sdp.g; vertcat(eq_constraints_x{:}); vertcat(ineq_constraints_x{:})];
 
     % number of new equality and cone constainemnt constraints
-    num_eq   = length(vertcat(eq_constraints{:}));
-    num_ineq = length(vertcat(ineq_constraints{:}));
+    num_eq_x   = length(vertcat(eq_constraints_x{:}));
+    num_ineq_x = length(vertcat(ineq_constraints_x{:}));
 
     % update lower and upper bound on the linear constraints
-    args.dd_lbg = [args.dd_lbg; zeros(num_eq, 1); zeros(num_ineq, 1)];
+    args.dd_lbg = [args.dd_lbg; zeros(num_eq_x, 1); zeros(num_ineq_x, 1)];
 
     % upper bounds is always infinity
-    args.dd_ubg = [args.dd_ubg; zeros(num_eq, 1); inf(num_ineq,1)];
-
-    % update decision variables
-    sdp.x = [sdp.x; vertcat(M{:})];
+    args.dd_ubg = [args.dd_ubg; zeros(num_eq_x, 1); inf(num_ineq_x,1)];
 
     % remove DD cone from constraints
     opts.Kx = rmfield(opts.Kx, 'dd');
 end
 
+% update decision variables
+sdp.x = [sdp.x; vertcat(M_g{:}); vertcat(M_x{:})];
 
 % add linear cones to constraints
-Mlin = length(sdp.g);
+Mlin = Mlin + num_ineq_x + num_eq_x + num_eq_g + num_ineq_g;
 
 % add the variables M to sdp.x
-Nlin = length(sdp.x);
+Nlin = Nlin + sum(Ndd.^2) + length(vertcat(M_g{:})) + length(vertcat(M_x{:}));
 
 % update linear variables and constraints
 opts.Kx = setfield(opts.Kx,'lin',Nlin);
