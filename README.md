@@ -202,6 +202,8 @@ The options `K_` define the (convex) polynomial cones $\mathcal K$ as well as th
 
 - `K.lin` : number of coefficient-wise constraints; corresponds to the dimension of $G_\mathrm{l}$ or $\xi_\mathrm{l} \in \mathbb R[x]^l$;
 - `K.sos` : number of sum-of-squares constraints, that is, $\mathcal K = \Sigma[x]^s$; corresponds to the dimension of $g_\mathrm{c}$ or $\xi_\mathrm{c}$;
+- `K.dsos` : number of diagonally dominant sum-of-squares constraints, that is, $\mathcal K = DSOS[x]^s$;
+- `K.sdsos` : number of scaled diagonally dominant sum-of-squares constraints, that is, $\mathcal K = SDSOS[x]^s$;
 - no further cones are currently supported;
 
 by default (if the option `K_` is omitted), only coefficient-wise constraints are enforced.
@@ -267,6 +269,8 @@ The options `K_` define the convex cones $\mathcal K$ as well as the number of l
 
 - `K.lin` : number of linear constraints; corresponds to the first dimension of $A_\mathrm{l}$, the dimension of $g_\mathrm{l}$, or the dimension of $x_\mathrm{l}$;
 - `K.sos` : vector $(s_1, \ldots, s_k)$ of semidefinite cone dimensions, that is, $\mathcal K = \mathbb S_{s_1}^{+} \times \cdots \times \mathbb S_{s_k}^{+}$; the total number of SDP cone constraints is equal to $\sum_i s_i^2$;
+- `K.dd` : vector $(d_1, \ldots, d_k)$ of diagonally dominant cone dimensions, that is, $\mathcal K =  DD_{d_1} \times \cdots \times DD_{d_k}$ with $DD_{d}$ being the set of $d \times d$ diagonally dominant matrices; the total number of DD cone constraints is equal to $\sum_i d_i^2$;
+- `K.sdd` : vector $(d_1, \ldots, d_k)$ of scaled diagonally dominant cone dimensions, that is, $\mathcal K =  SDD_{s_1} \times \cdots \times SDD_{s_k}$ with $SDD_{s}$ being the set of $s \times s$ scaled diagonally dominant matrices; the total number of SDD cone constraints is equal to $\sum_i d_i^2$;
 - further cones, e.g., the Lorentz (or second-order) cone, are supported depending on the convex solver; the total number of *all* cone constraints corresponds to the first dimension of $A_\mathrm{c}$, the dimension of $g_\mathrm{c}$, or the dimension of $x_\mathrm{c}$;
 
 by default (if the option `K_` is omitted), only linear constraints are enforced.
