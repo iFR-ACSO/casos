@@ -79,9 +79,6 @@ if isfield(opts.Kc, 'sdd')
     
     % upper bounds is always infinity
     args.dd_ubg = [args.dd_ubg; zeros(num_eq, 1)];
-    
-    % update decision variables
-    sdp.x = [sdp.x; vertcat(M_g{:})];
 
     % remove DD cone from constraints
     opts.Kc = rmfield(opts.Kc, 'sdd');
@@ -136,12 +133,12 @@ if isfield(opts.Kx, 'sdd')
     % upper bounds is always infinity
     args.dd_ubg = [args.dd_ubg; zeros(num_eq, 1)];
 
-    % update decision variables
-    sdp.x = [sdp.x; vertcat(M_x{:})];
-
     % remove DD cone from constraints
     opts.Kx = rmfield(opts.Kx, 'sdd');
 end
+
+% update decision variables
+sdp.x = [sdp.x(1:Nlin); vertcat(M_g{:}); vertcat(M_x{:}); sdp.x(Nlin+1:end)];
 
 % update linear variables and constraints
 opts.Kx = setfield(opts.Kx,'lin', Nlin + sum(Nsdd.^2) + length(vertcat(M_g{:})) + length(vertcat(M_x{:})));
