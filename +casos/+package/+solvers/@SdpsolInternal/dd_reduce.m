@@ -11,8 +11,6 @@ check_cone(obj.get_cones,opts.Kc,'dd');
 % ToDo: due to ordering, create a map for this 
 args.dd_lbg = [];
 args.dd_ubg = [];
-args.dd_lbx = [];
-args.dd_ubx = [];
 
 % get dimensions of cones in the program decision variables
 Nlin = get_dimension(obj.get_cones,opts.Kx,'lin');
