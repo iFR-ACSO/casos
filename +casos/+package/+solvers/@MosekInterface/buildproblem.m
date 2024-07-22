@@ -225,11 +225,11 @@ obj.barv = casadi.Function('v',struct2cell(obj.args_in),struct2cell(barv),fieldn
 
 % build conic information
 Accs = [
-    arrayfun(@(l) [symbcon.MSK_DOMAIN_QUADRATIC_CONE  l], Na.q, 'UniformOutput',false)
-    arrayfun(@(l) [symbcon.MSK_DOMAIN_RQUADRATIC_CONE l], Na.r, 'UniformOutput',false)
-    arrayfun(@(d) [symbcon.MSK_DOMAIN_SVEC_PSD_CONE   d], Na_S, 'UniformOutput',false)
-    arrayfun(@(l) [symbcon.MSK_DOMAIN_QUADRATIC_CONE  l], Nx.q, 'UniformOutput',false)
-    arrayfun(@(l) [symbcon.MSK_DOMAIN_RQUADRATIC_CONE l], Nx.r, 'UniformOutput',false)
+    arrayfun(@(l) [symbcon.MSK_DOMAIN_QUADRATIC_CONE  l], Na.q(:), 'UniformOutput',false)
+    arrayfun(@(l) [symbcon.MSK_DOMAIN_RQUADRATIC_CONE l], Na.r(:), 'UniformOutput',false)
+    arrayfun(@(d) [symbcon.MSK_DOMAIN_SVEC_PSD_CONE   d], Na_S(:), 'UniformOutput',false)
+    arrayfun(@(l) [symbcon.MSK_DOMAIN_QUADRATIC_CONE  l], Nx.q(:), 'UniformOutput',false)
+    arrayfun(@(l) [symbcon.MSK_DOMAIN_RQUADRATIC_CONE l], Nx.r(:), 'UniformOutput',false)
     acc_cost
 ];
 cone.bardim = Nx.s;
