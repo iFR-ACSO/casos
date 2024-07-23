@@ -63,40 +63,39 @@ methods
         % options
         if nargin < 4
             opts = struct;
-        else
-            % ensure cone has default value
-            if ~isfield(opts,'Kx')
-                opts.Kx.lin = numel(sdp.x);
-            elseif ~isfield(opts.Kx,'lin')
-                opts.Kx.lin = 0; 
-            end
-            if ~isfield(opts,'Kc')
-                opts.Kc.lin = numel(sdp.g);
-            elseif ~isfield(opts.Kc,'lin')
-                opts.Kc.lin = 0;
-            end
+        end
 
-            % relax problem to smaller easier cones (LP and SOCP)
-            args = struct;
+        % ensure cone has default value
+        if ~isfield(opts,'Kx')
+            opts.Kx.lin = numel(sdp.x);
+        elseif ~isfield(opts.Kx,'lin')
+            opts.Kx.lin = 0; 
+        end
+        if ~isfield(opts,'Kc')
+            opts.Kc.lin = numel(sdp.g);
+        elseif ~isfield(opts.Kc,'lin')
+            opts.Kc.lin = 0;
+        end
 
-            % rebuild problem from SDD to SOCP
-            if isfield(opts.Kx,'sdd') || isfield(opts.Kc,'sdd')
-                [sdp, args, map, opts] = sdd_reduce(obj, sdp, opts);
-                obj.map = map;
-            end
+        % relax problem to smaller easier cones (LP and SOCP)
+        args = struct;
 
-            % rebuild problem from DD to LP
-            if isfield(opts.Kx,'dd') || isfield(opts.Kc,'dd')
-                [sdp, args, map, opts] = dd_reduce(obj, sdp, opts);
-                obj.map = map;
-            end
+        % rebuild problem from SDD to SOCP
+        if isfield(opts.Kx,'sdd') || isfield(opts.Kc,'sdd')
+            [sdp, args, map, opts] = sdd_reduce(obj, sdp, opts);
+            obj.map = map;
+        end
 
-            % if no DD/SDD was present create an identity map
-            if isempty(fieldnames(args))
-                obj.map.x = speye(length(sdp.x));
-                obj.map.g = speye(length(sdp.g));
-            end
+        % rebuild problem from DD to LP
+        if isfield(opts.Kx,'dd') || isfield(opts.Kc,'dd')
+            [sdp, args, map, opts] = dd_reduce(obj, sdp, opts);
+            obj.map = map;
+        end
 
+        % if no DD/SDD was present create an identity map
+        if isempty(fieldnames(args))
+            obj.map.x = speye(length(sdp.x));
+            obj.map.g = speye(length(sdp.g));
         end
 
         % decision variables

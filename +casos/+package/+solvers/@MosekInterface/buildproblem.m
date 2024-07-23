@@ -62,61 +62,73 @@ Kx = opts.Kx;
 Kc = opts.Kc;
 
 % number of variables per cone type
-Nx.l = (obj.getdimc(Kx,'lin'));
-Nx.q = (obj.getdimc(Kx,'lor'));
-Nx.r = (obj.getdimc(Kx,'rot'));
-Nx.s = (obj.getdimc(Kx,'psd'));
+Nx.lin = (obj.getdimc(Kx,'lin'));
+Nx.lor = (obj.getdimc(Kx,'lor'));
+Nx.rot = (obj.getdimc(Kx,'rot'));
+Nx.psd = (obj.getdimc(Kx,'psd'));
+Nx.exp = (obj.getdimc(Kx,'exp'));
+Nx.dexp = (obj.getdimc(Kx,'dexp'));
 
 % number of constraints per cone type
-Na.l = (obj.getdimc(Kc,'lin'));
-Na.q = (obj.getdimc(Kc,'lor'));
-Na.r = (obj.getdimc(Kc,'rot'));
-Na.s = (obj.getdimc(Kc,'psd'));
+Na.lin = (obj.getdimc(Kc,'lin'));
+Na.lor = (obj.getdimc(Kc,'lor'));
+Na.rot = (obj.getdimc(Kc,'rot'));
+Na.psd = (obj.getdimc(Kc,'psd'));
+Na.exp = (obj.getdimc(Kc,'exp'));
+Na.dexp = (obj.getdimc(Kc,'dexp'));
 
+% number of variables in the polynomial cones
+Nx_p = Nx.exp + Nx.dexp;
 % number of vector-valued variables
-Nx_v = n - sum(Nx.s.^2);
+Nx_v = n - sum(Nx.psd.^2) - Nx_p;
 % number of quadratic variables
-Nx_q = sum([Nx.q Nx.r]);
+Nx_q = sum([Nx.lor Nx.rot]);
 % number of conic constraints
-Na_c = m - Na.l;
+Na_c = m - Na.lin;
 % number of quadratic constraints
-Na_q = sum([Na.q Na.r]);
+Na_q = sum([Na.lor Na.rot]);
+% number of polynomial constraints
+Na_p = Na.exp + Na.dexp;
+
+% number of variable constraints
+% to write into affine cone constraints
+Nx_acc = Nx_q + Nx_p;
 
 % semidefinite variables (vectorized)
-Nx_S = Nx.s.*(Nx.s+1)/2;
-Na_S = Na.s.*(Na.s+1)/2;
+Nx_S = Nx.psd.*(Nx.psd+1)/2;
+Na_S = Na.psd.*(Na.psd+1)/2;
 % affine cone constraints (vectorized)
-Na_C = Na_c + sum(Na_S - Na.s.^2);
+Na_C = Na_c + sum(Na_S - Na.psd.^2);
 
-% separate conic bound for vector and matrix conic variables
-[cbx_v,cbx_s] = separate(cbx,[Nx_q sum(Nx.s.^2)]);
+% separate conic bound for vector, matrix, and polynomial conic variables
+[cbx_v,cbx_s,cbx_p] = separate(cbx,[Nx_q sum(Nx.psd.^2) Nx_p]);
 
-% separate linear cost for vector and matrix variables
+% separate linear cost for vector, matrix, and polynomial variables
 % C' = | c : Cbar |
-[Clin,Cbar] = separate(g,[Nx_v sum(Nx.s.^2)],1);
-% linear cost vector
-prob.c = Clin;
+[Clin,Cbar,Cpoly] = separate(g,[Nx_v sum(Nx.psd.^2) Nx_p],1);
+% linear cost vector (vector and polynomial variables)
+prob.c = [Clin; Cpoly];
 % symmetric cost matrices Cbar_j as stacked vectorization
 % Cbar = [Cbar1(:); ...; CbarN(:)]
 % get nonzero elements and subindices (j,k,l)
-[barv.c,barc.subj,~,barc.subk,barc.subl] = obj.sdp_vec(Cbar,Nx.s,1);
+[barv.c,barc.subj,~,barc.subk,barc.subl] = obj.sdp_vec(Cbar,Nx.psd,1);
 
 % separate linear constraints and affine cone constraints
 %     | a : Abar | 
 % A = |----------|
 %     |    F     |
-[A,F] = separate(a,[Na.l Na_c],n);
+[A,F] = separate(a,[Na.lin Na_c],n);
 
-% separate linear constraints for vector and matrix variables
-[Alin,Abar] = separate(A,Na.l,[Nx_v sum(Nx.s.^2)]);
-% linear constraints matrix
-prob.a = Alin;
+% separate linear constraints for vector, matrix, and polynomial variables
+[Alin,Abar,Apoly] = separate(A,Na.lin,[Nx_v sum(Nx.psd.^2) Nx_p]);
+% linear constraints matrix (vector and polynomial variables)
+prob.a = [Alin Apoly];
 % symmetric constraint matrices Abar_ij as stacked vectorizations
 %        | Abar11(:)' ... Abar1N(:)' |
 % Abar = |     :       :      :      |
 %        | AbarM1(:)' ... AbarMN(:)' |
 % get nonzero elements and subindices (i,j,k,l)
-[barv.a,bara.subi,bara.subj,bara.subk,bara.subl] = obj.sdp_vec(Abar,Nx.s,1,2);
+[barv.a,bara.subi,bara.subj,bara.subk,bara.subl] = obj.sdp_vec(Abar,Nx.psd,1,2);
 % rewrite 
 %   lba <= Abar*X <= uba, X in Kx + cbx
 % into
@@ -128,39 +140,41 @@ prob.buc = uba - Acb;
 
 % vectorize semidefinite domain for affine cone constraints
 %     | Fvec |
-% F = |------|
-%     | Fmat |
-Fc = mat2cell(   F,[Na_q sum(Na.s.^2)],n);
-gc = mat2cell(-cba,[Na_q sum(Na.s.^2)],1);
+%     |------|
+% F = | Fmat |
+%     |------|
+%     | Fpol |
+Fc = mat2cell(   F,[Na_q sum(Na.psd.^2) Na_p],n);
+gc = mat2cell(-cba,[Na_q sum(Na.psd.^2) Na_p],1);
 % vector-based vectorization
-Fmat = obj.sdp_vec(Fc{2},Na.s,[],1);
-gmat = obj.sdp_vec(gc{2},Na.s,[],1);
+Fmat = obj.sdp_vec(Fc{2},Na.psd,[],1);
+gmat = obj.sdp_vec(gc{2},Na.psd,[],1);
 % build affine cone constraints
-Facc = vertcat(Fc{1},Fmat);
-gacc = vertcat(gc{1},gmat);
+Facc = vertcat(Fc{1},Fmat,Fc{3});
+gacc = vertcat(gc{1},gmat,gc{3});
 
-% separate affine cone constraints for vector and matrix variables
+% separate affine cone constraints for vector, matrix, and polynomial variables
 % F = | f : Fbar |
-[Flin,Fbar] = separate(Facc,Na_C,[Nx_v sum(Nx.s.^2)]);
+[Flin,Fbar,Fpoly] = separate(Facc,Na_C,[Nx_v sum(Nx.psd.^2) Nx_p]);
 % affine cone constraint matrix
 prob.f = [
-    Flin
-    casadi.DM.triplet((1:Nx_q)-1,Nx.l+(1:Nx_q)-1,ones(Nx_q,1),Nx_q,Nx_v)
+    Flin Fpoly
+    casadi.DM.triplet((1:Nx_acc)-1,Nx.lin+(1:Nx_acc)-1,ones(Nx_acc,1),Nx_acc,Nx_v+Nx_p)
 ];
 % symmetric constraint matrices as stacked vectorization
 % get nonzero elements and subindices (i,j,k,l)
-[barv.f,barf.subi,barf.subj,barf.subk,barf.subl] = obj.sdp_vec(Fbar,Nx.s,1,2);
+[barv.f,barf.subi,barf.subj,barf.subk,barf.subl] = obj.sdp_vec(Fbar,Nx.psd,1,2);
 % rewrite 
 %   Fbar*X + g in Kc, X in Kx + cbx
 % into
 %   Fbar*(X'+cbx) + g in Kc, X' in Kx
 Fcb = Fbar*cbx_s;
 % constant cone
-prob.g = [gacc + Fcb; cbx_v];
+prob.g = [gacc + Fcb; cbx_v; cbx_p];
 
 % linear and vector state constraints
-prob.blx = [lbx; -inf(Nx_q,1)];
-prob.bux = [ubx; +inf(Nx_q,1)];
+prob.blx = [lbx; -inf(Nx_acc,1)];
+prob.bux = [ubx; +inf(Nx_acc,1)];
 
 % handle quadratic cost function
 % MOSEK cannot solve conic problems with quadratic cost
@@ -186,19 +200,19 @@ if nnz(h) > 0
     % number of additional variables and constraints
     Nx_cost = 1;
     Na_cost = n + 2;
-    % separate ACC for vector and matrix variables
-    [Llin,Lbar] = separate(L,Na_cost,[Nx_v+1 sum(Nx.s.^2)]);
+    % separate ACC for vector, matrix, and polynomial variables
+    [Llin,Lbar,Lpoly] = separate(L,Na_cost,[Nx_v+1 sum(Nx.psd.^2) Nx_p]);
     % get nonzero elements and subindices (i,j,k,l) for Lbar
-    [barv_l,barl.subi,barl.subj,barl.subk,barl.subl] = obj.sdp_vec(Lbar,Nx.s,1,2);
+    [barv_l,barl.subi,barl.subj,barl.subk,barl.subl] = obj.sdp_vec(Lbar,Nx.psd,1,2);
     % add to regular (linear) cost
     prob.c = [1; prob.c];
     % add to regular linear constraints
-    prob.a = [casadi.DM(Na.l,1) prob.a];
+    prob.a = [casadi.DM(Na.lin,1) prob.a];
     % add to regular affine cone constraints
-    prob.f = [casadi.DM(Na_C+Nx_q,1) prob.f; Llin];
+    prob.f = [casadi.DM(Na_C+Nx_acc,1) prob.f; Llin Lpoly];
     prob.g = [prob.g; k];
     barv.f = [barv.f barv_l];
-    barf.subi = [barf.subi (Na_C+Nx_q)+barl.subi];
+    barf.subi = [barf.subi (Na_C+Nx_acc)+barl.subi];
     barf.subj = [barf.subj barl.subj];
     barf.subk = [barf.subk barl.subk];
     barf.subl = [barf.subl barl.subl];
@@ -225,14 +239,18 @@ obj.barv = casadi.Function('v',struct2cell(obj.args_in),struct2cell(barv),fieldn
 
 % build conic information
 Accs = [
-    arrayfun(@(l) [symbcon.MSK_DOMAIN_QUADRATIC_CONE  l], Na.q(:), 'UniformOutput',false)
-    arrayfun(@(l) [symbcon.MSK_DOMAIN_RQUADRATIC_CONE l], Na.r(:), 'UniformOutput',false)
+    arrayfun(@(l) [symbcon.MSK_DOMAIN_QUADRATIC_CONE  l], Na.lor(:), 'UniformOutput',false)
+    arrayfun(@(l) [symbcon.MSK_DOMAIN_RQUADRATIC_CONE l], Na.rot(:), 'UniformOutput',false)
     arrayfun(@(d) [symbcon.MSK_DOMAIN_SVEC_PSD_CONE   d], Na_S(:), 'UniformOutput',false)
-    arrayfun(@(l) [symbcon.MSK_DOMAIN_QUADRATIC_CONE  l], Nx.q(:), 'UniformOutput',false)
-    arrayfun(@(l) [symbcon.MSK_DOMAIN_RQUADRATIC_CONE l], Nx.r(:), 'UniformOutput',false)
+          repmat({[symbcon.MSK_DOMAIN_PRIMAL_EXP_CONE 3]}, Na.exp/3, 1)
+          repmat({[symbcon.MSK_DOMAIN_DUAL_EXP_CONE   3]}, Na.dexp/3, 1)
+    arrayfun(@(l) [symbcon.MSK_DOMAIN_QUADRATIC_CONE  l], Nx.lor(:), 'UniformOutput',false)
+    arrayfun(@(l) [symbcon.MSK_DOMAIN_RQUADRATIC_CONE l], Nx.rot(:), 'UniformOutput',false)
+          repmat({[symbcon.MSK_DOMAIN_PRIMAL_EXP_CONE 3]}, Nx.exp/3, 1)
+          repmat({[symbcon.MSK_DOMAIN_DUAL_EXP_CONE   3]}, Nx.dexp/3, 1)
     acc_cost
 ];
-cone.bardim = Nx.s;
+cone.bardim = Nx.psd;
 cone.barc = barc;
 cone.bara = bara;
 cone.barf = barf;
@@ -242,25 +260,25 @@ obj.cone = cone;
 
 % parse MOSEK solution into (x,cost,lam_a,lam_x)
 sol.pobjval = casadi.MX.sym('pobjval');
-sol.xx   = casadi.MX.sym('xx',[Nx_cost+Nx_v 1]);
+sol.xx   = casadi.MX.sym('xx',[Nx_cost+Nx_v+Nx_p 1]);
 sol.barx = casadi.MX.sym('barx',[sum(Nx_S) 1]);
-sol.slc  = casadi.MX.sym('slc',[Na.l 1]);
-sol.suc  = casadi.MX.sym('suc',[Na.l 1]);
-sol.slx  = casadi.MX.sym('slx',[Nx_cost+Nx.l+Nx_q 1]);
-sol.sux  = casadi.MX.sym('sux',[Nx_cost+Nx.l+Nx_q 1]);
-sol.doty = casadi.MX.sym('doty',[Na_q+sum(Na_S)+Nx_q+Na_cost 1]);
+sol.slc  = casadi.MX.sym('slc',[Na.lin 1]);
+sol.suc  = casadi.MX.sym('suc',[Na.lin 1]);
+sol.slx  = casadi.MX.sym('slx',[Nx_cost+Nx.lin+Nx_q+Nx_p 1]);
+sol.sux  = casadi.MX.sym('sux',[Nx_cost+Nx.lin+Nx_q+Nx_p 1]);
+sol.doty = casadi.MX.sym('doty',[Na_q+sum(Na_S)+Na_p+Nx_q+Nx_p+Na_cost 1]);
 sol.bars = casadi.MX.sym('bars',[sum(Nx_S) 1]);
 
 % dual variables corresponding to linear variables
-[~,Slx,~] = separate(sol.slx,[Nx_cost Nx.l Nx_q],1);
-[~,Slu,~] = separate(sol.sux,[Nx_cost Nx.l Nx_q],1);
+[~,Slx,~] = separate(sol.slx,[Nx_cost Nx.lin Nx_q Nx_p],1);
+[~,Slu,~] = separate(sol.sux,[Nx_cost Nx.lin Nx_q Nx_p],1);
 % dual variables corresponding to affine conic constraints
-[Yaq,Yas,Yxq,Ycost] = separate(sol.doty,[Na_q sum(Na_S) Nx_q Na_cost],1);
+[Yaq,Yas,Yap,Yxq,Yxp,Ycost] = separate(sol.doty,[Na_q sum(Na_S) Na_p Nx_q Nx_p Na_cost],1);
 % de-vectorize SDP primal and dual variables (no scaling)
-Xc_s = obj.sdp_mat(sol.barx,Nx.s,1) + cbx_s;
-Sc_s = obj.sdp_mat(sol.bars,Nx.s,1);
+Xc_s = obj.sdp_mat(sol.barx,Nx.psd,1) + cbx_s;
+Sc_s = obj.sdp_mat(sol.bars,Nx.psd,1);
 % de-vectorize duals corresponding to semidefinite constraints
-Yc_s = obj.sdp_mat(Yas,Na.s,1);
+Yc_s = obj.sdp_mat(Yas,Na.psd,1);
 % multipliers for box constraints
 lam_a_l = sol.suc - sol.slc;
 lam_x_l = Slu - Slx;
@@ -270,12 +288,15 @@ lam_x_q = -Yxq;
 % multipliers for SDP constraints
 lam_a_s = -vertcat(Yc_s);
 lam_x_s = -vertcat(Sc_s);
+% multipliers for polynomial constraints
+lam_a_p = -Yap;
+lam_x_p = -Yxp;
 % build multipliers
-lam_a = [lam_a_l; lam_a_q; lam_a_s];
-lam_x = [lam_x_l; lam_x_q; lam_x_s];
+lam_a = [lam_a_l; lam_a_q; lam_a_s; lam_a_p];
+lam_x = [lam_x_l; lam_x_q; lam_x_s; lam_x_p];
 % build solution
-[~,Xc_l] = separate(sol.xx,[Nx_cost Nx_v],1);
-sol_x = vertcat(Xc_l,Xc_s);
+[~,Xc_l,Xc_p] = separate(sol.xx,[Nx_cost Nx_v Nx_p],1);
+sol_x = vertcat(Xc_l,Xc_s,Xc_p);
 % cost
 cost = sol.pobjval;
 

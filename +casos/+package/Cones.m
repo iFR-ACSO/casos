@@ -11,8 +11,10 @@ properties (Constant)
     LOR = {'lor' 'LIST' 'Lorentz (quadratic, second-order) cone.'};
     ROT = {'rot' 'LIST' 'Rotated Lorentz cone.'};
     PSD = {'psd' 'LIST' 'Cone of positive semidefinite matrices.'};
-    DD  = {'dd'  'LIST' 'Cone of symmetric diagonally dominant matrices'};
-    SDD = {'sdd' 'LIST' 'Cone of symmetric scaled diagonally dominant matrices'};
+    EXP = {'exp' 'NUM' 'Primal exponential cone (dimension must be multiple of three).'};
+    DEXP = {'dexp' 'NUM' 'Dual exponential cone (dimension must be multiple of three).'};
+    DD  = {'dd'  'LIST' 'Cone of symmetric diagonally dominant matrices.'};
+    SDD = {'sdd' 'LIST' 'Cone of symmetric scaled diagonally dominant matrices.'};
     % Polynomial cones
     SOS   = {'sos' 'NUM' 'Cone of sum-of-squares polynomials.'}
     DSOS  = {'dsos' 'NUM' 'Cone of diagonally dominant sum-of-squares polynomials.'}
@@ -87,6 +89,11 @@ methods
                 assert(isvector(K.(name)), 'Cone "%s" must be specified as vector.', name);
             case {'struct' 'cones'}
                 assert(isstruct(K.(name)), 'Cone "%s" must be specified as struct.', name);
+        end
+
+        switch (name)
+            case {'exp' 'dexp'}
+                assert(mod(K.(name),3) == 0, 'Dimension of cone "%s" must be multiple of three.', name);
         end
     end
 
