@@ -30,10 +30,12 @@ sos.p = nlsos.p;
 % store user parameter
 p0 = nlsos.p;
 
-
 base_x = sparsity(sos.x);
 
+% current iterate
 xi_k    = casos.PS.sym('xi_k',base_x);
+
+% search direction
 d       = casos.PS.sym('d',base_x);
 
 % Taylor Approximation constraints and evaluate at current solution
@@ -42,13 +44,15 @@ sos.g = linearize(nlsos.g,nlsos.x,xi_k);
 % parameterize cost in hessian
 B_k    = casos.PS.sym('b',[length(poly2basis(xi_k)),length(poly2basis(xi_k))]);
 
+% needed to initialize it later
 obj.sizeHessian = size(B_k);
 
 % needed because we have a parameter vector
 B_k = B_k(:);
 
 % quadratic cost approximation; refactor hessian vector to symmetric matrix
-sos.f =  1/2*poly2basis(sos.x)'* reshape(B_k,[length(poly2basis(xi_k)),length(poly2basis(xi_k))]) * poly2basis(sos.x) + linearize(nlsos.f,nlsos.x,xi_k);
+% f =          1/2 d^T B d + nabla f(x_k)^T*d
+sos.f =  1/2*poly2basis(sos.x)'* reshape(B_k,[length(poly2basis(xi_k)),length(poly2basis(xi_k))]) * poly2basis(sos.x) +  linearize(nlsos.f,sos.x,xi_k);
 
 % extend parameter vector
 sos.p = [p0; xi_k; B_k];
@@ -57,9 +61,9 @@ sos.p = [p0; xi_k; B_k];
 obj.Filter = Filter([]);
 
 % SOS options
-sosopt = opts.sossol_options;
-sosopt.Kx = struct('lin',Nl,'sos',Ns);
-sosopt.Kc = struct('lin',Ml,'sos',Ms);
+sosopt               = opts.sossol_options;
+sosopt.Kx            = struct('lin',Nl,'sos',Ns);
+sosopt.Kc            = struct('lin',Ml,'sos',Ms);
 sosopt.error_on_fail = false;
 
 % initialize convex SOS solver
@@ -77,8 +81,8 @@ obj.sparsity_gs = obj.sossolver.sparsity_gs;
 
 %% Second-order correction
 
-conFun      = casos.Function('f',{sos.x,p0},{nlsos.g});
-derivConFun = casos.Function('f',{sos.x,d,p0},{ dot(jacobian(nlsos.g,sos.x),d) });
+conFun      = casos.Function('f',{sos.x, p0},{nlsos.g});
+derivConFun = casos.Function('f',{xi_k, d,p0},{ dot(jacobian(nlsos.g,xi_k),d) });
 
 % Constraints with second order correction
 correction = conFun(xi_k + d ,p0) - derivConFun(xi_k,d,p0);
@@ -155,6 +159,8 @@ end
     
     % get multiplier for SOS cone projection
     s    = casos.PS.sym('q',grambasis(nlsos.g(I==1))); 
+
+    % Currently just debugging
     x    = casos.Indeterminates('x',6,1);
     
     obj.size_s = length(s);
@@ -164,14 +170,16 @@ end
 
     % projection error
     e = s - nlsos.g(I==1);
-
+    
+    % weight for regularization (parameter)
     zeta = casos.PS.sym('z');
+
+    % current iterate where feas. restoration is called (parameter)
     x0   = casos.PS.sym('xi0',base_x);
     
-    % zeta = 0.1;
     regularization = dot(sos.x-x0,sos.x-x0);
 
-    sosFeas = struct('x',[sos.x; s],... % augment decision variables
+    sosFeas = struct('x',[sos.x; s],...                        % augment decision variables
                      'f',dot(e,e) + zeta*regularization , ...
                      'p',[x0;zeta]);
     
