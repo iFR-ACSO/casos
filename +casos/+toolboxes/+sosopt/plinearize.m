@@ -38,7 +38,7 @@ fx = nabla(f,x);
 % otherwise convert to double
 if any(ismember(fx.indeterminates.str,x.str))
 
-    A = full(subs(fx,x,x0));
+    A = full(subs(fx,[x,u],[x0;u0]));
 
 else
     A = full(fx);
@@ -52,7 +52,7 @@ if ~isempty(u)
     % evaluate it at trim point; otherwise convert to double
     if any(ismember(fu.indeterminates.str,u.str))
       
-        B = full(subs(fu,u,u0));
+        B = full(subs(fu,[x,u],[x0;u0]));
 
     else
         B = full(fu);
