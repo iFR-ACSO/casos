@@ -112,7 +112,7 @@ Vinit = x'*P*x;
 p = x'*x*1e2;
 
 % Lyapunov function candidate
-V = casos.PS.sym('v',monomials(x,2));
+V = casos.PS.sym('v',monomials(x,2:4));
 
 % SOS multiplier
 s2 = casos.PS.sym('s2',monomials(x,2:4));

@@ -95,7 +95,7 @@ tic
 S1 = casos.nlsossol('S1','sequential',sos1,opts);
 toc
 
-sol1 = S1('x0' ,[Vinit; x'*x;1]);
+sol1 = S1('x0' ,[Vinit; 1;1]);
 
 
 % Descale/ scale input
