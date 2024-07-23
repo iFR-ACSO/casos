@@ -61,16 +61,13 @@ pcontour(subs(subs(Vinit,x,D*x),x(3:end),zeros(4,1)),1,[-omega_max omega_max -om
 hold on
 
 % Lyapunov function candidate
-V = casos.PS.sym('v',monomials(x,2:4));%) monomials(x,2:4));
+V = casos.PS.sym('v',monomials(x,2));
 
 % SOS multiplier
-s2 = casos.PS.sym('s2',monomials(x,2:4));
+s2 = casos.PS.sym('s2',monomials(x,2));
 
 % enforce positivity
 l = 1e-6*(x'*x);
-
-% level of stability
-b = casos.PS.sym('b');
 
 % options
 opts = struct('sossol','mosek');
@@ -111,11 +108,12 @@ opts.sossol_options.sdpsol_options.error_on_fail = 0;
 
 tic
 S1 = casos.nlsossol('S1','sequential',sos1,opts);
+
 toc
 
 sol1 = S1('x0' ,[Vinit; (x'*x)]);
 
-profile viewer
+% profile viewer
 
 Vsol = subs(sol1.x(1),x,D*x);
 

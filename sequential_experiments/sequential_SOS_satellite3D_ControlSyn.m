@@ -6,12 +6,13 @@ profile off
 
 
 import casos.toolboxes.sosopt.plinearize
+import casos.toolboxes.sosopt.cleanpoly
 import casos.toolboxes.sosopt.pcontour
 import casos.toolboxes.sosopt.pcontour3
 
 % system states
-x = casos.PS('x',3,1);
-u = casos.PS('u',3,1);
+x = casos.Indeterminates('x',3,1);
+u = casos.Indeterminates('u',3,1);
 
 % Casini Parameter
 J = diag([8970;9230;3830]);
@@ -103,27 +104,25 @@ opts.verbose = 1;
 opts.sossol_options.sdpsol_options.error_on_fail = 0;
 
 
-Vlb  = casos.PS(basis(V), -inf);
-Vub  = casos.PS(basis(V), +inf);
-s2lb = casos.PS(basis(s2),-inf);
-s2ub = casos.PS(basis(s2),+inf);
+Vlb  = casos.PS(sparsity(V), -inf);
+Vub  = casos.PS(sparsity(V), +inf);
+s2lb = casos.PS(sparsity(s2),-inf);
+s2ub = casos.PS(sparsity(s2),+inf);
 
-kappalb = casos.PS(basis(kappa),-inf);
-kappaub = casos.PS(basis(kappa),+inf);
+kappalb = casos.PS(sparsity(kappa),-inf);
+kappaub = casos.PS(sparsity(kappa),+inf);
 
-
-opts.Sequential_Algorithm = 'SQP';
 
 tic
 S1 = casos.nlsossol('S1','sequential',sos1,opts);
 toc
 
-sol1 = S1('x0' ,[x'*x; (x'*x)^2;K], ...
+sol1 = S1('x0' ,[x'*x; (x'*x);ones(3,1)], ...
           'lbx',[Vlb;s2lb;kappalb], ...
           'ubx',[Vub;s2ub;kappaub]);
 
 Vsol = subs(sol1.x(1),x,D*x);
-kappa_sol  = subs(sol1.x(3:end),x,D*x)
+kappa_sol  = subs(sol1.x(3:end),x,D*x);
 
 figure(1)
 pcontour(subs(Vsol,x(3),0),1,[-omega_max omega_max -omega_max omega_max],'r')

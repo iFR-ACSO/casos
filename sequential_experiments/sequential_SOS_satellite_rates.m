@@ -52,10 +52,10 @@ pcontour(subs(Vinit,x(3),0),1,[-omega_max omega_max -omega_max omega_max])
 hold on
 
 % Lyapunov function candidate
-V = casos.PS.sym('v',monomials(x,2));%) monomials(x,2:4));
+V = casos.PS.sym('v',monomials(x,2:4));%) monomials(x,2:4));
 
 % SOS multiplier
-s2 = casos.PS.sym('s2',monomials(x,2:4));
+s2 = casos.PS.sym('s2',monomials(x,2));
 
 s3 = casos.PS.sym('s3',monomials(x,0:2));
 
@@ -108,7 +108,7 @@ tic
 S1 = casos.nlsossol('S1','sequential',sos1,opts);
 toc
 
-sol1 = S1('x0' ,[Vinit; (x'*x)^2]);
+sol1 = S1('x0' ,[Vinit; (x'*x)]);
 
 Vsol = subs(sol1.x(1),x,D*x);
 

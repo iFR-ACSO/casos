@@ -112,39 +112,23 @@ Vinit = x'*P*x;
 p = x'*x*1e2;
 
 % Lyapunov function candidate
-V = casos.PS.sym('v',monomials(x,2:4));
+V = casos.PS.sym('v',monomials(x,2));
 
 % SOS multiplier
-s1 = casos.PS.sym('s1',monomials(x,2));
 s2 = casos.PS.sym('s2',monomials(x,2:4));
 
 % enforce positivity
 l = 1e-6*(x'*x);
 
-% level of stability
-b = casos.PS.sym('b');
 
 % options
 opts = struct('sossol','mosek');
-
 
 gam = 1;
 
 g = Vinit-0.8; 
 
-
-gfun = to_function(g);
-
-a = -1;
-b = 1;
-
-
-r = (b-a).*rand(4,10000) + a;
-gval = full(gfun(r));
-
 cost = dot(g - (V-gam), g - (V-gam));
-
-
 
 %% setup solver
 sos1 = struct('x',[V; s2],...
@@ -160,20 +144,15 @@ opts.Kx      = struct('lin', 2);
 opts.Kc      = struct('sos', 3);
 opts.verbose = 1;
 opts.sossol_options.sdpsol_options.error_on_fail = 0;
-% opts.Sampling_Point = r(:,full(gfun(r)) <= 0 );
-
-% opts.Sequential_Algorithm = 'SQP';
 
 tic
-profile on -historysize 50000000000
 S1 = casos.nlsossol('S1','sequential',sos1,opts);
-toc
+buildtime = toc;
 
 
 sol1 = S1('x0' ,[Vinit^2; (x'*x)^2]);
+disp(['Solver buildtime: ' num2str(buildtime), ' s'])
 
-
-profile viewer
 
 %% plotting
 import casos.toolboxes.sosopt.pcontour

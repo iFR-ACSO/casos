@@ -1,16 +1,20 @@
 % Estimate region of the Generic Transport Model
 % See Chakraborty et al. 2011 (CEP) for details.
 
-import casos.toolboxes.sosopt.*
-
 clear
 close all
 clc
+profile off
 
+
+import casos.toolboxes.sosopt.plinearize
+import casos.toolboxes.sosopt.pcontour
+import casos.toolboxes.sosopt.cleanpoly
+import casos.toolboxes.sosopt.pcontour3
 
 % system states
-x = casos.Indeterminates('x',2,1);
-
+x = casos.Indeterminates('x',4,1);
+u = casos.Indeterminates('u',2,1);
 
 %% Polynomial Dynamics
 f1 = @(V,alpha,q,theta,eta,F) +1.233e-8*V.^4.*q.^2         + 4.853e-9.*alpha.^3.*F.^3    + 3.705e-5*V.^3.*alpha.*q      ...
@@ -74,7 +78,6 @@ delta0  = 14.33;   % percent
 x0 = [v0; alpha0; q0; theta0];
 u0 = [eta0; delta0];
 
-
 % get trim point 
 f = @(x,u) [
                     f1(x(1,:),x(2,:),x(3,:),x(4,:),u(1,:),u(2,:))
@@ -83,20 +86,11 @@ f = @(x,u) [
                     f4(x(1,:),x(2,:),x(3,:),x(4,:),u(1,:),u(2,:))
 ];
 
-% find more accurate trim values  
 [x0, u0] = findtrim(f,x0, u0);
 
-% short period
-f = @(x,u) [
-                    f2(x0(1),x(1),x(2),x0(4),u0(1),u0(2))
-                    f3(x0(1),x(1),x(2),x0(4),u0(1),u0(2))
-];
-
-
 % set up dynamic system
-f = f(x+[x0(2);x0(3)],u0(1));
+f = f(x+x0,u+u0);
 
-% scaling
 d = ([
           convvel(20, 'm/s', 'm/s')  %range.tas.lebesgue.get('ft/s')
           convang(20, 'deg', 'rad')  %range.gamma.lebesgue.get('rad')
@@ -105,72 +99,87 @@ d = ([
 ]);
 
 
-D = diag(d(2:3))^-1;
+% use scaled dynamics to compute initial guess for lyapunov function
+
+
+D = diag(d)^-1;
+
 f = D*subs(f, x, D^-1*x);
 
-f = cleanpoly(f,1e-6,0:5);
+f = cleanpoly(f,1e-6,1:5);
 
-% use scaled dynamics to compute initial guess for lyapunov function
-A = nabla(f,x);
+[A,B] = plinearize(f ,x , u);
+[K0,P] = lqr(A,B,eye(4),eye(2));
 
-A0 = full(subs(A,x,zeros(2,1))); 
+K = -K0*x;
 
-P = lyap(A0',eye(2));
 
 % initial Lyapunov function
 Vinit = x'*P*x;
 
+% polynomial shape
+p = x'*x*1e2;
+
 % Lyapunov function candidate
-V = casos.PS.sym('v',monomials(x,2:4));
+V = casos.PS.sym('v',monomials(x,2));
 
 % SOS multiplier
-s2 = casos.PS.sym('s2',monomials(x,2:4));
+s2    = casos.PS.sym('s2',monomials(x,2:4));
+kappa = casos.PS.sym('kappa',monomials(x,1),[2,1]);
 
 % enforce positivity
 l = 1e-6*(x'*x);
 
-% level of stability
-b = casos.PS.sym('b');
+% options
+opts = struct('sossol','mosek');
 
-g = Vinit-2; 
 
-cost = dot(g - (V-1),g - (V-1)) ;
+gam = 1;
+
+g = Vinit-0.5; 
+
+cost = dot(g - (V-gam), g - (V-gam));
+
 
 
 %% setup solver
-
-% options
-opts = struct('sossol','mosek');
-opts.verbose = 1;
-
-sos1 = struct('x',[V; s2],...
+sos1 = struct('x',[V; s2;kappa],...
               'f',cost, ...
               'p',[]);
 
-% constraints
 sos1.('g') = [s2; 
               V-l; 
-              s2*(V-1)-nabla(V,x)*f-l];
+              s2*(V-gam)-nabla(V,x)*subs(f,u,kappa)-l];
 
-% states + constraint are linear/SOS cones
-opts.Kx = struct('lin', 2);
-opts.Kc = struct('sos', 3);
+% states + constraint are SOS cones
+opts.Kx      = struct('lin', length(sos1.x));
+opts.Kc      = struct('sos', 3);
+opts.verbose = 1;
+opts.sossol_options.sdpsol_options.error_on_fail = 0;
 
-% build solver
+
 tic
+% profile on -historysize 5000000
 S1 = casos.nlsossol('S1','sequential',sos1,opts);
-buildtime = toc;
+toc
 
 
-%% solve
-
-sol1 = S1('x0',[ Vinit;  x'*x]); 
-disp(['Solver buildtime: ' num2str(buildtime), ' s'])
+sol1 = S1('x0' ,[Vinit; (x'*x);K]);
 
 
-%% plot sublevel set
-figure()
-pcontour(g,0,[-2 2 -2 2]*3,'k--')
+%% plotting
+import casos.toolboxes.sosopt.pcontour
+
+xD = D*x;
+V = subs(sol1.x(1),[x(1);x(4)],zeros(2,1));
+V = subs(V,[x(2);x(3)],xD(2:3));
+
+
+g = subs(g,[x(1);x(4)],zeros(2,1));
+g = subs(g,[x(2);x(3)],xD(2:3));
+
+figure(1)
+clf
+pcontour(g, 0, [-1 1 -4 4], 'k--');
 hold on
-pcontour(sol1.x(1),1,[-2 2 -2 2]*3)
-
+pcontour(V, gam, [-1 1 -4 4], 'b-');

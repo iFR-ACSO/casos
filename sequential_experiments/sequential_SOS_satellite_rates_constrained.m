@@ -47,10 +47,10 @@ fc = D*subs(fc,x,D^(-1)*x);
 Vinit = (D^(-1)*x)'*P*(D^(-1)*x);
 
 % Lyapunov function candidate
-V = casos.PS.sym('v',monomials(x,2:4));
+V = casos.PS.sym('v',monomials(x,2));
 
 % SOS multiplier
-s2 = casos.PS.sym('s2',monomials(x,2:4));
+s2 = casos.PS.sym('s2',monomials(x,2));
 s3 = casos.PS.sym('s3',monomials(x,2));
 
 % enforce positivity
@@ -77,6 +77,7 @@ sos1 = struct('x',[V;s2;s3],...
               'f',cost, ...
               'p',[]);
 
+
 sos1.('g') = [s2;
               s3; 
               V - l; 
@@ -94,7 +95,7 @@ tic
 S1 = casos.nlsossol('S1','sequential',sos1,opts);
 toc
 
-sol1 = S1('x0' ,[Vinit^2; (x'*x)^2;(x'*x)]);
+sol1 = S1('x0' ,[Vinit; x'*x;1]);
 
 
 % Descale/ scale input

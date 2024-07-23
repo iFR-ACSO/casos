@@ -11,7 +11,6 @@ clc
 % system states
 x = casos.Indeterminates('x',2,1);
 
-
 %% Polynomial Dynamics
 f1 = @(V,alpha,q,theta,eta,F) +1.233e-8*V.^4.*q.^2         + 4.853e-9.*alpha.^3.*F.^3    + 3.705e-5*V.^3.*alpha.*q      ...
                              - 2.184e-6*V.^3.*q.^2         + 2.203e-2*V.^2.*alpha.^3     - 2.836e-6*alpha.^3.*F.^2      ...
@@ -108,6 +107,7 @@ d = ([
 D = diag(d(2:3))^-1;
 f = D*subs(f, x, D^-1*x);
 
+
 f = cleanpoly(f,1e-6,0:5);
 
 % use scaled dynamics to compute initial guess for lyapunov function
@@ -120,11 +120,14 @@ P = lyap(A0',eye(2));
 % initial Lyapunov function
 Vinit = x'*P*x;
 
+% polynomial shape
+p = x'*x;
+
 % Lyapunov function candidate
-V = casos.PS.sym('v',monomials(x,2:4));
+V = casos.PS.sym('v',monomials(x,2));
 
 % SOS multiplier
-s2 = casos.PS.sym('s2',monomials(x,2:4));
+s2 = casos.PS.sym('s2',monomials(x,2));
 
 % enforce positivity
 l = 1e-6*(x'*x);
@@ -132,45 +135,55 @@ l = 1e-6*(x'*x);
 % level of stability
 b = casos.PS.sym('b');
 
-g = Vinit-2; 
-
-cost = dot(g - (V-1),g - (V-1)) ;
+g0 = Vinit-2; 
 
 
 %% setup solver
-
+% profile on
 % options
 opts = struct('sossol','mosek');
 opts.verbose = 1;
 
-sos1 = struct('x',[V; s2],...
+g = [s2; 
+     V-l; 
+     s2*(V-1)-nabla(V,x)*f-l];
+
+s    = casos.PS.sym('q',grambasis(g(3)));
+
+
+x0 = [1; 1; 
+        x'*x];
+
+cost = dot(s-g(3),s-g(3));
+
+sos1 = struct('x',[V; s2;s],...
               'f',cost, ...
               'p',[]);
 
-% constraints
-sos1.('g') = [s2; 
-              V-l; 
-              s2*(V-1)-nabla(V,x)*f-l];
+sos1.('g') = [g(1:2);s];
 
-% states + constraint are linear/SOS cones
-opts.Kx = struct('lin', 2);
-opts.Kc = struct('sos', 3);
+% states + constraint are SOS cones
+opts.Kx = struct('lin', 2 + length(g(3)));
+opts.Kc = struct('sos', length(sos1.g));
 
-% build solver
+opts.sossol_options.sdpsol_options.error_on_fail = 0;
+
 tic
 S1 = casos.nlsossol('S1','sequential',sos1,opts);
-buildtime = toc;
+toc
 
 
 %% solve
-
-sol1 = S1('x0',[ Vinit;  x'*x]); 
-disp(['Solver buildtime: ' num2str(buildtime), ' s'])
+sol1 = S1('x0',x0);
 
 
-%% plot sublevel set
+% profile viewer
+
+% plotStats(S1.stats.iter);
+
+
 figure()
-pcontour(g,0,[-2 2 -2 2]*3,'k--')
+pcontour(g0,0,[-2 2 -2 2]*3,'k--')
 hold on
-pcontour(sol1.x(1),1,[-2 2 -2 2]*3)
+pcontour(sol1.x(1),1,[-2 2 -2 2])
 
