@@ -1,5 +1,5 @@
-classdef Sequential < casos.package.solvers.SosoptCommon
-% Solve sum-of-squares problems via sequential SOS.
+classdef FeasRes < casos.package.solvers.SosoptCommon
+% Solve sum-of-squares problems via FeasRes SOS.
 
 properties (Access=private)
     sossolver;
@@ -9,12 +9,6 @@ properties (Access=private)
     
     % second-order-correction
     solver_soc
-    
-    % feasibility restoration phase
-    solver_feas_res
-    s0
-    size_s
-    size_x
 
     % BFGS
     BFGS_fun % function to efficiently evaluate BFGS
@@ -44,7 +38,7 @@ properties (Access=private)
 end
 
 properties (Constant,Access=protected)
-    sequential_options = [casos.package.solvers.SosoptCommon.sosopt_options
+    FeasRes_options = [casos.package.solvers.SosoptCommon.sosopt_options
         {'max_iter', 'Maximum number of bisections.'
          'sossol', 'The convex sum-of-squares solver to be used in the subproblem.'
          'sossol_options', 'Options to be passed to the SOS solver.'
@@ -55,13 +49,13 @@ properties (Constant,Access=protected)
 end
 
 properties (SetAccess=private)
-    class_name = 'Sequential';
+    class_name = 'FeasRes';
 end
 
 methods (Static)
     function options = get_options
         % Return static options.
-        options = casos.package.solvers.Sequential.sequential_options;
+        options = casos.package.solvers.FeasRes.FeasRes_options;
     end
 end
 
@@ -71,7 +65,7 @@ methods (Access=protected)
 end
 
 methods
-    function obj = Sequential(name,sos,varargin)
+    function obj = FeasRes(name,sos,varargin)
         obj@casos.package.solvers.SosoptCommon(name,sos,varargin{:});
     
         % states
@@ -89,7 +83,7 @@ methods
         end
         % objective
         if ~isfield(sos,'f')
-            error('No objective given for sequential problem.')
+            error('No objective given for FeasRes problem.')
         else
             sos.f = casos.PS(sos.f);
     
@@ -104,7 +98,7 @@ methods
         end
 
         % default options
-        if ~isfield(obj.opts,'sossol'), obj.opts.sossol = 'sedumi'; end
+        if ~isfield(obj.opts,'sossol'), obj.opts.sossol = 'mosek'; end
         if ~isfield(obj.opts,'sossol_options'), obj.opts.sossol_options = struct; end
         if ~isfield(obj.opts,'max_iter'), obj.opts.max_iter = 1000; end
 

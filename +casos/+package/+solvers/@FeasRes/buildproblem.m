@@ -75,22 +75,6 @@ obj.sparsity_g  = obj.sossolver.sparsity_g;
 obj.sparsity_gl = obj.sossolver.sparsity_gl;
 obj.sparsity_gs = obj.sossolver.sparsity_gs;
 
-%% Second-order correction
-
-conFun      = casos.Function('f',{sos.x,p0},{nlsos.g});
-derivConFun = casos.Function('f',{sos.x,d,p0},{ dot(jacobian(nlsos.g,sos.x),d) });
-
-% Constraints with second order correction
-correction = conFun(xi_k + d ,p0) - derivConFun(xi_k,d,p0);
-
-% get adapted
-sos.g = linearize(nlsos.g,nlsos.x,xi_k) + correction;
-
-sos.p = [p0; xi_k; d; B_k];
-
-% initialize SOS solver for SOC
-obj.solver_soc = casos.package.solvers.sossolInternal('SOS',opts.sossol,sos,sosopt);
-
 %% setup damped BFGS
 lam_gs    =  casos.PS.sym('lam_gs', obj.sparsity_gs);
 
@@ -104,86 +88,46 @@ obj.BFGS_fun =  casadi.Function('f',{B,r,s}, {B + (r*r')/(s'*r) - (B*(s*s')*B)/(
 dLdx = jacobian(nlsos.f + dot(lam_gs,nlsos.g),sos.x)';
 
 % gradient of Langrangian needed for BFGS and for convergence check
-obj.nabla_xi_L      = casos.Function('f',{poly2basis(sos.x),poly2basis(lam_gs),p0}, { op2basis(dLdx) });
-obj.nabla_xi_L_norm = casos.Function('f',{poly2basis(sos.x),poly2basis(lam_gs),p0}, { Fnorm2(dLdx) });
+obj.nabla_xi_L      =  casos.Function('f',{poly2basis(sos.x),poly2basis(lam_gs),poly2basis(p0)}, { op2basis(dLdx) });
+obj.nabla_xi_L_norm = casos.Function('f',{poly2basis(sos.x),poly2basis(lam_gs),poly2basis(p0)}, { Fnorm2(dLdx) });
 
 
 % cost function and gradient needed for filter linesearch
-obj.f          = casos.Function('f',{poly2basis(sos.x),p0}, { nlsos.f });
-obj.nabla_xi_f = casos.Function('f',{poly2basis(sos.x),p0}, { op2basis(jacobian(nlsos.f,sos.x)) });
+obj.f          = casos.Function('f',{poly2basis(sos.x),poly2basis(p0)}, { nlsos.f });
+obj.nabla_xi_f = casos.Function('f',{poly2basis(sos.x),poly2basis(p0)}, { op2basis(jacobian(nlsos.f,sos.x)) });
 
 
 %% setup projection for constraint violation check
 
-% work around for polynomial interface
-obj.xk1fun = casos.Function('f',{poly2basis(sos.x),p0}, {sos.x});
+% % identify nonlinear constraints; work around for polynomial interface
+obj.xk1fun = casos.Function('f',{poly2basis(sos.x),poly2basis(p0)}, {sos.x});
+% 
+% I = zeros(length(nlsos.g),1);
+% for idx = 1:length(nlsos.g)
+%     I(idx) = ~is_linear(nlsos.g(idx),nlsos.x);
+% end
+% 
+% % Gram decision variable
+% s    = casos.PS.sym('q',sparsity(nlsos.g(I==1)));
+% 
+% % parameterized projection for linesearch prediction
+% nonLinCon = nlsos.g(I==1);
+% conFunRed = casos.Function('f',{sos.x,p0}, {nonLinCon});
+% 
+% % projection error
+% e = s - conFunRed(sos.x,p0);
+% 
+% % define Q-SOS problem parameterized nonlinear constraints
+% %   min ||s-p||^2  s.t. s is SOS
+% proj_sos = struct('x',s,'f',dot(e,e),'g',s,'p',[sos.x;p0]);
+% 
+% opts               = [];
+% opts.Kc            = struct('sos', length(s));
+% opts.error_on_fail = 0;
+% obj.projConPara    =  casos.sossol('S','mosek',proj_sos,opts);
 
-% identify nonlinear constraints 
-I = zeros(length(nlsos.g),1);
-for idx = 1:length(nlsos.g)
-    I(idx) = ~is_linear(nlsos.g(idx),nlsos.x);
-end
+% error should be zero anyway
+obj.projConPara    = [];
 
-% Gram decision variable
-s    = casos.PS.sym('q',sparsity(nlsos.g(I==1)));
-
-if ~isempty(s)
-
-    % parameterized projection for linesearch prediction
-    nonLinCon = nlsos.g(I==1);
-    conFunRed = casos.Function('f',{sos.x,p0}, {nonLinCon});
-    
-    % projection error
-    e = s - conFunRed(sos.x,p0);
-    
-    % define Q-SOS problem parameterized nonlinear constraints
-    %   min ||s-p||^2  s.t. s is SOS
-    proj_sos = struct('x',s,'f',dot(e,e),'g',s,'p',[sos.x;p0]);
-    
-    opts               = [];
-    opts.Kc            = struct('sos', length(s));
-    opts.error_on_fail = 1;
-    obj.projConPara    =  casos.sossol('S','mosek',proj_sos,opts);
-else
-
-    obj.projConPara    = [];
-
-end
-
-
-%% feasibility restoration phase
-    
-    % get multiplier for SOS cone projection
-    s    = casos.PS.sym('q',grambasis(nlsos.g(I==1))); 
-    x    = casos.Indeterminates('x',6,1);
-    
-    obj.size_s = length(s);
-    obj.s0     = ones(obj.size_s,1)*(x'*x);
-    obj.size_x = length(sos.x);
-
-
-    % projection error
-    e = s - nlsos.g(I==1);
-
-    zeta = casos.PS.sym('z');
-    x0   = casos.PS.sym('xi0',base_x);
-    
-    % zeta = 0.1;
-    regularization = dot(sos.x-x0,sos.x-x0);
-
-    sosFeas = struct('x',[sos.x; s],... % augment decision variables
-                     'f',dot(e,e) + zeta*regularization , ...
-                     'p',[x0;zeta]);
-    
-    sosFeas.('g') = [nlsos.g(I~=1);s];
-    
-    opts               = [];
-    opts.Kc            = struct('sos', length(sosFeas.g));
-    opts.Kx            = struct('lin', length(sosFeas.x));
-    opts.error_on_fail = 1;
-    opts.verbose       = 1;
-
-    % initialize solver
-    obj.solver_feas_res = casos.nlsossol('S','FeasRes',sosFeas,opts);
 
 end
