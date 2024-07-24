@@ -267,11 +267,17 @@ evaluates the conic solver `S` providing (optional) arguments to describe $H$, $
 
 The options `K_` define the convex cones $\mathcal K$ as well as the number of linear constraints in SDP or conic problems. Each option takes a structure `K` as value which can have the following fields:
 
-- `K.lin` : number of linear constraints; corresponds to the first dimension of $A_\mathrm{l}$, the dimension of $g_\mathrm{l}$, or the dimension of $x_\mathrm{l}$;
-- `K.psd` : list $(s_1, \ldots, s_k)$ of semidefinite cone dimensions, that is, $\mathcal K = \mathbb S_{s_1}^{+} \times \cdots \times \mathbb S_{s_k}^{+}$; the total number of SDP cone constraints is equal to $\sum_i s_i^2$;
-- `K.dd` : list $(d_1, \ldots, d_k)$ of diagonally dominant cone dimensions, that is, $\mathcal K =  DD_{d_1} \times \cdots \times DD_{d_k}$ with $DD_{d}$ being the set of $d \times d$ diagonally dominant matrices; the total number of DD cone constraints is equal to $\sum_i d_i^2$;
-- `K.sdd` : list $(d_1, \ldots, d_k)$ of scaled diagonally dominant cone dimensions, that is, $\mathcal K =  SDD_{s_1} \times \cdots \times SDD_{s_k}$ with $SDD_{s}$ being the set of $s \times s$ scaled diagonally dominant matrices; the total number of SDD cone constraints is equal to $\sum_i d_i^2$;
-- further cones, e.g., the Lorentz (or second-order) cone, are supported depending on the convex solver; the total number of *all* cone constraints corresponds to the first dimension of $A_\mathrm{c}$, the dimension of $g_\mathrm{c}$, or the dimension of $x_\mathrm{c}$;
+- `K.lin` : length $n_\mathrm{l}$ of linear constraints; corresponds to the first dimension of $A_\mathrm{l}$, the dimension of $g_\mathrm{l}$, or the dimension of $x_\mathrm{l}$;
+- `K.lor` : list $(n_1, \ldots, n_k)$ of Lorentz (or second-order) cone dimensions, that is, $\mathcal K = \mathcal Q^{n_1} \times \cdots \times \mathcal Q^{n_k}$;
+- `K.rot` : list $(n_1, \ldots, n_k)$ of rotated Lorentz cone dimensions, that is, $\mathcal K = \mathcal Q_{\mathrm r}^{n_1} \times \cdots \times \mathcal Q_{\mathrm r}^{n_k}$;
+- `K.psd` : list $(m_1, \ldots, m_k)$ of semidefinite cone dimensions, that is, $\mathcal K = \mathbb S_{m_1}^{+} \times \cdots \times \mathbb S_{m_k}^{+}$; the total length of the SDP constraint cone is equal to $\sum_i m_i^2$;
+- further cones, only supported by the MOSEK interface:
+  - `K.pow`, `K.dpow` : structure array `s` with length $k$ describing the (primal / dual) power cones, that is, $\mathcal K = \mathcal P_{n_1}^{\boldsymbol \alpha_1} \times \cdots \times \mathcal P_{n_k}^{\boldsymbol \alpha_k}$; each entry `s(i)` has the fields `'dim'` and `'alpha'` with, respectively, the dimension $n_i$ and the exponents $\boldsymbol \alpha_i = (\alpha_{i,1}, \ldots, \alpha_{i,\ell_i})$; the total length of the (primal / dual) power constraint cone is equal to $\sum_i n_i$;
+  - `K.exp`, `K.dexp` : dimension $n$ of the (primal / dual) exponential cone, that is, $\mathcal K = (\mathcal K_\mathrm{exp})^{n/3}$; note that $\mathcal K_\mathrm{exp}^{(\ast)} \subset \mathbb R^3$ and hence, the dimension $n$ must be a multiple of three. 
+- further matrix cones, only supported by the high-level interface:
+  - `K.dd` : list $(m_1, \ldots, m_k)$ of diagonally dominant cone dimensions, that is, $\mathcal K = DD_{m_1} \times \cdots \times DD_{m_k}$ with $DD_{m}$ being the set of $m \times m$ diagonally dominant matrices; the total length of the DD constraint cone is equal to $\sum_i m_i^2$;
+  - `K.sdd` : list $(m_1, \ldots, m_k)$ of scaled diagonally dominant cone dimensions, that is, $\mathcal K = SDD_{m_1} \times \cdots \times SDD_{m_k}$ with $SDD_{m}$ being the set of $m \times m$ scaled diagonally dominant matrices; the total number of the SDD constraint cone is equal to $\sum_i m_i^2$;
+- the total length of *all* constraint cones corresponds to the first dimension of $A_\mathrm{c}$, the dimension of $g_\mathrm{c}$, or the dimension of $x_\mathrm{c}$;
 
 by default (if the option `K_` is omitted), only linear constraints are enforced.
 
