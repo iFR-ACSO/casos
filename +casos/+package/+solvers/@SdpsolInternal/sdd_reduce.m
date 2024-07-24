@@ -32,11 +32,12 @@ x_original = sdp.x;
 g_original = sdp.g;
 
 M_g = cell(length(Msdd),1);
+% loop to iterate over each SDD cone in the constraints
+eq_constraints_g   = cell(length(Msdd),1);
+ineq_constraints_g = cell(length(Msdd),1);
+
 % Verify SDD cones in the constraints and create slack SDD variables
 if isfield(opts.Kc, 'sdd')
-    % loop to iterate over each SDD cone in the constraints
-    eq_constraints   = cell(length(Msdd),1);
-    ineq_constraints = cell(length(Msdd),1);
 
     for i=1:length(Msdd)
         % locate set of SDD constraints (start from the end)
@@ -57,12 +58,12 @@ if isfield(opts.Kc, 'sdd')
         M_g{i} = casadi.SX.sym(['M_g' num2str(i)], 3*numPairs, 1);
 
         % method by equality constraints and casadi
-        eq_constraints{i} = dd_g-vecY*M_g{i};
+        eq_constraints_g{i} = dd_g-vecY*M_g{i};
 
         M_selector = sparse([1, 2, 3, 4], [1, 3, 3, 2], [1, 1, 1, 1], 4, 3);
 
         % constraints on M to be PSD
-        ineq_constraints{i} = kron(speye(numPairs),M_selector)*M_g{i};
+        ineq_constraints_g{i} = kron(speye(numPairs),M_selector)*M_g{i};
     end
 
     % remove previous constraints related to dd from sdp.g
@@ -70,14 +71,14 @@ if isfield(opts.Kc, 'sdd')
 
     % add new constraints to the place of the linear constraints
     if Mlin~=0
-        sdp.g = [sdp.g(1:Mlin); vertcat(eq_constraints{:}); sdp.g(Mlin+1:end)];
+        sdp.g = [sdp.g(1:Mlin); vertcat(eq_constraints_g{:}); sdp.g(Mlin+1:end)];
     else
-        sdp.g = [vertcat(eq_constraints{:}); sdp.g];
+        sdp.g = [vertcat(eq_constraints_g{:}); sdp.g];
     end
-    sdp.g = [sdp.g; vertcat(ineq_constraints{:})];
+    sdp.g = [sdp.g; vertcat(ineq_constraints_g{:})];
 
     % get number of equality and inequality constraints
-    num_eq   = length(vertcat(eq_constraints{:}));
+    num_eq   = length(vertcat(eq_constraints_g{:}));
     
     % update lower and upper bound on the linear constraints
     args.dd_lbg = [args.dd_lbg; zeros(num_eq, 1)];
@@ -91,11 +92,10 @@ end
 
 % Verify SDD cones in the decision variables
 M_x = cell(length(Nsdd),1);
+% loop to iterate over each SDD cone in the constraints
+eq_constraints_x   = cell(length(Nsdd),1);
+ineq_constraints_x = cell(length(Nsdd),1);
 if isfield(opts.Kx, 'sdd')
-
-    % loop to iterate over each SDD cone in the constraints
-    eq_constraints   = cell(length(Nsdd),1);
-    ineq_constraints = cell(length(Nsdd),1);
 
     for i=1:length(Nsdd)
         % locate set of SDD constraints (start from the end)
@@ -117,25 +117,25 @@ if isfield(opts.Kx, 'sdd')
         M_x{i} = casadi.SX.sym(['M_x' num2str(i)], 3*numPairs, 1);
 
         % method by equality constraints and casadi
-        eq_constraints{i} = dd_x-vecY*M_x{i};
+        eq_constraints_x{i} = dd_x-vecY*M_x{i};
 
         % build vectorized Y
         M_selector = sparse([1, 2, 3, 4], [1, 3, 3, 2], [1, 1, 1, 1], 4, 3);
 
         % constraints on M to be PSD
-        ineq_constraints{i} = kron(speye(numPairs),M_selector)*M_x{i}; 
+        ineq_constraints_x{i} = kron(speye(numPairs),M_selector)*M_x{i}; 
     end
 
     % add new constraints to the place of the linear constraints
     if Mlin~=0
-        sdp.g = [sdp.g(1:Mlin); vertcat(eq_constraints{:}); sdp.g(Mlin+1:end)];
+        sdp.g = [sdp.g(1:Mlin); vertcat(eq_constraints_x{:}); sdp.g(Mlin+1:end)];
     else
-        sdp.g = [vertcat(eq_constraints{:}); sdp.g];
+        sdp.g = [vertcat(eq_constraints_x{:}); sdp.g];
     end
-    sdp.g = [sdp.g; vertcat(ineq_constraints{:})];
+    sdp.g = [sdp.g; vertcat(ineq_constraints_x{:})];
     
     % number of new equality and cone constainemnt constraints
-    num_eq   = length(vertcat(eq_constraints{:}));
+    num_eq   = length(vertcat(eq_constraints_x{:}));
 
     % update lower and upper bound on the linear constraints
     args.dd_lbg = [args.dd_lbg; zeros(num_eq, 1)];
@@ -152,7 +152,7 @@ sdp.x = [sdp.x(1:Nlin); vertcat(M_g{:}); vertcat(M_x{:}); sdp.x(Nlin+1:end)];
 
 % update linear variables and constraints
 opts.Kx = setfield(opts.Kx,'lin', Nlin + sum(Nsdd.^2) + length(vertcat(M_g{:})) + length(vertcat(M_x{:})));
-opts.Kc = setfield(opts.Kc,'lin', Mlin + length(vertcat(eq_constraints{:})));
+opts.Kc = setfield(opts.Kc,'lin', Mlin + length(vertcat(eq_constraints_x{:}))+length(vertcat(eq_constraints_g{:})));
 opts.Kc = setfield(opts.Kc,'psd', [Mpsd, repmat(2, 1, length(vertcat(M_g{:}))/3+length(vertcat(M_x{:}))/3)]);
 
 % map from new sdp.x to old
