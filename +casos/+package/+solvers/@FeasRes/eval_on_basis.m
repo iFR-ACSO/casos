@@ -26,7 +26,7 @@ function argout = eval_on_basis(obj,argin)
     
    conVio_xi0   = 0;
     
-   curr_cost   = inf;
+   curr_cost   = full(casadi.DM(p0(end)));
    curr_conVio = conVio_xi0;
     
    % initialize filter
@@ -80,7 +80,7 @@ function argout = eval_on_basis(obj,argin)
 
         %% backtracking line search filter 
         alpha_max            = 1;
-        alpha_min            = 0.0001;
+        alpha_min            = 0.00001;
         tau                  = 0.5;
         
         alpha_k = alpha_max;
@@ -127,10 +127,24 @@ function argout = eval_on_basis(obj,argin)
         if alpha_k < alpha_min
         
           printf(obj.log,'error','Feasibility restoration unsuccesful.\n');
-          error('Problem seems infeasible.')
 
         
-         % % terminate
+           % store iteration info
+           info(i+1:end) = [];
+           obj.info.iter = info;
+               
+           % adjust last solution similar to iteration i.e. overwrite optimization solution 
+           sol{1} = xi_k1;
+           sol{5} = dual_k1;
+               
+          argout = sol;
+        
+          printf(obj.log,'debug','Feasibility restoration unsuccesful.\n'); 
+        
+          % terminate
+          return
+
+          % terminate
          % return
           
         end
@@ -160,11 +174,11 @@ function argout = eval_on_basis(obj,argin)
         end
             
         %% check convergence criteria
-        optimality_flag =   max ([full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k,dual_star,p0)))),new_conVio]) <= 1e-6;
+        optimality_flag =   max([full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k,dual_star,p0)))), new_cost]) <= 1e-5;
         
         % check if solution stays below tolerance for a certain number of
         % iterations --> solved to acceptable level
-        if ([full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k,dual_star,p0)))),new_conVio]) <= 1e-4
+        if ([full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k,dual_star,p0)))), new_cost]) <= 1e-4
             counter = counter + 1;
         else
             counter = 0;
@@ -205,6 +219,25 @@ function argout = eval_on_basis(obj,argin)
         
                    printf(obj.log,'debug','----------------------------------------------------------------------------------------------------------------------\n');
                    printf(obj.log,'debug','Solution status: Solved to acceptable level\n'); 
+                   printf(obj.log,'debug',['Solution time: ' num2str(toc) ' s\n']); 
+        
+                   % terminate
+                   return
+
+        elseif i == obj.opts.max_iter
+                
+                             % store iteration info
+                  info(i+1:end) = [];
+                  obj.info.iter = info;
+               
+                   % adjust last solution similar to iteration i.e. overwrite optimization solution 
+                   sol{1} = xi_k1;
+                   sol{5} = dual_k1;
+               
+                   argout = sol;
+        
+                   printf(obj.log,'debug','----------------------------------------------------------------------------------------------------------------------\n');
+                   printf(obj.log,'debug','Solution status: Maximum number of iterations reached\n'); 
                    printf(obj.log,'debug',['Solution time: ' num2str(toc) ' s\n']); 
         
                    % terminate
