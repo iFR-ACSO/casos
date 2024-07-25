@@ -110,6 +110,7 @@ buildtime = toc(buildTime_in);
 
 % solve
 sol = solver_Satellite3D_syn('x0' ,[x'*x; (x'*x);ones(3,1)]);
+disp(['Solver buildtime: ' num2str(buildtime), ' s'])
 
 % plot solver statistics
 plotSolverStats(solver_Satellite3D_syn.stats);
