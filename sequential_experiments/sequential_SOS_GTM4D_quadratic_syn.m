@@ -128,7 +128,7 @@ opts = struct('sossol','mosek');
 
 gam = 1;
 
-g = Vinit-0.5; 
+g = Vinit-2; 
 
 cost = dot(g - (V-gam), g - (V-gam));
 

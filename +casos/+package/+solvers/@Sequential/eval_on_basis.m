@@ -74,14 +74,14 @@ function argout = eval_on_basis(obj,argin)
                     dual_star = sol{5};
 
             case UnifiedReturnStatus.SOLVER_RET_INFEASIBLE
-                               %% go to feasibility restoration phase
+                    %% go to feasibility restoration phase
 					printf(obj.log,'debug',['Subproblem infeasible in iteration ' num2str(i)   '. Go to feasibility restoration.\n']);
     
 					% prepare polynomial input to high-level solver
 					polySol = obj.xk1fun(xi_k,p0);
     
 					sol_feas_res = obj.solver_feas_res('x0',[casos.PS(polySol) ; obj.s0 ],...
-													   'p',[casos.PS(polySol);0;inf]); 
+													   'p', [casos.PS(polySol);0;inf]); 
     
     
 					xi_feas      = poly2basis(sol_feas_res.x(1:obj.size_x));
@@ -263,30 +263,34 @@ function argout = eval_on_basis(obj,argin)
 			% prepare polynomial input to high-level solver
 			polySol = obj.xk1fun(xi_k1,p0);
 
-  
-			zeta_val     = 0.01;
-			sol_feas_res = obj.solver_feas_res('x0',[casos.PS(polySol) ; obj.s0 ],...
-                                               'p',  [casos.PS(polySol);zeta_val;curr_conVio]); 
+
+			     zeta_val     = 0.3;
+        
+			    sol_feas_res = obj.solver_feas_res('x0',[casos.PS(polySol) ; obj.s0],...
+                                                   'p',  [casos.PS(polySol);zeta_val;curr_conVio]); 
+        
+			    % extract solution
+			    xi_feas      = poly2basis(sol_feas_res.x(1:obj.size_x));
     
-			% extract solution
-			xi_feas      = poly2basis(sol_feas_res.x(1:obj.size_x));
+    
+			    % estimate constraint violation because feasibility
+			    % restoration potentially considers regularization term
+			    solPara_proj = obj.projConPara('p',[obj.xk1fun(xi_feas,p0);p0]);
+			    new_conVio   = full(solPara_proj.f);
+                
+			    % check for filter acceptance
+			    [obj.Filter,~,accept_FeasResStep] = obj.Filter.updateFilter(alpha_k,...
+																		    full(casadi.DM(xi_feas)), ...
+																		    curr_cost, ....
+																		    curr_conVio,....
+																		    full(casadi.DM(full(obj.f(xi_feas,p0)))),...
+																		    new_conVio,....
+																		    full(casadi.DM(full(obj.nabla_xi_f(xi_feas,p0))))');
+    
+  
+   
 
-
-			% estimate constraint violation because feasibility
-			% restoration potentially considers regularization term
-			solPara_proj = obj.projConPara('p',[obj.xk1fun(xi_feas,p0);p0]);
-			new_conVio   = full(solPara_proj.f);
-            
-			% check for filter acceptance
-			[obj.Filter,~,accept_FeasResStep] = obj.Filter.updateFilter(alpha_k,...
-																		full(casadi.DM(xi_feas)), ...
-																		curr_cost, ....
-																		curr_conVio,....
-																		full(casadi.DM(full(obj.f(xi_feas,p0)))),...
-																		new_conVio,....
-																		full(casadi.DM(full(obj.nabla_xi_f(xi_feas,p0))))');
-
-			if accept_FeasResStep && new_conVio < curr_conVio
+			if accept_FeasResStep 
 
 				% solve new iterate
 				xi_k  = xi_feas;
@@ -295,21 +299,34 @@ function argout = eval_on_basis(obj,argin)
 				% restart conic subproblem from new solution
 				continue
 
-			else
-              
-				% store iteration info
-				info{i+1}.seqSOS_common_stats.solve_time_iter  = toc(measTime_seqSOS__iter_in);
-				info{i+1}.seqSOS_common_stats.solve_time = toc(measTime_seqSOS_in);
-				info(i+2:end) = [];
-				obj.info.iter = info;
-           
+            else
 
-				% compute dual variables
+                % compute dual variables
 				if ~isempty(dual_k)
                     dual_k1 = dual_k + alpha_k*(dual_star - dual_k);
 				else
                     dual_k1 = dual_star;
                 end
+              
+				% store iteration info
+				info{i+1}.seqSOS_common_stats.solve_time_iter  = toc(measTime_seqSOS__iter_in);
+				info{i+1}.seqSOS_common_stats.solve_time       = toc(measTime_seqSOS_in);
+                
+			    delta_xi_double   = norm(full( casadi.DM(xi_k1 - xi_k)),inf); 
+			    delta_dual_double = norm(full( (dual_k1 - dual_k)),inf);
+
+                    % store common optimization data
+                    info{i+1}.seqSOS_common_stats.delta_prim  = delta_xi_double;
+                    info{i+1}.seqSOS_common_stats.delta_dual  = delta_dual_double;
+                    info{i+1}.seqSOS_common_stats.conViol     = new_conVio;
+                    info{i+1}.seqSOS_common_stats.gradLang    = full(casadi.DM(full(obj.nabla_xi_L_norm(xi_feas,dual_star,p0))));
+
+
+				info(i+2:end) = [];
+				obj.info.iter = info;
+           
+
+			
 
 				% adjust last solution similar to iteration i.e. overwrite optimization solution 
 				sol{1} = xi_k1;

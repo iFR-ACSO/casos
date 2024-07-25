@@ -91,7 +91,6 @@ dLdx = jacobian(nlsos.f + dot(lam_gs,nlsos.g),sos.x)';
 obj.nabla_xi_L      =  casos.Function('f',{poly2basis(sos.x),poly2basis(lam_gs),poly2basis(p0)}, { op2basis(dLdx) });
 obj.nabla_xi_L_norm = casos.Function('f',{poly2basis(sos.x),poly2basis(lam_gs),poly2basis(p0)}, { Fnorm2(dLdx) });
 
-
 % cost function and gradient needed for filter linesearch
 obj.f          = casos.Function('f',{poly2basis(sos.x),poly2basis(p0)}, { nlsos.f });
 obj.nabla_xi_f = casos.Function('f',{poly2basis(sos.x),poly2basis(p0)}, { op2basis(jacobian(nlsos.f,sos.x)) });
@@ -101,30 +100,6 @@ obj.nabla_xi_f = casos.Function('f',{poly2basis(sos.x),poly2basis(p0)}, { op2bas
 
 % % identify nonlinear constraints; work around for polynomial interface
 obj.xk1fun = casos.Function('f',{poly2basis(sos.x),poly2basis(p0)}, {sos.x});
-% 
-% I = zeros(length(nlsos.g),1);
-% for idx = 1:length(nlsos.g)
-%     I(idx) = ~is_linear(nlsos.g(idx),nlsos.x);
-% end
-% 
-% % Gram decision variable
-% s    = casos.PS.sym('q',sparsity(nlsos.g(I==1)));
-% 
-% % parameterized projection for linesearch prediction
-% nonLinCon = nlsos.g(I==1);
-% conFunRed = casos.Function('f',{sos.x,p0}, {nonLinCon});
-% 
-% % projection error
-% e = s - conFunRed(sos.x,p0);
-% 
-% % define Q-SOS problem parameterized nonlinear constraints
-% %   min ||s-p||^2  s.t. s is SOS
-% proj_sos = struct('x',s,'f',dot(e,e),'g',s,'p',[sos.x;p0]);
-% 
-% opts               = [];
-% opts.Kc            = struct('sos', length(s));
-% opts.error_on_fail = 0;
-% obj.projConPara    =  casos.sossol('S','mosek',proj_sos,opts);
 
 % error should be zero anyway
 obj.projConPara    = [];

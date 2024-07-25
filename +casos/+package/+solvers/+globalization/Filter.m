@@ -137,7 +137,7 @@ classdef Filter
               if sum(dom_logi_arr,2) ~= 0  % row-wise sum must be unequal to 0
                   FilterAcceptFlag = 1;
                      % augment filter
-                   obj.filter = vertcat(obj.filter, [new_cost,new_conVio]);
+                   % obj.filter = vertcat(obj.filter, [new_cost,new_conVio]);
               else
                   FilterAcceptFlag = 0;
               end
@@ -177,7 +177,7 @@ classdef Filter
                 else
 
                    % augment filter
-                   % obj.filter = vertcat(obj.filter, [curr_cost, curr_conVio]);
+                   obj.filter = vertcat(obj.filter, [curr_cost, curr_conVio]);
                     
                    % check if the cost or constraint violation of new iterate is at least as good as the
                    % current iterate

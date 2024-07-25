@@ -80,7 +80,7 @@ function argout = eval_on_basis(obj,argin)
 
         %% backtracking line search filter 
         alpha_max            = 1;
-        alpha_min            = 0.00001;
+        alpha_min            = 0.001;
         tau                  = 0.5;
         
         alpha_k = alpha_max;
@@ -126,7 +126,7 @@ function argout = eval_on_basis(obj,argin)
                 
         if alpha_k < alpha_min
         
-          printf(obj.log,'error','Feasibility restoration unsuccesful.\n');
+          % printf(obj.log,'error','Feasibility restoration unsuccesful.\n');
 
         
            % store iteration info
@@ -139,13 +139,10 @@ function argout = eval_on_basis(obj,argin)
                
           argout = sol;
         
-          printf(obj.log,'debug','Feasibility restoration unsuccesful.\n'); 
+          % printf(obj.log,'debug','Feasibility restoration unsuccesful.\n'); 
         
           % terminate
           return
-
-          % terminate
-         % return
           
         end
 
@@ -174,11 +171,11 @@ function argout = eval_on_basis(obj,argin)
         end
             
         %% check convergence criteria
-        optimality_flag =   max([full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k,dual_star,p0)))), new_cost]) <= 1e-5;
+        optimality_flag =  new_cost <= 1e-8;% max([full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k,dual_star,p0)))), new_cost]) <= 1e-4;
         
         % check if solution stays below tolerance for a certain number of
         % iterations --> solved to acceptable level
-        if ([full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k,dual_star,p0)))), new_cost]) <= 1e-4
+        if new_cost <= 1e-6%([full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k,dual_star,p0)))), new_cost]) <= 1e-3
             counter = counter + 1;
         else
             counter = 0;
