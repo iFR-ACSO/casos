@@ -36,6 +36,7 @@ function argout = eval_on_basis(obj,argin)
         curr_cost   = inf;
 	end
     
+    counter = 0;
 
 	% initialize filter
 	obj.Filter =  obj.Filter.initializeFilter(curr_conVio ,curr_cost);
