@@ -13,6 +13,7 @@ properties (Access=private)
     % feasibility restoration phase
     solver_feas_res
     s0
+    feas_res_cost
     size_s
     size_x
 

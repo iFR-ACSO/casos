@@ -19,7 +19,7 @@ function argout = eval_on_basis(obj,argin)
     p0   = args{2};
     
     % initialize Hessian/BFGS approximation
-    B = eye(obj.sizeHessian(1));
+    Bk = eye(obj.sizeHessian(1));
  
     dual_k = [];
     
@@ -40,15 +40,15 @@ function argout = eval_on_basis(obj,argin)
    % initialize filter
    obj.Filter =  obj.Filter.initializeFilter(curr_conVio ,curr_cost);
 
-   tic
+   measTime_seqSOS_in = tic; % measure overall solve time
    % solve nonconvex SOS problem via sequence of convex SOS problem
     for i = 1:obj.opts.max_iter
-
+        measTime_seqSOS__iter_in = tic;
         % initial guesss; actually not used but just for completness
         args{1} = xi_k;
     
         % set parameter to convex problem
-        args{2}  = [p0; xi_k; B(:)];
+        args{2}  = [p0; xi_k; Bk(:)];
 
         % adjust bounds
         args{3}  = argin{3} - xi_k;
@@ -58,7 +58,7 @@ function argout = eval_on_basis(obj,argin)
         sol = eval_on_basis(obj.sossolver, args);
            
         % store iteration info
-        info{i} = obj.sossolver.get_stats;
+        info{i}.subProb_stats = obj.sossolver.get_stats;
         
         % check if subproblem is feasible
         switch ( obj.sossolver.get_stats.UNIFIED_RETURN_STATUS)
@@ -74,14 +74,13 @@ function argout = eval_on_basis(obj,argin)
 
             case UnifiedReturnStatus.SOLVER_RET_INFEASIBLE
                                %% go to feasibility restoration phase
-            printf(obj.log,'debug','----------------------------------------------------------------------------------------------------------------------\n');
-            printf(obj.log,'debug','Subproblem infeasible: Go to feasibility restoration\n');
+            printf(obj.log,'debug',['Subproblem infeasible in ' num2str(i) ' iteration:  Go to feasibility restoration\n']);
     
                 % prepare polynomial input to high-level solver
                polySol = obj.xk1fun(xi_k,p0);
     
                sol_feas_res = obj.solver_feas_res('x0',[casos.PS(polySol) ; obj.s0 ],...
-                                                  'p',[casos.PS(polySol);0]); 
+                                                  'p',[casos.PS(polySol);0;inf]); 
     
     
               xi_feas      = poly2basis(sol_feas_res.x(1:obj.size_x));
@@ -97,9 +96,11 @@ function argout = eval_on_basis(obj,argin)
             if accept_FeasResStep
                % solve new iterate
                xi_k  = xi_feas;
+               printf(obj.log,'debug', 'Feasibility restoration iterate accepted to filter. Continue original problem \n');
               continue
             else
-                error('Problem seems infeasible')
+                info{i}.seqSOS_common_stats.solve_time = toc(measTime_seqSOS_in);
+                error('Problem seems locally infeasible!')
             end
              
 
@@ -113,11 +114,12 @@ function argout = eval_on_basis(obj,argin)
 
         %% backtracking line search filter 
         alpha_max            = 1;
-        alpha_min            = 0.0001;
+        alpha_min            = 0.001;
         tau                  = 0.5;
         
         alpha_k = alpha_max;
 		
+        measTime_filter_in = tic;
         while alpha_k >= alpha_min
                 
             % new-iterate
@@ -127,10 +129,13 @@ function argout = eval_on_basis(obj,argin)
             new_cost     = full(casadi.DM(full(obj.f(xi_k1,p0))));
             nabla_xi_f   = full(casadi.DM(full(obj.nabla_xi_f(xi_k1,p0))))';
             
+            % check constraint violation (projection onto SOS cone)
             if ~isempty(obj.projConPara)
-
-                solPara_proj = obj.projConPara('p',[obj.xk1fun(xi_k1,p0);p0]);
-                new_conVio   = full(solPara_proj.f);
+                
+                measTime_Proj_in = tic;
+                    solPara_proj = obj.projConPara('p',[obj.xk1fun(xi_k1,p0);p0]);
+                    new_conVio   = full(solPara_proj.f);
+                info{i}.filter_stats.measTime_proj_out = toc(measTime_Proj_in);
 
             else
 
@@ -153,20 +158,21 @@ function argout = eval_on_basis(obj,argin)
                 break
         
             % second-order correction
-            elseif ~accept_new_iter && goto_SOC && alpha_k >= alpha_max/2
+            elseif ~accept_new_iter && goto_SOC && alpha_k == alpha_max
             
         
                      d_corr_full = d_star;
                      
                      p    = 1;
                      pmax = 5;
-
+                    
+                     measTime_SOC_in = tic;
                      % perform for maximum number of SOC iterations
                      while p < pmax 
                         
                         % adjust parameter for soc
                         args_solver    = args;
-                        args_solver{2} = [p0; xi_k; d_corr_full; B(:)];
+                        args_solver{2} = [p0; xi_k; d_corr_full; Bk(:)];
         
                          % evaluate subproblem of SOC
                         sol_soc = eval_on_basis(obj.solver_soc, args_solver);
@@ -183,7 +189,8 @@ function argout = eval_on_basis(obj,argin)
                         % check cost, gradient of cost and constraint violation
                         new_cost     = full(casadi.DM(full(obj.f(x_soc_trial,p0))));
                         nabla_xi_f   = full(casadi.DM(full(obj.nabla_xi_f(x_soc_trial,p0))))';
-                
+                        
+                        % check constraint violation (projection onto SOS cone)
                         solPara_proj = obj.projConPara('p',[obj.xk1fun(x_soc_trial,p0);p0]);
                         new_conVio   = full(solPara_proj.f);
                             
@@ -215,6 +222,7 @@ function argout = eval_on_basis(obj,argin)
                             end
                             
                      end % --- end of while SOC ---
+                     info{i}.filter_stats.measTime_SOC_out = toc(measTime_SOC_in);
         
             else
                     % not acceptable to filter, adjust step length
@@ -225,54 +233,88 @@ function argout = eval_on_basis(obj,argin)
       
 
         end % --- end while ---
-
+        measTime_filter_out = toc(measTime_filter_in);
+        
+        % store some metrics about filter
+        info{i}.filter_stats.alpha_k  = alpha_k;
+        info{i}.filter_stats.measTime = measTime_filter_out;
                 
-            if alpha_k < alpha_min
+        if alpha_k < alpha_min
     
-            %% go to feasibility restoration phase
-            printf(obj.log,'debug','----------------------------------------------------------------------------------------------------------------------\n');
-            printf(obj.log,'debug','step length below minimum step length: Go to feasibility restoration\n');
+        % go to feasibility restoration phase
+        printf(obj.log,'debug',['Step length below minimum step length ' num2str(i) ' iteration:  Go to feasibility restoration\n']);
     
-                % prepare polynomial input to high-level solver
-               polySol = obj.xk1fun(xi_k1,p0);
-                xmax = 1;
-               zeta_val     = 1/xmax^2* full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k1,dual_k1,p0))))^2; % To do: add poly. interpolation
-               if zeta_val >= xmax
-                   zeta_val = xmax;
-               end
-               zeta_val = 0.5;
-               sol_feas_res = obj.solver_feas_res('x0',[casos.PS(polySol) ; obj.s0 ],...
-                                                  'p',  [casos.PS(polySol);zeta_val]); 
+           % prepare polynomial input to high-level solver
+           polySol = obj.xk1fun(xi_k1,p0);
+
+  
+           zeta_val     = 0.5;
+           sol_feas_res = obj.solver_feas_res('x0',[casos.PS(polySol) ; obj.s0 ],...
+                                              'p',  [casos.PS(polySol);zeta_val;curr_conVio]); 
     
-    
-              xi_feas      = poly2basis(sol_feas_res.x(1:obj.size_x));
+          % extract solution
+          xi_feas      = poly2basis(sol_feas_res.x(1:obj.size_x));
 
 
+          % estimate constraint violation because feasibility
+          % restoration potentially considers regularization term
+          solPara_proj = obj.projConPara('p',[obj.xk1fun(xi_feas,p0);p0]);
+          new_conVio   = full(solPara_proj.f);
+            
+          % check for filter acceptance
+          [obj.Filter,~,accept_FeasResStep] = obj.Filter.updateFilter(alpha_k,...
+                                                                      full(casadi.DM(xi_feas)), ...
+                                                                      curr_cost, ....
+                                                                      curr_conVio,....
+                                                                      full(casadi.DM(full(obj.f(xi_feas,p0)))),...
+                                                                      new_conVio,....
+                                                                      full(casadi.DM(full(obj.nabla_xi_f(xi_feas,p0))))');
+
+        if accept_FeasResStep && new_conVio < curr_conVio
+
+           % solve new iterate
+           xi_k  = xi_feas;
+           printf(obj.log,'debug', 'Feasibility restoration iterate accepted to filter. Continue original problem \n');
+
+          % restart conic subproblem from new solution
+          continue
+
+        else
               
-               solPara_proj = obj.projConPara('p',[obj.xk1fun(xi_feas,p0);p0]);
-               new_conVio   = full(solPara_proj.f);
+              % store iteration info
+              info{i}.seqSOS_common_stats.solve_time_iter  = toc(measTime_seqSOS__iter_in);
+              info{i}.seqSOS_common_stats.solve_time = toc(measTime_seqSOS_in);
+              info(i+1:end) = [];
+              obj.info.iter = info;
+           
 
-              [obj.Filter,~,accept_FeasResStep] = obj.Filter.updateFilter(alpha_k,...
-                                                                          full(casadi.DM(xi_feas)), ...
-                                                                          curr_cost, ....
-                                                                          curr_conVio,....
-                                                                          full(casadi.DM(full(obj.f(xi_feas,p0)))),...
-                                                                          new_conVio,....
-                                                                          full(casadi.DM(full(obj.nabla_xi_f(xi_feas,p0))))');
+                % compute dual variables
+                 if ~isempty(dual_k)
+                    dual_k1 = dual_k + alpha_k*(dual_star - dual_k);
+                else
+                    dual_k1 = dual_star;
+                 end
 
-            if accept_FeasResStep
-               % solve new iterate
-               xi_k  = xi_feas;
-              continue
-            else
-                error('Problem seems infeasible')
-            end
-             
+               % adjust last solution similar to iteration i.e. overwrite optimization solution 
+               sol{1} = xi_k1;
+               sol{5} = dual_k1;
+           
+               argout = sol;
+        
+               printf(obj.log,'debug','----------------------------------------------------------------------------------------------------------------------\n');
+               printf(obj.log,'debug','Solution status: Solver stalled (not progress after feasibility restoration)\n'); 
+               printf(obj.log,'debug',['Solution time: ' num2str(toc) ' s\n']); 
+
+        
+               % terminate
+               return
+        end
+         
     
-            end
+        end % --- end of step-length step ---
 
 
-        % set new iterate for next iteration
+        % prepare new constraint violation/cost for next iteration (filter)
         curr_conVio = new_conVio;
         curr_cost   = new_cost;
         
@@ -288,89 +330,134 @@ function argout = eval_on_basis(obj,argin)
         %% Prepare display output 
         if ~isempty(dual_k)
         
-        delta_xi_double   = norm(full( d_star),inf); 
-        delta_dual_double = norm(full( (dual_k1 - dual_k)),inf);
+			delta_xi_double   = norm(full( casadi.DM(xi_k1 - xi_k)),inf); 
+			delta_dual_double = norm(full( (dual_k1 - dual_k)),inf);
         
         
-          printf(obj.log,'debug','%-15d%-15e%-20e%-20e%-20e%-15.4f%-18e\n',...
+			printf(obj.log,'debug','%-15d%-15e%-20e%-20e%-20e%-15.4f%-18e\n',...
                  i, new_cost , delta_xi_double, delta_dual_double, new_conVio , alpha_k , full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k1,dual_k1,p0))))    );
+            
+            % store common optimization data
+            info{i}.seqSOS_common_stats.delta_prim  = delta_xi_double;
+            info{i}.seqSOS_common_stats.delta_dual  = delta_dual_double;
+            info{i}.seqSOS_common_stats.conViol     = new_conVio;
+            info{i}.seqSOS_common_stats.gradLang    = full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k1,dual_star,p0))));
         
         else
         
-            delta_xi_double   = norm( full( d_star    ), inf ); 
+            delta_xi_double   = norm( full( casadi.DM(xi_k)    ), inf ); 
             delta_dual_double = norm( full( dual_star ), inf );
             
-          printf(obj.log,'debug','%-15d%-15e%-20e%-20e%-20e%-15.4f%-18e\n',...
+			printf(obj.log,'debug','%-15d%-15e%-20e%-20e%-20e%-15.4f%-18e\n',...
                  i, new_cost, delta_xi_double, delta_dual_double, new_conVio, alpha_k , full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k,dual_star,p0))))   );
+            
+            % store common optimization data
+            info{i}.seqSOS_common_stats.delta_prim  = delta_xi_double;
+            info{i}.seqSOS_common_stats.delta_dual  = delta_dual_double;
+            info{i}.seqSOS_common_stats.conViol     = new_conVio;
+            info{i}.seqSOS_common_stats.gradLang    = full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k,dual_star,p0))));
+           
         
         end % --- end of display output ---
             
         %% check convergence criteria
-        optimality_flag =     max ([full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k1,dual_k1,p0)))),new_conVio]) <= 1e-5;
+        optimality_flag =     max ([full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k1,dual_k1,p0)))),new_conVio]) <= 1e-4;
         
-        % check if solution stays below tolerance for a certain number of
-        % iterations --> solved to acceptable level
-        if max ([full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k1,dual_k1,p0)))),new_conVio]) <= 1e-4
+        % check if solution stays below tolerance for a certain number of iterations --> solved to acceptable level
+        if max ([full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k1,dual_k1,p0)))),new_conVio]) <= 1e-3
+
             counter = counter + 1;
+
         else
+
             counter = 0;
+
         end % --- end of counter ---
 
         
         %% termination criteria and output preparation
         if i ~= obj.opts.max_iter && optimality_flag
                  
-                  % store iteration info
-                  info(i+1:end) = [];
-                  obj.info.iter = info;
+                % store iteration info
+                info{i}.seqSOS_common_stats.solve_time_iter  = toc(measTime_seqSOS__iter_in);
+                info{i}.seqSOS_common_stats.solve_time = toc(measTime_seqSOS_in);
+                info(i+1:end) = [];
+                obj.info.iter = info;
                
-                   % adjust last solution similar to iteration i.e. overwrite optimization solution 
-                   sol{1} = xi_k1;
-                   sol{5} = dual_k1;
+                % adjust last solution similar to iteration i.e. overwrite optimization solution 
+                sol{1} = xi_k1;
+                sol{5} = dual_k1;
                
-                   argout = sol;
+                argout = sol;
         
-                   printf(obj.log,'debug','----------------------------------------------------------------------------------------------------------------------\n');
-                   printf(obj.log,'debug','Solution status: Optimal solution found\n'); 
-                   printf(obj.log,'debug',['Solution time: ' num2str(toc) ' s\n']); 
-        
-                   % terminate
-                   return
+                printf(obj.log,'debug','----------------------------------------------------------------------------------------------------------------------\n');
+                printf(obj.log,'debug','Solution status: Optimal solution found\n'); 
+                printf(obj.log,'debug',['Solution time: ' num2str(toc(measTime_seqSOS_in)) ' s\n']); 
+                
+                % terminate
+                return
 
-        elseif i ~= obj.opts.max_iter && counter == 10
+        elseif i ~= obj.opts.max_iter && counter == 15
     
-                           % store iteration info
-                  info(i+1:end) = [];
-                  obj.info.iter = info;
+                % store iteration info
+                info{i}.seqSOS_common_stats.solve_time_iter  = toc(measTime_seqSOS__iter_in);
+                info{i}.seqSOS_common_stats.solve_time = toc(measTime_seqSOS_in);
+				info(i+1:end) = [];
+				obj.info.iter = info;
                
-                   % adjust last solution similar to iteration i.e. overwrite optimization solution 
-                   sol{1} = xi_k1;
-                   sol{5} = dual_k1;
+                % adjust last solution similar to iteration i.e. overwrite optimization solution 
+                sol{1} = xi_k1;
+                sol{5} = dual_k1;
                
-                   argout = sol;
+                argout = sol;
         
-                   printf(obj.log,'debug','----------------------------------------------------------------------------------------------------------------------\n');
-                   printf(obj.log,'debug','Solution status: Solved to acceptable level\n'); 
-                   printf(obj.log,'debug',['Solution time: ' num2str(toc) ' s\n']); 
+                printf(obj.log,'debug','----------------------------------------------------------------------------------------------------------------------\n');
+                printf(obj.log,'debug','Solution status: Solved to acceptable level\n'); 
+                printf(obj.log,'debug',['Solution time: ' num2str(toc(measTime_seqSOS_in)) ' s\n']); 
+
+                % terminate
+                return
+
+
+              elseif i == obj.opts.max_iter 
+    
+                % store iteration info
+                info{i}.seqSOS_common_stats.solve_time_iter  = toc(measTime_seqSOS__iter_in);
+                info{i}.seqSOS_common_stats.solve_time = toc(measTime_seqSOS_in);
+                info(i+1:end) = [];
+                obj.info.iter = info;
+               
+                % adjust last solution similar to iteration i.e. overwrite optimization solution 
+                sol{1} = xi_k1;
+                sol{5} = dual_k1;
+               
+                argout = sol;
         
-                   % terminate
-                   return
+                printf(obj.log,'debug','----------------------------------------------------------------------------------------------------------------------\n');
+                printf(obj.log,'debug','Solution status: Maximum number of iterations reached\n'); 
+                printf(obj.log,'debug',['Solution time: ' num2str(toc(measTime_seqSOS_in)) ' s\n']); 
+        
+                % terminate
+                return
+				
         end % --- end of output preparation
        
         
         %% Damped BFGS 
         
         % update BFGS
-        s = d_star; 
+        s = xi_k1-xi_k; 
         y = casadi.DM( full(obj.nabla_xi_L(xi_k1,dual_k1,p0) - obj.nabla_xi_L(xi_k,dual_k1,p0)))';
-           
-        B = dampedBFGS(obj,B,s,y);
+        
+        % prepared hessian approximation for next iteration
+        Bk = dampedBFGS(obj,Bk,s,y);
         
         
         %% new solution becomes new linearization point
         xi_k   = xi_k1;
         dual_k = dual_k1;
-
+        
+        info{i}.seqSOS_common_stats.solve_time_iter  = toc(measTime_seqSOS__iter_in);
     end % --- end for-loop ---
 
     argout = sol;
