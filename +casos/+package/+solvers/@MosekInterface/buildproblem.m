@@ -33,6 +33,10 @@ function buildproblem(obj)
 % Lorentz cone, rotated Lorentz cone, and PSD cone can be shifted by a
 % lower bound (cb).
 
+if ~isfield(obj.opts,'hessian_cholesky')
+    obj.opts.hessian_cholesky = false; 
+end
+
 opts = obj.opts;
 
 % retrieve MOSEK symbolic constants
@@ -165,9 +169,6 @@ prob.bux = [ubx; +inf(Nx_q,1)];
 % handle quadratic cost function
 % MOSEK cannot solve conic problems with quadratic cost
 if nnz(h) > 0
-    % only SX supports Cholesky decomposition
-    H = casadi.SX.sym('H',sparsity(h));
-    chol_f = casadi.Function('chol',{H},{chol(H)});
     % rewrite quadratic cost
     %
     %   min_x 1/2 x'*Q*x + c'*x
@@ -177,7 +178,15 @@ if nnz(h) > 0
     %   min_{x,y} c'*x + y, s.t. 1 + y >= ||(sqrt(2)*U*x, 1 - y)||
     %
     % with additional variable y and Cholesky decomposition U'*U = Q
-    U = chol_f(h);
+    if opts.hessian_cholesky
+        % Hessian matrix is already in Cholesky decomposition
+        U = h;
+    else
+        % only SX supports Cholesky decomposition
+        H = casadi.SX.sym('H',sparsity(h));
+        chol_f = casadi.Function('chol',{H},{chol(H)});
+        U = chol_f(h);
+    end
     % build affine cone constraint 
     % L(y,x) + k = (1+y, sqrt(2)*U*x, 1-y) in SOC
     % note: additional variable y is first decision variable
