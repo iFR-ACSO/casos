@@ -43,6 +43,7 @@ sos.g = linearize(nlsos.g,nlsos.x,xi_k);
 B_k    = casos.PS.sym('b',[length(poly2basis(xi_k)),length(poly2basis(xi_k))]);
 
 obj.sizeHessian = size(B_k);
+sos.derivatives.Hf = casadi.SX(B_k);
 
 % needed because we have a parameter vector
 B_k = B_k(:);

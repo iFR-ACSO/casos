@@ -110,10 +110,10 @@ Vinit = x'*P*x;
 p = x'*x*1e2;
 
 % Lyapunov function candidate
-V = casos.PS.sym('v',monomials(x,2));
+V = casos.PS.sym('v',monomials(x,2:4));
 
 % SOS multiplier
-s2 = casos.PS.sym('s2',monomials(x,2));
+s2 = casos.PS.sym('s2',monomials(x,2:4));
 
 % enforce positivity
 l = 1e-6*(x'*x);
@@ -142,10 +142,12 @@ opts.Kc      = struct('sos', 3);
 opts.verbose = 1;
 opts.sossol_options.sdpsol_options.error_on_fail = 0;
 
+profile on
 buildTime_in = tic;
     solver_GTM4D_ROA = casos.nlsossol('S','sequential',sos,opts);
 buildtime = toc(buildTime_in);
 
+profile viewer
 
 sol = solver_GTM4D_ROA('x0' ,[Vinit; (x'*x)^2]);
 disp(['Solver buildtime: ' num2str(buildtime), ' s'])

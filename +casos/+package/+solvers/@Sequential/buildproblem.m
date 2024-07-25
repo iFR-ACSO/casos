@@ -45,11 +45,15 @@ sos.g = conFun(xi_k,p0) + derivConFun(xi_k,d,p0); % sos.g = linearize(nlsos.g,nl
 % parameterize cost in hessian
 B_k    = casos.PS.sym('b',[length(poly2basis(xi_k)),length(poly2basis(xi_k))]);
 
+
+sos.derivatives.Hf = casadi.SX(B_k);
+
 % needed to initialize it later
 obj.sizeHessian = size(B_k);
 
 % needed because we have a parameter vector
 B_k = B_k(:);
+
 
 % quadratic cost approximation; refactor hessian vector to symmetric matrix
 % f =          1/2 d^T B d + nabla f(x_k)^T*d
