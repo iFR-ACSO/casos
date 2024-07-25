@@ -201,7 +201,7 @@ opts               = [];
 opts.Kc            = struct('sos', length(sosFeas.g));
 opts.Kx            = struct('lin', length(sosFeas.x));
 opts.error_on_fail = 1;
-opts.verbose       = 0;
+opts.verbose       = 1;
 
 % initialize solver
 obj.solver_feas_res = casos.nlsossol('S','FeasRes',sosFeas,opts);

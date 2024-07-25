@@ -110,7 +110,7 @@ Vinit = x'*P*x;
 p = x'*x*1e2;
 
 % Lyapunov function candidate
-V = casos.PS.sym('v',monomials(x,2:4));
+V = casos.PS.sym('v',monomials(x,2));
 
 % SOS multiplier
 s2 = casos.PS.sym('s2',monomials(x,2:4));
@@ -147,7 +147,7 @@ buildTime_in = tic;
 buildtime = toc(buildTime_in);
 
 
-sol = solver_GTM4D_ROA('x0' ,[Vinit^2; (x'*x)^2]);
+sol = solver_GTM4D_ROA('x0' ,[Vinit; (x'*x)^2]);
 disp(['Solver buildtime: ' num2str(buildtime), ' s'])
 
 %% plot solver statistics

@@ -264,7 +264,7 @@ function argout = eval_on_basis(obj,argin)
 			polySol = obj.xk1fun(xi_k1,p0);
 
   
-			zeta_val     = 0.5;
+			zeta_val     = 0.01;
 			sol_feas_res = obj.solver_feas_res('x0',[casos.PS(polySol) ; obj.s0 ],...
                                                'p',  [casos.PS(polySol);zeta_val;curr_conVio]); 
     
