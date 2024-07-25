@@ -48,7 +48,12 @@ classdef Filter
             
 
              % compute most right entry of filter
+             if conVio_xi0 > 0
              conVio_0   = max(obj.opts.maxConVio_0, obj.opts.maxConVio_0_multiplier*conVio_xi0);
+             else
+                 conVio_0 = 0;
+             end
+
 
              % compute most right entry of filter
              % conVio_0   = obj.opts.maxConVio_0_multiplier*conVio_xi0;
