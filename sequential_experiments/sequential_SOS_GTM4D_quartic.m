@@ -1,9 +1,7 @@
 % Estimate region of the Generic Transport Model
 % See Chakraborty et al. 2011 (CEP) for details.
 
-clear
-close all
-clc
+
 import casos.toolboxes.sosopt.*
 
 % system states
@@ -120,7 +118,6 @@ s2 = casos.PS.sym('s2',monomials(x,2:4));
 % enforce positivity
 l = 1e-6*(x'*x);
 
-
 % options
 opts = struct('sossol','mosek');
 
@@ -131,11 +128,11 @@ g = Vinit-0.8;
 cost = dot(g - (V-gam), g - (V-gam));
 
 %% setup solver
-sos1 = struct('x',[V; s2],...
+sos = struct('x',[V; s2],...
               'f',cost, ...
               'p',[]);
 
-sos1.('g') = [s2; 
+sos.('g') = [s2; 
               V-l; 
               s2*(V-gam)-nabla(V,x)*f-l];
 
@@ -145,28 +142,29 @@ opts.Kc      = struct('sos', 3);
 opts.verbose = 1;
 opts.sossol_options.sdpsol_options.error_on_fail = 0;
 
-tic
-S1 = casos.nlsossol('S1','sequential',sos1,opts);
-buildtime = toc;
+buildTime_in = tic;
+    solver_GTM4D_ROA = casos.nlsossol('S','sequential',sos,opts);
+buildtime = toc(buildTime_in);
 
 
-sol1 = S1('x0' ,[Vinit^2; (x'*x)^2]);
+sol = solver_GTM4D_ROA('x0' ,[Vinit^2; (x'*x)^2]);
 disp(['Solver buildtime: ' num2str(buildtime), ' s'])
+
+%% plot solver statistics
+plotSolverStats(solver_GTM4D_ROA.stats);
 
 
 %% plotting
 import casos.toolboxes.sosopt.pcontour
 
 xD = D*x;
-V = subs(sol1.x(1),[x(1);x(4)],zeros(2,1));
+V = subs(sol.x(1),[x(1);x(4)],zeros(2,1));
 V = subs(V,[x(2);x(3)],xD(2:3));
 
 
 g = subs(g,[x(1);x(4)],zeros(2,1));
 g = subs(g,[x(2);x(3)],xD(2:3));
 
-figure(1)
-clf
-% pcontour(g, 0, [-1 1 -4 4], 'k--');
+figure()
 hold on
 pcontour(V, gam, [-1 1 -4 4], 'b-');

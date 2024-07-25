@@ -27,7 +27,7 @@ skew = @(x) [   0  -x(3)  x(2);
               x(3)   0   -x(1); 
              -x(2)  x(1)   0 ];
 
-omega_max = 2*pi/180;
+omega_max = 3*pi/180;
 
 % system dynamics
 B = @(sigma) (1-sigma'*sigma)*eye(3)+skew(sigma)+ 2*sigma*sigma';
@@ -57,7 +57,7 @@ fc = D*subs(fc,x,D^(-1)*x);
 Vinit = (D^(-1)*x)'*P*(D^(-1)*x);
 
 figure(1)
-pcontour(subs(subs(Vinit,x,D*x),x(3:end),zeros(4,1)),1,[-omega_max omega_max -omega_max omega_max])
+pcontour(subs(subs(Vinit,x,D*x),x(3:end),zeros(4,1)),1,[-omega_max omega_max -omega_max omega_max],'b')
 hold on
 
 % Lyapunov function candidate
@@ -87,7 +87,7 @@ g0 = subs(g0,x,D^(-1)*x);
 
 pcontour(subs(subs(g0,x,D*x),x(3:end),zeros(4,1)),0,[-omega_max omega_max -omega_max omega_max]*2,'k')
 
-cost = dot(g0 - (V), g0 - (V)) ;
+cost = dot(g0 - (V-1), g0 - (V-1)) ;
 
 %% setup solver
 sos1 = struct('x',[V;s2],...

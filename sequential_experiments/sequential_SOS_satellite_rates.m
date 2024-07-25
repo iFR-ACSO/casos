@@ -86,31 +86,37 @@ pcontour(subs(g0,x(3),0),0,[-omega_max omega_max -omega_max omega_max],'k')
 cost = dot(g0 - (V), g0 - (V)) ;
 
 %% setup solver
-sos1 = struct('x',[V;s2],...
+sos = struct('x',[V;s2],...
               'f',cost, ...
               'p',[]);
 
-sos1.('g') = [s2; 
+sos.('g') = [s2; 
               V - l; 
               s2*(V - 1) - nabla(V,x)*fc - l];
 
 % states + constraint are SOS cones
 
 
-opts.Kx      = struct('lin', length(sos1.x));
-opts.Kc      = struct('sos', length(sos1.g));
+opts.Kx      = struct('lin', length(sos.x));
+opts.Kc      = struct('sos', length(sos.g));
 opts.verbose = 1;
 opts.sossol_options.sdpsol_options.error_on_fail = 0;
 
 
+buildTime_in = tic;
+    solver_Satellite3D = casos.nlsossol('S','sequential',sos,opts);
+buildtime = toc(buildTime_in);
 
-tic
-S1 = casos.nlsossol('S1','sequential',sos1,opts);
-toc
+% solve
+sol = solver_Satellite3D('x0' ,[Vinit; (x'*x)]);
 
-sol1 = S1('x0' ,[Vinit; (x'*x)]);
 
-Vsol = subs(sol1.x(1),x,D*x);
+% plot solver statistics
+plotSolverStats(solver_Satellite3D.stats);
+
+
+% plot solution
+Vsol = subs(sol.x(1),x,D*x);
 
 
 figure(1)

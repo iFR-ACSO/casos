@@ -1,11 +1,6 @@
 % Estimate region of the Generic Transport Model
 % See Chakraborty et al. 2011 (CEP) for details.
 
-clear
-close all
-clc
-profile off
-
 
 import casos.toolboxes.sosopt.plinearize
 import casos.toolboxes.sosopt.pcontour
@@ -100,19 +95,17 @@ d = ([
 
 
 % use scaled dynamics to compute initial guess for lyapunov function
-
-
 D = diag(d)^-1;
 
 f = D*subs(f, x, D^-1*x);
 
 f = cleanpoly(f,1e-6,1:5);
 
+% initial guess for control law
 [A,B] = plinearize(f ,x , u);
 [K0,P] = lqr(A,B,eye(4),eye(2));
 
 K = -K0*x;
-
 
 % initial Lyapunov function
 Vinit = x'*P*x;
@@ -133,7 +126,6 @@ l = 1e-6*(x'*x);
 % options
 opts = struct('sossol','mosek');
 
-
 gam = 1;
 
 g = Vinit-0.5; 
@@ -141,45 +133,47 @@ g = Vinit-0.5;
 cost = dot(g - (V-gam), g - (V-gam));
 
 
-
 %% setup solver
-sos1 = struct('x',[V; s2;kappa],...
+sos = struct('x',[V; s2;kappa],...
               'f',cost, ...
               'p',[]);
 
-sos1.('g') = [s2; 
+sos.('g') = [s2; 
               V-l; 
               s2*(V-gam)-nabla(V,x)*subs(f,u,kappa)-l];
 
 % states + constraint are SOS cones
-opts.Kx      = struct('lin', length(sos1.x));
+opts.Kx      = struct('lin', length(sos.x));
 opts.Kc      = struct('sos', 3);
 opts.verbose = 1;
 opts.sossol_options.sdpsol_options.error_on_fail = 0;
 
 
-tic
-% profile on -historysize 5000000
-S1 = casos.nlsossol('S1','sequential',sos1,opts);
-toc
+buildTime_in = tic;
+    solver_GTM_syn = casos.nlsossol('S1','sequential',sos,opts);
+buildtime = toc(buildTime_in);
+
+% solve problem
+sol = solver_GTM_syn('x0' ,[Vinit; (x'*x);K]);
+disp(['Solver buildtime: ' num2str(buildtime), ' s'])
 
 
-sol1 = S1('x0' ,[Vinit; (x'*x);K]);
-
+%% plot solver statistics
+plotSolverStats(solver_GTM_syn.stats);
 
 %% plotting
 import casos.toolboxes.sosopt.pcontour
 
 xD = D*x;
-V = subs(sol1.x(1),[x(1);x(4)],zeros(2,1));
+V = subs(sol.x(1),[x(1);x(4)],zeros(2,1));
 V = subs(V,[x(2);x(3)],xD(2:3));
 
 
 g = subs(g,[x(1);x(4)],zeros(2,1));
 g = subs(g,[x(2);x(3)],xD(2:3));
 
-figure(1)
+figure()
 clf
-pcontour(g, 0, [-1 1 -4 4], 'k--');
+pcontour(g, 0, [-1 1 -4 4]*2, 'k--');
 hold on
-pcontour(V, gam, [-1 1 -4 4], 'b-');
+pcontour(V, gam, [-1 1 -4 4]*2, 'b-');

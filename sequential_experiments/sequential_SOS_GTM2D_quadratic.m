@@ -3,14 +3,8 @@
 
 import casos.toolboxes.sosopt.*
 
-clear
-close all
-clc
-
-
-% system states
+%% system states
 x = casos.Indeterminates('x',2,1);
-
 
 %% Polynomial Dynamics
 f1 = @(V,alpha,q,theta,eta,F) +1.233e-8*V.^4.*q.^2         + 4.853e-9.*alpha.^3.*F.^3    + 3.705e-5*V.^3.*alpha.*q      ...
@@ -132,6 +126,7 @@ l = 1e-6*(x'*x);
 % level of stability
 b = casos.PS.sym('b');
 
+% minimize the quadratic distance to a given sublevel set
 g = Vinit-2; 
 
 cost = dot(g - (V-1),g - (V-1)) ;
@@ -143,12 +138,12 @@ cost = dot(g - (V-1),g - (V-1)) ;
 opts = struct('sossol','mosek');
 opts.verbose = 1;
 
-sos1 = struct('x',[V; s2],...
+sos = struct('x',[V; s2],...
               'f',cost, ...
               'p',[]);
 
 % constraints
-sos1.('g') = [s2; 
+sos.('g') = [s2; 
               V-l; 
               s2*(V-1)-nabla(V,x)*f-l];
 
@@ -156,21 +151,23 @@ sos1.('g') = [s2;
 opts.Kx = struct('lin', 2);
 opts.Kc = struct('sos', 3);
 
-% build solver
-tic
-S1 = casos.nlsossol('S1','sequential',sos1,opts);
-buildtime = toc;
+% build sequential solver
+buildTime_in = tic;
+    solver_GTM2D_ROA  = casos.nlsossol('S','sequential',sos,opts);
+buildtime = toc(buildTime_in);
 
 
 %% solve
-
-sol1 = S1('x0',[ Vinit;  x'*x]); 
+sol = solver_GTM2D_ROA('x0',[ Vinit;  x'*x]); 
 disp(['Solver buildtime: ' num2str(buildtime), ' s'])
 
+
+%% plot solver statistics
+plotSolverStats(solver_GTM2D_ROA.stats);
 
 %% plot sublevel set
 figure()
 pcontour(g,0,[-2 2 -2 2]*3,'k--')
 hold on
-pcontour(sol1.x(1),1,[-2 2 -2 2]*3)
+pcontour(sol.x(1),1,[-2 2 -2 2]*3)
 
