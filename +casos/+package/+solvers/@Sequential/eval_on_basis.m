@@ -42,7 +42,7 @@ function argout = eval_on_basis(obj,argin)
 
    measTime_seqSOS_in = tic; % measure overall solve time
    % solve nonconvex SOS problem via sequence of convex SOS problem
-    for i = 1:obj.opts.max_iter
+    for i = 0:obj.opts.max_iter
         measTime_seqSOS__iter_in = tic;
         % initial guesss; actually not used but just for completness
         args{1} = xi_k;
@@ -58,7 +58,7 @@ function argout = eval_on_basis(obj,argin)
         sol = eval_on_basis(obj.sossolver, args);
            
         % store iteration info
-        info{i}.subProb_stats = obj.sossolver.get_stats;
+        info{i+1}.subProb_stats = obj.sossolver.get_stats;
         
         % check if subproblem is feasible
         switch ( obj.sossolver.get_stats.UNIFIED_RETURN_STATUS)
@@ -95,11 +95,22 @@ function argout = eval_on_basis(obj,argin)
 
             if accept_FeasResStep
                % solve new iterate
+                
+                % just fill info struct for consitency
+                info{i+1}.filter_stats.measTime_proj_out = nan;
+                info{i+1}.filter_stats.alpha_k  = nan;
+                info{i+1}.filter_stats.measTime = nan;
+                info{i+1}.seqSOS_common_stats.delta_prim  = nan;
+                info{i+1}.seqSOS_common_stats.delta_dual  = nan;
+                info{i+1}.seqSOS_common_stats.conViol     = nan;
+                info{i+1}.seqSOS_common_stats.gradLang    = nan;
+                info{i+1}.seqSOS_common_stats.solve_time_iter  = toc(measTime_seqSOS__iter_in);
+
                xi_k  = xi_feas;
                printf(obj.log,'debug', 'Feasibility restoration iterate accepted to filter. Continue original problem \n');
               continue
             else
-                info{i}.seqSOS_common_stats.solve_time = toc(measTime_seqSOS_in);
+                info{i+1}.seqSOS_common_stats.solve_time = toc(measTime_seqSOS_in);
                 error('Problem seems locally infeasible!')
             end
              
@@ -135,7 +146,7 @@ function argout = eval_on_basis(obj,argin)
                 measTime_Proj_in = tic;
                     solPara_proj = obj.projConPara('p',[obj.xk1fun(xi_k1,p0);p0]);
                     new_conVio   = full(solPara_proj.f);
-                info{i}.filter_stats.measTime_proj_out = toc(measTime_Proj_in);
+                info{i+1}.filter_stats.measTime_proj_out = toc(measTime_Proj_in);
 
             else
 
@@ -222,7 +233,7 @@ function argout = eval_on_basis(obj,argin)
                             end
                             
                      end % --- end of while SOC ---
-                     info{i}.filter_stats.measTime_SOC_out = toc(measTime_SOC_in);
+                     info{i+1}.filter_stats.measTime_SOC_out = toc(measTime_SOC_in);
         
             else
                     % not acceptable to filter, adjust step length
@@ -236,8 +247,8 @@ function argout = eval_on_basis(obj,argin)
         measTime_filter_out = toc(measTime_filter_in);
         
         % store some metrics about filter
-        info{i}.filter_stats.alpha_k  = alpha_k;
-        info{i}.filter_stats.measTime = measTime_filter_out;
+        info{i+1}.filter_stats.alpha_k  = alpha_k;
+        info{i+1}.filter_stats.measTime = measTime_filter_out;
                 
         if alpha_k < alpha_min
     
@@ -282,9 +293,9 @@ function argout = eval_on_basis(obj,argin)
         else
               
               % store iteration info
-              info{i}.seqSOS_common_stats.solve_time_iter  = toc(measTime_seqSOS__iter_in);
-              info{i}.seqSOS_common_stats.solve_time = toc(measTime_seqSOS_in);
-              info(i+1:end) = [];
+              info{i+1}.seqSOS_common_stats.solve_time_iter  = toc(measTime_seqSOS__iter_in);
+              info{i+1}.seqSOS_common_stats.solve_time = toc(measTime_seqSOS_in);
+              info(i+2:end) = [];
               obj.info.iter = info;
            
 
@@ -338,10 +349,10 @@ function argout = eval_on_basis(obj,argin)
                  i, new_cost , delta_xi_double, delta_dual_double, new_conVio , alpha_k , full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k1,dual_k1,p0))))    );
             
             % store common optimization data
-            info{i}.seqSOS_common_stats.delta_prim  = delta_xi_double;
-            info{i}.seqSOS_common_stats.delta_dual  = delta_dual_double;
-            info{i}.seqSOS_common_stats.conViol     = new_conVio;
-            info{i}.seqSOS_common_stats.gradLang    = full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k1,dual_star,p0))));
+            info{i+1}.seqSOS_common_stats.delta_prim  = delta_xi_double;
+            info{i+1}.seqSOS_common_stats.delta_dual  = delta_dual_double;
+            info{i+1}.seqSOS_common_stats.conViol     = new_conVio;
+            info{i+1}.seqSOS_common_stats.gradLang    = full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k1,dual_star,p0))));
         
         else
         
@@ -352,10 +363,10 @@ function argout = eval_on_basis(obj,argin)
                  i, new_cost, delta_xi_double, delta_dual_double, new_conVio, alpha_k , full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k,dual_star,p0))))   );
             
             % store common optimization data
-            info{i}.seqSOS_common_stats.delta_prim  = delta_xi_double;
-            info{i}.seqSOS_common_stats.delta_dual  = delta_dual_double;
-            info{i}.seqSOS_common_stats.conViol     = new_conVio;
-            info{i}.seqSOS_common_stats.gradLang    = full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k,dual_star,p0))));
+            info{i+1}.seqSOS_common_stats.delta_prim  = delta_xi_double;
+            info{i+1}.seqSOS_common_stats.delta_dual  = delta_dual_double;
+            info{i+1}.seqSOS_common_stats.conViol     = new_conVio;
+            info{i+1}.seqSOS_common_stats.gradLang    = full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k,dual_star,p0))));
            
         
         end % --- end of display output ---
@@ -379,9 +390,9 @@ function argout = eval_on_basis(obj,argin)
         if i ~= obj.opts.max_iter && optimality_flag
                  
                 % store iteration info
-                info{i}.seqSOS_common_stats.solve_time_iter  = toc(measTime_seqSOS__iter_in);
-                info{i}.seqSOS_common_stats.solve_time = toc(measTime_seqSOS_in);
-                info(i+1:end) = [];
+                info{i+1}.seqSOS_common_stats.solve_time_iter  = toc(measTime_seqSOS__iter_in);
+                info{i+1}.seqSOS_common_stats.solve_time = toc(measTime_seqSOS_in);
+                info(i+2:end) = [];
                 obj.info.iter = info;
                
                 % adjust last solution similar to iteration i.e. overwrite optimization solution 
@@ -400,9 +411,9 @@ function argout = eval_on_basis(obj,argin)
         elseif i ~= obj.opts.max_iter && counter == 15
     
                 % store iteration info
-                info{i}.seqSOS_common_stats.solve_time_iter  = toc(measTime_seqSOS__iter_in);
-                info{i}.seqSOS_common_stats.solve_time = toc(measTime_seqSOS_in);
-				info(i+1:end) = [];
+                info{i+1}.seqSOS_common_stats.solve_time_iter  = toc(measTime_seqSOS__iter_in);
+                info{i+1}.seqSOS_common_stats.solve_time = toc(measTime_seqSOS_in);
+				info(i+2:end) = [];
 				obj.info.iter = info;
                
                 % adjust last solution similar to iteration i.e. overwrite optimization solution 
@@ -422,9 +433,9 @@ function argout = eval_on_basis(obj,argin)
               elseif i == obj.opts.max_iter 
     
                 % store iteration info
-                info{i}.seqSOS_common_stats.solve_time_iter  = toc(measTime_seqSOS__iter_in);
-                info{i}.seqSOS_common_stats.solve_time = toc(measTime_seqSOS_in);
-                info(i+1:end) = [];
+                info{i+1}.seqSOS_common_stats.solve_time_iter  = toc(measTime_seqSOS__iter_in);
+                info{i+1}.seqSOS_common_stats.solve_time = toc(measTime_seqSOS_in);
+                info(i+2:end) = [];
                 obj.info.iter = info;
                
                 % adjust last solution similar to iteration i.e. overwrite optimization solution 
@@ -457,7 +468,7 @@ function argout = eval_on_basis(obj,argin)
         xi_k   = xi_k1;
         dual_k = dual_k1;
         
-        info{i}.seqSOS_common_stats.solve_time_iter  = toc(measTime_seqSOS__iter_in);
+        info{i+1}.seqSOS_common_stats.solve_time_iter  = toc(measTime_seqSOS__iter_in);
     end % --- end for-loop ---
 
     argout = sol;
