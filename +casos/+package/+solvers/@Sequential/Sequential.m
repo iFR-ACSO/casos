@@ -49,6 +49,13 @@ properties (Constant,Access=protected)
         {'max_iter', 'Maximum number of bisections.'
          'sossol', 'The convex sum-of-squares solver to be used in the subproblem.'
          'sossol_options', 'Options to be passed to the SOS solver.'
+         'alpha_max', 'Maximum default step length'
+         'alpha_min', 'Minimum default step length'
+         'tau', 'Multiplier to adjust step length during linesearch'
+         'soc_max_iter', 'Maximum number of sub-iterations in second-order correction'
+         'optTol','Tolerance for optimality ( max(||L_xi ||, conVio) <= optTol )'
+         'accTol','Tolerance for problem to be solved to acceptable level ( max(||L_xi ||, conVio) <= optTol )'
+         'noAccIter','Number of iterations where the tolerance to acceptable level must be reached to leave optimization'
          'verbose', 'Turn on/off iteration display.'}
     ];
 
@@ -105,10 +112,18 @@ methods
         end
 
         % default options
-        if ~isfield(obj.opts,'sossol'), obj.opts.sossol = 'sedumi'; end
+        if ~isfield(obj.opts,'sossol'), obj.opts.sossol = 'mosek'; end
         if ~isfield(obj.opts,'sossol_options'), obj.opts.sossol_options = struct; end
         if ~isfield(obj.opts,'max_iter'), obj.opts.max_iter = 1000; end
+        if ~isfield(obj.opts,'alpha_max'), obj.opts.alpha_max = 1; end
+        if ~isfield(obj.opts,'alpha_min'), obj.opts.alpha_min = 1e-4; end
+        if ~isfield(obj.opts,'tau'), obj.opts.tau = 0.5; end
+        if ~isfield(obj.opts,'soc_max_iter'), obj.opts.soc_max_iter = 5; end
+        if ~isfield(obj.opts,'optTol'), obj.opts.optTol = 1e-4; end
+        if ~isfield(obj.opts,'accTol'), obj.opts.accTol = 1e-3; end
+        if ~isfield(obj.opts,'noAccIter'), obj.opts.noAccIter = 15; end
 
+     
 
         % set up logger
         if ~isfield(obj.opts,'verbose') || ~obj.opts.verbose
