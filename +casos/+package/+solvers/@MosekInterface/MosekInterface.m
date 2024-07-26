@@ -45,6 +45,17 @@ methods
         s = obj.info;
         s = addfield(obj.status,s);
     end
+
+    function sp = get_sparsity_in(obj,i)
+        % Return sparsity pattern.
+        if (i == 0)
+            % Hessian pattern
+            sp = sparsity(obj.args_in.h);
+
+        else
+            sp = get_sparsity_in@casos.package.solvers.ConicSolver(obj,i);
+        end
+    end
 end
 
 methods (Access=protected)
