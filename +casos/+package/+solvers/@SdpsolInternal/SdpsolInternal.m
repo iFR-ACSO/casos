@@ -79,21 +79,26 @@ methods
 
         % relax problem to smaller easier cones (LP and SOCP)
         args = struct;
-
+        args.dd_lbx = [];
+        args.dd_ubx = [];
+        args.dd_lbg = [];
+        args.dd_ubg = [];
+        obj.map = [];
+        
         % rebuild problem from SDD to SOCP
         if isfield(opts.Kx,'sdd') || isfield(opts.Kc,'sdd')
-            [sdp, args, map, opts] = sdd_reduce(obj, sdp, opts);
+            [sdp, args, map, opts] = sdd_reduce(obj, sdp, opts, args);
             obj.map = map;
         end
 
         % rebuild problem from DD to LP
         if isfield(opts.Kx,'dd') || isfield(opts.Kc,'dd')
-            [sdp, args, map, opts] = dd_reduce(obj, sdp, opts);
+            [sdp, args, map, opts] = dd_reduce(obj, sdp, opts, args);
             obj.map = map;
         end
 
         % if no DD/SDD was present create an identity map
-        if isempty(fieldnames(args))
+        if isempty(obj.map)
             obj.map.x = speye(length(sdp.x));
             obj.map.g = speye(length(sdp.g));
         end
@@ -210,10 +215,10 @@ end
 
 methods (Access=protected)
     % reduce DD constraints to LPs
-    [sdp,args,map,opts] = dd_reduce(obj,sdp,opts);
+    [sdp,args,map,opts] = dd_reduce(obj,sdp,opts, args);
 
     % reduce SDD constraints to SOCP
-    [sdp,args,map,opts] = sdd_reduce(obj,sdp,opts);
+    [sdp,args,map,opts] = sdd_reduce(obj,sdp,opts, args);
 
     function S = copyElement(obj)
         % Use copy constructor.

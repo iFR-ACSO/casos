@@ -1,4 +1,4 @@
-function [sdp,args,map,opts] = dd_reduce(obj, sdp, opts)
+function [sdp,args,map,opts] = dd_reduce(obj, sdp, opts, args)
 % Reduce a DD cone program to LP 
 
 % check cones
@@ -7,12 +7,6 @@ check_cone(obj.get_cones,opts.Kc,'lin');
 check_cone(obj.get_cones,opts.Kx,'dd');
 check_cone(obj.get_cones,opts.Kc,'dd');
 
-% initialize 
-% ToDo: due to ordering, create a map for this 
-args.dd_lbx = [];
-args.dd_ubx = [];
-args.dd_lbg = [];
-args.dd_ubg = [];
 
 % get dimensions of cones in the program decision variables
 Nlin = get_dimension(obj.get_cones,opts.Kx,'lin');
@@ -95,10 +89,10 @@ if isfield(opts.Kc,'dd')
     num_ineq_g = length(vertcat(ineq_constraints_g{:}));
 
     % update lower and upper bound on the linear constraints
-    args.dd_lbg = [zeros(num_eq_g, 1); zeros(num_ineq_g, 1)];
+    args.dd_lbg = [args.dd_lbg; zeros(num_eq_g, 1); zeros(num_ineq_g, 1)];
     
     % upper bounds is always infinity
-    args.dd_ubg = [zeros(num_eq_g, 1); inf(num_ineq_g,1)];
+    args.dd_ubg = [args.dd_ubg; zeros(num_eq_g, 1); inf(num_ineq_g,1)];
 
     % remove DD cone from constraints
     opts.Kc = rmfield(opts.Kc, 'dd');
@@ -170,8 +164,8 @@ Mlin = Mlin + num_ineq_x + num_eq_x + num_eq_g + num_ineq_g;
 % add the variables M to sdp.x
 Nlin = Nlin + sum(Ndd.^2) + length(vertcat(M_g{:})) + length(vertcat(M_x{:}));
 
-args.dd_lbx = -inf(sum(Ndd.^2) + length(vertcat(M_g{:})) + length(vertcat(M_x{:})),1);
-args.dd_ubx = inf(sum(Ndd.^2) + length(vertcat(M_g{:})) + length(vertcat(M_x{:})),1);
+args.dd_lbx = [args.dd_lbx; -inf(sum(Ndd.^2) + length(vertcat(M_g{:})) + length(vertcat(M_x{:})),1)];
+args.dd_ubx = [args.dd_ubx; inf(sum(Ndd.^2) + length(vertcat(M_g{:})) + length(vertcat(M_x{:})),1)];
 
 % update linear variables and constraints
 opts.Kx = setfield(opts.Kx,'lin',Nlin);

@@ -1,4 +1,4 @@
-function [sdp,args,map,opts] = sdd_reduce(obj, sdp, opts)
+function [sdp,args,map,opts] = sdd_reduce(obj, sdp, opts, args)
 % Reduce a SDD cone program to SOCP 
 
 % check cones
@@ -6,12 +6,6 @@ check_cone(obj.get_cones,opts.Kx,'lin');
 check_cone(obj.get_cones,opts.Kc,'lin');
 check_cone(obj.get_cones,opts.Kx,'sdd');
 check_cone(obj.get_cones,opts.Kc,'sdd');
-
-% initialize 
-args.dd_lbx = [];
-args.dd_ubx = [];
-args.dd_lbg = [];
-args.dd_ubg = [];
 
 % get dimensions of cones in the program decision variables
 Nlin = get_dimension(obj.get_cones,opts.Kx,'lin');
@@ -153,8 +147,8 @@ end
 sdp.x = [sdp.x(1:Nlin); vertcat(M_g{:}); vertcat(M_x{:}); sdp.x(Nlin+1:end)];
 
 % update lbx and ubx 
-args.dd_lbx = -inf(sum(Nsdd.^2) + length(vertcat(M_g{:})) + length(vertcat(M_x{:})),1);
-args.dd_ubx = inf(sum(Nsdd.^2) + length(vertcat(M_g{:})) + length(vertcat(M_x{:})),1);
+args.dd_lbx = [args.dd_lbx; -inf(sum(Nsdd.^2) + length(vertcat(M_g{:})) + length(vertcat(M_x{:})),1)];
+args.dd_ubx = [args.dd_ubx; inf(sum(Nsdd.^2) + length(vertcat(M_g{:})) + length(vertcat(M_x{:})),1)];
 
 
 % update linear variables and constraints
