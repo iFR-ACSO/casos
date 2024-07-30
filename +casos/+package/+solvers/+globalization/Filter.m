@@ -113,7 +113,6 @@ classdef Filter
 
         end % --- end of method updateFilter ---
 
-
     end
 
     methods (Access =private)
@@ -136,8 +135,20 @@ classdef Filter
               % if both entries are 1 than  list entry dominates current iterate
               if sum(dom_logi_arr,2) ~= 0  % row-wise sum must be unequal to 0
                   FilterAcceptFlag = 1;
-                     % augment filter
-                   % obj.filter = vertcat(obj.filter, [new_cost,new_conVio]);
+
+                  % first remove all points that are dominated by the new
+                  % accepted iterate (both values of new iterate must be
+                  % smaller than current filter entries!
+                    
+                  % identify dominated entries
+                  idx = find(sum(dom_logi_arr,2) == 2);
+                    
+                  % remove if necessary
+                  obj.filter(idx,:) = []; 
+
+                   % augment filter i.e. add new iterate
+                   obj.filter = vertcat(obj.filter, [new_cost,new_conVio]);
+                    
               else
                   FilterAcceptFlag = 0;
               end
@@ -177,7 +188,7 @@ classdef Filter
                 else
 
                    % augment filter
-                   obj.filter = vertcat(obj.filter, [curr_cost, curr_conVio]);
+                   % obj.filter = vertcat(obj.filter, [curr_cost, curr_conVio]);
                     
                    % check if the cost or constraint violation of new iterate is at least as good as the
                    % current iterate

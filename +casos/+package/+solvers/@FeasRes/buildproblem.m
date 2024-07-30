@@ -48,6 +48,14 @@ sos.derivatives.Hf = casadi.SX(B_k);
 % needed because we have a parameter vector
 B_k = B_k(:);
 
+% gf_fun = casos.Function('f',{poly2basis(nlsos.x)},{op2basis(jacobian(nlsos.f,nlsos.x))});
+% sos.derivatives.Gf = casadi.SX(gf_fun(sos.x));
+
+
+% gg_fun = casos.Function('f',{nlsos.x},{op2basis(jacobian(nlsos.g,nlsos.x))});
+% sos.derivatives.Gg = casadi.SX(gg_fun(sos.x));
+
+
 % quadratic cost approximation; refactor hessian vector to symmetric matrix
 sos.f =  1/2*poly2basis(sos.x)'* reshape(B_k,[length(poly2basis(xi_k)),length(poly2basis(xi_k))]) * poly2basis(sos.x) + linearize(nlsos.f,nlsos.x,xi_k);
 

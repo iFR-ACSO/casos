@@ -20,7 +20,6 @@ function argout = eval_on_basis(obj,argin)
     
     % initialize Hessian/BFGS approximation
     Bk = eye(obj.sizeHessian(1));
- 
     dual_k = [];
     
 	if ~isempty(obj.projConPara)
@@ -286,6 +285,28 @@ function argout = eval_on_basis(obj,argin)
 																		    full(casadi.DM(full(obj.f(xi_feas,p0)))),...
 																		    new_conVio,....
 																		    full(casadi.DM(full(obj.nabla_xi_f(xi_feas,p0))))');
+
+
+
+                % compute dual variables
+				if ~isempty(dual_k)
+                    dual_k1 = dual_k + alpha_k*(dual_star - dual_k);
+				else
+                    dual_k1 = dual_star;
+                end
+              
+				% store iteration info
+				info{i+1}.seqSOS_common_stats.solve_time_iter  = toc(measTime_seqSOS__iter_in);
+				info{i+1}.seqSOS_common_stats.solve_time       = toc(measTime_seqSOS_in);
+                
+			    delta_xi_double   = norm(full( casadi.DM(xi_k1 - xi_k)),inf); 
+			    delta_dual_double = norm(full( (dual_k1 - dual_k)),inf);
+
+                    % store common optimization data
+                    info{i+1}.seqSOS_common_stats.delta_prim  = delta_xi_double;
+                    info{i+1}.seqSOS_common_stats.delta_dual  = delta_dual_double;
+                    info{i+1}.seqSOS_common_stats.conViol     = new_conVio;
+                    info{i+1}.seqSOS_common_stats.gradLang    = full(casadi.DM(full(obj.nabla_xi_L_norm(xi_feas,dual_star,p0))));
     
   
    
@@ -364,17 +385,26 @@ function argout = eval_on_basis(obj,argin)
         if ~isempty(dual_k)
         
 			delta_xi_double   = norm(full( casadi.DM(xi_k1 - xi_k)),inf); 
-			delta_dual_double = norm(full( (dual_k1 - dual_k)),inf);
+			delta_dual_double = norm(full( (dual_k1 - dual_k)),inf)/norm(full(dual_k1),inf);
         
         
 			printf(obj.log,'debug','%-15d%-15e%-20e%-20e%-20e%-15.4f%-18e\n',...
-                 i, new_cost , delta_xi_double, delta_dual_double, new_conVio , alpha_k , full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k1,dual_k1,p0))))    );
-            
+                 i, new_cost , delta_xi_double, delta_dual_double, (new_conVio) , alpha_k , (full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k1,dual_k1,p0)))))    );
+
+
+
+			% printf(obj.log,'debug','%-15d%-15e%-20e%-20e%-20e%-15.4f%-18e\n',...
+            %      i, new_cost , delta_xi_double, delta_dual_double, sqrt(new_conVio) , alpha_k , norm(full(casadi.DM(full(obj.nabla_xi_L(xi_k1,dual_k1,p0)))),inf)/norm(full(dual_k1),inf)    );
+
+      
+
             % store common optimization data
             info{i+1}.seqSOS_common_stats.delta_prim  = delta_xi_double;
             info{i+1}.seqSOS_common_stats.delta_dual  = delta_dual_double;
             info{i+1}.seqSOS_common_stats.conViol     = new_conVio;
             info{i+1}.seqSOS_common_stats.gradLang    = full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k1,dual_star,p0))));
+
+
         
         else
         
@@ -382,8 +412,11 @@ function argout = eval_on_basis(obj,argin)
             delta_dual_double = norm( full( dual_star ), inf );
             
 			printf(obj.log,'debug','%-15d%-15e%-20e%-20e%-20e%-15.4f%-18e\n',...
-                 i, new_cost, delta_xi_double, delta_dual_double, new_conVio, alpha_k , full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k,dual_star,p0))))   );
+                 i, new_cost, delta_xi_double, delta_dual_double, (new_conVio), alpha_k , (full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k,dual_star,p0)))))   );
             
+            % printf(obj.log,'debug','%-15d%-15e%-20e%-20e%-20e%-15.4f%-18e\n',...
+                 % i, new_cost , delta_xi_double, delta_dual_double, sqrt(new_conVio) , alpha_k , norm(full(casadi.DM(full(obj.nabla_xi_L(xi_k,dual_star,p0)))),inf)/norm(full(dual_star),inf)    );
+
             % store common optimization data
             info{i+1}.seqSOS_common_stats.delta_prim  = delta_xi_double;
             info{i+1}.seqSOS_common_stats.delta_dual  = delta_dual_double;
@@ -394,10 +427,10 @@ function argout = eval_on_basis(obj,argin)
         end % --- end of display output ---
             
         %% check convergence criteria
-        optimality_flag =     max ([full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k1,dual_k1,p0)))),new_conVio]) <= obj.opts.optTol;
+        optimality_flag =     max ([full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k,dual_star,p0)))),(new_conVio)]) <= obj.opts.optTol;
         
         % check if solution stays below tolerance for a certain number of iterations --> solved to acceptable level
-        if max ([full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k1,dual_k1,p0)))),new_conVio]) <= obj.opts.accTol
+        if max ([full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k,dual_star,p0)))),(new_conVio)]) <= obj.opts.accTol
 
             counter = counter + 1;
 
@@ -485,6 +518,7 @@ function argout = eval_on_basis(obj,argin)
         % prepared hessian approximation for next iteration
         Bk = dampedBFGS(obj,Bk,s,y);
         
+
         
         %% new solution becomes new linearization point
         xi_k   = xi_k1;

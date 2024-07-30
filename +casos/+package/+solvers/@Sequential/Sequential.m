@@ -6,6 +6,7 @@ properties (Access=private)
 
     % convex subproblem
     sizeHessian % needed for the initilization
+    cholFun
     
     % second-order-correction
     solver_soc

@@ -45,7 +45,6 @@ sos.g = conFun(xi_k,p0) + derivConFun(xi_k,d,p0); % sos.g = linearize(nlsos.g,nl
 % parameterize cost in hessian
 B_k    = casos.PS.sym('b',[length(poly2basis(xi_k)),length(poly2basis(xi_k))]);
 
-
 sos.derivatives.Hf = casadi.SX(B_k);
 
 % needed to initialize it later
@@ -54,7 +53,6 @@ obj.sizeHessian = size(B_k);
 % needed because we have a parameter vector
 B_k = B_k(:);
 
-
 % quadratic cost approximation; refactor hessian vector to symmetric matrix
 % f =          1/2 d^T B d + nabla f(x_k)^T*d
 nabla_f_Fun = casos.Function('f',{nlsos.x,d,p0},{ dot(jacobian(nlsos.f,nlsos.x),d) });
@@ -62,7 +60,7 @@ nabla_f_Fun = casos.Function('f',{nlsos.x,d,p0},{ dot(jacobian(nlsos.f,nlsos.x),
 sos.f =  1/2*poly2basis(d)'* reshape(B_k,[length(poly2basis(xi_k)),length(poly2basis(xi_k))]) * poly2basis(d) + nabla_f_Fun(xi_k,d,p0); %linearize(nlsos.f,sos.x,xi_k);
 
 % extend parameter vector
-sos.p = [p0; xi_k; B_k];
+sos.p = [p0; xi_k; B_k(:)];
 
 % initilize Filter object
 obj.Filter = Filter([]);
@@ -74,6 +72,7 @@ sosopt.Kc            = struct('lin',Ml,'sos',Ms);
 sosopt.error_on_fail = false;
 
 % initialize convex SOS solver (subproblem)
+
 obj.sossolver = casos.package.solvers.sossolInternal('SOS',opts.sossol,sos,sosopt);
 
 % store basis
@@ -104,8 +103,9 @@ sosSOC.x = dsoc;
 sosSOC.f = 0;
 
 % initialize SOS solver for SOC
+% timeinit_SOC = tic;
 obj.solver_soc = casos.package.solvers.sossolInternal('SOS',opts.sossol,sosSOC,sosopt);
-
+% SOC_buildtime = toc(timeinit_SOC)
 %% setup damped BFGS
 lam_gs    =  casos.PS.sym('lam_gs', obj.sparsity_gs);
 
@@ -121,7 +121,6 @@ dLdx = jacobian(nlsos.f + dot(lam_gs,nlsos.g),nlsos.x)';
 % gradient of Langrangian needed for BFGS and for convergence check
 obj.nabla_xi_L      = casos.Function('f',{poly2basis(nlsos.x),poly2basis(lam_gs),p0}, { op2basis(dLdx) });
 obj.nabla_xi_L_norm = casos.Function('f',{poly2basis(nlsos.x),poly2basis(lam_gs),p0}, { Fnorm2(dLdx) });
-
 
 % cost function and gradient needed for filter linesearch
 obj.f          = casos.Function('f',{poly2basis(nlsos.x),p0}, { nlsos.f });
@@ -158,7 +157,9 @@ if ~isempty(s)
     opts               = [];
     opts.Kc            = struct('sos', length(s));
     opts.error_on_fail = 0;
+    % timeinit_proj = tic;
     obj.projConPara    =  casos.sossol('S','mosek',proj_sos,opts);
+    % proj_buildtime = toc(timeinit_proj)
 else
 
     obj.projConPara    = [];
@@ -210,6 +211,7 @@ opts.error_on_fail = 1;
 opts.verbose       = 0;
 
 % initialize solver
+% timeinit_feasres = tic;
 obj.solver_feas_res = casos.nlsossol('S','FeasRes',sosFeas,opts);
-
+% feasres_buildtime = toc(timeinit_feasres)
 end
