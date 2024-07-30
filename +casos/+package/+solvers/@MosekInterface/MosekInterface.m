@@ -19,7 +19,9 @@ properties (Constant, Access=protected)
     ];
 
     mosek_cones = [casos.package.solvers.ConicSolver.conic_cones
-        [casos.package.Cones.EXP
+        [casos.package.Cones.POW
+         casos.package.Cones.DPOW
+         casos.package.Cones.EXP
          casos.package.Cones.DEXP]
     ];
 end

@@ -11,8 +11,12 @@ properties (Constant)
     LOR = {'lor' 'LIST' 'Lorentz (quadratic, second-order) cone.'};
     ROT = {'rot' 'LIST' 'Rotated Lorentz cone.'};
     PSD = {'psd' 'LIST' 'Cone of positive semidefinite matrices.'};
+    % Analytic cones
+    POW = {'pow' 'STRUCT' 'Primal power cone.'};
+    DPOW = {'dpow' 'STRUCT' 'Dual power cone.'};
     EXP = {'exp' 'NUM' 'Primal exponential cone (dimension must be multiple of three).'};
     DEXP = {'dexp' 'NUM' 'Dual exponential cone (dimension must be multiple of three).'};
+    % Matrix cones
     DD  = {'dd'  'LIST' 'Cone of symmetric diagonally dominant matrices.'};
     SDD = {'sdd' 'LIST' 'Cone of symmetric scaled diagonally dominant matrices.'};
     % Polynomial cones
@@ -65,7 +69,7 @@ methods
         str = obj.entries.description{name};
     end
 
-    function check(obj,K,varargin)
+    function check(obj,K)
         % Check cone structure.
         fn_cone = fieldnames(K);
         % check cones
@@ -94,6 +98,12 @@ methods
         switch (name)
             case {'exp' 'dexp'}
                 assert(mod(K.(name),3) == 0, 'Dimension of cone "%s" must be multiple of three.', name);
+            case {'pow' 'dpow'}
+                tf = ismember(fieldnames(K.(name)),{'dim' 'alpha'});
+                % check structure of power cones
+                assert(length(tf) == 2 && all(tf), 'Cone "%s" must have exactly two fields, "dim" and "alpha".', name);
+                arrayfun(@(s) assert(isscalar(s.dim), 'Field "dim" of cone "%s" must be a scalar.',name), K.(name));
+                arrayfun(@(s) assert(isvector(s.alpha), 'Field "alpha" of cone "%s" must be a vector.',name), K.(name));
         end
     end
 
@@ -117,7 +127,8 @@ methods
 
         % else
         switch (name)
-            case {'psd' 'dd'}, l = sum(K.(name).^2);
+            case {'psd' 'dd' 'sdd'}, l = sum(K.(name).^2);
+            case {'pow' 'dpow'}, l = sum([K.(name).dim]);
             otherwise,  l = sum(K.(name));
         end
     end
@@ -130,6 +141,10 @@ methods
             d = K.(name);
         elseif strcmpi(obj.entries.type{name},'list')
             d = [];
+        elseif strcmpi(obj.entries.type{name},'struct')
+            d = struct([]);
+        elseif strcmpi(obj.entries.type{name},'cones')
+            d = struct;
         else
             d = 0;
         end

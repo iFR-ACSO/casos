@@ -66,6 +66,8 @@ Nx.lin = (obj.getdimc(Kx,'lin'));
 Nx.lor = (obj.getdimc(Kx,'lor'));
 Nx.rot = (obj.getdimc(Kx,'rot'));
 Nx.psd = (obj.getdimc(Kx,'psd'));
+Nx.pow = (obj.getdimc(Kx,'pow'));
+Nx.dpow = (obj.getdimc(Kx,'dpow'));
 Nx.exp = (obj.getdimc(Kx,'exp'));
 Nx.dexp = (obj.getdimc(Kx,'dexp'));
 
@@ -74,11 +76,13 @@ Na.lin = (obj.getdimc(Kc,'lin'));
 Na.lor = (obj.getdimc(Kc,'lor'));
 Na.rot = (obj.getdimc(Kc,'rot'));
 Na.psd = (obj.getdimc(Kc,'psd'));
+Na.pow = (obj.getdimc(Kc,'pow'));
+Na.dpow = (obj.getdimc(Kc,'dpow'));
 Na.exp = (obj.getdimc(Kc,'exp'));
 Na.dexp = (obj.getdimc(Kc,'dexp'));
 
-% number of variables in the polynomial cones
-Nx_p = Nx.exp + Nx.dexp;
+% number of variables in the analytic cones
+Nx_p = Nx.exp + Nx.dexp + obj.getnumc(Kx,'pow') + obj.getnumc(Kx,'dpow');
 % number of vector-valued variables
 Nx_v = n - sum(Nx.psd.^2) - Nx_p;
 % number of quadratic variables
@@ -87,8 +91,8 @@ Nx_q = sum([Nx.lor Nx.rot]);
 Na_c = m - Na.lin;
 % number of quadratic constraints
 Na_q = sum([Na.lor Na.rot]);
-% number of polynomial constraints
-Na_p = Na.exp + Na.dexp;
+% number of analytic constraints
+Na_p = Na.exp + Na.dexp + obj.getnumc(Kc,'pow') + obj.getnumc(Kc,'dpow');
 
 % number of variable constraints
 % to write into affine cone constraints
@@ -100,13 +104,13 @@ Na_S = Na.psd.*(Na.psd+1)/2;
 % affine cone constraints (vectorized)
 Na_C = Na_c + sum(Na_S - Na.psd.^2);
 
-% separate conic bound for vector, matrix, and polynomial conic variables
+% separate conic bound for vector, matrix, and analytic conic variables
 [cbx_v,cbx_s,cbx_p] = separate(cbx,[Nx_q sum(Nx.psd.^2) Nx_p]);
 
-% separate linear cost for vector, matrix, and polynomial variables
+% separate linear cost for vector, matrix, and analytic variables
 % C' = | c : Cbar |
 [Clin,Cbar,Cpoly] = separate(g,[Nx_v sum(Nx.psd.^2) Nx_p],1);
-% linear cost vector (vector and polynomial variables)
+% linear cost vector (vector and analytic variables)
 prob.c = [Clin; Cpoly];
 % symmetric cost matrices Cbar_j as stacked vectorization
 % Cbar = [Cbar1(:); ...; CbarN(:)]
@@ -119,9 +123,9 @@ prob.c = [Clin; Cpoly];
 %     |    F     |
 [A,F] = separate(a,[Na.lin Na_c],n);
 
-% separate linear constraints for vector, matrix, and polynomial variables
+% separate linear constraints for vector, matrix, and analytic variables
 [Alin,Abar,Apoly] = separate(A,Na.lin,[Nx_v sum(Nx.psd.^2) Nx_p]);
-% linear constraints matrix (vector and polynomial variables)
+% linear constraints matrix (vector and analytic variables)
 prob.a = [Alin Apoly];
 % symmetric constraint matrices Abar_ij as stacked vectorizations
 %        | Abar11(:)' ... Abar1N(:)' |
@@ -153,7 +157,7 @@ gmat = obj.sdp_vec(gc{2},Na.psd,[],1);
 Facc = vertcat(Fc{1},Fmat,Fc{3});
 gacc = vertcat(gc{1},gmat,gc{3});
 
-% separate affine cone constraints for vector, matrix, and polynomial variables
+% separate affine cone constraints for vector, matrix, and analytic variables
 % F = | f : Fbar |
 [Flin,Fbar,Fpoly] = separate(Facc,Na_C,[Nx_v sum(Nx.psd.^2) Nx_p]);
 % affine cone constraint matrix
@@ -200,7 +204,7 @@ if nnz(h) > 0
     % number of additional variables and constraints
     Nx_cost = 1;
     Na_cost = n + 2;
-    % separate ACC for vector, matrix, and polynomial variables
+    % separate ACC for vector, matrix, and analytic variables
     [Llin,Lbar,Lpoly] = separate(L,Na_cost,[Nx_v+1 sum(Nx.psd.^2) Nx_p]);
     % get nonzero elements and subindices (i,j,k,l) for Lbar
     [barv_l,barl.subi,barl.subj,barl.subk,barl.subl] = obj.sdp_vec(Lbar,Nx.psd,1,2);
@@ -242,10 +246,14 @@ Accs = [
     arrayfun(@(l) [symbcon.MSK_DOMAIN_QUADRATIC_CONE  l], Na.lor(:), 'UniformOutput',false)
     arrayfun(@(l) [symbcon.MSK_DOMAIN_RQUADRATIC_CONE l], Na.rot(:), 'UniformOutput',false)
     arrayfun(@(d) [symbcon.MSK_DOMAIN_SVEC_PSD_CONE   d], Na_S(:), 'UniformOutput',false)
+    arrayfun(@(s) [symbcon.MSK_DOMAIN_PRIMAL_POWER_CONE s.dim length(s.alpha) s.alpha(:)'], Na.pow(:), 'UniformOutput',false)
+    arrayfun(@(s) [symbcon.MSK_DOMAIN_DUAL_POWER_CONE s.dim length(s.alpha) s.alpha(:)'], Na.dpow(:), 'UniformOutput',false)
           repmat({[symbcon.MSK_DOMAIN_PRIMAL_EXP_CONE 3]}, Na.exp/3, 1)
           repmat({[symbcon.MSK_DOMAIN_DUAL_EXP_CONE   3]}, Na.dexp/3, 1)
     arrayfun(@(l) [symbcon.MSK_DOMAIN_QUADRATIC_CONE  l], Nx.lor(:), 'UniformOutput',false)
     arrayfun(@(l) [symbcon.MSK_DOMAIN_RQUADRATIC_CONE l], Nx.rot(:), 'UniformOutput',false)
+    arrayfun(@(s) [symbcon.MSK_DOMAIN_PRIMAL_POWER_CONE s.dim length(s.alpha) s.alpha(:)'], Nx.pow(:), 'UniformOutput',false)
+    arrayfun(@(s) [symbcon.MSK_DOMAIN_DUAL_POWER_CONE s.dim length(s.alpha) s.alpha(:)'], Nx.dpow(:), 'UniformOutput',false)
           repmat({[symbcon.MSK_DOMAIN_PRIMAL_EXP_CONE 3]}, Nx.exp/3, 1)
           repmat({[symbcon.MSK_DOMAIN_DUAL_EXP_CONE   3]}, Nx.dexp/3, 1)
     acc_cost
@@ -288,7 +296,7 @@ lam_x_q = -Yxq;
 % multipliers for SDP constraints
 lam_a_s = -vertcat(Yc_s);
 lam_x_s = -vertcat(Sc_s);
-% multipliers for polynomial constraints
+% multipliers for analytic constraints
 lam_a_p = -Yap;
 lam_x_p = -Yxp;
 % build multipliers
