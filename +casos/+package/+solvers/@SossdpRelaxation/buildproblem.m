@@ -96,20 +96,16 @@ sdp.derivatives.Jg = horzcat(sdp_Jg*map, -Mp_g);
 sdpopt = opts.sdpsol_options;
 
 % define the cones in the sdp level
-% -------------------------------------------------------------------------
-% RL: temporary approach
-if Ns==0 && Ms==0
-    % sdpopt.Kx = struct('lin', nnz_lin_x);
-    if Nds~=0 || Mds~=0
-        sdpopt.Kx = struct('lin', nnz_lin_x, 'dd', [Ksdp_x_s(Ns+1:end); Ksdp_g_s(Ns+1:end)] );
-    else 
-        sdpopt.Kx = struct('lin', nnz_lin_x, 'sdd', [Ksdp_x_s(Ns+1:end); Ksdp_g_s(Ns+1:end)] );
-    end
-    %sdpopt.Kx = struct('lin', nnz_lin_x, 'psd', [Ksdp_x_s(1:Ns); Ksdp_g_s(1:Ms)], 'dd', [Ksdp_x_s(Ns+1:end); Ksdp_g_s(Ns+1:end)] );
-else
-    sdpopt.Kx = struct('lin', nnz_lin_x, 'psd', [Ksdp_x_s; Ksdp_g_s]);
+sdpopt.Kx.lin = nnz_lin_x;
+if Ns~=0 || Ms~=0
+sdpopt.Kx.psd = [Ksdp_x_s(1:Ns), Ksdp_g_s(1:Ms)];
 end
-% -------------------------------------------------------------------------
+if Nds~=0 || Mds~=0
+sdpopt.Kx.dd = [Ksdp_x_s(Ns+1:Nds+Ns); Ksdp_g_s(Ms+1:Mds+Ms)];
+end
+if Nsds~=0 || Msds~=0
+sdpopt.Kx.sdd = [Ksdp_x_s(Nds+Ns+1:end); Ksdp_g_s(Mds+Ms+1:end)];  
+end
 
 sdpopt.Kc = struct('lin', nnz_lin_g + nnz_sos_g);
 
