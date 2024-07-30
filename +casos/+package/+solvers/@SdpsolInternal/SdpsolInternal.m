@@ -84,24 +84,29 @@ methods
         args.dd_lbg = [];
         args.dd_ubg = [];
         obj.map = [];
-        
+
         % rebuild problem from SDD to SOCP
         if isfield(opts.Kx,'sdd') || isfield(opts.Kc,'sdd')
             [sdp, args, map, opts] = sdd_reduce(obj, sdp, opts, args);
-            obj.map = map;
+            map_SDD_2_ORIG = map;
+        else
+            % if no SDD was present create an identity map
+            map_SDD_2_ORIG.x = speye(length(sdp.x));
+            map_SDD_2_ORIG.g = speye(length(sdp.g));
         end
 
         % rebuild problem from DD to LP
         if isfield(opts.Kx,'dd') || isfield(opts.Kc,'dd')
             [sdp, args, map, opts] = dd_reduce(obj, sdp, opts, args);
-            obj.map = map;
+            map_DD_2_ORIG = map;
+        else
+            % if no DD was present create an identity map
+            map_DD_2_ORIG.x = speye(length(sdp.x));
+            map_DD_2_ORIG.g = speye(length(sdp.g));
         end
-
-        % if no DD/SDD was present create an identity map
-        if isempty(obj.map)
-            obj.map.x = speye(length(sdp.x));
-            obj.map.g = speye(length(sdp.g));
-        end
+        % Create the full map
+        obj.map.x = map_SDD_2_ORIG.x*map_DD_2_ORIG.x;
+        obj.map.g = map_SDD_2_ORIG.g*map_DD_2_ORIG.g;
 
         % decision variables
         x = sdp.x;
