@@ -31,7 +31,11 @@ sz_g = size(gx);
 if isfield(args, 'dd_ubg')
     dd_lbg = args.dd_lbg;
     dd_ubg = args.dd_ubg;
+    dd_lbx = args.dd_lbx;
+    dd_ubx = args.dd_ubx;
 else
+    dd_lbx = [];
+    dd_ubx = [];
     dd_lbg = [];
     dd_ubg = [];
 end
@@ -56,8 +60,8 @@ Bp = mat2cell(bp,[Ng_l Ng_c],1);
 % into high-level SDP interface
 % (x0,p,lbx,ubx,cbx,lbg,ubg,cbg,lam_x0,lam_g0)->(x,f,g,lam_x,lam_g,lam_p)
 x0 = casadi.MX.sym('x0',sz_x);
-lbx = casadi.MX.sym('lbx',Nx_l, 1);
-ubx = casadi.MX.sym('ubx',Nx_l, 1);
+lbx = casadi.MX.sym('lbx',Nx_l - length(dd_lbx), 1);
+ubx = casadi.MX.sym('ubx',Nx_l - length(dd_ubx), 1);
 cbx = casadi.MX.sym('cbx',Nx_c, 1);
 lbg = casadi.MX.sym('lbg',Ng_l - length(dd_lbg),1);
 ubg = casadi.MX.sym('ubg',Ng_l - length(dd_ubg),1);
@@ -77,7 +81,7 @@ fopt = struct('allow_duplicate_io_names',true);
 % input function
 obj.fhan = casadi.Function('f', ...
             {x0 p lbx ubx cbx lbg ubg cbg lam_x0 lam_g0}, ...
-            {Hp gp Ap Bp{1}+[lbg;dd_lbg] Bp{1}+[ubg;dd_ubg] Bp{2}+cbg lbx ubx cbx x0 lam_x0 lam_g0}, ...
+            {Hp gp Ap Bp{1}+[lbg;dd_lbg] Bp{1}+[ubg;dd_ubg] Bp{2}+cbg [lbx;dd_lbx] [ubx;dd_ubx] cbx x0 lam_x0 lam_g0}, ...
             {'x0' 'p' 'lbx' 'ubx' 'cbx' 'lbg' 'ubg' 'cbg' 'lam_x0' 'lam_g0'}, ...
             {'h' 'g' 'a' 'lba' 'uba' 'cba' 'lbx' 'ubx' 'cbx' 'x0' 'lam_x0' 'lam_a0'}, ...
             fopt ...

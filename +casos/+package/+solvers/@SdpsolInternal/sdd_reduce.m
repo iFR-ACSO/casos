@@ -8,6 +8,8 @@ check_cone(obj.get_cones,opts.Kx,'sdd');
 check_cone(obj.get_cones,opts.Kc,'sdd');
 
 % initialize 
+args.dd_lbx = [];
+args.dd_ubx = [];
 args.dd_lbg = [];
 args.dd_ubg = [];
 
@@ -149,6 +151,11 @@ end
 
 % update decision variables
 sdp.x = [sdp.x(1:Nlin); vertcat(M_g{:}); vertcat(M_x{:}); sdp.x(Nlin+1:end)];
+
+% update lbx and ubx 
+args.dd_lbx = -inf(sum(Nsdd.^2) + length(vertcat(M_g{:})) + length(vertcat(M_x{:})),1);
+args.dd_ubx = inf(sum(Nsdd.^2) + length(vertcat(M_g{:})) + length(vertcat(M_x{:})),1);
+
 
 % update linear variables and constraints
 opts.Kx = setfield(opts.Kx,'lin', Nlin + sum(Nsdd.^2) + length(vertcat(M_g{:})) + length(vertcat(M_x{:})));

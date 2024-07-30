@@ -9,6 +9,8 @@ check_cone(obj.get_cones,opts.Kc,'dd');
 
 % initialize 
 % ToDo: due to ordering, create a map for this 
+args.dd_lbx = [];
+args.dd_ubx = [];
 args.dd_lbg = [];
 args.dd_ubg = [];
 
@@ -167,6 +169,9 @@ Mlin = Mlin + num_ineq_x + num_eq_x + num_eq_g + num_ineq_g;
 
 % add the variables M to sdp.x
 Nlin = Nlin + sum(Ndd.^2) + length(vertcat(M_g{:})) + length(vertcat(M_x{:}));
+
+args.dd_lbx = -inf(sum(Ndd.^2) + length(vertcat(M_g{:})) + length(vertcat(M_x{:})),1);
+args.dd_ubx = inf(sum(Ndd.^2) + length(vertcat(M_g{:})) + length(vertcat(M_x{:})),1);
 
 % update linear variables and constraints
 opts.Kx = setfield(opts.Kx,'lin',Nlin);
