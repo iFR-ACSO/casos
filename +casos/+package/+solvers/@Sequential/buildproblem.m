@@ -173,7 +173,7 @@ end
 s    = casos.PS.sym('q',grambasis(nlsos.g(I==1))); 
 
 % Currently just debugging for feasibility restoration
-x    = casos.Indeterminates('x',2,1);
+x    = casos.Indeterminates('x',3,1);
 
 obj.size_s = length(s);
 obj.s0     = ones(obj.size_s,1)*(x'*x);
@@ -189,18 +189,21 @@ zeta = casos.PS.sym('z');
 % weight for regularization (parameter)
 minCost = casos.PS.sym('m');
 
+minVio = casos.PS.sym('m');
+
 % current iterate where feas. restoration is called (parameter)
 x0   = casos.PS.sym('xi0',base_x);
 
 
-eReg = nlsos.x-x0;
+eReg           = nlsos.x-x0;
+
 regularization = dot(eReg,eReg);
 
-cost = dot(e,e) + zeta/2*regularization;
+cost = (1-zeta/2)*dot(e,e) + zeta/2*regularization;
 
 sosFeas = struct('x',[nlsos.x; s],...      % augment decision variables
                  'f',cost , ...
-                 'p',[x0;zeta;minCost]);
+                 'p',[x0;zeta;minCost;minVio]);
 
 sosFeas.('g') = [nlsos.g(I~=1);s];
 
@@ -211,7 +214,6 @@ opts.error_on_fail = 1;
 opts.verbose       = 0;
 
 % initialize solver
-% timeinit_feasres = tic;
 obj.solver_feas_res = casos.nlsossol('S','FeasRes',sosFeas,opts);
-% feasres_buildtime = toc(timeinit_feasres)
+
 end

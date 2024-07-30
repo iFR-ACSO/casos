@@ -34,8 +34,8 @@ classdef Filter
              % default options
             if ~isfield(specOps,'maxConVio_0'),             obj.opts.maxConVio_0            = 10000000000;  end
             if ~isfield(specOps,'maxConVio_0_multiplier'),  obj.opts.maxConVio_0_multiplier = 100;          end
-            if ~isfield(specOps,'gamma_theta'),             obj.opts.gamma_theta            = 0.01;         end
-            if ~isfield(specOps,'gamma_phi'),               obj.opts.gamma_phi              = 1;            end
+            if ~isfield(specOps,'gamma_theta'),             obj.opts.gamma_theta            = 1e-5;         end
+            if ~isfield(specOps,'gamma_phi'),               obj.opts.gamma_phi              = 1e-5;         end
             if ~isfield(specOps,'eta'),                     obj.opts.eta                    = 1e-4;         end
             if ~isfield(specOps,'s_phi'),                   obj.opts.s_phi                  = 2.3;          end
             if ~isfield(specOps,'s_theta'),                 obj.opts.s_theta                = 1.1;          end
@@ -54,17 +54,20 @@ classdef Filter
                  conVio_0 = 0;
              end
 
-
-             % compute most right entry of filter
-             % conVio_0   = obj.opts.maxConVio_0_multiplier*conVio_xi0;
-            
              % minimum constraint violation for sufficient decrease
-             obj.opts.minConVio =  1e-3;
+             obj.opts.minConVio =  1e-4*max(1,conVio_0);
                 
              % initialize filter; basically an array
              obj.filter             = [cost0,conVio_0];
 
         end
+
+        % function obj = augmentFilter(obj,cost,conVio)
+        %          % augment filter
+        %          obj.filter = vertcat(obj.filter,[cost - obj.opts.gamma_phi*curr_conVio, ... 
+        %                                           conVio*(1-obj.opts.gamma_theta)]);
+        % 
+        % end
         
         % function called during online execution
         function [obj,goto_SOC,accept_new_iter] = updateFilter(obj,...
@@ -113,6 +116,12 @@ classdef Filter
 
         end % --- end of method updateFilter ---
 
+         function obj = augmentFilter(obj,new_cost,new_conVio)
+                    obj.filter = vertcat(obj.filter, [new_cost - obj.opts.gamma_phi*new_conVio, ... 
+                                                      new_conVio*(1-obj.opts.gamma_theta)]);
+        end
+
+
     end
 
     methods (Access =private)
@@ -122,7 +131,7 @@ classdef Filter
               % add envelope
               Filter_adapt = [obj.filter(:,1) - obj.opts.gamma_phi*obj.filter(:,2), ... 
                               obj.filter(:,2)*(1-obj.opts.gamma_theta)];
-    
+              % 
               % For acceptance one cost or violation must be smaller
               % Example comparison one list entry with current trial point:
               % Output: 1) 0 0 --> Filter dominates i.e. entries are smaller
@@ -131,6 +140,8 @@ classdef Filter
               %         4) 1 1 --> both are smaller
               % --> case 2) to case 4): accept to filter 
               dom_logi_arr = Filter_adapt > [new_cost,new_conVio]; 
+
+              % dom_logi_arr = obj.filter > [new_cost,new_conVio]; 
                                       
               % if both entries are 1 than  list entry dominates current iterate
               if sum(dom_logi_arr,2) ~= 0  % row-wise sum must be unequal to 0
@@ -141,13 +152,13 @@ classdef Filter
                   % smaller than current filter entries!
                     
                   % identify dominated entries
-                  idx = find(sum(dom_logi_arr,2) == 2);
+                  % idx = find(sum(dom_logi_arr,2) == 2);
                     
                   % remove if necessary
-                  obj.filter(idx,:) = []; 
+                  % obj.filter(idx,:) = []; 
 
                    % augment filter i.e. add new iterate
-                   obj.filter = vertcat(obj.filter, [new_cost,new_conVio]);
+                   % obj.filter = vertcat(obj.filter, [new_cost,new_conVio]);
                     
               else
                   FilterAcceptFlag = 0;
@@ -155,6 +166,7 @@ classdef Filter
 
 
         end % --- end of function checkFilterAcceptance ---
+
 
         % check for sufficient decrease
         function [obj,suffDecreaseFlag] = checkSuffDecrease(obj,...
@@ -172,7 +184,7 @@ classdef Filter
             
             % sufficient decrease in cost; descent direction and decrease
             suffDecrease_cost   = nabla_x_cost'*searchDir < 0 &&  ...
-               alpha_k*( - nabla_x_cost'*searchDir )^obj.opts.s_phi > curr_conVio^obj.opts.s_theta;
+                                  alpha_k*( - nabla_x_cost'*searchDir )^obj.opts.s_phi > curr_conVio^obj.opts.s_theta;
             
 
                 % check for f-type switching
@@ -183,12 +195,17 @@ classdef Filter
                             suffDecreaseFlag = 1;
                         else
                             suffDecreaseFlag = 0;
+
+                          % augment filter
+                           obj.filter = vertcat(obj.filter, [curr_cost - obj.opts.gamma_phi*curr_conVio, ... 
+                                                curr_conVio*(1-obj.opts.gamma_theta)]);
                         end
 
                 else
 
                    % augment filter
-                   % obj.filter = vertcat(obj.filter, [curr_cost, curr_conVio]);
+                   obj.filter = vertcat(obj.filter, [curr_cost - obj.opts.gamma_phi*curr_conVio, ... 
+                                 curr_conVio*(1-obj.opts.gamma_theta)]);
                     
                    % check if the cost or constraint violation of new iterate is at least as good as the
                    % current iterate

@@ -117,7 +117,7 @@ methods
         if ~isfield(obj.opts,'sossol_options'), obj.opts.sossol_options = struct; end
         if ~isfield(obj.opts,'max_iter'), obj.opts.max_iter = 1000; end
         if ~isfield(obj.opts,'alpha_max'), obj.opts.alpha_max = 1; end
-        if ~isfield(obj.opts,'alpha_min'), obj.opts.alpha_min = 1e-4; end
+        if ~isfield(obj.opts,'alpha_min'), obj.opts.alpha_min = 1e-5; end
         if ~isfield(obj.opts,'tau'), obj.opts.tau = 0.5; end
         if ~isfield(obj.opts,'soc_max_iter'), obj.opts.soc_max_iter = 5; end
         if ~isfield(obj.opts,'optTol'), obj.opts.optTol = 1e-4; end

@@ -171,11 +171,11 @@ function argout = eval_on_basis(obj,argin)
         end
             
         %% check convergence criteria
-        optimality_flag =  new_cost <= 1e-8;% max([full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k,dual_star,p0)))), new_cost]) <= 1e-4;
+        optimality_flag =  max([full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k,dual_star,p0)))), new_cost]) <= 1e-4;
         
         % check if solution stays below tolerance for a certain number of
         % iterations --> solved to acceptable level
-        if new_cost <= 1e-6%([full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k,dual_star,p0)))), new_cost]) <= 1e-3
+        if max([full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k,dual_star,p0)))), new_cost]) <= 1e-3
             counter = counter + 1;
         else
             counter = 0;
