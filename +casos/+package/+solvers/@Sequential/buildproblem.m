@@ -129,6 +129,7 @@ obj.nabla_xi_f = casos.Function('f',{poly2basis(nlsos.x),p0}, { op2basis(jacobia
 
 %% setup projection for constraint violation check
 
+
 % work around for polynomial interface
 obj.xk1fun = casos.Function('f',{poly2basis(nlsos.x),p0}, {nlsos.x});
 
@@ -138,10 +139,11 @@ for idx = 1:length(nlsos.g)
     I(idx) = ~is_linear(nlsos.g(idx),nlsos.x);
 end
 
+if isempty(opts.conVioSamp)
 % Gram decision variable
 s    = casos.PS.sym('q',sparsity(nlsos.g(I==1)));
 
-if ~isempty(s)
+if ~isempty(s) 
 
     % parameterized projection for linesearch prediction
     nonLinCon = nlsos.g(I==1);
@@ -157,12 +159,22 @@ if ~isempty(s)
     opts               = [];
     opts.Kc            = struct('sos', length(s));
     opts.error_on_fail = 0;
-    % timeinit_proj = tic;
+
     obj.projConPara    =  casos.sossol('S','mosek',proj_sos,opts);
-    % proj_buildtime = toc(timeinit_proj)
+
 else
 
     obj.projConPara    = [];
+
+end
+
+
+else
+    nonLinCon = nlsos.g(I==1);
+
+    % evaluate current solution (coefficients) at provided sampling points
+    obj.pseudoProj = casos.Function('f',{poly2basis(nlsos.x),p0}, {nonLinCon});
+      
 
 end
 

@@ -131,16 +131,28 @@ g = Vinit-2;
 
 cost = dot(g - (V-1),g - (V-1)) ;
 
+% we want to minimze the distance to g hence we only produce samples in
+% this set
+figure(100)
+pcontour(g,0,[-6 6 -6 6])
+hold on
+gfun = to_function(g);
 
+a = -6;
+b =  6;
 
+smpl = a + (b-a)*rand(2,10000);
 
+idx = find(full(gfun(smpl(1,:),smpl(2,:))) <= 0);
+plot(smpl(1,idx),smpl(2,idx),'g*')
+% plot(smpl(1,idx),smpl(2,idx),'r*')
 %% setup solver
 
 % options
 opts = struct('sossol','mosek');
-opts.verbose = 4;
-opts.conVioSamp = [1;2;3;4]; 
-opts.indeterminates = x;
+opts.verbose = 1;
+opts.conVioSamp = smpl(:,idx); 
+opts.indeterminates = casos.PS(x);
 sos = struct('x',[V; s2],...
               'f',cost, ...
               'p',[]);
@@ -161,9 +173,11 @@ buildtime = toc(buildTime_in);
 
 
 %% solve
+profile on
 sol = solver_GTM2D_ROA('x0',[ Vinit;  x'*x]); 
 disp(['Solver buildtime: ' num2str(buildtime), ' s'])
 
+profile viewer
 
 %% plot solver statistics
 plotSolverStats(solver_GTM2D_ROA.stats);

@@ -185,6 +185,20 @@ function argout = eval_on_basis(obj,argin)
 
                 new_conVio = 0;
 
+                % execute pseudo-projection
+                if ~isempty(obj.opts.conVioSamp)
+                    measTime_Proj_in = tic;
+                    pseudo_proj = to_function(obj.pseudoProj(xi_k1,p0));
+                    new_conVio = min(full(pseudo_proj(obj.opts.conVioSamp(1,:),obj.opts.conVioSamp(2,:))));
+                    
+                    if new_conVio >= 0
+                        new_conVio = 0;
+                    else
+                        new_conVio = abs(new_conVio);
+                    end
+                    info{i+1}.filter_stats.measTime_proj_out = toc(measTime_Proj_in);
+                end
+
             end
 
                    

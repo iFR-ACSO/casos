@@ -28,6 +28,7 @@ properties (Access=private)
     % parameterized projection (constraint violation)
     paraProjConVio
     xk1fun
+    
 
     % cost function
     f
@@ -35,6 +36,7 @@ properties (Access=private)
 
     % constraint violation
     projConPara 
+    pseudoProj
 
     % Langrangian
     nabla_xi_L_norm
@@ -63,6 +65,8 @@ properties (Constant,Access=protected)
          's_theta', 'Constraint violation exponent for sufficient decrease condition (filter)'
          'gamma_phi','Envelope parameter cost (filter)'
          'delta', 'Multiplier for sufficient decrease condition'
+         'conVioSamp','Sampling points provided from user for pseudo-projection'
+         'indeterminates','Vector of indeterminates'
          'verbose', 'Turn on/off iteration display.'}
     ];
 
@@ -134,6 +138,8 @@ methods
         if ~isfield(obj.opts,'s_theta'),        obj.opts.s_theta        = 1.1; end
         if ~isfield(obj.opts,'gamma_phi'),      obj.opts.gamma_phi      = 1; end
         if ~isfield(obj.opts,'delta '),         obj.opts.delta          = 1; end
+        if ~isfield(obj.opts,'conVioSamp'),     obj.opts.conVioSamp     = []; end
+        if ~isfield(obj.opts,'indeterminates'), obj.opts.indeterminates = []; end       
         
        
 
