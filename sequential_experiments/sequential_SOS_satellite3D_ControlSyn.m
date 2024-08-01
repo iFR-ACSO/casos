@@ -84,7 +84,7 @@ g0 = subs(g0,x,D^(-1)*x);
 
 pcontour(subs(g0,x(3),0),0,[-omega_max omega_max -omega_max omega_max],'k')
 
-cost = dot(g0 - (V), g0 - (V)) ;
+cost = dot(g0 - (V-1), g0 - (V-1)) ;
 
 %% setup solver
 sos = struct('x',[V;s2;kappa],...

@@ -186,10 +186,8 @@ e = s - nlsos.g(I==1);
 % weight for regularization (parameter)
 zeta = casos.PS.sym('z');
 
-% weight for regularization (parameter)
-minCost = casos.PS.sym('m');
+vio0 = casos.PS.sym('V');
 
-minVio = casos.PS.sym('m');
 
 % current iterate where feas. restoration is called (parameter)
 x0   = casos.PS.sym('xi0',base_x);
@@ -199,11 +197,14 @@ eReg           = nlsos.x-x0;
 
 regularization = dot(eReg,eReg);
 
-cost = (1-zeta/2)*dot(e,e) + zeta/2*regularization;
+cost = dot(e,e) + zeta/2*nlsos.f;
+
+
+obj.conVio_0 = casos.Function('f',{nlsos.x,s,x0,zeta},{cost});
 
 sosFeas = struct('x',[nlsos.x; s],...      % augment decision variables
                  'f',cost , ...
-                 'p',[x0;zeta;minCost;minVio]);
+                 'p',[zeta;vio0;x0]);
 
 sosFeas.('g') = [nlsos.g(I~=1);s];
 
@@ -211,7 +212,7 @@ opts               = [];
 opts.Kc            = struct('sos', length(sosFeas.g));
 opts.Kx            = struct('lin', length(sosFeas.x));
 opts.error_on_fail = 1;
-opts.verbose       = 0;
+opts.verbose       = 1;
 
 % initialize solver
 obj.solver_feas_res = casos.nlsossol('S','FeasRes',sosFeas,opts);

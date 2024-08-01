@@ -26,7 +26,9 @@ function argout = eval_on_basis(obj,argin)
     
    conVio_xi0   = 0;
     
-   curr_cost   = full(casadi.DM(p0(end)));
+   % initialize the current cost with the last constraint violation of the
+   % original problem
+   curr_cost   = full(casadi.DM(p0(2)));
    curr_conVio = conVio_xi0;
     
    % initialize filter
@@ -80,13 +82,36 @@ function argout = eval_on_basis(obj,argin)
 
         %% backtracking line search filter 
         alpha_max            = 1;
-        alpha_min            = 0.001;
         tau                  = 0.5;
         
         alpha_k = alpha_max;
 		
-        while alpha_k >= alpha_min
+        while true
+
+            % compute alpha min 
+            dirVecDeriv = full(casadi.DM(full(obj.nabla_xi_f(xi_k,p0)))*d_star);
+            if dirVecDeriv < 0
+                s_phi = 2.3;
+                s_theta =  1.1;
+                gamma_phi = 1;
+                delta = 1;
+                alpha_min = min([ 1e-5, ( gamma_phi*full(casadi.DM(full(obj.f(xi_k,p0)))) )/abs(dirVecDeriv ), (delta*full(casadi.DM(full(obj.f(xi_k,p0))))^s_theta )/(abs(dirVecDeriv)^s_phi) ]);
+
+            else
+
+                alpha_min = 1e-5; % same value as gamma_theta in filter
+
+            end
                 
+            % leave linesearch 
+            if alpha_k < alpha_min
+                infeasible = 1;
+                break
+            else
+                infeasible = 0;
+            end
+
+
             % new-iterate
             xi_k1 = xi_k + alpha_k*d_star;
 
@@ -124,25 +149,19 @@ function argout = eval_on_basis(obj,argin)
             dual_k1 = dual_star;
         end
                 
-        if alpha_k < alpha_min
+        if infeasible
         
-          % printf(obj.log,'error','Feasibility restoration unsuccesful.\n');
-
-        
-           % store iteration info
-           info(i+1:end) = [];
-           obj.info.iter = info;
-               
-           % adjust last solution similar to iteration i.e. overwrite optimization solution 
-           sol{1} = xi_k1;
-           sol{5} = dual_k1;
-               
-          argout = sol;
-        
-          % printf(obj.log,'debug','Feasibility restoration unsuccesful.\n'); 
-        
-          % terminate
-          return
+            error('Feasibility Restoration run into local infeasibility!')
+          %  % store iteration info
+          %  info(i+1:end) = [];
+          %  obj.info.iter = info;
+          % 
+          %  % adjust last solution similar to iteration i.e. overwrite optimization solution 
+          %  sol{1} = xi_k1;
+          %  sol{5} = dual_k1;
+          % 
+          % argout = sol;
+          % return
           
         end
 
@@ -171,7 +190,9 @@ function argout = eval_on_basis(obj,argin)
         end
             
         %% check convergence criteria
-        optimality_flag =  max([full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k,dual_star,p0)))), new_cost]) <= 1e-4;
+        optimality_flag = new_cost/full(casadi.DM(p0(2))) < 1e-2;
+
+        % optimality_flag =  max([full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k,dual_star,p0)))), new_cost]) <= 1e-4;
         
         % check if solution stays below tolerance for a certain number of
         % iterations --> solved to acceptable level

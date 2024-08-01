@@ -23,6 +23,7 @@ properties (Access=private)
     % cost function
     f
     nabla_xi_f
+ 
 
     % constraint violation
     projConPara 

@@ -125,6 +125,7 @@ obj.nabla_xi_L_norm = casos.Function('f',{poly2basis(nlsos.x),poly2basis(lam_gs)
 obj.f          = casos.Function('f',{poly2basis(nlsos.x),poly2basis(p0)}, { nlsos.f });
 obj.nabla_xi_f = casos.Function('f',{poly2basis(nlsos.x),poly2basis(p0)}, { op2basis(jacobian(nlsos.f,nlsos.x)) });
 
+
 % we do not have nonlinear constraints in feasibility restoration
 obj.projConPara    = [];
 
