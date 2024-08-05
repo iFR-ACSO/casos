@@ -6,7 +6,7 @@ N_min = 2;
 N_max = 20;
 N = N_min:N_max;
 
-if ~exist('data_stats.mat', 'file')
+if ~exist('data_stats.mat', 'file') 
     % pre-allocate data
     time_collector = zeros(length(N), 3);
     ratio_collector = zeros(length(N), 2);
@@ -17,7 +17,7 @@ if ~exist('data_stats.mat', 'file')
     end
 
     % save the time data
-    save('data_stats.mat', 'time_collector')
+    save('data_stats.mat', 'time_collector', 'ratio_collector')
 else
     load('data_stats.mat')
 end
