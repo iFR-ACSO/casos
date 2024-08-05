@@ -19,13 +19,12 @@ opts = struct('Kc',struct('sos',1));
 % solve by relaxation to SDP
 S = casos.sossol('S','mosek',sos,opts);
 % evaluate
+tic
 sol = S();
-
+% result should be 0.47247
+fprintf('SOS: Minimum is %g. (time = %d)\n', full(sol.f), toc)
 % save solution with SOS cone
 g_sos = full(sol.x);
-
-% result should be 0.47247
-fprintf('SOS: Minimum is %g.\n', full(sol.f))
 
 %% Diagonally dominant sum-of-squares cone
 
@@ -35,12 +34,12 @@ opts = struct('Kc',struct('dsos',1));
 % solve by relaxation to SDP
 S = casos.sossol('S','mosek',sos,opts);
 % evaluate
+tic
 sol = S();
+% the result should be 0.75 
+fprintf('DSOS: Minimum is %g. (time = %d)\n', full(sol.f), toc)
 % save solution with DSOS cone
 g_dsos = full(sol.x);
-
-% the result should be 0.75 
-fprintf('DSOS: Minimum is %g.\n', full(sol.f))
 
 %% Scaled diagonally dominant sum-of-squares cone
 
@@ -50,13 +49,12 @@ opts = struct('Kc',struct('sdsos',1));
 % solve by relaxation to SDP
 S = casos.sossol('S','mosek',sos,opts);
 % evaluate
+tic
 sol = S();
-
+% the result should be 0.47247
+fprintf('SDSOS: Minimum is %g. (time = %d)\n', full(sol.f), toc)
 % save solution with SOS cone
 g_sdsos = full(sol.x);
-
-% the result should be 
-fprintf('SDSOS: Minimum is %g.\n', full(sol.f))
 
 %% Plot results
 % convert f into a function to evaluate on the interval [-1, 1]
