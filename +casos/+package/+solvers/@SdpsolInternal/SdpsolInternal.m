@@ -61,14 +61,22 @@ methods
         % constraint function (vectorized)
         sdp_g = sdp.g(:);
 
+        if isfield(sdp,'derivatives')
+            % use pre-computed derivatives (undocumented)
+            H = sdp.derivatives.Hf;
+            g = sdp.derivatives.Jf;
+            A = sdp.derivatives.Jg;
+
+        else
         % quadratic cost
         H = hessian(sdp.f, x);
         % linear cost
-        g = jacobian(simplify(sdp.f - x'*(H/2)*x), x);
+        g = jacobian(sdp.f, x);
         % linear constraint
         A = jacobian(sdp_g, x);
+        end
         % constant constraint
-        b = simplify(A*x - sdp_g);
+        b = -sdp_g;
         
         % get sparsity
         conic.h = sparsity(H);
@@ -78,6 +86,7 @@ methods
         obj.solver = casos.package.solvers.conicInternal([name '_conic'],solver,conic,opts);
 
         % conic problem data as function of p
+        % NOTE: When evaluating, we must set x = 0.
         data = casadi.Function('P',{x p},{H g A b});
 
         % SDP problem as function of p and x
@@ -133,9 +142,13 @@ methods (Access={?casos.package.functions.FunctionCommon, ?casos.package.functio
         var_in{idx+1}  = expr_in; % CasADi uses 0-based index
         var_out{idx+1} = expr_out;
 
+        % NOTE: As per Casadi v3.6.5, functions' input and output names 
+        % must be mutually exclusive unless explicity permitted.
+        fopt = struct('allow_duplicate_io_names',true);
+
         % substitute
-        fhan = casadi.Function('f',var_in,call(obj.fhan,var_out),name_in(obj.fhan),name_out(obj.fhan));
-        S = casos.package.solvers.SdpsolInternal(obj,fhan);
+        fhan_new = casadi.Function('f',var_in,call(obj.fhan,var_out),name_in(obj.fhan),name_out(obj.fhan),fopt);
+        S = casos.package.solvers.SdpsolInternal(obj,fhan_new);
     end
 end
 

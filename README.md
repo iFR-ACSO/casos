@@ -1,13 +1,11 @@
-# CaΣoS: _CasADi-based sum-of-squares optimization suite_[^1]
+# CaΣoS, the nonlinear sum-of-squares optimization suite
 
-CaΣoS provides a symbolic framework for convex and nonconvex sum-of-squares problems, making use of the [CasADi](https://web.casadi.org) software for symbolic expressions, automatic differentiation, and numerical optimization.
-
-[^1]: CaΣoS has been neither supported nor endorsed by CasADi or any of its affilitiates.
+CaΣoS provides tools for symbolic polynomial expressions as well as parametrized convex and nonconvex sum-of-squares optimization problems, making use of the [CasADi](https://web.casadi.org) software for symbolic expressions, automatic differentiation, and numerical optimization.
 
 ### Install
 
 The following requirements need to be met in order to use all functionalities of CaΣoS:
-1. Download [Casadi](https://web.casadi.org/get/) (currently, using v3.5.5 is recommended) and add it to your Matlab path.
+1. Download [CasADi v3.6.x](https://web.casadi.org/get/#body-36) and add it to your Matlab path.
 2. Download and install at least one solver for semidefinite (conic) programs, and add the solver(s) to the Matlab Path.
 
    - Currently supported are [Mosek](https://www.mosek.com/downloads/) (v10.1), [SCS](https://www.cvxgrp.org/scs/install/matlab.html#matlab-install) (v3.2.4), and [SeDuMi](https://sedumi.ie.lehigh.edu/?page_id=58) (v1.3).
@@ -15,97 +13,113 @@ The following requirements need to be met in order to use all functionalities of
 
 3. Add the CaΣoS root folder (the one that contains the directory `+casos`) to your Matlab path.
 
+> [!IMPORTANT]
+> CaΣoS requires CasADi version 3.6.0 or newer.
+
 ## Polynomial expressions
 
-The class `casos.PS` implements polynomials of which the coefficients can be symbolic expressions.
+The classes `casos.PD` and `casos.PS` implement polynomials of which the coefficients are constant doubles or can be symbolic expressions, respectively.
 
 #### Polynomials of degree zero
 Polynomials of degree zero correspond to constant or symbolic expressions without indeterminate variables.
 
 ```
+casos.PD(M)
 casos.PS(M)
 ```
-creates a zero-degree polynomial which corresponds to the double, `casadi.DM`, or `casadi.SX` matrix `M`.
+creates a zero-degree polynomial which corresponds to the double or `casadi.DM`, or `casadi.SX` matrix `M`.
 
+The following syntaxes for constant matrices are also supported by `casos.PS`:
 ```
-casos.PS(m,n)
-casos.PS.zeros(m,n)
-casos.PS.zeros(n)
+casos.PD(m,n)
+casos.PD.zeros(m,n)
+casos.PD.zeros(n)
 ```
 creates a zero-degree polynomial which corresponds to a `m × n` matrix (resp., a column vector with length `n`) of zeros.
 
 ```
-casos.PS.ones(m,n)
-casos.PS.ones(n)
+casos.PD.ones(m,n)
+casos.PD.ones(n)
 ```
 creates a zero-degree polynomial which corresponds to a `m × n` matrix (resp., a column vector with length `n`) of ones.
 
 ```
-casos.PS.eye(n)
+casos.PD.eye(n)
 ```
 creates a zero-degree polynomial which corresponds to the `n × n` identity matrix.
 
-#### Indeterminate variables & monomials
-CaΣoS distinguishes between *indeterminate* variables (symbols in a polynomial sense) and *symbolic* variables (variables in an optimization sense). The following syntax creates polynomials that correspond to (vectors of) indeterminate variables and monomial expressions.
+#### Indeterminate variables
+CaΣoS distinguishes between *indeterminate* variables (symbols in a polynomial sense) and *symbolic* variables (variables in an optimization sense).
 
 ```
-casos.PS('x','y',...)
+casos.Indeterminates('x',n)
+casos.Indeterminates('x','y',...)
 ```
-creates a `n × 1` vector of indeterminate variables, where `n` corresponds to the number of arguments.
+creates a tupel of `n` indeterminate variables; in the second case, `n` corresponds to the number of arguments.
 
+Tupels of indeterminate variables can be converted into polynomials that correspond to vectors of indeterminate variables, and vice-versa. Moreover, indeterminate variables can be used in algebraic expressions to define polynomials with constant or symbolic coefficients, e.g.,
 ```
-casos.PS('x',m,n)
-casos.PS('x',n)
+f = [-x(2); x(1) + (x(1)^2 - 1)*x(2)]
+u = K*x
 ```
-creates a `m × n` matrix (resp., a square matrix) of indeterminate variables.
+if `x` is a tuple of indeterminate variables and `K` is a double, `casadi.DM`, or `casadi.SX` matrix of suitable dimensions.
+
+#### Monomial patterns
+Monomial patterns describe the monomial terms a polynomial expression has.
 
 ```
 monomials(x,deg)
 ```
-creates a `l × 1` vector of all monomials in `x` with degree(s) in `deg`, where `x` must be a vector of indeterminate variables and `deg` is vector of nonnegative integers; where `l` is the total number of such monomials.
+creates a pattern of the `l` monomials in `x` with degree(s) in `deg`, where `x` must be a tuple of indeterminate variables (or a corresponding, vector-valed polynomial) and `deg` is a list of nonnegative integers; where `l` is the total number of such monomials.
 
+Monomial patterns are defined by the class `casos.Sparsity`; if multiple patterns are concatenated to a vector or matrix, we call that a monomial *sparsity* pattern. The previous syntax is equivalent to
 ```
-monomials(p)
+casos.Sparsity.scalar(x,deg)
 ```
-creates a `l × 1` vector of all monomials in the polynomial `p`; where `l` is the total number of monomials in `p`.
+while the following syntaxes can be used to create more complex, matrix-valued monomial sparsity patterns:
+```
+casos.Sparsity.dense(...,w)
+casos.Sparsity.diag(...,w)
+casos.Sparsity.band(...,w)
+casos.Sparsity.banded(...,w)
+casos.Sparsity.nonzeros(...,w)
+casos.Sparsity.triplet(...,w)
+```
+where `...` denotes arguments to the equivalent function of `casadi.Sparsity` and `w` is either a scalar monomial pattern or a monomial sparsity pattern with length equal to the nonzero matrix entries.
+
+Both (scalar) monomial patterns and monomial sparsity patterns can be used to define symbolic polynomials.
 
 #### Polynomials with symbolic coefficients
-Unlike indeterminate variables, symbolic variables can be decision variables of an optimization problem. The following syntax creates polynomials which have symbolic variables as coefficients. In all of the following syntaxes, the first argument corresponds to the display name (resp., prefix) for the symbolic coeffcients. See [Casadi's `SX` symbolics](https://web.casadi.org/docs/#the-sx-symbolics) for details.
+The class `casos.PS` implements polynomials of which the coefficients can be symbolic expressions.
+Unlike indeterminate variables, symbolic polynomials (variables) can be decision variables of an optimization problem. The following syntax creates polynomials which have symbolic variables as coefficients. In all of the following syntaxes, the first argument corresponds to the display name (resp., prefix) for the symbolic coeffcients. See [Casadi's `SX` symbolics](https://web.casadi.org/docs/#the-sx-symbolics) for details.
 
 ```
 casos.PS.sym('c',w)
 ```
-creates a scalar polynomial with symbolic coefficients and monomials in `w`, where `w` must be a vector of monomials.
+creates a scalar polynomial with symbolic coefficients and monomials in `w`, if `w` is a scalar monomial pattern; *or* creates a vector/matrix of polynomials with symbolic coefficients, size equal to the size of `w`, and its `(i,j)`-th entry having the monomial terms of `w(i,j)`.
 
 ```
 casos.PS.sym('c',w,[m n])
 casos.PS.sym('c',w,n)
 ```
-creates a `m × n` matrix (resp., a square matrix with length `n`) of polynomials with symbolic coefficients and monomials in `w`, where `w` must be a vector of monomials.
+creates a `m × n` matrix or a `n × 1` vector of polynomials with symbolic coefficients and each entry having the monomial terms in `w`, where `w` must be a scalar monomial pattern.
 
 ```
 casos.PS.sym('c',[m n])
 casos.PS.sym('c',n)
 ```
-creates a `m × n` matrix (resp., a square matrix with length `n`) of polynomials of degree zero; essentially, this is a symbolic matrix similar to `casadi.SX`.
+creates a `m × n` matrix or a `n × 1` vector of polynomials with degree zero; essentially, this is a symbolic matrix similar to `casadi.SX`.
 
 ```
 casos.PS.sym(...,'gram')
 ```
 where `...` denotes any of the syntaxes above, creates a scalar or matrix polynomial in Gram form, that is, with entries `p = z'*Q*z`, where `z` is the vector of monomials in `w` and `Q` is a quadratic symbolic matrix.
 
-**Note 1:** The syntax `casos.PS.sym('c',w,...)` creates polynomials with monomials *in* `w` and is therefore equivalent to `casos.PS.sym('c',monomials(w),...)`. In consequence, all of the following syntaxes yield the same result:
-```
-casos.PS.sym('c',[1;w])
-casos.PS.sym('c',[w;1])
-casos.PS.sym('c',[1;w;w])
-```
-
-**Note 2:** We say that a polynomial is *symbolic* if and only if all of its (nonzero) coefficients are symbols in the sense of Casadi. Except for the Gram form, all polynomials created with the syntaxes above are symbolic but the result of the notation 
+**Note:** We say that a polynomial is *symbolic* if and only if all of its (nonzero) coefficients are symbols in the sense of Casadi. All polynomials created with the syntaxes above, *including the Gram form,* are symbolic but the result of the notation 
 ```
 casos.PS.sym('c',[1 2])*[x;x]
 ```
-with `x = casos.PS('x')` would only be a symbolic *expression*. The same is true for the Gram form syntax because of the symmetries in the Gram matrix expression. The queries `is_symbolic`, `is_symexpr`, and `is_symgram` check whether a polynomial is a symbolic polynomial, a symbolic expression, or a symbolic Gram form, respectively.
+with `x = casos.PS('x')` would only be a symbolic *expression*. The queries `is_symbolic` and `is_symexpr` check whether a polynomial is a symbolic polynomial or a symbolic expression, respectively.
 
 ## Functions between polynomials
 
@@ -114,7 +128,7 @@ The class `casos.Function` provides functions of which the input and/or output a
 ```
 casos.Function('f',{p1 ... pN},{q1 ... qM})
 ```
-creates a function named `'f'` mapping the `M` outputs to `N` inputs. Outputs may be any expressions of types `casadi.DM`, `casadi.SX`, or `casos.PS` whereas inputs must be *symbolic* expressions of types `casadi.SX` or `casos.PS`.
+creates a function named `'f'` mapping the `M` outputs to `N` inputs. Outputs may be any expressions of types `casadi.DM`, `casadi.SX`, `casos.PD`, or `casos.PS` whereas inputs must be *symbolic* expressions of types `casadi.SX` or `casos.PS`.
 
 ```
 casos.Function('f',{p1 ... pN},{q1 ... qM},{'a1' ... 'aN'},{'b1' ... 'bM'})
@@ -157,7 +171,7 @@ A sum-of-squares problem is affine if $F$ is a linear (or quadratic) form in $\x
 ```
 S = casos.sossol('S','solver',struct('x',xi,'f',F,'g',G,'p',pi),opts)
 ```
-initializes the SOS solver named `'S'` by relaxation to a convex optimization problem using the convex solver `'solver'`. See [Convex optimization](#convex-optimization) for supported solvers. Options are provided as structure `opts` including optional fields `opts.Kx` and `opts.Kg` describing, respectively, the cones $\mathcal K_x$ and $\mathcal K_c$. See [Polynomial cones](#polynomial-cones) for details.
+initializes the SOS solver named `'S'` by relaxation to a convex optimization problem using the convex solver `'solver'`. See [Convex optimization](#convex-optimization) for supported solvers. Options are provided as structure `opts` including optional fields `opts.Kx` and `opts.Kc` describing, respectively, the cones $\mathcal K_x$ and $\mathcal K_c$. See [Polynomial cones](#polynomial-cones) for details.
 
 ```
 sol = S('lbx',lbx,'ubx',ubx,'lbg',lbg,'ubg',ubg)
@@ -180,7 +194,7 @@ where $t$ enters affinely into $G = (G_\mathrm{l}, G_\mathrm{c})$ and $G(t, \xi,
 ```
 S = casos.qcsossol('S','bisection',struct('x',xi,'f',±t,'g',G,'p',pi),opts)
 ```
-initializes the quasiconvex SOS solver named `'S'` by bisection over convex sum-of-squares optimization problems. The options structure `opts` includes optional fields `opts.Kx` and `opts.Kg` describing $\mathcal K_x$ and $\mathcal K_c$, respectively. See [Polynomial cones](#polynomial-cones) for details.
+initializes the quasiconvex SOS solver named `'S'` by bisection over convex sum-of-squares optimization problems. The options structure `opts` includes optional fields `opts.Kx` and `opts.Kc` describing $\mathcal K_x$ and $\mathcal K_c$, respectively. See [Polynomial cones](#polynomial-cones) for details.
 
 #### Polynomial cones
 
