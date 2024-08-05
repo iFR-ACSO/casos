@@ -82,14 +82,15 @@ f(1:n) = dtheta';          % dtheta/dt = dtheta
 f(n+1:2*n) = ddtheta_sol;  % ddtheta/dt = solution from above
 
 % Convert symbolic to function
-matlabFunction(f, 'File', 'pendulum_dynamics', 'Vars', {z', tau'});
+pendulum_dyn = ['pendulum_dyn_n' num2str(n)];
+matlabFunction(f, 'File', pendulum_dyn, 'Vars', {z', tau'});
 
 
 %% obtain linear model
 % Compute the Jacobian matrices
 % Linearized state-space: dx/dt = A*x + B*u
 % f is the function handle obtained from the symbolic dynamics
-f_sym = pendulum_dynamics([theta, dtheta]', tau');
+f_sym = feval(pendulum_dyn, [theta, dtheta]', tau');
 f_sym = f_sym(:);
 
 % State vector
@@ -118,13 +119,12 @@ R = eye(n-1);        % Control cost matrix (weight for the control inputs)
 [K, S, e] = lqr(A_lin, B_lin, Q, R);
 
 %% obtain taylor expansion of controlled system
-def = 2;
 f_sym_ctrl = subs(f_sym, tau', -K*x_sym');
 % Convert symbolic to function
-matlabFunction(f_sym_ctrl, 'File', 'pendulum_dynamics_ctrl', 'Vars', {z'});
+matlabFunction(f_sym_ctrl, 'File', ['pendulum_dyn_ctrl_n' num2str(n)], 'Vars', {z'});
 
 taylor_expansion = taylor(f_sym_ctrl, x_sym, 'Order', deg+1, 'ExpansionPoint', x_eq);
 % Convert symbolic to function
-matlabFunction(taylor_expansion, 'File', 'pendulum_dynamics_poly', 'Vars', {z'});
+matlabFunction(taylor_expansion, 'File', ['pendulum_dyn_poly_n' num2str(n) '_d' num2str(deg)], 'Vars', {z'});
 
 end
