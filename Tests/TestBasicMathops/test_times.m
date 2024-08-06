@@ -47,9 +47,9 @@ classdef test_times < matlab.unittest.TestCase
 
         function test_times_multiple(testCase,testValue,refValue)
 
-            actSolution = plus(testValue(1:10), testValue(11:20));
+            actSolution = times(testValue(1:10), testValue(11:20));
 
-            refSolution = plus(refValue(1:10), refValue(11:20));
+            refSolution = times(refValue(1:10), refValue(11:20));
             
             c_sopt =  [];
             c_cas  =  [];

@@ -113,6 +113,8 @@ bc = mat2cell(b(idx)  ,[1+Na.l+Nx.l sum(K.q) sum(K.s.^2)],1);
 % vector-based vectorization
 Ac_s = cellfun(@obj.sdp_vec, mat2cell(Ac{3},K.s.^2,n), 'UniformOutput', false);
 bc_s = cellfun(@obj.sdp_vec, mat2cell(bc{3},K.s.^2,1), 'UniformOutput', false);
+
+
 % build SCS structures
 Ascs = vertcat(Ac{1},Ac{2},Ac_s{:});
 bscs = vertcat(bc{1},bc{2},bc_s{:});

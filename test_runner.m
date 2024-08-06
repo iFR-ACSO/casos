@@ -10,7 +10,7 @@
 % ========================================================================
 
 % Get all function files in test f
-allFiles = dir(fullfile([pwd '\+Tests\+unitTests\', '*.m']));
+allFiles = dir(fullfile([pwd '\Tests\+unitTests\', '*.m']));
 
 % Initialize a cell array to store the names of functions
 functionNames = char();

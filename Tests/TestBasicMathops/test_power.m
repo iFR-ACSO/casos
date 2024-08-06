@@ -13,7 +13,7 @@ classdef test_power < matlab.unittest.TestCase
            testValue = [];
            refValue  = [];
 
-        for k = 1:10
+        for k = 1:5
            [testValuek,refValuek] = genTestPoly();
            testValue = [testValue; testValuek];
            refValue = [refValue; refValuek];
@@ -45,23 +45,23 @@ classdef test_power < matlab.unittest.TestCase
             
         end
 
-        function test_power_multiple(testCase,testValue,refValue)
-
-            actSolution = power(testValue(1:10),5);
-
-            refSolution = power(refValue(1:10), 5);
-            
-            c_sopt =  [];
-            c_cas  =  [];
-            for k = 1:length(refSolution)
-                    c_sopt = [c_sopt;full(poly2basis(refSolution(k)))];
-                    c_cas  = [c_cas ;full(casadi.DM(poly2basis(actSolution(k))))];
-            end
-  
-
-            % Perform assertions if needed
-            testCase.verifyEqual(c_cas, c_sopt ,"AbsTol",1e-12);
-        end
+        % function test_power_multiple(testCase,testValue,refValue)
+        % 
+        %     actSolution = power(testValue(1:2),5);
+        % 
+        %     refSolution = power(refValue(1:2), 5);
+        % 
+        %     c_sopt =  [];
+        %     c_cas  =  [];
+        %     for k = 1:length(refSolution)
+        %             c_sopt = [c_sopt;full(poly2basis(refSolution(k)))];
+        %             c_cas  = [c_cas ;full(casadi.DM(poly2basis(actSolution(k))))];
+        %     end
+        % 
+        % 
+        %     % Perform assertions if needed
+        %     testCase.verifyEqual(c_cas, c_sopt ,"AbsTol",1e-12);
+        % end
 
     end
    

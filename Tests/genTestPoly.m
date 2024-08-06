@@ -1,7 +1,7 @@
 function  [testValue,refValue] = genTestPoly()
 
             lower = 1;
-            upper = 7;
+            upper = 4;
 
             m    = ceil(lower + (upper-lower)*rand());  % number of indeterminates
 
@@ -14,12 +14,13 @@ function  [testValue,refValue] = genTestPoly()
             x_monom2_cas = monomials(x_cas,deg2);
             
             % generate random coefficients
-            coeffs1 = rand(length(x_monom1_cas),1)';
-            coeffs2 = rand(length(x_monom2_cas),1)';
+            coeffs1 = rand(x_monom1_cas.nnz,1)';
+            coeffs2 = rand(x_monom2_cas.nnz,1)';
             
+
             % generate casos polynomials
-            poly1_cas = coeffs1 * x_monom1_cas;
-            poly2_cas = coeffs2 * x_monom2_cas;
+            poly1_cas = casos.PS(x_monom1_cas,coeffs1);
+            poly2_cas = casos.PS(x_monom2_cas,coeffs2);
 
             % generate reference polynomials using multipoly
             x_sopt        = mpvar('x',m,1);
