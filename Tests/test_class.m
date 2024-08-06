@@ -19,8 +19,14 @@ disp(['The script is located in: ', activeDir]);
 filePattern = fullfile(test_folder_dir, 'test_*.m');
 mFiles = dir(filePattern);
 
+% Initialize a cell array to hold the file names
+fileNames = {mFiles.name};
+
+% Display the total number of test files
+disp(['Total number of tests: ', num2str(length(fileNames))]);
+
 % Create a suite of tests.
-suite_basicMath = testsuite({mFiles.name});
+suite_basicMath = testsuite(fileNames);
 
 % run the tests
 results_suite_basicMath = run(suite_basicMath);
