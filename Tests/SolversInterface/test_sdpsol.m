@@ -1,3 +1,17 @@
+% ========================================================================
+%
+% Test Name: test_sdpsol.m
+%
+% Test Description: 
+%   > Check for a simple SDP with only linear and psd cones if the
+%   interface with mosek and sedumi works.
+%               
+% Test Procedure: ToDo
+%                               
+% Date: 09/06/2024 
+%
+% ========================================================================
+
 classdef test_sdpsol < matlab.unittest.TestCase
 
     properties (TestParameter)
