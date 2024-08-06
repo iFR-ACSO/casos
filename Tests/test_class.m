@@ -3,6 +3,17 @@ clear
 
 
 %% setup a testsuite for basic math operations
+
+% add to path the folder with tests
+activeFile = matlab.desktop.editor.getActiveFilename;
+
+% Extract the directory part of the full path
+[activeDir, ~, ~] = fileparts(activeFile);
+addpath([activeDir, '/PolyOperations']);
+
+% Display the directory of the file
+disp(['The script is located in: ', activeDir]);
+
 suite_basicMath = testsuite({'test_plus',...
                              'test_times', ...
                              'test_mtimes', ...
