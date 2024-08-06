@@ -9,8 +9,9 @@ function test_class(silentMode)
     clc
     clear
     
+    % Default to false if no argument is provided
     if nargin < 1
-        silentMode = false; % Default to false if no argument is provided
+        silentMode = false; 
     end
 
     %% setup a testsuite for basic math operations
@@ -49,10 +50,11 @@ function test_class(silentMode)
         results_suite_basicMath = run(suite_basicMath);
     end
     
+    % Display the results
     if  all([results_suite_basicMath.Passed])
         disp('Passed all test for basic polynomial math operations.')
     else
-      
+        disp('Failed some test for basic polynomial math operations.')
     end
 
 end
