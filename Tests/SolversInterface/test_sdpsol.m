@@ -1,18 +1,42 @@
 classdef test_sdpsol < matlab.unittest.TestCase
-    % WARNING: THIS IS JUST  A PLACEHOLDER FILE
 
     properties (TestParameter)
-        testValue  % test polynmials
-        refValue   % reference values
+        sdp  
+        opts 
     end
     
 
     methods (TestParameterDefinition,Static)
 
-       function [testValue,refValue] = initializeTestData()
+       function [sdp, opts] = initializeTestData()
 
-           testValue = {1};
-           refValue  = {1};
+            % set seed
+            rng(0)
+        
+            % dimension of SDP
+            ndim = 2;
+        
+            % decision variables
+            x = casadi.SX.sym('x', 4, 1);
+        
+            % create random SDP data
+            A = randn(ndim, ndim);
+            B = randn(ndim, ndim);
+            A = A+A';
+            B = B+B';
+        
+            % define SDP problem
+            sdp.f = x(1);
+            sdp.g = eye(ndim) + x(1)*A + x(2)*B;
+            sdp.g = [sdp.g(:)];
+            sdp.x = x;
+       
+            % define cones
+            opts.Kx = struct('lin', 4);
+            opts.Kc = struct('psd', ndim);
+
+            sdp  = {sdp};
+            opts = {opts};
        end
 
     end
@@ -20,15 +44,42 @@ classdef test_sdpsol < matlab.unittest.TestCase
 
     methods (Test)
 
-        function test_dot_single(testCase,testValue,refValue)
+        function test_sdpsol_mosek(testCase,sdp,opts)
+           
+            % initialize solver
+            S = casos.sdpsol('S','mosek',sdp,opts);
             
+            % solve with equality constraints
+            sol = S('lbx',-inf,'ubx',+inf);
 
-            actSolution = 1; %full(casadi.DM(full(dot(testValue(1), testValue(1)))));
+            if S.stats.UNIFIED_RETURN_STATUS == "SOLVER_RET_SUCCESS"
+                actSolution = 1;
+                refSolution = 1;
+            else
+                refSolution = 1;
+                actSolution = inf;
+            end
+
+            % Perform assertions if needed
+            testCase.verifyEqual(actSolution, refSolution ,"AbsTol",1e-12);
+
+        end
+
+        function test_sdpsol_sedumi(testCase,sdp,opts)
             
-            %coeff1 = poly2basis(testValue(1));
-            %coeff2 = poly2basis(testValue(1));
+            % initialize solver
+            S = casos.sdpsol('S','sedumi',sdp,opts);
+            
+            % solve with equality constraints
+            sol = S('lbx',-inf,'ubx',+inf);
 
-            refSolution = 1; %full(casadi.DM(full(coeff1'*coeff2)));
+            if S.stats.UNIFIED_RETURN_STATUS == "SOLVER_RET_SUCCESS"
+                actSolution = 1;
+                refSolution = 1;
+            else
+                refSolution = 1;
+                actSolution = inf;
+            end
 
             % Perform assertions if needed
             testCase.verifyEqual(actSolution, refSolution ,"AbsTol",1e-12);
