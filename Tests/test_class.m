@@ -13,30 +13,6 @@ function test_class(silentMode)
         silentMode = false; 
     end
 
-    % add to path the folder with tests
-    activeFile = matlab.desktop.editor.getActiveFilename;
-    
-    % Extract the directory part of the full path
-    [activeDir, ~, ~] = fileparts(activeFile);
-    test_folder_dir = [activeDir, '/PolyOperations'];
-    addpath(test_folder_dir);
-    
-    % Display the directory of the file
-    disp(['The script is located in: ', activeDir]);
-    
-    % List all .m files that start with 'test_' in the specified directory
-    filePattern = fullfile(test_folder_dir, 'test_*.m');
-    mFiles = dir(filePattern);
-    
-    % Initialize a cell array to hold the file names
-    fileNames = {mFiles.name};
-    
-    % Display the total number of test files
-    disp(['Total number of tests: ', num2str(length(fileNames))]);
-    
-    % Create a suite of tests.
-    suite_basicMath = testsuite(fileNames);
-    
     % Create a test runner (verbose or silent mode)
     if silentMode
         runner = matlab.unittest.TestRunner.withNoPlugins;
@@ -44,14 +20,58 @@ function test_class(silentMode)
         runner = matlab.unittest.TestRunner.withTextOutput;
     end
 
-    % run the tests
-    results_suite_basicMath = runner.run(suite_basicMath);
+    % add to path the folder with tests
+    activeFile = matlab.desktop.editor.getActiveFilename;
+
+    % Extract the directory part of the full path
+    [activeDir, ~, ~] = fileparts(activeFile);
+
+    % List all entries at the same level as the script
+    entries = dir(activeDir);
+
+    % Filter out only directories
+    isFolder = [entries.isdir];
+    folders = entries(isFolder);
+
+    % Remove '.' and '..' directories
+    folders = folders(~ismember({folders.name}, {'.', '..'}));
+
+    % Remove directories that start with '+'
+    folders = folders(~startsWith({folders.name}, '+'));
+
+    % Create a list of full paths for each folder
+    folderPaths = fullfile(activeDir, {folders.name});
+
+    % Add all folders to the MATLAB path
+    addpath(folderPaths{:});
     
-    % Display the results
-    if  all([results_suite_basicMath.Passed])
-        disp('Passed all test for basic polynomial math operations.')
-    else
-        disp('Failed some test for basic polynomial math operations.')
+    % Display the directory of the file
+    disp(['The script is located in: ', activeDir]);
+    
+    % List all .m files that start with 'test_' in the specified directory
+    for i = 1:length(folderPaths)
+        filePattern = fullfile(folderPaths{i}, 'test_*.m');
+        mFiles = dir(filePattern);
+    
+        % Initialize a cell array to hold the file names
+        fileNames = {mFiles.name};
+    
+        % Display the total number of test files
+        disp(['Tests located in: ' folderPaths{i}]);
+        disp(['Total number of tests: ', num2str(length(fileNames))]);
+    
+        % Create a suite of tests.
+        suite_basicMath = testsuite(fileNames);
+
+        % run the tests
+        results_suite_basicMath = runner.run(suite_basicMath);
+    
+        % Display the results
+        if  all([results_suite_basicMath.Passed])
+            disp('Passed all test for basic polynomial math operations.')
+        else
+            disp('Failed some test for basic polynomial math operations.')
+        end
     end
 
 end
