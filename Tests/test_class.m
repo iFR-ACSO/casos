@@ -5,17 +5,14 @@ function test_class(silentMode)
     %   test_class(true);   % Silent mode
     %   test_class(false);  % Verbose mode
 
-    % clean workspace and terminal
+    % clean terminal
     clc
-    clear
     
     % Default to false if no argument is provided
     if nargin < 1
         silentMode = false; 
     end
 
-    %% setup a testsuite for basic math operations
-    
     % add to path the folder with tests
     activeFile = matlab.desktop.editor.getActiveFilename;
     
@@ -40,15 +37,15 @@ function test_class(silentMode)
     % Create a suite of tests.
     suite_basicMath = testsuite(fileNames);
     
-    % Create a test runner with no output plugins (silent mode).
-    runner = matlab.unittest.TestRunner.withNoPlugins;
-    
-    % run the tests
+    % Create a test runner (verbose or silent mode)
     if silentMode
-        results_suite_basicMath = runner.run(suite_basicMath);
+        runner = matlab.unittest.TestRunner.withNoPlugins;
     else
-        results_suite_basicMath = run(suite_basicMath);
+        runner = matlab.unittest.TestRunner.withTextOutput;
     end
+
+    % run the tests
+    results_suite_basicMath = runner.run(suite_basicMath);
     
     % Display the results
     if  all([results_suite_basicMath.Passed])
