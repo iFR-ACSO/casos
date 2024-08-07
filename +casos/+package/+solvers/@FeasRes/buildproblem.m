@@ -87,23 +87,23 @@ obj.sparsity_gs = obj.sossolver.sparsity_gs;
 
 %% Second-order correction
 
-% correction term
-correction = conFun(xi_k + d ,p0) - derivConFun(xi_k,d,p0);
-
-% new decision variable is corrected search direction
-dsoc = casos.PS.sym('dsoc',base_x);
-
-% get adapted constraint
-sosSOC.g = conFun(xi_k,p0) + derivConFun(xi_k,dsoc,p0) + correction; 
-
-sosSOC.p = [p0; xi_k; d; B_k];
-
-sosSOC.x = dsoc;
-
-sosSOC.f = 0;
-
-% initialize SOS solver for SOC
-obj.solver_soc = casos.package.solvers.sossolInternal('SOS',opts.sossol,sosSOC,sosopt);
+% % correction term
+% correction = conFun(xi_k + d ,p0) - derivConFun(xi_k,d,p0);
+% 
+% % new decision variable is corrected search direction
+% dsoc = casos.PS.sym('dsoc',base_x);
+% 
+% % get adapted constraint
+% sosSOC.g = conFun(xi_k,p0) + derivConFun(xi_k,dsoc,p0) + correction; 
+% 
+% sosSOC.p = [p0; xi_k; d; B_k];
+% 
+% sosSOC.x = dsoc;
+% 
+% sosSOC.f = 0;
+% 
+% % initialize SOS solver for SOC
+% obj.solver_soc = casos.package.solvers.sossolInternal('SOS',opts.sossol,sosSOC,sosopt);
 
 %% setup damped BFGS
 lam_gs    =  casos.PS.sym('lam_gs', obj.sparsity_gs);
@@ -127,6 +127,43 @@ obj.nabla_xi_f = casos.Function('f',{poly2basis(nlsos.x),poly2basis(p0)}, { op2b
 
 
 % we do not have nonlinear constraints in feasibility restoration
-obj.projConPara    = [];
+% work around for polynomial interface
+obj.xk1fun = casos.Function('f',{poly2basis(nlsos.x)}, {nlsos.x});
+
+% identify nonlinear constraints 
+I = zeros(length(nlsos.g),1);
+for idx = 1:length(nlsos.g)
+    I(idx) = ~is_linear(nlsos.g(idx),nlsos.x);
+end
+
+
+% Gram decision variable
+s    = casos.PS.sym('q',sparsity(nlsos.g(I==1)));
+
+if ~isempty(s) 
+
+    % parameterized projection for linesearch prediction
+    nonLinCon = nlsos.g(I==1);
+    conFunRed = casos.Function('f',{nlsos.x(1:4),p0}, {nonLinCon});
+    
+    % projection error
+    e = s - conFunRed(nlsos.x(1:4),p0);
+    
+    % define Q-SOS problem parameterized nonlinear constraints
+    %   min ||s-p||^2  s.t. s is SOS
+    proj_sos = struct('x',s,'f',dot(e,e),'g',s,'p',[nlsos.x(1:4)]);
+    
+    opts               = [];
+    opts.Kc            = struct('sos', length(s));
+    opts.error_on_fail = 0;
+
+    obj.projConPara    =  casos.sossol('S','mosek',proj_sos,opts);
+
+else
+
+    obj.projConPara    = [];
+
+end
+
 
 end

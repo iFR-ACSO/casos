@@ -29,7 +29,7 @@ function argout = eval_on_basis(obj,argin)
    % initialize the current cost with the last constraint violation of the
    % original problem
    curr_cost   = full(casadi.DM(p0(2)));
-   curr_conVio = conVio_xi0;
+   curr_conVio = full(casadi.DM(p0(2)));
     
    % initialize filter
    obj.Filter =  obj.Filter.initializeFilter(conVio_xi0,curr_cost);
@@ -71,7 +71,7 @@ function argout = eval_on_basis(obj,argin)
 
             case UnifiedReturnStatus.SOLVER_RET_INFEASIBLE
 
-                   error('Feasibility Restoration Subproblem infeasible!')
+                   error('Feasibility restoration bubproblem infeasible! ')
 
             otherwise   % problem status unknown or ill-posed
 
@@ -119,9 +119,14 @@ function argout = eval_on_basis(obj,argin)
             new_cost     = full(casadi.DM(full(obj.f(xi_k1,p0))));
             nabla_xi_f   = full(casadi.DM(full(obj.nabla_xi_f(xi_k1,p0))))';
 
-            new_conVio   = 0; 
+            % measTime_Proj_in = tic;
+            % xi_k1_sub = obj.xk1fun(xi_k1);
+            % solPara_proj = obj.projConPara('p',[xi_k1_sub(1:4)]);
+            % new_conVio   = sqrt(full(solPara_proj.f));
+            % info{i+1}.filter_stats.measTime_proj_out = toc(measTime_Proj_in);
 
-       
+            new_conVio = 0 ;
+
             % check filter acceptance
             [obj.Filter,~,accept_new_iter] = obj.Filter.updateFilter(alpha_k,...
                                                                      full(d_star), ...
@@ -142,8 +147,8 @@ function argout = eval_on_basis(obj,argin)
         
         end
 
-          % compute dual variables
-         if ~isempty(dual_k)
+        % compute dual variables
+        if ~isempty(dual_k)
             dual_k1 = dual_k + alpha_k*(dual_star - dual_k);
         else
             dual_k1 = dual_star;
@@ -151,18 +156,8 @@ function argout = eval_on_basis(obj,argin)
                 
         if infeasible
         
-            error('Feasibility Restoration run into local infeasibility!')
-          %  % store iteration info
-          %  info(i+1:end) = [];
-          %  obj.info.iter = info;
-          % 
-          %  % adjust last solution similar to iteration i.e. overwrite optimization solution 
-          %  sol{1} = xi_k1;
-          %  sol{5} = dual_k1;
-          % 
-          % argout = sol;
-          % return
-          
+            
+
         end
 
         % set new iterate for next iteration
@@ -172,8 +167,8 @@ function argout = eval_on_basis(obj,argin)
         %% Prepare display output 
         if ~isempty(dual_k)
         
-        delta_xi_double   = norm(full( d_star),inf); 
-        delta_dual_double = norm(full( (dual_k1 - dual_k)),inf);
+        delta_xi_double   = norm(full(casadi.DM(full( xi_k1 - xi_k))),inf); 
+        delta_dual_double = norm(full(casadi.DM(full( dual_k1 - dual_k))),inf);
         
         
           printf(obj.log,'debug','%-15d%-15e%-20e%-20e%-20e%-15.4f%-18e\n',...
@@ -190,13 +185,13 @@ function argout = eval_on_basis(obj,argin)
         end
             
         %% check convergence criteria
-        optimality_flag = new_cost/full(casadi.DM(p0(2))) < 1e-2;
+        % optimality_flag = new_cost/full(casadi.DM(p0(2))) < 1e-2;
 
-        % optimality_flag =  max([full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k,dual_star,p0)))), new_cost]) <= 1e-4;
+        optimality_flag =   max([full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k,dual_star,p0)))), new_cost]) <= 1e-3;
         
         % check if solution stays below tolerance for a certain number of
         % iterations --> solved to acceptable level
-        if max([full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k,dual_star,p0)))), new_cost]) <= 1e-3
+        if max([full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k,dual_star,p0)))), new_cost]) <= 1e-2
             counter = counter + 1;
         else
             counter = 0;

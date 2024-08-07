@@ -11,5 +11,6 @@ end
 r = theta*y+(1-theta)*B*s;
 
 % B = B + (r*r')/(s'*r) - (B*s*s'*B)/(s'*B*s);
-B =  full(obj.BFGS_fun(B,r,s));
+B =  full(obj.BFGS_fun((B),(r),(s)));
+
 end

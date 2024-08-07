@@ -37,9 +37,10 @@ function argout = eval_on_basis(obj,argin)
         curr_conVio = 0;
         curr_cost   = inf;
 
-	end
+    end
+
+    counter_acceptLvl = 0;
    
-    
     feasResdone = 0;
 
 	obj.Filter =  obj.Filter.initializeFilter(curr_conVio ,curr_cost);
@@ -319,7 +320,7 @@ function argout = eval_on_basis(obj,argin)
                         eps_opt = 10;
                     end
 
-                    zeta_val = eta_opt_fun(eps_opt,1.01,10,1);
+                    zeta_val = 1; %eta_opt_fun(eps_opt,1.01,10,1);
 
                     % add the current solution to filter to ensure we are
                     % better than this point
@@ -383,7 +384,31 @@ function argout = eval_on_basis(obj,argin)
             else
 			
                 info{i+1}.seqSOS_common_stats.solve_time = toc(measTime_seqSOS_in);
-                error('Problem seems locally infeasible!')
+
+                info{i+1}.filter_stats.measTime_proj_out      = 0;
+                info{i+1}.filter_stats.alpha_k                = alpha_k;
+                info{i+1}.filter_stats.measTime               = measTime_feasRes_out;
+                info{i+1}.seqSOS_common_stats.delta_prim      = nan;
+                info{i+1}.seqSOS_common_stats.delta_dual      = nan;
+                info{i+1}.seqSOS_common_stats.conViol         = new_conVio ;
+                info{i+1}.seqSOS_common_stats.gradLang        = full(casadi.DM(full(obj.nabla_xi_L_norm(xi_feas,dual_star,p0))));
+                info{i+1}.seqSOS_common_stats.solve_time_iter  = toc(measTime_seqSOS__iter_in);
+                info(i+2:end) = [];
+                obj.info.iter = info;
+               
+                % adjust last solution similar to iteration i.e. overwrite optimization solution 
+                sol{1} = xi_feas;
+                sol{5} = dual_k1;
+               
+                argout = sol;
+        
+                printf(obj.log,'debug','----------------------------------------------------------------------------------------------------------------------\n');
+                printf(obj.log,'debug','Solution status: Solver stalled\n'); 
+                printf(obj.log,'debug',['Solution time: ' num2str(toc(measTime_seqSOS_in)) ' s\n']); 
+                
+                % terminate
+                return
+           
 				
             end
                 
@@ -539,8 +564,8 @@ function argout = eval_on_basis(obj,argin)
         %% Damped BFGS 
         
         % update BFGS
-        s = xi_k1-xi_k; 
-        y = casadi.DM( full(obj.nabla_xi_L(xi_k1,dual_k1,p0) - obj.nabla_xi_L(xi_k,dual_k1,p0)))';
+        s = full(casadi.DM(xi_k1-xi_k)); 
+        y = full(casadi.DM( full(obj.nabla_xi_L(xi_k1,dual_k1,p0) - obj.nabla_xi_L(xi_k,dual_k1,p0)))');
         
         % prepare hessian approximation for next iteration
         Bk = dampedBFGS(obj,Bk,s,y);

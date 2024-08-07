@@ -16,6 +16,7 @@ properties (Constant, Access=protected)
     mosek_options = [casos.package.solvers.ConicSolver.conic_options
         {'mosek_param', 'Parameters to be passed to MOSEK.'
          'mosek_echo',  'Verbosity level passed to MOSEK (default: 0).'
+         'chol', 'cholseky pre-comp'
          'hessian_cholesky', 'Provide Cholesky decomposition of Hessian matrix.'}
     ];
 end

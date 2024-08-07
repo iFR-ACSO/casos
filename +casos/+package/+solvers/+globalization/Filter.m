@@ -128,10 +128,6 @@ classdef Filter
         % check if a new iterate can be accepted to filter or not   
         function [obj,FilterAcceptFlag] = checkFilterAcceptance(obj,new_cost,new_conVio)
                 
-              % add envelope
-              Filter_adapt = [obj.filter(:,1) - obj.opts.gamma_phi*obj.filter(:,2), ... 
-                              obj.filter(:,2)*(1-obj.opts.gamma_theta)];
-              % 
               % For acceptance one cost or violation must be smaller
               % Example comparison one list entry with current trial point:
               % Output: 1) 0 0 --> Filter dominates i.e. entries are smaller
@@ -139,26 +135,12 @@ classdef Filter
               %         3) 1 0 --> cost smaller, but violation larger
               %         4) 1 1 --> both are smaller
               % --> case 2) to case 4): accept to filter 
-              dom_logi_arr = Filter_adapt > [new_cost,new_conVio]; 
+              dom_logi_arr = obj.filter > [new_cost,new_conVio]; 
 
-              % dom_logi_arr = obj.filter > [new_cost,new_conVio]; 
                                       
               % if both entries are 1 than  list entry dominates current iterate
               if sum(dom_logi_arr,2) ~= 0  % row-wise sum must be unequal to 0
                   FilterAcceptFlag = 1;
-
-                  % first remove all points that are dominated by the new
-                  % accepted iterate (both values of new iterate must be
-                  % smaller than current filter entries!
-                    
-                  % identify dominated entries
-                  % idx = find(sum(dom_logi_arr,2) == 2);
-                    
-                  % remove if necessary
-                  % obj.filter(idx,:) = []; 
-
-                   % augment filter i.e. add new iterate
-                   % obj.filter = vertcat(obj.filter, [new_cost,new_conVio]);
                     
               else
                   FilterAcceptFlag = 0;
@@ -198,7 +180,7 @@ classdef Filter
 
                           % augment filter
                            obj.filter = vertcat(obj.filter, [curr_cost - obj.opts.gamma_phi*curr_conVio, ... 
-                                                curr_conVio*(1-obj.opts.gamma_theta)]);
+                                                             curr_conVio*(1-obj.opts.gamma_theta)]);
                         end
 
                 else

@@ -190,12 +190,26 @@ if nnz(h) > 0
     %     chol_f = casadi.Function('chol',{H},{chol(H)});
     %     U = chol_f(h);
     % end
-    U = casadi.MX.sym('U',casadi.Sparsity.upper(length(h)));
+    
+    % get sparisty pattern from h
+  H = sparsity(h);
+[rr,cc] = get_triplet(H);
+
+i = min(rr); j = max(rr); % row numbers are sorted
+
+spU = casadi.Sparsity.upper(j - i + 1);
+% enlarge(spU, size(H,1), size(H,2), rr, cc);
+
+spU.enlarge(size(H,1), size(H,2), i:j, i:j);
+
+U = casadi.MX.sym('U', spU);
+     % U = casadi.DM(casadi.Sparsity.upper(length(h)));
     % build affine cone constraint 
     % L(y,x) + k = (1+y, sqrt(2)*U*x, 1-y) in SOC
     % note: additional variable y is first decision variable
-    L = [1 casadi.DM(1,n); casadi.DM(n,1) sqrt(2)*U; -1 casadi.DM(1,n)];
+    L = [1 casadi.DM(1,n); casadi.DM(n,1) sqrt(2)*casadi.MX(U); -1 casadi.DM(1,n)];
     k = [1; casadi.DM(n,1); 1];
+
     % number of additional variables and constraints
     Nx_cost = 1;
     Na_cost = n + 2;

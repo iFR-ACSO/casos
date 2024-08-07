@@ -91,8 +91,11 @@ sdp.derivatives.Hf = blockcat(map'*sdp_Hf*map, ...
                               sparse(nnz_lin_x+nnz_gram_x,nnz_gram_g), ...
                               sparse(nnz_gram_g,nnz_lin_x+nnz_gram_x), ...
                               sparse(nnz_gram_g,nnz_gram_g));
+
+
 sdp.derivatives.Jf = horzcat(sdp_Jf*map, sparse(1,nnz_gram_g));
 sdp.derivatives.Jg = horzcat(sdp_Jg*map, -Mp_g);
+
 % SDP options
 sdpopt = opts.sdpsol_options;
 sdpopt.Kx = struct('lin', nnz_lin_x, 'psd', [Ksdp_x_s; Ksdp_g_s]);

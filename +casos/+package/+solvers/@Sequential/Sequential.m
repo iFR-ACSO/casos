@@ -33,6 +33,7 @@ properties (Access=private)
     % cost function
     f
     nabla_xi_f
+    nabla_xi_g 
 
     % constraint violation
     projConPara 
@@ -130,8 +131,8 @@ methods
         if ~isfield(obj.opts,'alpha_min'),      obj.opts.alpha_min      = 1e-5; end
         if ~isfield(obj.opts,'tau'),            obj.opts.tau            = 0.5; end
         if ~isfield(obj.opts,'soc_max_iter'),   obj.opts.soc_max_iter   = 5; end
-        if ~isfield(obj.opts,'optTol'),         obj.opts.optTol         = 1e-5; end
-        if ~isfield(obj.opts,'conVioTol'),      obj.opts.conVioTol      = 1e-3; end
+        if ~isfield(obj.opts,'optTol'),         obj.opts.optTol         = 1e-4; end
+        if ~isfield(obj.opts,'conVioTol'),      obj.opts.conVioTol      = 1e-2; end
         if ~isfield(obj.opts,'accTol'),         obj.opts.accTol         = 1e-3; end
         if ~isfield(obj.opts,'noAccIter'),      obj.opts.noAccIter      = 15; end
         if ~isfield(obj.opts,'s_phi'),          obj.opts.s_phi          = 2.3; end
