@@ -142,11 +142,12 @@ opts.Kc      = struct('sos', 3);
 opts.verbose = 1;
 opts.sossol_options.sdpsol_options.error_on_fail = 0;
 
-
+profile on
 buildTime_in = tic;
     solver_GTM4D_ROA = casos.nlsossol('S','sequential',sos,opts);
 buildtime = toc(buildTime_in);
-
+% profile viewer
+% profile off
 
 profile on
 sol = solver_GTM4D_ROA('x0' ,[Vinit; (x'*x)^2]);

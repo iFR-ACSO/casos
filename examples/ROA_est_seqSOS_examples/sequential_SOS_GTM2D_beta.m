@@ -115,11 +115,11 @@ P = lyap(A0',eye(2));
 Vinit = x'*P*x;
 
 % Lyapunov function candidate
-V = casos.PS.sym('v',monomials(x,2:4));
+V = casos.PS.sym('v',monomials(x,2));
 
 % SOS multiplier
-s2 = casos.PS.sym('s2',monomials(x,0:2:4));
-
+s2 = casos.PS.sym('s2',monomials(x,2));
+s3 = casos.PS.sym('s3',monomials(x,0));
 % enforce positivity
 l = 1e-6*(x'*x);
 
@@ -129,25 +129,33 @@ b = casos.PS.sym('b');
 % minimize the quadratic distance to a given sublevel set
 g = Vinit-2; 
 
-cost = dot(g - (V-1),g - (V-1)) ;
+p = Vinit*10;
+
+figure()
+pcontour(p,0.01,[-4 4 -4 4],'r')
+hold on
+pcontour(Vinit,1,[-4 4 -4 4],'b')
 
 %% setup solver
 
 % options
 opts = struct('sossol','mosek');
 opts.verbose = 1;
-sos = struct('x',[V; s2],...
-              'f',cost, ...
+opts.indeterminates = casos.PS(x);
+sos = struct('x',[V; s2;s3;b],...
+              'f',-b, ...
               'p',[]);
 
 % constraints
 sos.('g') = [s2; 
-              V-l; 
-              s2*(V-1)-nabla(V,x)*f-l];
+             s3;
+             V-l; 
+             s2*(V-1)-nabla(V,x)*f-l;
+             s3*(p-b) + 1 - V];
 
 % states + constraint are linear/SOS cones
-opts.Kx = struct('lin', 2);
-opts.Kc = struct('sos', 3);
+opts.Kx = struct('lin', 4);
+opts.Kc = struct('sos', 5);
 
 % build sequential solver
 buildTime_in = tic;
@@ -155,8 +163,9 @@ buildTime_in = tic;
 buildtime = toc(buildTime_in);
 
 
+
 %% solve
-sol = solver_GTM2D_ROA('x0',[ Vinit;  x'*x]); 
+sol = solver_GTM2D_ROA('x0',[ Vinit;  x'*x;  x'*x; 0.01]); 
 disp(['Solver buildtime: ' num2str(buildtime), ' s'])
 
 
@@ -167,5 +176,7 @@ plotSolverStats(solver_GTM2D_ROA.stats);
 figure()
 pcontour(g,0,[-2 2 -2 2]*3,'k--')
 hold on
+Vval = sol.x(1);
+beta_val = full(casadi.DM(full(sol.x(end))));
 pcontour(sol.x(1),1,[-2 2 -2 2]*3)
-
+pcontour(p,beta_val,[-2 2 -2 2]*3,'r')

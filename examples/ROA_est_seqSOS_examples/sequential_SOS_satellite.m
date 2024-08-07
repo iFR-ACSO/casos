@@ -61,10 +61,10 @@ pcontour(subs(subs(Vinit,x,D*x),x(3:end),zeros(4,1)),1,[-omega_max omega_max -om
 hold on
 
 % Lyapunov function candidate
-V = casos.PS.sym('v',monomials(x,2));
+V = casos.PS.sym('v',monomials(x,2:4));
 
 % SOS multiplier
-s2 = casos.PS.sym('s2',monomials(x,2));
+s2 = casos.PS.sym('s2',monomials(x,2:4));
 
 % enforce positivity
 l = 1e-6*(x'*x);
@@ -105,12 +105,12 @@ opts.verbose = 1;
 
 opts.sossol_options.sdpsol_options.error_on_fail = 0;
 
-% profile on
+profile on
 buildTime_in = tic;
     solver_Satellite6D  = casos.nlsossol('S','sequential',sos,opts);
 buildtime = toc(buildTime_in);
 
-% profile viewer
+profile viewer
 % solve problem
 sol = solver_Satellite6D ('x0' ,[Vinit; (x'*x)]);
 disp(['Solver buildtime: ' num2str(buildtime), ' s'])

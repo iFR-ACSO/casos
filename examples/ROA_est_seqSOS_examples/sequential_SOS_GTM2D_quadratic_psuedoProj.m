@@ -115,10 +115,10 @@ P = lyap(A0',eye(2));
 Vinit = x'*P*x;
 
 % Lyapunov function candidate
-V = casos.PS.sym('v',monomials(x,2:4));
+V = casos.PS.sym('v',monomials(x,2));
 
 % SOS multiplier
-s2 = casos.PS.sym('s2',monomials(x,2:4));
+s2 = casos.PS.sym('s2',monomials(x,0:2));
 
 % enforce positivity
 l = 1e-6*(x'*x);
@@ -165,19 +165,22 @@ sos.('g') = [s2;
 % states + constraint are linear/SOS cones
 opts.Kx = struct('lin', 2);
 opts.Kc = struct('sos', 3);
-
+profile on
 % build sequential solver
 buildTime_in = tic;
     solver_GTM2D_ROA  = casos.nlsossol('S','sequential',sos,opts);
 buildtime = toc(buildTime_in);
 
-
 %% solve
-profile on
+
 sol = solver_GTM2D_ROA('x0',[ Vinit;  x'*x]); 
 disp(['Solver buildtime: ' num2str(buildtime), ' s'])
 
 profile viewer
+
+
+
+totalTime = buildtime + solver_GTM2D_ROA.stats.iter{end}.seqSOS_common_stats.solve_time;
 
 %% plot solver statistics
 plotSolverStats(solver_GTM2D_ROA.stats);
