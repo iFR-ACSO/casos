@@ -25,43 +25,17 @@ classdef test_sdpsol_mosek < matlab.unittest.TestCase
     end
 
     properties (Access = private, Constant)
-        PackagesAvailable   = test_sdpsol_mosek.checkRequiredPackages(1);
-        MissingPackages     = test_sdpsol_mosek.checkRequiredPackages(2);
+        packages = {'mosek'};
+        PackagesAvailable   = checkRequiredPackages(1, test_sdpsol_mosek.packages);
+        MissingPackages     = checkRequiredPackages(2, test_sdpsol_mosek.packages);
     end
-    
-    methods (Static)
-        function output = checkRequiredPackages(out_select)
-            % Define a list of required packages and their check functions
-            packages = {'mosek'};
-            packageChecks = @(pkgName) exist(pkgName, 'file') == 2;
-
-            % Initialize the flag for package availability
-            available = true;
-            missingPackages = {};
-
-            % Check each package
-            for i = 1:numel(packages)
-                pkgName = packages{i};
-                if ~packageChecks(pkgName)
-                    available = false;
-                    missingPackages{end+1} = pkgName;
-                end
-            end
-
-            % set output
-            if out_select==1
-                output = available;
-            else
-                output = missingPackages;
-            end
-        end
-    end
-    
+        
     methods (TestClassSetup)
         function setupClass(testCase)
             if ~test_sdpsol_mosek.PackagesAvailable
-                message = sprintf('The following required packages are missing: %s.', strjoin(test_sdpsol_mosek.MissingPackages, ', '));
-                testCase.assumeTrue(test_sdpsol.PackagesAvailable, message);
+                default = 'The following required packages are missing: %s.';
+                message = sprintf(default, strjoin(test_sdpsol_mosek.MissingPackages, ', '));
+                testCase.assumeTrue(test_sdpsol_mosek.PackagesAvailable, message);
             end
         end
     end
@@ -96,9 +70,7 @@ classdef test_sdpsol_mosek < matlab.unittest.TestCase
 
 
     methods (Test)
-
         function solve_sdp(testCase,sdp,opts)
-           
             % initialize solver
             S = casos.sdpsol('S','mosek',sdp,opts);
             
@@ -116,9 +88,6 @@ classdef test_sdpsol_mosek < matlab.unittest.TestCase
 
             % Perform assertions if needed
             testCase.verifyEqual(actSolution, refSolution ,"AbsTol",1e-12);
-
         end
-
     end
-   
 end
