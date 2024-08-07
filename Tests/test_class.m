@@ -8,6 +8,9 @@ function test_class(silentMode)
     % clean terminal
     clc
     
+    % set warning messages to off
+    warning('off', 'MATLAB:rankDeficientMatrix');
+
     % Default to false if no argument is provided
     if nargin < 1
         silentMode = false; 
