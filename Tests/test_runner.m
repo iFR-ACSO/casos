@@ -66,10 +66,10 @@ function test_runner(silentMode)
     disp(['Total number of tests: ', num2str(length(fileNames))]);
 
     % Create a suite of tests.
-    suite_basicMath = testsuite(fileNames);
+    unitTest_suite = testsuite(fileNames);
 
     % run the tests
-    results_suite_basicMath = runner.run(suite_basicMath);
+    results_suite_basicMath = runner.run(unitTest_suite);
 
     % Display table with status of all tests
     % disp(results_suite_basicMath.table)
