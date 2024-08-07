@@ -55,11 +55,11 @@ function [time_collector, ratio_collector] = main_prog(N)
     % randn('state',0);
     
     % Degree 4 homogeneous
-    vx = gen_monomials(x,4:4);
-    
+    [coeff, sparse] = poly2basis(casos.PS.sym('a',monomials(x,4:4)));
+
     % Generate random polynomial
-    cp = randn(1,length(vx));
-    p = cp*vx;
+    rancoeff = randn(length(coeff),1);
+    p = casos.PS(sparse,rancoeff);
     
     % scalar decision variable
     g = casos.PS.sym('g');
@@ -129,43 +129,4 @@ function [g_sdsos, f_sdsos, elapsed_time] = sdsos_prog(sos)
     % save solution with SOS cone
     g_sdsos = full(sol.x);
     f_sdsos = full(sol.f);
-end
-
-%% Functions
-
-function mon = gen_monomials(p, deg)
-    % return vector of monomials of desired degree
-
-    % enumerate monomials up to max(deg)
-    r = nchoosek(p.nvars+max(deg),p.nvars); % total number of monomials
-    M = nan(r,p.nvars);
-    % iterate over ascending degrees
-    l = 1;
-    for i = unique(deg)
-        [M,l] = degreemat(M,l,p.nvars,i);
-    end
-    % select degrees
-    I = ismember(sum(M,2),deg);
-    degmat = M(I,:);
-    
-    mon = casos.PS(length(degmat),1);
-
-    for i = 1:length(degmat)
-        aux = p'.^degmat(i,:);
-        mon(i) = prod(aux);
-    end 
-end
-
-function [M,l] = degreemat(M, l0, m, d)
-% Build degree matrix for m variables and degree d.
-% Monomials will be in graded REVERSE lexicographic order.
-    switch m
-        case 1, M(l0,1) = d; l = l0+1;
-        otherwise
-            for j = d:-1:0
-                [M,l] = degreemat(M,l0,m-1,j);
-                M(l0:l-1,m) = d - j;
-                l0 = l;
-            end
-    end
 end
