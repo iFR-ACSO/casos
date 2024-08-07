@@ -69,7 +69,7 @@ function test_class(silentMode)
     results_suite_basicMath = runner.run(suite_basicMath);
 
     % Display table with status of all tests
-    disp(results_suite_basicMath.table)
+    % disp(results_suite_basicMath.table)
 
     % Display the results
     if  all([results_suite_basicMath.Passed])
