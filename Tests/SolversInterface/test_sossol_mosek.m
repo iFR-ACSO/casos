@@ -1,13 +1,13 @@
 % ========================================================================
 %
-% Test Name: test_sdpsol_mosek_2.m
+% Test Name: test_sossol_mosek.m
 %
 % Test Description: 
-%   > Solve simple second order cone programm with mosek
+%   > Solve simple sos program
 %               
 % Test Procedure: 
 %
-%   min       f         |   f   =       
+%   min       f         |   f   =          
 %   s.t.    x in K_x    |   K_x = 
 %          Ax in K_c    |   K_c = 
 %                               
@@ -15,7 +15,7 @@
 %
 % ========================================================================
 
-classdef test_sdpsol_mosek_2 < matlab.unittest.TestCase
+classdef test_sossol_mosek < matlab.unittest.TestCase
 
     properties (TestParameter)
         sdp  
@@ -24,16 +24,16 @@ classdef test_sdpsol_mosek_2 < matlab.unittest.TestCase
 
     properties (Access = private, Constant)
         packages = {'mosek'};
-        PackagesAvailable   = checkRequiredPackages(1, test_sdpsol_mosek_2.packages);
-        MissingPackages     = checkRequiredPackages(2, test_sdpsol_mosek_2.packages);
+        PackagesAvailable   = checkRequiredPackages(1, test_sossol_mosek.packages);
+        MissingPackages     = checkRequiredPackages(2, test_sossol_mosek.packages);
     end
         
     methods (TestClassSetup)
         function setupClass(testCase)
-            if ~test_sdpsol_mosek_2.PackagesAvailable
+            if ~test_sossol_mosek.PackagesAvailable
                 default = 'The following required packages are missing: %s.';
-                message = sprintf(default, strjoin(test_sdpsol_mosek_2.MissingPackages, ', '));
-                testCase.assumeTrue(test_sdpsol_mosek_2.PackagesAvailable, message);
+                message = sprintf(default, strjoin(test_sossol_mosek.MissingPackages, ', '));
+                testCase.assumeTrue(test_sossol_mosek.PackagesAvailable, message);
             end
         end
     end
@@ -43,7 +43,7 @@ classdef test_sdpsol_mosek_2 < matlab.unittest.TestCase
        function [sdp, opts] = initializeTestData()
 
             % only run initialization if all required packages are available
-            if ~test_sdpsol_mosek_2.PackagesAvailable
+            if ~test_sossol_mosek.PackagesAvailable
                 sdp  = {[]};
                 opts = {[]};
                 return;
@@ -51,24 +51,21 @@ classdef test_sdpsol_mosek_2 < matlab.unittest.TestCase
 
             % set seed
             rng(0)
+            
+            % indeterminate variable
+            x = casos.Indeterminates('x');
 
-            % basic data
-            t = (0:0.02:2*pi)';
-            x = (1:6)';
-            A = sin(t * x');
-            y = A*x; %+randn(length(A),1);
-            %A(100:210,:)=.1;
-            
-            x = casadi.SX.sym('x', 6, 1);
-            u = casadi.SX.sym('u', 1, 1);
-            v = casadi.SX.sym('v', 1, 1);
-            
+            % some polynomial
+            f = x^4 + 10*x;
+
+            % scalar decision variable
+            g = casos.PS.sym('g');
+
             % define f,g,x
-            sdp = {struct('f', u+v,'g',[u; y-A*x; v; x],'x', [x; u; v])};
+            sdp = {struct('x',g,'f',g,'g',f+g)};
 
             % define cones
-            opts = {struct('Kx',struct('lin',8),...
-                           'Kc',struct('lor',[length(y)+1; length(x)+1]))};
+            opts = {struct('Kc',struct('sos',1))};
 
        end
 
@@ -78,7 +75,7 @@ classdef test_sdpsol_mosek_2 < matlab.unittest.TestCase
     methods (Test)
         function solve_sdp(testCase,sdp,opts)
             % initialize solver
-            S = casos.sdpsol('S','mosek',sdp,opts);
+            S = casos.sossol('S','mosek',sdp,opts);
             
             % solve with equality constraints
             sol = S();
