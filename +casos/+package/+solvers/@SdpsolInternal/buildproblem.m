@@ -1,4 +1,4 @@
-function buildproblem(obj,prob,data,opts)
+function buildproblem(obj,prob,data,opts,args)
 % Convert SDP structure into conic problem description.
 %
 % The high-level SDP interface has the form
@@ -27,17 +27,19 @@ p = casadi.MX.sym('p',sz_p);
 
 sz_g = size(gx);
 
-% ensure cone has default value
-if ~isfield(opts,'Kx')
-    opts.Kx.lin = prod(sz_x);
-elseif ~isfield(opts.Kx,'lin')
-    opts.Kx.lin = 0; 
+% additional bounds from DD reduction
+if isfield(args, 'dd_ubg')
+    dd_lbg = args.dd_lbg;
+    dd_ubg = args.dd_ubg;
+    dd_lbx = args.dd_lbx;
+    dd_ubx = args.dd_ubx;
+else
+    dd_lbx = [];
+    dd_ubx = [];
+    dd_lbg = [];
+    dd_ubg = [];
 end
-if ~isfield(opts,'Kc')
-    opts.Kc.lin = prod(sz_g);
-elseif ~isfield(opts.Kc,'lin')
-    opts.Kc.lin = 0;
-end
+
 
 % linear variables
 Nx_l = opts.Kx.lin;
@@ -58,11 +60,11 @@ Bp = mat2cell(bp,[Ng_l Ng_c],1);
 % into high-level SDP interface
 % (x0,p,lbx,ubx,cbx,lbg,ubg,cbg,lam_x0,lam_g0)->(x,f,g,lam_x,lam_g,lam_p)
 x0 = casadi.MX.sym('x0',sz_x);
-lbx = casadi.MX.sym('lbx',Nx_l,1);
-ubx = casadi.MX.sym('ubx',Nx_l,1);
-cbx = casadi.MX.sym('cbx',Nx_c,1);
-lbg = casadi.MX.sym('lbg',Ng_l,1);
-ubg = casadi.MX.sym('ubg',Ng_l,1);
+lbx = casadi.MX.sym('lbx',Nx_l - length(dd_lbx), 1);
+ubx = casadi.MX.sym('ubx',Nx_l - length(dd_ubx), 1);
+cbx = casadi.MX.sym('cbx',Nx_c, 1);
+lbg = casadi.MX.sym('lbg',Ng_l - length(dd_lbg),1);
+ubg = casadi.MX.sym('ubg',Ng_l - length(dd_ubg),1);
 cbg = casadi.MX.sym('cbg',Ng_c,1);
 lam_x0 = casadi.MX.sym('lam_x0',sz_x);
 lam_g0 = casadi.MX.sym('lam_g0',sz_g);
@@ -79,7 +81,7 @@ fopt = struct('allow_duplicate_io_names',true);
 % input function
 obj.fhan = casadi.Function('f', ...
             {x0 p lbx ubx cbx lbg ubg cbg lam_x0 lam_g0}, ...
-            {Hp gp Ap Bp{1}+lbg Bp{1}+ubg Bp{2}+cbg lbx ubx cbx x0 lam_x0 lam_g0}, ...
+            {Hp gp Ap Bp{1}+[lbg;dd_lbg] Bp{1}+[ubg;dd_ubg] Bp{2}+cbg [lbx;dd_lbx] [ubx;dd_ubx] cbx x0 lam_x0 lam_g0}, ...
             {'x0' 'p' 'lbx' 'ubx' 'cbx' 'lbg' 'ubg' 'cbg' 'lam_x0' 'lam_g0'}, ...
             {'h' 'g' 'a' 'lba' 'uba' 'cba' 'lbx' 'ubx' 'cbx' 'x0' 'lam_x0' 'lam_a0'}, ...
             fopt ...
