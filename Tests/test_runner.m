@@ -1,5 +1,5 @@
-function test_class(silentMode)
-    % test_class - Run test suite with optional silent mode. 
+function test_runner(silentMode)
+    % test_runner- Run test suite with optional silent mode. 
     % Usage: 
     %   test_class();       % Default: verbose mode 
     %   test_class(true);   % Silent mode
