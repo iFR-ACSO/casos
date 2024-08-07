@@ -98,7 +98,7 @@ sdpopt = opts.sdpsol_options;
 % define the cones in the sdp level
 sdpopt.Kx.lin = nnz_lin_x;
 if Ns~=0 || Ms~=0
-sdpopt.Kx.psd = [Ksdp_x_s(1:Ns), Ksdp_g_s(1:Ms)];
+sdpopt.Kx.psd = [Ksdp_x_s(1:Ns); Ksdp_g_s(1:Ms)];
 end
 if Nds~=0 || Mds~=0
 sdpopt.Kx.dd = [Ksdp_x_s(Ns+1:Nds+Ns); Ksdp_g_s(Ms+1:Mds+Ms)];
