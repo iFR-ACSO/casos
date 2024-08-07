@@ -19,6 +19,33 @@ classdef test_sdpsol < matlab.unittest.TestCase
         opts 
     end
     
+    methods (TestClassSetup)
+        function checkRequiredPackage(testCase)
+            % Define a list of required packages and their check functions
+            packages = {'sedumi', 'multipoly', 'sosopt', 'mosek'};
+            packageChecks = @(pkgName) exist(pkgName, 'file') == 2;
+
+            % Initialize a flag for package availability
+            packagesAvailable = true;
+            missingPackages = {};
+
+            % Check each package
+            for i = 1:numel(packages)
+                pkgName = packages{i};
+                if ~packageChecks(pkgName)
+                    packagesAvailable = false;
+                    missingPackages{end+1} = pkgName;
+                end
+            end
+            
+            % Use assumeTrue to ensure tests are skipped if any package is missing
+            if ~packagesAvailable
+                message = sprintf('The following required packages are missing: %s.', strjoin(missingPackages, ', '));
+                testCase.assumeTrue(packagesAvailable, message);
+            end
+
+        end
+    end
 
     methods (TestParameterDefinition,Static)
 
