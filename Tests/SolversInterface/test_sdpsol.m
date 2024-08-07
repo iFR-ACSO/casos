@@ -18,38 +18,59 @@ classdef test_sdpsol < matlab.unittest.TestCase
         sdp  
         opts 
     end
+
+    properties (Access = private, Constant)
+        PackagesAvailable   = test_sdpsol.checkRequiredPackages(1);
+        MissingPackages     = test_sdpsol.checkRequiredPackages(2);
+    end
     
-    methods (TestClassSetup)
-        function checkRequiredPackage(testCase)
+    methods (Static)
+        function output = checkRequiredPackages(out_select)
             % Define a list of required packages and their check functions
             packages = {'sedumi', 'multipoly', 'sosopt', 'mosek'};
             packageChecks = @(pkgName) exist(pkgName, 'file') == 2;
 
-            % Initialize a flag for package availability
-            packagesAvailable = true;
+            % Initialize the flag for package availability
+            available = true;
             missingPackages = {};
 
             % Check each package
             for i = 1:numel(packages)
                 pkgName = packages{i};
                 if ~packageChecks(pkgName)
-                    packagesAvailable = false;
+                    available = false;
                     missingPackages{end+1} = pkgName;
                 end
             end
-            
-            % Use assumeTrue to ensure tests are skipped if any package is missing
-            if ~packagesAvailable
-                message = sprintf('The following required packages are missing: %s.', strjoin(missingPackages, ', '));
-                testCase.assumeTrue(packagesAvailable, message);
-            end
 
+            % set output
+            if out_select==1
+                output = available;
+            else
+                output = missingPackages;
+            end
+        end
+    end
+    
+    methods (TestClassSetup)
+        function setupClass(testCase)
+            if ~test_sdpsol.PackagesAvailable
+                message = sprintf('The following required packages are missing: %s.', strjoin(test_sdpsol.MissingPackages, ', '));
+                testCase.assumeTrue(test_sdpsol.PackagesAvailable, message);
+            end
         end
     end
 
     methods (TestParameterDefinition,Static)
 
        function [sdp, opts] = initializeTestData()
+
+            % only run initialization if all required packages are available
+            if ~test_sdpsol.PackagesAvailable
+                sdp  = {[]};
+                opts = {[]};
+                return;
+            end
 
             % set seed
             rng(0)
