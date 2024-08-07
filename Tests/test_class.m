@@ -75,10 +75,12 @@ function test_class(silentMode)
     % disp(results_suite_basicMath.table)
 
     % Display the results
+    statusMessages = {'100% success! Time for a victory dance!', ...
+                      'Some tests failed. Keep calm and debug on.'};
     if  all([results_suite_basicMath.Passed])
-        disp('Passed all test.')
+        fprintf('<strong> STATUS </strong>: %s\n', statusMessages{1});
     else
-        disp('Failed some test.')
+        fprintf('\n<strong> STATUS </strong>: %s\n', statusMessages{2});
     end
     
 end
