@@ -32,7 +32,7 @@ classdef test_sdpsol < matlab.unittest.TestCase
     methods (Static)
         function output = checkRequiredPackages(out_select)
             % Define a list of required packages and their check functions
-            packages = {'sedumi',mose};
+            packages = {'sedumi'};
             packageChecks = @(pkgName) exist(pkgName, 'file') == 2;
 
             % Initialize the flag for package availability
