@@ -1,15 +1,14 @@
 % ========================================================================
 %
-% Test Name: test_sdpsol.m
+% Test Name: test_sdpsol_sedumi.m
 %
 % Test Description: 
-%   > Check for a simple SDP with only linear and psd cones if the
-%   interface with mosek and sedumi works.
+%   > Solve simple SDP with only linear and psd cones with sedumi
 %   > see https://yalmip.github.io/tutorial/semidefiniteprogramming/
 %               
 % Test Procedure: 
 %
-%   min       c'x       |   c   = [0; ...; 0]       
+%   min       f         |   f   = x(1)         
 %   s.t.    x in K_x    |   K_x = single psd cone
 %          Ax in K_c    |   K_c = single psd cone 
 %                               
@@ -30,7 +29,6 @@ classdef test_sdpsol_sedumi < matlab.unittest.TestCase
         MissingPackages     = checkRequiredPackages(2, test_sdpsol_sedumi.packages);
     end
     
-    
     methods (TestClassSetup)
         function setupClass(testCase)
             if ~test_sdpsol_sedumi.PackagesAvailable
@@ -42,9 +40,7 @@ classdef test_sdpsol_sedumi < matlab.unittest.TestCase
     end
 
     methods (TestParameterDefinition,Static)
-
        function [sdp, opts] = initializeTestData()
-
             % only run initialization if all required packages are available
             if ~test_sdpsol_sedumi.PackagesAvailable
                 sdp  = {[]};

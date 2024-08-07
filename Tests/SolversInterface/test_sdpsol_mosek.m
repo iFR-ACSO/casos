@@ -1,15 +1,13 @@
 % ========================================================================
 %
-% Test Name: test_sdpsol.m
+% Test Name: test_sdpsol_mosek.m
 %
 % Test Description: 
-%   > Check for a simple SDP with only linear and psd cones if the
-%   interface with mosek and sedumi works.
-%   > see https://yalmip.github.io/tutorial/semidefiniteprogramming/
+%   > Solve simple SDP with only linear and psd cones with mosek
 %               
 % Test Procedure: 
 %
-%   min       c'x       |   c   = [0; ...; 0]       
+%   min       f         |   f   = x(1)           
 %   s.t.    x in K_x    |   K_x = single psd cone
 %          Ax in K_c    |   K_c = single psd cone 
 %                               
