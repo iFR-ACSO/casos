@@ -1,9 +1,9 @@
 function test_runner(silentMode)
     % test_runner- Run test suite with optional silent mode. 
     % Usage: 
-    %   test_class();       % Default: verbose mode 
-    %   test_class(true);   % Silent mode
-    %   test_class(false);  % Verbose mode
+    %   test_runner();       % Default: verbose mode 
+    %   test_runner(true);   % Silent mode
+    %   test_runner(false);  % Verbose mode
 
     % clean terminal
     clc
