@@ -1,4 +1,17 @@
-
+%% ------------------------------------------------------------------------
+%
+%
+%   Short Descirption:  Calculate an inner-estimate of the
+%                       region-of-attraction for a satellite. We consider a
+%                       linear control law. The dynamics consists of the
+%                       rotational dynamics and attitude kinematics
+%                       (Modified Rodriques Parameter) with respect to the
+%                       inertial frame.
+%
+%   Reference: custom
+%           
+%
+%--------------------------------------------------------------------------
 close all
 clc
 profile off

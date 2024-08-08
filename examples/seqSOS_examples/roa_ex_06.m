@@ -1,15 +1,26 @@
-% Estimate region of the Generic Transport Model
-% See Chakraborty et al. 2011 (CEP) for details.
+%% ------------------------------------------------------------------------
+%
+%
+%   Short Descirption:  Calculate an inner-estimate of the
+%                       region-of-attraction for the longitudinal motion 
+%                       of the Nasa Generic Transport Model. To increase
+%                       the size of the sublevel set we try to minimize the
+%                       squared distance to a defined set.
+%
+%   Reference: Modified problem from:
+%              Chakraborty, Abhijit and Seiler, Peter and Balas, Gary J.,
+%              Nonlinear region of attraction analysis for flight control 
+%              verification and validation, Control Engineering Practice,
+%              2011, doi: 10.1016/j.conengprac.2010.12.001
+%           
+%
+%--------------------------------------------------------------------------
 
 
-import casos.toolboxes.sosopt.plinearize
-import casos.toolboxes.sosopt.pcontour
-import casos.toolboxes.sosopt.cleanpoly
-import casos.toolboxes.sosopt.pcontour3
+import casos.toolboxes.sosopt.*
 
 % system states
 x = casos.Indeterminates('x',4,1);
-u = casos.Indeterminates('u',2,1);
 
 %% Polynomial Dynamics
 f1 = @(V,alpha,q,theta,eta,F) +1.233e-8*V.^4.*q.^2         + 4.853e-9.*alpha.^3.*F.^3    + 3.705e-5*V.^3.*alpha.*q      ...
@@ -84,7 +95,7 @@ f = @(x,u) [
 [x0, u0] = findtrim(f,x0, u0);
 
 % set up dynamic system
-f = f(x+x0,u+u0);
+f = f(x+x0,[Kq*x(3); 0]+u0);
 
 d = ([
           convvel(20, 'm/s', 'm/s')  %range.tas.lebesgue.get('ft/s')
@@ -94,18 +105,18 @@ d = ([
 ]);
 
 
-% use scaled dynamics to compute initial guess for lyapunov function
 D = diag(d)^-1;
 
 f = D*subs(f, x, D^-1*x);
 
 f = cleanpoly(f,1e-6,1:5);
 
-% initial guess for control law
-[A,B] = plinearize(f ,x , u);
-[K0,P] = lqr(A,B,eye(4),eye(2));
+% use scaled dynamics to compute initial guess for lyapunov function
+A = nabla(f,x);
 
-K = -K0*x;
+A0 = full(subs(A,x,zeros(4,1))); 
+
+P = lyap(A0',0.1*eye(4));
 
 % initial Lyapunov function
 Vinit = x'*P*x;
@@ -114,11 +125,10 @@ Vinit = x'*P*x;
 p = x'*x*1e2;
 
 % Lyapunov function candidate
-V = casos.PS.sym('v',monomials(x,2));
+V = casos.PS.sym('v',monomials(x,2:4));
 
 % SOS multiplier
-s2    = casos.PS.sym('s2',monomials(x,2:4));
-kappa = casos.PS.sym('kappa',monomials(x,1),[2,1]);
+s2 = casos.PS.sym('s2',monomials(x,2:4));
 
 % enforce positivity
 l = 1e-6*(x'*x);
@@ -128,38 +138,39 @@ opts = struct('sossol','mosek');
 
 gam = 1;
 
-g = Vinit-2; 
+g = Vinit-0.8; 
 
 cost = dot(g - (V-gam), g - (V-gam));
 
-
 %% setup solver
-sos = struct('x',[V; s2;kappa],...
+sos = struct('x',[V; s2],...
               'f',cost, ...
               'p',[]);
 
 sos.('g') = [s2; 
               V-l; 
-              s2*(V-gam)-nabla(V,x)*subs(f,u,kappa)-l];
+              s2*(V-gam)-nabla(V,x)*f-l];
 
 % states + constraint are SOS cones
-opts.Kx      = struct('lin', length(sos.x));
+opts.Kx      = struct('lin', 2);
 opts.Kc      = struct('sos', 3);
 opts.verbose = 1;
 opts.sossol_options.sdpsol_options.error_on_fail = 0;
 
-
+profile on
 buildTime_in = tic;
-    solver_GTM_syn = casos.nlsossol('S1','sequential',sos,opts);
+    solver_GTM4D_ROA = casos.nlsossol('S','sequential',sos,opts);
 buildtime = toc(buildTime_in);
+% profile viewer
+% profile off
 
-% solve problem
-sol = solver_GTM_syn('x0' ,[Vinit; (x'*x);K]);
+profile on
+sol = solver_GTM4D_ROA('x0' ,[Vinit; (x'*x)^2]);
 disp(['Solver buildtime: ' num2str(buildtime), ' s'])
-
-
+profile viewer
 %% plot solver statistics
-plotSolverStats(solver_GTM_syn.stats);
+plotSolverStats(solver_GTM4D_ROA.stats);
+
 
 %% plotting
 import casos.toolboxes.sosopt.pcontour
@@ -173,7 +184,5 @@ g = subs(g,[x(1);x(4)],zeros(2,1));
 g = subs(g,[x(2);x(3)],xD(2:3));
 
 figure()
-clf
-pcontour(g, 0, [-1 1 -4 4]*2, 'k--');
 hold on
-pcontour(V, gam, [-1 1 -4 4]*2, 'b-');
+pcontour(V, gam, [-1 1 -4 4], 'b-');

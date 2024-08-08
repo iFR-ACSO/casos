@@ -1,5 +1,20 @@
-% Estimate region of the Generic Transport Model
-% See Chakraborty et al. 2011 (CEP) for details.
+%% ------------------------------------------------------------------------
+%
+%
+%   Short Descirption:  Calculate an inner-estimate of the
+%                       region-of-attraction for the longitudinal motion 
+%                       of the Nasa Generic Transport Model. To increase
+%                       the size of the sublevel set we try to minimize the
+%                       squared distance to a defined set.
+%
+%   Reference: Modified problem from:
+%              Chakraborty, Abhijit and Seiler, Peter and Balas, Gary J.,
+%              Nonlinear region of attraction analysis for flight control 
+%              verification and validation, Control Engineering Practice,
+%              2011, doi: 10.1016/j.conengprac.2010.12.001
+%           
+%
+%--------------------------------------------------------------------------
 
 import casos.toolboxes.sosopt.*
 
@@ -115,47 +130,35 @@ P = lyap(A0',eye(2));
 Vinit = x'*P*x;
 
 % Lyapunov function candidate
-V = casos.PS.sym('v',monomials(x,2));
+V = casos.PS.sym('v',monomials(x,2:4));
 
 % SOS multiplier
-s2 = casos.PS.sym('s2',monomials(x,2));
-s3 = casos.PS.sym('s3',monomials(x,0));
+s2 = casos.PS.sym('s2',monomials(x,1:2),'gram');
+
 % enforce positivity
 l = 1e-6*(x'*x);
-
-% level of stability
-b = casos.PS.sym('b');
 
 % minimize the quadratic distance to a given sublevel set
 g = Vinit-2; 
 
-p = Vinit*10;
-
-figure()
-pcontour(p,0.01,[-4 4 -4 4],'r')
-hold on
-pcontour(Vinit,1,[-4 4 -4 4],'b')
+cost = dot(g - (V-1),g - (V-1)) ;
 
 %% setup solver
 
 % options
 opts = struct('sossol','mosek');
 opts.verbose = 1;
-opts.indeterminates = casos.PS(x);
-sos = struct('x',[V; s2;s3;b],...
-              'f',-b, ...
+sos = struct('x',[V; s2],...
+              'f',cost, ...
               'p',[]);
 
 % constraints
-sos.('g') = [s2; 
-             s3;
-             V-l; 
-             s2*(V-1)-nabla(V,x)*f-l;
-             s3*(p-b) + 1 - V];
+sos.('g') = [V-l; 
+              s2*(V-1)-nabla(V,x)*f-l];
 
 % states + constraint are linear/SOS cones
-opts.Kx = struct('lin', 4);
-opts.Kc = struct('sos', 5);
+opts.Kx = struct('lin', 1, 'sos',1);
+opts.Kc = struct('sos', 2);
 
 % build sequential solver
 buildTime_in = tic;
@@ -163,9 +166,8 @@ buildTime_in = tic;
 buildtime = toc(buildTime_in);
 
 
-
 %% solve
-sol = solver_GTM2D_ROA('x0',[ Vinit;  x'*x;  x'*x; 0.01]); 
+sol = solver_GTM2D_ROA('x0',[ Vinit;  x'*x]); 
 disp(['Solver buildtime: ' num2str(buildtime), ' s'])
 
 
@@ -176,7 +178,5 @@ plotSolverStats(solver_GTM2D_ROA.stats);
 figure()
 pcontour(g,0,[-2 2 -2 2]*3,'k--')
 hold on
-Vval = sol.x(1);
-beta_val = full(casadi.DM(full(sol.x(end))));
 pcontour(sol.x(1),1,[-2 2 -2 2]*3)
-pcontour(p,beta_val,[-2 2 -2 2]*3,'r')
+

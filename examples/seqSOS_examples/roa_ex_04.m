@@ -1,5 +1,22 @@
-% Estimate region of the Generic Transport Model
-% See Chakraborty et al. 2011 (CEP) for details.
+%% ------------------------------------------------------------------------
+%
+%
+%   Short Descirption:  Calculate an inner-estimate of the
+%                       region-of-attraction for the short-period motion 
+%                       of the Nasa Generic Transport Model. To increase
+%                       the size of the sublevel set we try to minimize the
+%                       squared distance to a defined set.
+%                       Here, we make use of a sampling approach to
+%                       estimate the constraint vioation (experimental).
+%
+%   Reference: Modified problem from:
+%              Chakraborty, Abhijit and Seiler, Peter and Balas, Gary J.,
+%              Nonlinear region of attraction analysis for flight control 
+%              verification and validation, Control Engineering Practice,
+%              2011, doi: 10.1016/j.conengprac.2010.12.001
+%           
+%
+%--------------------------------------------------------------------------
 
 import casos.toolboxes.sosopt.*
 
