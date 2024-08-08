@@ -29,6 +29,13 @@ msk_prob.barc.val = full(data.c);
 msk_prob.barf.val = full(data.f);
 %TODO: initial guess, quadratic cost
 
+% workaround for non-psd Hessian
+Inan = isnan(msk_prob.barf.val);
+if any(Inan)
+    warning('NaN detected.')
+    msk_prob.barf.val(Inan) = 0;
+end
+
 % options to MOSEK
 msk_param = obj.opts.mosek_param;
 msk_echo  = obj.opts.mosek_echo;
