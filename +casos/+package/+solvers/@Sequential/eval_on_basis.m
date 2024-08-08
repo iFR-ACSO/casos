@@ -26,7 +26,7 @@ function argout = eval_on_basis(obj,argin)
     % initilize filter
 	if ~isempty(obj.projConPara)
 
-		solPara_proj   = obj.projConPara('p',[obj.xk1fun(xi_k,p0);p0]);
+		solPara_proj   = obj.projConPara('p',[obj.xk1fun(xi_k,p0)]);
 		curr_conVio    = full(solPara_proj.f);
 
 		curr_cost   = inf; 
@@ -178,7 +178,7 @@ function argout = eval_on_basis(obj,argin)
                 % measure time to compute projection/current constraint
                 % violation
                 measTime_Proj_in = tic;
-                    solPara_proj = obj.projConPara('p',[obj.xk1fun(xi_k1,p0);p0]);
+                    solPara_proj = obj.projConPara('p',[obj.xk1fun(xi_k1,p0)]);
                     new_conVio   = sqrt(full(solPara_proj.f));
                 info{i+1}.filter_stats.measTime_proj_out = toc(measTime_Proj_in);
 

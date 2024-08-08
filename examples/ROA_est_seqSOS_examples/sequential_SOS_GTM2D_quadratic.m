@@ -156,7 +156,7 @@ buildtime = toc(buildTime_in);
 
 
 %% solve
-sol = solver_GTM2D_ROA('x0',[ Vinit;  x'*x]); 
+sol = solver_GTM2D_ROA('x0',[ Vinit;  casos.PD(x'*x)]); 
 disp(['Solver buildtime: ' num2str(buildtime), ' s'])
 
 
