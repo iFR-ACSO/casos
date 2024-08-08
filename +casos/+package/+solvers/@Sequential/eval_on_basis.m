@@ -63,11 +63,11 @@ function argout = eval_on_basis(obj,argin)
         args{2}  = [p0; xi_k; Bk(:)];
 
         % adjust bounds
-        args{3}  = argin{3} - xi_k;
-        args{4}  = argin{4} - xi_k;
+        % args{3}  = argin{3} - xi_k;
+        % args{4}  = argin{4} - xi_k;
 
-        % args{3}  = argin{3};
-        % args{4}  = argin{4};
+        args{3}  = argin{3};
+        args{4}  = argin{4};
         % 
         %% evaluate convex SOS problem
         sol = eval_on_basis(obj.sossolver, args);
@@ -193,7 +193,7 @@ function argout = eval_on_basis(obj,argin)
                 % violation
                 measTime_Proj_in = tic;
                     solPara_proj = obj.projConPara('p',[obj.xk1fun(xi_k1,p0)]);
-                    new_conVio   = 1/length(xi_k)*sqrt(full(solPara_proj.f));
+                    new_conVio   = sqrt(full(solPara_proj.f));
                 info{i+1}.filter_stats.measTime_proj_out = toc(measTime_Proj_in);
 
             else

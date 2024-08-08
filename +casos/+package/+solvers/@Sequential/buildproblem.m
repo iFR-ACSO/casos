@@ -65,14 +65,12 @@ sos.derivatives.Hf = casadi.SX(B_k);
 % needed to initialize it later
 obj.sizeHessian = size(B_k);
 
-% needed because we have a parameter vector
-B_k = B_k(:);
 
 % quadratic cost approximation; refactor hessian vector to symmetric matrix
 % f =          1/2 d^T B d + nabla f(x_k)^T*d
 nabla_f_Fun = casos.Function('f',{nlsos.x, xi_new,p0},{ dot(jacobian(nlsos.f,nlsos.x),xi_new-nlsos.x) });
 
-sos.f =  1/2*poly2basis(d)'* reshape(B_k,[size_bk,size_bk]) * poly2basis(d) + nabla_f_Fun(xi_k, xi_new,p0); %linearize(nlsos.f,sos.x,xi_k);
+sos.f =  1/2*poly2basis(d)'* B_k * poly2basis(d) + nabla_f_Fun(xi_k, xi_new,p0); %linearize(nlsos.f,sos.x,xi_k);
 
 % extend parameter vector
 sos.p = [p0; xi_k; B_k(:)];
@@ -88,7 +86,6 @@ sosopt.error_on_fail = false;
 
 % initialize convex SOS solver (subproblem)
 obj.sossolver = casos.package.solvers.sossolInternal('SOS',opts.sossol,sos,sosopt);
-
 
 % store basis
 obj.sparsity_x  = obj.sossolver.sparsity_x;
@@ -115,11 +112,11 @@ correction = conFun(xi_k + xi_new ,p0) - derivConFun(xi_k, xi_new,p0);
 % % get adapted constraint
 sosSOC.g = conFun(xi_k,p0) + derivConFun(xi_k,xisoc_new,p0) + correction;
 
-sosSOC.p = [p0; xi_k; xi_new; B_k];
+sosSOC.p = [p0; xi_k; xi_new; B_k(:)];
 
 sosSOC.x = xisoc_new;
 
-sosSOC.f =  1/2*poly2basis(dsoc)'* reshape(B_k,[size_bk,size_bk]) * poly2basis(dsoc) + nabla_f_Fun(xi_k, xisoc_new,p0); %linearize(nlsos.f,sos.x,xi_k);
+sosSOC.f =  1/2*poly2basis(dsoc)'* B_k * poly2basis(dsoc) + nabla_f_Fun(xi_k, xisoc_new,p0); %linearize(nlsos.f,sos.x,xi_k);
 
 sosSOC.derivatives.Hf = casadi.SX(reshape(B_k,[size_bk,size_bk]));
 
@@ -129,9 +126,9 @@ obj.solver_soc = casos.package.solvers.sossolInternal('SOS',opts.sossol,sosSOC,s
 %% setup damped BFGS
 lam_gs    =  casos.PS.sym('lam_gs', obj.sparsity_gs);
 
-s = casadi.MX.sym('s',[length(poly2basis(nlsos.x)),1]);
-r = casadi.MX.sym('r',[length(poly2basis(nlsos.x)),1]);
-B = casadi.MX.sym('B',[length(poly2basis(nlsos.x)),length(poly2basis(nlsos.x))]);
+s = casadi.MX.sym('s',[size_bk,1]);
+r = casadi.MX.sym('r',[size_bk,1]);
+B = casadi.MX.sym('B',[size_bk,size_bk]);
 
 obj.BFGS_fun =  casadi.Function('f',{B,r,s}, {B + (r*r')/(s'*r) - (B*(s*s')*B)/(s'*B*s)});
  
@@ -139,20 +136,24 @@ obj.BFGS_fun =  casadi.Function('f',{B,r,s}, {B + (r*r')/(s'*r) - (B*(s*s')*B)/(
 dLdx = jacobian(nlsos.f + dot(lam_gs,nlsos.g),nlsos.x)';
 
 % gradient of Langrangian needed for BFGS and for convergence check
-obj.nabla_xi_L      = casos.Function('f',{poly2basis(nlsos.x),poly2basis(lam_gs),p0}, { op2basis(dLdx) });
-obj.nabla_xi_L_norm = casos.Function('f',{poly2basis(nlsos.x),poly2basis(lam_gs),p0}, { Fnorm2(dLdx) });
+coeff_nlsos_x = poly2basis(nlsos.x);
+coeff_lam_gs = poly2basis(lam_gs);
+coeff_p0 = poly2basis(p0);
+
+obj.nabla_xi_L      = casos.Function('f',{coeff_nlsos_x,coeff_lam_gs,p0}, { op2basis(dLdx) });
+obj.nabla_xi_L_norm = casos.Function('f',{coeff_nlsos_x,coeff_lam_gs,p0}, { Fnorm2(dLdx) });
 
 % cost function and gradient needed for filter linesearch
-obj.f          = casos.Function('f',{poly2basis(nlsos.x),p0}, { nlsos.f });
-obj.nabla_xi_f = casos.Function('f',{poly2basis(nlsos.x),p0}, { op2basis(jacobian(nlsos.f,nlsos.x)) });
+obj.f          = casos.Function('f',{coeff_nlsos_x,p0}, { nlsos.f });
+obj.nabla_xi_f = casos.Function('f',{coeff_nlsos_x,p0}, { op2basis(jacobian(nlsos.f,nlsos.x)) });
 
-obj.nabla_xi_g = casos.Function('f',{poly2basis(nlsos.x),p0}, { op2basis(jacobian(nlsos.g,nlsos.x)) });
+obj.nabla_xi_g = casos.Function('f',{coeff_nlsos_x,p0}, { op2basis(jacobian(nlsos.g,nlsos.x)) });
 
 
 %% setup projection for constraint violation check
 
 % work around for polynomial interface
-obj.xk1fun = casos.Function('f1',{poly2basis(nlsos.x),poly2basis(p0)}, {nlsos.x});
+obj.xk1fun = casos.Function('f1',{coeff_nlsos_x ,coeff_p0}, {nlsos.x});
 
 % identify nonlinear constraints 
 I = zeros(length(nlsos.g),1);
@@ -195,7 +196,7 @@ else
     nonLinCon = nlsos.g(I==1);
 
     % evaluate current solution (coefficients) at provided sampling points
-    obj.pseudoProj = casos.Function('f',{poly2basis(nlsos.x),p0}, {nonLinCon});
+    obj.pseudoProj = casos.Function('f',{coeff_nlsos_x,p0}, {nonLinCon});
       
 
 end
@@ -207,7 +208,7 @@ if obj.opts.feasRes_actv_flag
 % get multiplier for SOS cone projection
 
 spars_non_g = sparsity(nlsos.g(I==1));
-s    = casos.PS.sym('q',spars_non_g ); 
+s           = casos.PS.sym('q',spars_non_g ); 
 
 
 obj.size_s = length(s);
