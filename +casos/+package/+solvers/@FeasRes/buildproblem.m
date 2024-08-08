@@ -139,14 +139,14 @@ obj.BFGS_fun =  casadi.Function('f',{B,r,s}, {B + (r*r')/(s'*r) - (B*(s*s')*B)/(
 dLdx = jacobian(nlsos.f + dot(lam_gs,nlsos.g),nlsos.x)';
 
 % gradient of Langrangian needed for BFGS and for convergence check
-obj.nabla_xi_L      = casos.Function('f',{poly2basis(nlsos.x),poly2basis(lam_gs),p0}, { op2basis(dLdx) });
-obj.nabla_xi_L_norm = casos.Function('f',{poly2basis(nlsos.x),poly2basis(lam_gs),p0}, { Fnorm2(dLdx) });
+obj.nabla_xi_L      = casos.Function('f',{poly2basis(nlsos.x),poly2basis(lam_gs),poly2basis(p0)}, { op2basis(dLdx) });
+obj.nabla_xi_L_norm = casos.Function('f',{poly2basis(nlsos.x),poly2basis(lam_gs),poly2basis(p0)}, { Fnorm2(dLdx) });
 
 % cost function and gradient needed for filter linesearch
-obj.f          = casos.Function('f',{poly2basis(nlsos.x),p0}, { nlsos.f });
+obj.f          = casos.Function('f',{poly2basis(nlsos.x),poly2basis(p0)}, { nlsos.f });
 obj.nabla_xi_f = casos.Function('f',{poly2basis(nlsos.x),poly2basis(p0)}, { op2basis(jacobian(nlsos.f,nlsos.x)) });
 
-obj.nabla_xi_g = casos.Function('f',{poly2basis(nlsos.x),p0}, { op2basis(jacobian(nlsos.g,nlsos.x)) });
+obj.nabla_xi_g = casos.Function('f',{poly2basis(nlsos.x),poly2basis(p0)}, { op2basis(jacobian(nlsos.g,nlsos.x)) });
 
 
 %% setup projection for constraint violation check

@@ -94,7 +94,7 @@ buildTime_in = tic;
 buildtime = toc(buildTime_in);
 
 % solve
-sol = solver_Satellite3D('x0' ,[Vinit; 1;1]);
+sol = solver_Satellite3D('x0' ,[Vinit; x'*x;x'*x]);
 disp(['Solver buildtime: ' num2str(buildtime), ' s'])
 
 % plot solver statistics

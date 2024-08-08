@@ -205,13 +205,13 @@ end
 
 if obj.opts.feasRes_actv_flag
 % get multiplier for SOS cone projection
-s    = casos.PS.sym('q',sparsity(nlsos.g(I==1))); 
 
-% Currently just debugging for feasibility restoration
-x    = obj.opts.indeterminates;
+spars_non_g = sparsity(nlsos.g(I==1));
+s    = casos.PS.sym('q',spars_non_g ); 
+
 
 obj.size_s = length(s);
-obj.s0     = ones(obj.size_s,1)*(x'*x);
+obj.s0     = casos.PD(spars_non_g , ones(spars_non_g.nnz,1));
 obj.size_x = length(sos.x);
 
 
@@ -246,7 +246,6 @@ sosFeas = struct('x',[nlsos.x; s],...      % augment decision variables
 
 sosFeas.('g') = [nlsos.g(I==1);s];
 
-% sosFeas.('g') = [nlsos.g(I~=1);s];
 opts               = [];
 opts.Kc            = struct('sos', length(sosFeas.g));
 opts.Kx            = struct('lin', length(sosFeas.x));
