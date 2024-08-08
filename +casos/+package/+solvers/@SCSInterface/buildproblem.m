@@ -88,6 +88,14 @@ Na.s = (obj.getdimc(Kc,'psd'));
 Nx_c = n - Nx.l;
 Na_c = m - Na.l;
 
+% this leads to the SCS-style constraint
+%
+%   |   0  |     |  t  |   |   1  |
+%   |  -al |     | sba |   |   0  |
+%   |  -ac |*x + | sca | = | -cba |
+%   | -I 0 |     | sbx |   |   0  |
+%   | 0 -I |     | scx |   | -cbx |
+%
 A = [sparse(1,n); -a; -speye(n)];
 b = [1; sparse(Na.l,1); -cba; sparse(Nx.l,1); -cbx];
 c = g;
