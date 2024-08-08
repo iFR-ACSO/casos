@@ -152,7 +152,7 @@ obj.nabla_xi_g = casos.Function('f',{poly2basis(nlsos.x),p0}, { op2basis(jacobia
 %% setup projection for constraint violation check
 
 % work around for polynomial interface
-obj.xk1fun = casos.Function('f1',{poly2basis(nlsos.x),p0}, {nlsos.x});
+obj.xk1fun = casos.Function('f1',{poly2basis(nlsos.x),poly2basis(p0)}, {nlsos.x});
 
 % identify nonlinear constraints 
 I = zeros(length(nlsos.g),1);
@@ -161,7 +161,7 @@ for idx = 1:length(nlsos.g)
 end
 
 if isempty(opts.conVioSamp)
-    
+
 % Gram decision variable
 s    = casos.PS.sym('q',grambasis(nlsos.g(I==1)));
 
@@ -184,8 +184,6 @@ if ~isempty(s)
     obj.projConPara    =  casos.sossol('S','mosek',proj_sos,opts);
     
 
-    obj.conFun = casos.Function('f2',{poly2basis(xi_k),poly2basis(s)}, {poly2basis(s - conFun(xi_k))});
-
 else
 
     obj.projConPara    = [];
@@ -204,7 +202,8 @@ end
 
 
 %% feasibility restoration phase
-    
+
+if obj.opts.feasRes_actv_flag
 % get multiplier for SOS cone projection
 s    = casos.PS.sym('q',sparsity(nlsos.g(I==1))); 
 
@@ -245,7 +244,7 @@ sosFeas = struct('x',[nlsos.x; s],...      % augment decision variables
                  'f',cost , ...
                  'p',[zeta;vio0;x0]);
 
-sosFeas.('g') = [nlsos.g(I~=1);s];
+sosFeas.('g') = [nlsos.g(I==1);s];
 
 % sosFeas.('g') = [nlsos.g(I~=1);s];
 opts               = [];
@@ -256,5 +255,11 @@ opts.verbose       = 1;
 
 % initialize solver
 obj.solver_feas_res = casos.nlsossol('S','FeasRes',sosFeas,opts);
+
+else
+    % feasibility restoration is not active!
+    obj.solver_feas_res = [];
+
+end
 
 end

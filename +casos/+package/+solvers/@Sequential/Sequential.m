@@ -6,11 +6,9 @@ properties (Access=private)
 
     % convex subproblem
     sizeHessian % needed for the initilization
-    cholFun
     
     % second-order-correction
     solver_soc
-    correction
     
     % feasibility restoration phase
     solver_feas_res
@@ -29,9 +27,7 @@ properties (Access=private)
     % parameterized projection (constraint violation)
     paraProjConVio
     xk1fun
-    conFun
    
-
     % cost function
     f
     nabla_xi_f
@@ -70,7 +66,8 @@ properties (Constant,Access=protected)
          'delta', 'Multiplier for sufficient decrease condition'
          'conVioSamp','Sampling points provided from user for pseudo-projection'
          'indeterminates','Vector of indeterminates'
-         'verbose', 'Turn on/off iteration display.'}
+         'verbose', ['Turn on/off iteration display.' ...
+         'feasRes_actv_flag','flag to turn on/off feasibility restoration']}
     ];
 
     allow_eval_on_basis = true;
@@ -126,25 +123,25 @@ methods
         end
 
         % default options
-        if ~isfield(obj.opts,'sossol'),         obj.opts.sossol         = 'mosek'; end
-        if ~isfield(obj.opts,'sossol_options'), obj.opts.sossol_options = struct; end
-        if ~isfield(obj.opts,'max_iter'),       obj.opts.max_iter       = 1000; end
-        if ~isfield(obj.opts,'alpha_max'),      obj.opts.alpha_max      = 1; end
-        if ~isfield(obj.opts,'alpha_min'),      obj.opts.alpha_min      = 1e-5; end
-        if ~isfield(obj.opts,'tau'),            obj.opts.tau            = 0.5; end
-        if ~isfield(obj.opts,'soc_max_iter'),   obj.opts.soc_max_iter   = 5; end
-        if ~isfield(obj.opts,'optTol'),         obj.opts.optTol         = 1e-4; end
-        if ~isfield(obj.opts,'conVioTol'),      obj.opts.conVioTol      = 1e-2; end
-        if ~isfield(obj.opts,'accTol'),         obj.opts.accTol         = 1e-3; end
-        if ~isfield(obj.opts,'noAccIter'),      obj.opts.noAccIter      = 15; end
-        if ~isfield(obj.opts,'s_phi'),          obj.opts.s_phi          = 2.3; end
-        if ~isfield(obj.opts,'s_theta'),        obj.opts.s_theta        = 1.1; end
-        if ~isfield(obj.opts,'gamma_phi'),      obj.opts.gamma_phi      = 1; end
-        if ~isfield(obj.opts,'delta '),         obj.opts.delta          = 1; end
-        if ~isfield(obj.opts,'conVioSamp'),     obj.opts.conVioSamp     = []; end
-        if ~isfield(obj.opts,'indeterminates'), obj.opts.indeterminates = []; end       
-        
-       
+        if ~isfield(obj.opts,'sossol'),         obj.opts.sossol               = 'mosek'; end
+        if ~isfield(obj.opts,'sossol_options'), obj.opts.sossol_options       = struct; end
+        if ~isfield(obj.opts,'max_iter'),       obj.opts.max_iter             = 1000; end
+        if ~isfield(obj.opts,'alpha_max'),      obj.opts.alpha_max            = 1; end
+        if ~isfield(obj.opts,'alpha_min'),      obj.opts.alpha_min            = 1e-5; end
+        if ~isfield(obj.opts,'tau'),            obj.opts.tau                  = 0.5; end
+        if ~isfield(obj.opts,'soc_max_iter'),   obj.opts.soc_max_iter         = 5; end
+        if ~isfield(obj.opts,'optTol'),         obj.opts.optTol               = 1e-4; end
+        if ~isfield(obj.opts,'conVioTol'),      obj.opts.conVioTol            = 1e-3; end
+        if ~isfield(obj.opts,'accTol'),         obj.opts.accTol               = 1e-3; end
+        if ~isfield(obj.opts,'noAccIter'),      obj.opts.noAccIter            = 15; end
+        if ~isfield(obj.opts,'s_phi'),          obj.opts.s_phi                = 2.3; end
+        if ~isfield(obj.opts,'s_theta'),        obj.opts.s_theta              = 1.1; end
+        if ~isfield(obj.opts,'gamma_phi'),      obj.opts.gamma_phi            = 1; end
+        if ~isfield(obj.opts,'delta '),         obj.opts.delta                = 1; end
+        if ~isfield(obj.opts,'conVioSamp'),     obj.opts.conVioSamp           = []; end
+        if ~isfield(obj.opts,'indeterminates'), obj.opts.indeterminates       = []; end       
+        if ~isfield(obj.opts,'feasRes_actv_flag'), obj.opts.feasRes_actv_flag = 1; end  
+
 
         % set up logger
         if ~isfield(obj.opts,'verbose') || ~obj.opts.verbose

@@ -83,6 +83,7 @@ sos.('g') = [s2;
 % states + constraint are SOS cones
 opts.Kx      = struct('lin', length(sos.x));
 opts.Kc      = struct('sos', length(sos.g));
+
 opts.verbose = 1;
 opts.indeterminates = casos.PS(x);
 opts.sossol_options.sdpsol_options.error_on_fail = 0;

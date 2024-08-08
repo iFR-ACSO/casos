@@ -103,7 +103,6 @@ opts.Kx      = struct('lin', length(sos.x));
 opts.Kc      = struct('sos', length(sos.g));
 opts.verbose = 1;
 
-opts.sossol_options.sdpsol_options.error_on_fail = 0;
 
 profile on
 buildTime_in = tic;

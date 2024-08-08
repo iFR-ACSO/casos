@@ -113,7 +113,7 @@ p = x'*x*1e2;
 V = casos.PS.sym('v',monomials(x,2:4));
 
 % SOS multiplier
-s2 = casos.PS.sym('s2',monomials(x,1:2),'gram');
+s2 = casos.PS.sym('s2',monomials(x,2),'gram');
 
 % enforce positivity
 l = 1e-6*(x'*x);

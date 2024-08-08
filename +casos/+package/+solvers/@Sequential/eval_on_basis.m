@@ -63,12 +63,12 @@ function argout = eval_on_basis(obj,argin)
         args{2}  = [p0; xi_k; Bk(:)];
 
         % adjust bounds
-        % args{3}  = argin{3} - xi_k;
-        % args{4}  = argin{4} - xi_k;
+        args{3}  = argin{3} - xi_k;
+        args{4}  = argin{4} - xi_k;
 
-        args{3}  = argin{3};
-        args{4}  = argin{4};
-        
+        % args{3}  = argin{3};
+        % args{4}  = argin{4};
+        % 
         %% evaluate convex SOS problem
         sol = eval_on_basis(obj.sossolver, args);
            
@@ -88,62 +88,72 @@ function argout = eval_on_basis(obj,argin)
                     dual_star = sol{5};
 
             case UnifiedReturnStatus.SOLVER_RET_INFEASIBLE
+                    
 
-                    % go to feasibility restoration phase
-					printf(obj.log,'debug',['Subproblem infeasible in iteration ' num2str(i)   '. Go to feasibility restoration.\n']);
-    
-					% prepare polynomial input to high-level solver
-					polySol = obj.xk1fun(xi_k,p0);
-                    
-                    % compute the constraint violation of the current
-                    % iterate; we must be better than that one
-			        conVio_0 = obj.conVio_0(casos.PS(polySol),obj.s0,casos.PS(polySol),0);
-                    
-                    % run feasibility restoration (bascially a filter
-                    % linesearch with adpated cost)
-					sol_feas_res = obj.solver_feas_res('x0',[casos.PS(polySol) ; obj.s0 ],...
-													   'p', [0;conVio_0;casos.PS(polySol)]); 
-                
-                    % extract solution
-					xi_feas      = poly2basis(sol_feas_res.x(1:obj.size_x));
-                    
-                    %check if it is acceptable to filter
-					[obj.Filter,~,accept_FeasResStep] = obj.Filter.updateFilter(1,...
-																				full(casadi.DM(xi_feas)), ...
-																				curr_cost, ....
-																				curr_conVio,....
-																				full(casadi.DM(full(obj.f(xi_feas,p0)))),...
-																				full(sol_feas_res.f),....
-																				full(casadi.DM(full(obj.nabla_xi_f(xi_feas,p0))))');
-            
-                    % if acceptable, store iteration data and continue with the
-                    % normal iteration
-                    if accept_FeasResStep
-             
+                    if ~isempty(obj.solver_feas_res)
+                        % go to feasibility restoration phase
+					    printf(obj.log,'debug',['Subproblem infeasible in iteration ' num2str(i)   '. Go to feasibility restoration.\n']);
         
-                        % just fill info struct for consitency
-                        info{i+1}.filter_stats.measTime_proj_out      = 0;
-                        info{i+1}.filter_stats.alpha_k                = 1;
-                        info{i+1}.filter_stats.measTime               = 0;
-                        info{i+1}.seqSOS_common_stats.delta_prim      = nan;
-                        info{i+1}.seqSOS_common_stats.delta_dual      = nan;
-                        info{i+1}.seqSOS_common_stats.conViol         = curr_conVio ;
-                        info{i+1}.seqSOS_common_stats.gradLang        = nan;
-        
-                        info{i+1}.seqSOS_common_stats.solve_time_iter = toc(measTime_seqSOS__iter_in);
-        
-				        xi_k  = xi_feas;
-				        printf(obj.log,'debug', 'Feasibility restoration iterate accepted to filter. Continue original problem \n');
-				        continue
+					    % prepare polynomial input to high-level solver
+					    polySol = obj.xk1fun(xi_k,p0);
                         
-				        
+                        % compute the constraint violation of the current
+                        % iterate; we must be better than that one
+			            conVio_0 = obj.conVio_0(casos.PS(polySol),obj.s0,casos.PS(polySol),0);
+                        
+                        % run feasibility restoration (bascially a filter
+                        % linesearch with adpated cost)
+					    sol_feas_res = obj.solver_feas_res('x0',[polySol ; obj.s0 ],...
+													       'p', [0;conVio_0;casos.PS(polySol)]); 
+                    
+                        % extract solution
+					    xi_feas      = poly2basis(sol_feas_res.x(1:obj.size_x));
+                        
+                        %check if it is acceptable to filter
+					    [obj.Filter,~,accept_FeasResStep] = obj.Filter.updateFilter(1,...
+																				    full(casadi.DM(xi_feas)), ...
+																				    curr_cost, ....
+																				    curr_conVio,....
+																				    full(casadi.DM(full(obj.f(xi_feas,p0)))),...
+																				    full(sol_feas_res.f),....
+																				    full(casadi.DM(full(obj.nabla_xi_f(xi_feas,p0))))');
+                
+                        % if acceptable, store iteration data and continue with the
+                        % normal iteration
+                        if accept_FeasResStep
+                 
+            
+                            % just fill info struct for consitency
+                            info{i+1}.filter_stats.measTime_proj_out      = 0;
+                            info{i+1}.filter_stats.alpha_k                = 1;
+                            info{i+1}.filter_stats.measTime               = 0;
+                            info{i+1}.seqSOS_common_stats.delta_prim      = nan;
+                            info{i+1}.seqSOS_common_stats.delta_dual      = nan;
+                            info{i+1}.seqSOS_common_stats.conViol         = curr_conVio ;
+                            info{i+1}.seqSOS_common_stats.gradLang        = nan;
+            
+                            info{i+1}.seqSOS_common_stats.solve_time_iter = toc(measTime_seqSOS__iter_in);
+            
+				            xi_k  = xi_feas;
+				            printf(obj.log,'debug', 'Feasibility restoration iterate accepted to filter. Continue original problem \n');
+				            continue
+                            
+				            
+                        else
+			                
+                            % means the feasibility restoration solution is not
+                            % acceptable to filter
+                            info{i+1}.seqSOS_common_stats.solve_time = toc(measTime_seqSOS_in);
+                            error('Problem seems locally infeasible!')
+				            
+                        end
                     else
-			            
-                        % means the feasibility restoration solution is not
-                        % acceptable to filter
-                        info{i+1}.seqSOS_common_stats.solve_time = toc(measTime_seqSOS_in);
+                                     % go to feasibility restoration phase
+					    printf(obj.log,'debug',['Subproblem infeasible in iteration ' num2str(i)   '. Feasibility restoration is currently turn off.\n']);
+                        printf(obj.log,'debug',['Subproblem infeasible in iteration ' num2str(i) '\n']);
+        
                         error('Problem seems locally infeasible!')
-				        
+    
                     end
              
 
@@ -183,7 +193,7 @@ function argout = eval_on_basis(obj,argin)
                 % violation
                 measTime_Proj_in = tic;
                     solPara_proj = obj.projConPara('p',[obj.xk1fun(xi_k1,p0)]);
-                    new_conVio   = sqrt(full(solPara_proj.f));
+                    new_conVio   = 1/length(xi_k)*sqrt(full(solPara_proj.f));
                 info{i+1}.filter_stats.measTime_proj_out = toc(measTime_Proj_in);
 
             else
@@ -302,7 +312,7 @@ function argout = eval_on_basis(obj,argin)
                     % got to feasability restoration 
                     if alpha_k < alpha_min
                        
-
+                  if ~isempty(obj.solver_feas_res)
 					printf(obj.log,'debug',['Step length below minimum step length in iteration ' num2str(i)   '. Go to feasibility restoration.\n']);
     
 					% prepare polynomial input to high-level solver
@@ -311,31 +321,16 @@ function argout = eval_on_basis(obj,argin)
                     % measure time needed in restoration
                     measTime_feasRes_in = tic;
                     
-                    % compute weight for regularization term
-                    % Comment: If we are close to an optimal solution, we
-                    % want to stay closer to this solution i.e. more weight
-                    % to the regularization
-                    eps_opt = max([full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k1,dual_star,p0))))/obj.opts.optTol,(new_conVio)/obj.opts.conVioTol]);
-                    
-                    eta_opt_fun = @(eta,eta_min,eta_max,zeta_max)zeta_max.*(eta-eta_max).^2.*1.0./(eta_min-eta_max).^2;
-                    
-                    % ensure the weight is not to larger
-                    if eps_opt > 10
-                        eps_opt = 10;
-                    end
-
-                    zeta_val = 1; %eta_opt_fun(eps_opt,1.01,10,1);
+                    zeta_val = 1; 
 
                     % add the current solution to filter to ensure we are
                     % better than this point
                     obj.Filter.augmentFilter(new_cost,new_conVio);
              
                     
-                    conVio_0 = obj.conVio_0(casos.PS(polySol),obj.s0,casos.PS(polySol),zeta_val);
-                    
                     % solve restoration problem
 					sol_feas_res = obj.solver_feas_res('x0',[casos.PS(polySol) ; obj.s0 ],...
-													   'p', [zeta_val;conVio_0;casos.PS(polySol)]); 
+													   'p', [zeta_val;new_conVio;casos.PS(polySol)]); 
 
                     % extract solution
 					xi_feas      = poly2basis(sol_feas_res.x(1:obj.size_x));
@@ -383,7 +378,7 @@ function argout = eval_on_basis(obj,argin)
 				printf(obj.log,'debug', 'Feasibility restoration iterate accepted to filter. Continue original problem \n');
                 feasResdone = 1;
 				break
-                
+					
 				
             else
 			
@@ -415,7 +410,13 @@ function argout = eval_on_basis(obj,argin)
            
 				
             end
-                
+                  else
+
+                          printf(obj.log,'debug',['Step length below minimum step length in iteration ' num2str(i)  '. Feasibility restoration is currently turn off.\n']);
+                        printf(obj.log,'debug',['Subproblem infeasible in iteration ' num2str(i) '\n']);
+                    
+                        error('Problem seems locally infeasible!')
+            end
                     end
             end
       
