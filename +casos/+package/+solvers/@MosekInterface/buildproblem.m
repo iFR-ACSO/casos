@@ -192,18 +192,19 @@ if nnz(h) > 0
     % end
     
     % get sparisty pattern from h
-  H = sparsity(h);
-[rr,cc] = get_triplet(H);
+      H = sparsity(h);
+    [rr,~] = get_triplet(H);
+    
+    i = min(rr); j = max(rr); % row numbers are sorted
+    
+    spU = casadi.Sparsity.upper(j - i + 1);
+    % enlarge(spU, size(H,1), size(H,2), rr, cc);
+    
+    spU.enlarge(size(H,1), size(H,2), i:j, i:j);
+    
+    U = casadi.MX.sym('U', spU);
 
-i = min(rr); j = max(rr); % row numbers are sorted
 
-spU = casadi.Sparsity.upper(j - i + 1);
-% enlarge(spU, size(H,1), size(H,2), rr, cc);
-
-spU.enlarge(size(H,1), size(H,2), i:j, i:j);
-
-U = casadi.MX.sym('U', spU);
-     % U = casadi.DM(casadi.Sparsity.upper(length(h)));
     % build affine cone constraint 
     % L(y,x) + k = (1+y, sqrt(2)*U*x, 1-y) in SOC
     % note: additional variable y is first decision variable

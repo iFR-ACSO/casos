@@ -28,6 +28,7 @@ properties (Access=private)
     % parameterized projection (constraint violation)
     paraProjConVio
     xk1fun
+    conFun
     
 
     % cost function

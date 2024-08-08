@@ -118,7 +118,7 @@ Vinit = x'*P*x;
 V = casos.PS.sym('v',monomials(x,2:4));
 
 % SOS multiplier
-s2 = casos.PS.sym('s2',monomials(x,0:2:4));
+s2 = casos.PS.sym('s2',monomials(x,2:4));
 
 % enforce positivity
 l = 1e-6*(x'*x);
@@ -156,7 +156,8 @@ buildtime = toc(buildTime_in);
 
 
 %% solve
-sol = solver_GTM2D_ROA('x0',[ Vinit;  casos.PD(x'*x)]); 
+
+sol = solver_GTM2D_ROA('x0',[ Vinit;  x'*x]); 
 disp(['Solver buildtime: ' num2str(buildtime), ' s'])
 
 

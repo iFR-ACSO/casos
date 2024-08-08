@@ -27,6 +27,7 @@ function argout = eval_on_basis(obj,argin)
 	if ~isempty(obj.projConPara)
 
 		solPara_proj   = obj.projConPara('p',[obj.xk1fun(xi_k,p0)]);
+
 		curr_conVio    = full(solPara_proj.f);
 
 		curr_cost   = inf; 
@@ -62,9 +63,12 @@ function argout = eval_on_basis(obj,argin)
         args{2}  = [p0; xi_k; Bk(:)];
 
         % adjust bounds
-        args{3}  = argin{3} - xi_k;
-        args{4}  = argin{4} - xi_k;
+        % args{3}  = argin{3} - xi_k;
+        % args{4}  = argin{4} - xi_k;
 
+        args{3}  = argin{3};
+        args{4}  = argin{4};
+        
         %% evaluate convex SOS problem
         sol = eval_on_basis(obj.sossolver, args);
            
@@ -75,12 +79,12 @@ function argout = eval_on_basis(obj,argin)
         switch ( obj.sossolver.get_stats.UNIFIED_RETURN_STATUS)
             case UnifiedReturnStatus.SOLVER_RET_SUCCESS     % optimal soultion found
 
-                    d_star    = sol{1};
+                    d_star    = sol{1}-xi_k;
                     dual_star = sol{5};
 
             case UnifiedReturnStatus.SOLVER_RET_UNKNOWN % problem status unknown or ill-posed
 
-                    d_star    = sol{1};
+                    d_star    = sol{1}-xi_k;
                     dual_star = sol{5};
 
             case UnifiedReturnStatus.SOLVER_RET_INFEASIBLE

@@ -7,7 +7,7 @@ args = cell2struct(argin',fieldnames(obj.args_in));
 
 if nnz(obj.args_in.h) > 0
     % compute Cholesky decomposition
-    args.h = chol(args.h);
+    args.h = chol(args.h+speye(length(args.h))*1e-10);
 end
 
 % evaluate problem structure
@@ -32,7 +32,7 @@ msk_prob.barf.val = full(data.f);
 % workaround for non-psd Hessian
 Inan = isnan(msk_prob.barf.val);
 if any(Inan)
-    warning('NaN detected.')
+    % warning('NaN detected.')
     msk_prob.barf.val(Inan) = 0;
 end
 

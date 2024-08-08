@@ -25,25 +25,41 @@ Js = [false(Ml,1); true(Ms,1)];
 % store user parameter
 p0 = nlsos.p;
 
-base_x = sparsity(nlsos.x);
+% distinguish between linear and sos dec. var
+nonLinProb_linDec = nlsos.x(1:Nl);
+nonLinProb_sosDec = nlsos.x(Nl+1:end);
+
+base_x_lin = sparsity(nonLinProb_linDec);
+base_x_sos = grambasis(nonLinProb_sosDec);
 
 % current iterate
-xi_k    = casos.PS.sym('xi_k',base_x);
+xi_k_lin    = casos.PS.sym('xi_kl',base_x_lin);
+xi_k_sos    = casos.PS.sym('xi_ks',base_x_sos);
 
-% search direction
-d       = casos.PS.sym('d',base_x);
+xi_k = [xi_k_lin;xi_k_sos];
+
+% new convex solution
+xi_new_lin = casos.PS.sym('xi_l',base_x_lin);
+xi_new_sos = casos.PS.sym('xi_s',base_x_sos);
+
+xi_new = [xi_new_lin;xi_new_sos];
+
+d = xi_new - xi_k; 
 
 % search direction is decision variable of underlying Q-SDP
-sos.x = d;
+sos.x = xi_new; %d;
 
 % Taylor Approximation constraints and evaluate at current solution
 conFun      = casos.Function('f',{nlsos.x, p0},{nlsos.g});
-derivConFun = casos.Function('f',{nlsos.x, d,p0},{ dot(jacobian(nlsos.g,nlsos.x),d) });
+derivConFun = casos.Function('f',{nlsos.x, xi_new,p0},{ dot(jacobian(nlsos.g,nlsos.x),xi_new-nlsos.x) });
 
-sos.g = conFun(xi_k,p0) + derivConFun(xi_k,d,p0); % sos.g = linearize(nlsos.g,nlsos.x,xi_k);
+
+sos.g = conFun(xi_k,p0) + derivConFun(xi_k, xi_new,p0); 
+
 
 % parameterize cost in hessian
-B_k    = casos.PS.sym('b',[length(poly2basis(xi_k)),length(poly2basis(xi_k))]);
+size_bk = length(poly2basis(xi_k));
+B_k    = casos.PS.sym('b',[size_bk,size_bk]);
 
 sos.derivatives.Hf = casadi.SX(B_k);
 
@@ -55,9 +71,9 @@ B_k = B_k(:);
 
 % quadratic cost approximation; refactor hessian vector to symmetric matrix
 % f =          1/2 d^T B d + nabla f(x_k)^T*d
-nabla_f_Fun = casos.Function('f',{nlsos.x,d,p0},{ dot(jacobian(nlsos.f,nlsos.x),d) });
+nabla_f_Fun = casos.Function('f',{nlsos.x, xi_new,p0},{ dot(jacobian(nlsos.f,nlsos.x),xi_new-nlsos.x) });
 
-sos.f =  1/2*poly2basis(d)'* reshape(B_k,[length(poly2basis(xi_k)),length(poly2basis(xi_k))]) * poly2basis(d) + nabla_f_Fun(xi_k,d,p0); %linearize(nlsos.f,sos.x,xi_k);
+sos.f =  1/2*poly2basis(d)'* reshape(B_k,[size_bk,size_bk]) * poly2basis(d) + nabla_f_Fun(xi_k, xi_new,p0); %linearize(nlsos.f,sos.x,xi_k);
 
 % extend parameter vector
 sos.p = [p0; xi_k; B_k(:)];
@@ -88,24 +104,28 @@ obj.sparsity_gs = obj.sossolver.sparsity_gs;
 %% Second-order correction
 
 % correction term
-correction = conFun(xi_k + d ,p0) - derivConFun(xi_k,d,p0);
-
-% new decision variable is corrected search direction
-dsoc = casos.PS.sym('dsoc',base_x);
-
-% get adapted constraint
-sosSOC.g = conFun(xi_k,p0) + derivConFun(xi_k,dsoc,p0) + correction; %linearize(nlsos.g,nlsos.x,xi_k) + correction;
-
-sosSOC.p = [p0; xi_k; d; B_k];
-
-sosSOC.x = dsoc;
-
-sosSOC.f =  1/2*poly2basis(dsoc)'* reshape(B_k,[length(poly2basis(xi_k)),length(poly2basis(xi_k))]) * poly2basis(dsoc) + nabla_f_Fun(xi_k,dsoc,p0); %linearize(nlsos.f,sos.x,xi_k);
-
-sosSOC.derivatives.Hf = casadi.SX(reshape(B_k,[length(poly2basis(xi_k)),length(poly2basis(xi_k))]));
-
-% initialize SOS solver for SOC
-obj.solver_soc = casos.package.solvers.sossolInternal('SOS',opts.sossol,sosSOC,sosopt);
+% correction = conFun(xi_k + d ,p0) - derivConFun(xi_k, xi_new,p0);
+% 
+% % new decision variable is corrected search direction
+% d_k_lin    = casos.PS.sym('dsoc',base_x_lin);
+% d_k_sos    = casos.PS.sym('dsoc',base_x_sos);
+% 
+% dsoc = [d_k_lin;d_k_sos];
+% 
+% 
+% % get adapted constraint
+% sosSOC.g = conFun(xi_k,p0) + derivConFun(xi_k,dsoc,p0) + correction; %linearize(nlsos.g,nlsos.x,xi_k) + correction;
+% 
+% sosSOC.p = [p0; xi_k; d; B_k];
+% 
+% sosSOC.x = dsoc;
+% 
+% sosSOC.f =  1/2*poly2basis(dsoc)'* reshape(B_k,[size_bk,size_bk]) * poly2basis(dsoc) + nabla_f_Fun(xi_k,dsoc,p0); %linearize(nlsos.f,sos.x,xi_k);
+% 
+% sosSOC.derivatives.Hf = casadi.SX(reshape(B_k,[size_bk,size_bk]));
+% 
+% % initialize SOS solver for SOC
+% obj.solver_soc = casos.package.solvers.sossolInternal('SOS',opts.sossol,sosSOC,sosopt);
 
 %% setup damped BFGS
 lam_gs    =  casos.PS.sym('lam_gs', obj.sparsity_gs);
@@ -133,7 +153,7 @@ obj.nabla_xi_g = casos.Function('f',{poly2basis(nlsos.x),p0}, { op2basis(jacobia
 %% setup projection for constraint violation check
 
 % work around for polynomial interface
-obj.xk1fun = casos.Function('f',{poly2basis(nlsos.x),p0}, {nlsos.x});
+obj.xk1fun = casos.Function('f1',{poly2basis(nlsos.x),p0}, {nlsos.x});
 
 % identify nonlinear constraints 
 I = zeros(length(nlsos.g),1);
@@ -143,23 +163,28 @@ end
 
 if isempty(opts.conVioSamp)
 % Gram decision variable
-s    = casos.PS.sym('q',sparsity(nlsos.g(I==1)));
+s    = casos.PS.sym('q',grambasis(nlsos.g(I==1)));
 
 if ~isempty(s) 
-
- 
+    
+    conFun = casos.Function('g1',{nlsos.x},{nlsos.g(I==1)});
+    
     % projection error
-    e = s - nlsos.g(I==1);
+    e = s - conFun(xi_k);
     
     
     % define Q-SOS problem parameterized nonlinear constraints
     %   min ||s-p||^2  s.t. s is SOS
-    proj_sos = struct('x',s,'g',s,'f',dot(e,e),'p',[nlsos.x]);
+    proj_sos = struct('x',s,'g',s,'f',dot(e,e),'p',xi_k);
     
     opts               = [];
+    opts.Kx            = struct('lin', length(s));
     opts.Kc            = struct('sos', length(s));
- 
+    opts.error_on_fail = 0;
     obj.projConPara    =  casos.sossol('S','mosek',proj_sos,opts);
+    
+
+    obj.conFun = casos.Function('f2',{poly2basis(xi_k),poly2basis(s)}, {poly2basis(s - conFun(xi_k))});
 
 else
 
@@ -196,15 +221,18 @@ e = s - nlsos.g(I==1);
 
 % weight for regularization (parameter)
 zeta = casos.PS.sym('z');
-
 vio0 = casos.PS.sym('V');
 
 
 % current iterate where feas. restoration is called (parameter)
-x0   = casos.PS.sym('xi0',base_x);
 
+% current iterate
+xi_0_lin    = casos.PS.sym('x0',base_x_lin);
+xi_0_sos    = casos.PS.sym('x0',base_x_sos);
 
-eReg           = nlsos.x-x0;
+x0 = [xi_0_lin;xi_0_sos];
+
+eReg           = nlsos.x - x0;
 
 regularization = dot(eReg,eReg);
 
