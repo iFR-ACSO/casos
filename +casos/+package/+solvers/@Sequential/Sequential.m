@@ -10,6 +10,7 @@ properties (Access=private)
     
     % second-order-correction
     solver_soc
+    correction
     
     % feasibility restoration phase
     solver_feas_res
@@ -29,7 +30,7 @@ properties (Access=private)
     paraProjConVio
     xk1fun
     conFun
-    
+   
 
     % cost function
     f

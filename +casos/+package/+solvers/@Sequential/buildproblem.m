@@ -47,18 +47,17 @@ xi_new = [xi_new_lin;xi_new_sos];
 d = xi_new - xi_k; 
 
 % search direction is decision variable of underlying Q-SDP
-sos.x = xi_new; %d;
+sos.x = xi_new; 
 
 % Taylor Approximation constraints and evaluate at current solution
 conFun      = casos.Function('f',{nlsos.x, p0},{nlsos.g});
 derivConFun = casos.Function('f',{nlsos.x, xi_new,p0},{ dot(jacobian(nlsos.g,nlsos.x),xi_new-nlsos.x) });
 
-
 sos.g = conFun(xi_k,p0) + derivConFun(xi_k, xi_new,p0); 
-
 
 % parameterize cost in hessian
 size_bk = length(poly2basis(xi_k));
+
 B_k    = casos.PS.sym('b',[size_bk,size_bk]);
 
 sos.derivatives.Hf = casadi.SX(B_k);
@@ -102,30 +101,30 @@ obj.sparsity_gl = obj.sossolver.sparsity_gl;
 obj.sparsity_gs = obj.sossolver.sparsity_gs;
 
 %% Second-order correction
+xisoc_new_lin = casos.PS.sym('xi_ls',base_x_lin);
+xisoc_new_sos = casos.PS.sym('xi_ss',base_x_sos);
+
+xisoc_new = [xisoc_new_lin;xisoc_new_sos];
+
+dsoc = xisoc_new - xi_k; 
 
 % correction term
-% correction = conFun(xi_k + d ,p0) - derivConFun(xi_k, xi_new,p0);
-% 
-% % new decision variable is corrected search direction
-% d_k_lin    = casos.PS.sym('dsoc',base_x_lin);
-% d_k_sos    = casos.PS.sym('dsoc',base_x_sos);
-% 
-% dsoc = [d_k_lin;d_k_sos];
-% 
-% 
+correction = conFun(xi_k + xi_new ,p0) - derivConFun(xi_k, xi_new,p0);
+
+
 % % get adapted constraint
-% sosSOC.g = conFun(xi_k,p0) + derivConFun(xi_k,dsoc,p0) + correction; %linearize(nlsos.g,nlsos.x,xi_k) + correction;
-% 
-% sosSOC.p = [p0; xi_k; d; B_k];
-% 
-% sosSOC.x = dsoc;
-% 
-% sosSOC.f =  1/2*poly2basis(dsoc)'* reshape(B_k,[size_bk,size_bk]) * poly2basis(dsoc) + nabla_f_Fun(xi_k,dsoc,p0); %linearize(nlsos.f,sos.x,xi_k);
-% 
-% sosSOC.derivatives.Hf = casadi.SX(reshape(B_k,[size_bk,size_bk]));
-% 
+sosSOC.g = conFun(xi_k,p0) + derivConFun(xi_k,xisoc_new,p0) + correction;
+
+sosSOC.p = [p0; xi_k; xi_new; B_k];
+
+sosSOC.x = xisoc_new;
+
+sosSOC.f =  1/2*poly2basis(dsoc)'* reshape(B_k,[size_bk,size_bk]) * poly2basis(dsoc) + nabla_f_Fun(xi_k, xisoc_new,p0); %linearize(nlsos.f,sos.x,xi_k);
+
+sosSOC.derivatives.Hf = casadi.SX(reshape(B_k,[size_bk,size_bk]));
+
 % % initialize SOS solver for SOC
-% obj.solver_soc = casos.package.solvers.sossolInternal('SOS',opts.sossol,sosSOC,sosopt);
+obj.solver_soc = casos.package.solvers.sossolInternal('SOS',opts.sossol,sosSOC,sosopt);
 
 %% setup damped BFGS
 lam_gs    =  casos.PS.sym('lam_gs', obj.sparsity_gs);
@@ -162,6 +161,7 @@ for idx = 1:length(nlsos.g)
 end
 
 if isempty(opts.conVioSamp)
+    
 % Gram decision variable
 s    = casos.PS.sym('q',grambasis(nlsos.g(I==1)));
 

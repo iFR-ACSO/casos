@@ -206,7 +206,7 @@ function argout = eval_on_basis(obj,argin)
 
             end
 
-                   
+                  
             % check filter acceptance
             [obj.Filter,goto_SOC,accept_new_iter] = obj.Filter.updateFilter(alpha_k,...
                                                                             full(d_star), ...
