@@ -6,7 +6,11 @@ methods
         % Create a new function.
         import casos.package.functions.*
 
-        if isa(name,'casos.package.functions.FunctionWrapper')
+        if nargin < 1
+            % null function
+            wrap = [];
+
+        elseif isa(name,'casos.package.functions.FunctionWrapper')
             % copy constructor
             wrap = name.wrap;
 
@@ -45,6 +49,13 @@ methods
         end
 
         f@casos.package.functions.FunctionWrapper(wrap);
+    end
+end
+
+methods (Static)
+    function f = create(node)
+        % Create a new function.
+        f = set_wrapped(casos.Function, node);
     end
 end
 

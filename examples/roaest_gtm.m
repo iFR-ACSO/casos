@@ -2,12 +2,10 @@
 % See Chakraborty et al. 2011 (CEP) for details.
 
 % system states
-x = casos.PS('x',4,1);
+x = casos.Indeterminates('x',4);
 
 % Polynomial Dynamics
-load GTM_scaled_dyn.mat
-
-f = gtmdyn(x(1),x(2),x(3),x(4));
+f = GTM_dynamics(x(1),x(2),x(3),x(4));
 
 % shape function
 p = x'*x*1e2;
@@ -59,15 +57,8 @@ opts.Kc = struct('sos', 1);
 S2 = casos.qcsossol('S2','bisection',sos2,opts);
 
 % solver 3: V-step
-s1_sym = casos.PS.sym('s1',basis(s1));
-s2_sym = casos.PS.sym('s2',basis(s2));
-
-% s1 = casos.PS.sym()
-Vlb = casos.PS(basis(V),-inf);
-Vub = casos.PS(basis(V),+inf);
-
-sos3 = struct('x',V,'p',[b,g,s1_sym,s2_sym]);
-sos3.('g') = [V-l; s2_sym*(p-b)+g-V; s1_sym*(V-g)-nabla(V,x)*f-l];
+sos3 = struct('x',V,'p',[b,g,s1,s2]);
+sos3.('g') = [V-l; s2*(p-b)+g-V; s1*(V-g)-nabla(V,x)*f-l];
 
 opts = struct;
 opts.Kx = struct('sos', 0, 'lin', 1); 
@@ -82,7 +73,7 @@ for iter = 1:10
     % gamma step
     sol1 = S1('p',Vval);
 
-    gval = double(-sol1.f);
+    gval = -sol1.f;
     s1val = sol1.x;
 
     % beta step
@@ -92,9 +83,20 @@ for iter = 1:10
     s2val = sol2.x;
 
     % V-step
-    sol3 = S3('p',[bval,gval,s1val,s2val],'lbx',Vlb,'ubx',Vub);
+    sol3 = S3('p',[bval,gval,s1val,s2val]);
 
 
     Vval = sol3.x;
 
 end
+
+%% plot stable level set
+
+figure
+Vfun = to_function(Vval);
+pfun = to_function(p);
+fcontour(@(x,y) full(Vfun(x,y,0,0)), [-1 1], 'b-', 'LevelList', full(gval))
+hold on
+fcontour(@(x,y) full(pfun(x,y,0,0)), [-1 1], 'r-', 'LevelList', full(bval))
+hold off
+legend('Lyapunov function','shape function')
