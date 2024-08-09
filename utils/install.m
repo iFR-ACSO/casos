@@ -1,14 +1,15 @@
 % -------------------------------------------------------------------------
-%
-% Short Description: Script that install casos by adding it to the matlab
-%                    path and checks if casadi is installed. If either 
-%                    casos or casadi are not on the path they are added to 
-%                    it. Also it is checked which solvers are available and
-%                    if they are on the current path.
-%
-% Date: 04/02/2024
-%
+% Casos Installation Check
 % -------------------------------------------------------------------------
+% 
+% Purpose:
+%   Verifies the installation and configuration of essential toolboxes 
+%   (Casos, CasADi) and solvers (Mosek, SeDuMi) required for Casos.
+% 
+% Usage:
+%   Run this script to ensure all dependencies for Casos are correctly 
+%   installed before use.
+
 
 fprintf(['\n\n----------------------------------------------------\n' ...
     '         Checking installed toolboxes\n' ...
