@@ -167,6 +167,8 @@ methods
         % else
         in = cell(10,1);
         
+        in{1} = poly2basis(argin{1},obj.sparsity_x);
+        
         % project arguments to obtain SDP inputs
         % only linear coefficients are handled (p, lbx, ubx, lbg, ubg)
         in{2} = poly2basis(argin{2}, obj.sparsity_p);

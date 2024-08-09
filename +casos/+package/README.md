@@ -49,6 +49,7 @@ flowchart LR
     casos.sdpsol[sdpsol]
     casos.sossol[sossol]
     casos.qcsossol[qcsossol]
+    casos.nlsossol[nlsossol]
   end
   subgraph casos.package.functions
     FunctionInternal --> FunctionCommon
@@ -74,6 +75,11 @@ flowchart LR
     qcsossolInternal -.-> QuasiconvBisection
     QuasiconvBisection --> SosoptCommon
     QuasiconvBisection -.-> SossdpRelaxation
+    casos.nlsossol -.-> nlsossolInternal
+    nlsossolInternal -.-> Sequential
+    Sequential -.-> SossdpRelaxation
+    nlsossolInternal -.-> FeasibilityRestoration
+    FeasibilityRestoration -.-> SossdpRelaxation
   end
   casos.Function --> FunctionWrapper
   casos.Function -.-> CasadiFunction
@@ -86,4 +92,5 @@ flowchart LR
   casos.sdpsol -.-> SdpsolInternal
   casos.sossol -.-> sossolInternal
   casos.qcsossol -.-> qcsossolInternal
+
 ```

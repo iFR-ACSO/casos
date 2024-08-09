@@ -16,6 +16,22 @@ end
 
 methods (Static)
     %% Static constructors
+    function op = sym(dstr,Si,So)
+        % Symbolic operator.
+        if nargin < 2
+            % symbolic scalar multiplication
+            op = casos.PSOperator(casadi.SX.sym(dstr));
+
+        elseif nargin < 3
+            % symbolic dual operator
+            op = casos.PSOperator(casadi.SX.sym(dstr,1,nnz(Si)),Si);
+
+        else
+            % symbolic operator
+            op = casos.PSOperator(casadi.SX.sym(dstr,nnz(So),nnz(Si)),Si,So);
+        end
+    end
+
     function op = empty(varargin)
         % Empty operator.
         op = casos.PSOperator(double.empty(varargin{:}));

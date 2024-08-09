@@ -82,6 +82,8 @@ methods
         conic.h = sparsity(H);
         conic.a = sparsity(A);
 
+        % opts.chol = sdp.chol;
+
         % create low-level conic solver
         obj.solver = casos.package.solvers.conicInternal([name '_conic'],solver,conic,opts);
 

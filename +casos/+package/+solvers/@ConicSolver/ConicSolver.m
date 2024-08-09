@@ -101,6 +101,7 @@ methods
         obj.args_in.lam_x0 = casadi.MX.sym('lam_x0',n);
         obj.args_in.lam_a0 = casadi.MX.sym('lam_a0',m);
 
+     
         % build conic problem
         buildproblem(obj);
 

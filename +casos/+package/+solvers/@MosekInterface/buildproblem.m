@@ -33,6 +33,10 @@ function buildproblem(obj)
 % Lorentz cone, rotated Lorentz cone, and PSD cone can be shifted by a
 % lower bound (cb).
 
+if ~isfield(obj.opts,'hessian_cholesky')
+    obj.opts.hessian_cholesky = false; 
+end
+
 opts = obj.opts;
 
 % retrieve MOSEK symbolic constants
@@ -162,12 +166,12 @@ prob.g = [gacc + Fcb; cbx_v];
 prob.blx = [lbx; -inf(Nx_q,1)];
 prob.bux = [ubx; +inf(Nx_q,1)];
 
+% arguments to problem
+args_in = obj.args_in;
+
 % handle quadratic cost function
 % MOSEK cannot solve conic problems with quadratic cost
 if nnz(h) > 0
-    % only SX supports Cholesky decomposition
-    H = casadi.SX.sym('H',sparsity(h));
-    chol_f = casadi.Function('chol',{H},{chol(H)});
     % rewrite quadratic cost
     %
     %   min_x 1/2 x'*Q*x + c'*x
@@ -177,12 +181,36 @@ if nnz(h) > 0
     %   min_{x,y} c'*x + y, s.t. 1 + y >= ||(sqrt(2)*U*x, 1 - y)||
     %
     % with additional variable y and Cholesky decomposition U'*U = Q
-    U = chol_f(h);
+    % if opts.hessian_cholesky
+    %     % Hessian matrix is already in Cholesky decomposition
+    %     U = h;
+    % else
+    %     % only SX supports Cholesky decomposition
+    %     H = casadi.SX.sym('H',sparsity(h));
+    %     chol_f = casadi.Function('chol',{H},{chol(H)});
+    %     U = chol_f(h);
+    % end
+    
+    % get sparisty pattern from h
+      H = sparsity(h);
+    [rr,~] = get_triplet(H);
+    
+    i = min(rr); j = max(rr); % row numbers are sorted
+    
+    spU = casadi.Sparsity.upper(j - i + 1);
+    % enlarge(spU, size(H,1), size(H,2), rr, cc);
+    
+    spU.enlarge(size(H,1), size(H,2), i:j, i:j);
+    
+    U = casadi.MX.sym('U', spU);
+
+
     % build affine cone constraint 
     % L(y,x) + k = (1+y, sqrt(2)*U*x, 1-y) in SOC
     % note: additional variable y is first decision variable
-    L = [1 casadi.DM(1,n); casadi.DM(n,1) sqrt(2)*U; -1 casadi.DM(1,n)];
+    L = [1 casadi.DM(1,n); casadi.DM(n,1) sqrt(2)*casadi.MX(U); -1 casadi.DM(1,n)];
     k = [1; casadi.DM(n,1); 1];
+
     % number of additional variables and constraints
     Nx_cost = 1;
     Na_cost = n + 2;
@@ -208,6 +236,8 @@ if nnz(h) > 0
     % add to conic domain
     acc_cost = [symbcon.MSK_DOMAIN_QUADRATIC_CONE Na_cost];
 
+    % evaluate Cholesky decomposition in situ
+    args_in.h = U;
 else
     Nx_cost = 0;
     Na_cost = 0;
@@ -219,9 +249,9 @@ end
 % must be mutually exclusive unless explicity permitted.
 fopt = struct('allow_duplicate_io_names',true);
 % return MOSEK prob structure
-obj.fhan = casadi.Function('f',struct2cell(obj.args_in),struct2cell(prob),fieldnames(obj.args_in),fieldnames(prob),fopt);
+obj.fhan = casadi.Function('f',struct2cell(args_in),struct2cell(prob),fieldnames(args_in),fieldnames(prob),fopt);
 % return bar values
-obj.barv = casadi.Function('v',struct2cell(obj.args_in),struct2cell(barv),fieldnames(obj.args_in),fieldnames(barv),fopt);
+obj.barv = casadi.Function('v',struct2cell(args_in),struct2cell(barv),fieldnames(args_in),fieldnames(barv),fopt);
 
 % build conic information
 Accs = [
