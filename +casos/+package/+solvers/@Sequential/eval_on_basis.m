@@ -187,7 +187,7 @@ function argout = eval_on_basis(obj,argin)
             nabla_xi_f   = full(casadi.DM(full(obj.nabla_xi_f(xi_k1,p0))))';
             
             % check constraint violation (projection onto SOS cone)
-            if ~isempty(obj.projConPara)
+            if ~isempty(obj.projConPara) && strcmp(obj.opts.conViolCheck,'projection')
                 
                 % measure time to compute projection/current constraint
                 % violation
@@ -201,14 +201,30 @@ function argout = eval_on_basis(obj,argin)
                 new_conVio = 0;
 
                 % execute pseudo-projection
-                if ~isempty(obj.opts.conVioSamp)
+                if ~strcmp(obj.opts.conViolCheck,'projection')
                     measTime_Proj_in = tic;
+
+                    % we first evaluate the constraints at the current
+                    % solution and re-write it as a function
                     pseudo_proj = to_function(obj.pseudoProj(xi_k1,p0));
-                    new_conVio = min(full(pseudo_proj(obj.opts.conVioSamp(1,:),obj.opts.conVioSamp(2,:))));
+
+
+                    % To-Do: sample prep. can be done in build problem
+
+                    % bring samples into the correct form i.e.
+                    % pseudo_proj(x_1, x_2, ... , nInputs) 
+                    samples = num2cell(obj.opts.conVioSamp,pseudo_proj.n_in);
                     
+                    % evaluate
+                    new_conVio = min(full(pseudo_proj(samples{:})));
+                    
+                    % if min-value is non-negative then there is no
+                    % violation (based on samples)
                     if new_conVio >= 0
                         new_conVio = 0;
                     else
+                        % just to stick we the definition of filter i.e.
+                        % similar to norm only non-negative values
                         new_conVio = abs(new_conVio);
                     end
                     info{i+1}.filter_stats.measTime_proj_out = toc(measTime_Proj_in);
@@ -497,6 +513,27 @@ function argout = eval_on_basis(obj,argin)
 
         end % --- end of counter ---
 
+        if (optimality_flag || counter_acceptLvl == obj.opts.noAccIter) && ~strcmp(obj.opts.conViolCheck,'projection')
+            if optimality_flag 
+                printf(obj.log,'debug','Solution status: Optimal solution found using pseudo-projection\n'); 
+                printf(obj.log,'debug','Run final check with projection \n'); 
+                solPara_proj = obj.projConPara('p',[obj.xk1fun(xi_k1,p0);p0]);
+                new_conVio   = sqrt(full(solPara_proj.f));
+                optimality_flag =     max ([full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k1,dual_star,p0))))/obj.opts.optTol,new_conVio/obj.opts.conVioTol]) <= 1;
+
+            else
+                printf(obj.log,'debug','Solution status: Solved to acceptable level using pseudo-projection\n'); 
+                printf(obj.log,'debug','Run final check with projection \n'); 
+                solPara_proj = obj.projConPara('p',[obj.xk1fun(xi_k1,p0);p0]);
+                new_conVio   = sqrt(full(solPara_proj.f));
+                if max ([full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k1,dual_star,p0))))/obj.opts.accTol,new_conVio/obj.opts.conVioTol/10]) <= 1
+                    counter_acceptLvl = counter_acceptLvl + 1;
+                end
+            end
+
+
+        end
+
         
         %% termination criteria and output preparation
         if i ~= obj.opts.max_iter && optimality_flag
@@ -507,6 +544,9 @@ function argout = eval_on_basis(obj,argin)
                 info(i+2:end) = [];
                 obj.info.iter = info;
                
+                
+                    
+
                 % adjust last solution similar to iteration i.e. overwrite optimization solution 
                 sol{1} = xi_k1;
                 sol{5} = dual_k1;
@@ -520,7 +560,7 @@ function argout = eval_on_basis(obj,argin)
                 % terminate
                 return
 
-        elseif i ~= obj.opts.max_iter && counter_acceptLvl == obj.opts.noAccIter
+        elseif i ~= obj.opts.max_iter && counter_acceptLvl >= obj.opts.noAccIter
     
                 % store iteration info
                 info{i+1}.seqSOS_common_stats.solve_time_iter  = toc(measTime_seqSOS__iter_in);

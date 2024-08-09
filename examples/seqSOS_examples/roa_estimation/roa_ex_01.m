@@ -156,7 +156,7 @@ pcontour(Vinit,1,[-4 4 -4 4],'b')
 % options
 opts = struct('sossol','mosek');
 opts.verbose = 1;
-opts.indeterminates = casos.PS(x);
+opts.conVioSamp = 1;
 sos = struct('x',[V; s2;s3;b],...
               'f',-b, ...
               'p',[]);

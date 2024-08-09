@@ -136,9 +136,9 @@ obj.BFGS_fun =  casadi.Function('f',{B,r,s}, {B + (r*r')/(s'*r) - (B*(s*s')*B)/(
 dLdx = jacobian(nlsos.f + dot(lam_gs,nlsos.g),nlsos.x)';
 
 % gradient of Langrangian needed for BFGS and for convergence check
-coeff_nlsos_x = poly2basis(nlsos.x);
-coeff_lam_gs = poly2basis(lam_gs);
-coeff_p0 = poly2basis(p0);
+[coeff_nlsos_x,sparse_nlsos] = poly2basis(nlsos.x);
+coeff_lam_gs  = poly2basis(lam_gs);
+coeff_p0      = poly2basis(p0);
 
 obj.nabla_xi_L      = casos.Function('f',{coeff_nlsos_x,coeff_lam_gs,p0}, { op2basis(dLdx) });
 obj.nabla_xi_L_norm = casos.Function('f',{coeff_nlsos_x,coeff_lam_gs,p0}, { Fnorm2(dLdx) });
@@ -161,43 +161,93 @@ for idx = 1:length(nlsos.g)
     I(idx) = ~is_linear(nlsos.g(idx),nlsos.x);
 end
 
-if isempty(opts.conVioSamp)
+if  strcmp(obj.opts.conViolCheck,'projection')
+    
+    
+    % Gram decision variable
+    s    = casos.PS.sym('q',grambasis(nlsos.g(I==1)));
+    
+    if ~isempty(s) 
+        
+        conFun = casos.Function('g1',{nlsos.x},{nlsos.g(I==1)});
+        
+        % projection error
+        e = s - conFun(xi_k);
+        
+        
+        % define Q-SOS problem parameterized nonlinear constraints
+        %   min ||s-p||^2  s.t. s is SOS
+        proj_sos = struct('x',s,'g',s,'f',dot(e,e),'p',xi_k);
+        
+        opts               = [];
+        opts.Kx            = struct('lin', length(s));
+        opts.Kc            = struct('sos', length(s));
+        opts.error_on_fail = 0;
+        obj.projConPara    =  casos.sossol('S','mosek',proj_sos,opts);
+        
 
-% Gram decision variable
-s    = casos.PS.sym('q',grambasis(nlsos.g(I==1)));
+    else
+    
+        obj.projConPara    = [];
+    
+    end
 
-if ~isempty(s) 
-    
-    conFun = casos.Function('g1',{nlsos.x},{nlsos.g(I==1)});
-    
-    % projection error
-    e = s - conFun(xi_k);
-    
-    
-    % define Q-SOS problem parameterized nonlinear constraints
-    %   min ||s-p||^2  s.t. s is SOS
-    proj_sos = struct('x',s,'g',s,'f',dot(e,e),'p',xi_k);
-    
-    opts               = [];
-    opts.Kx            = struct('lin', length(s));
-    opts.Kc            = struct('sos', length(s));
-    opts.error_on_fail = 0;
-    obj.projConPara    =  casos.sossol('S','mosek',proj_sos,opts);
-    
 
 else
+    % constraint violation is checked via pseudo-proejction
+    
+    % did the user provide samples
+    if isempty(opts.conVioSamp)
 
-    obj.projConPara    = [];
+        % if no, we simply build a scaled (scaling set to 10) 
+        % unit box for all indeterminates
+        nIndet = length(sparse_nlsos.indeterminates);
 
-end
+        a = -10;
+        b =  10;
 
+        obj.opts.conVioSamp = a + (b-a)*rand(nIndet,10000);
 
-else
+    end
+
     nonLinCon = nlsos.g(I==1);
-
+    
     % evaluate current solution (coefficients) at provided sampling points
     obj.pseudoProj = casos.Function('f',{coeff_nlsos_x,p0}, {nonLinCon});
-      
+    
+    
+    % for the final-check, we should still use the actual proejction to
+    % check the result
+
+    % Gram decision variable
+    s    = casos.PS.sym('q',grambasis(nlsos.g(I==1)));
+    
+    if ~isempty(s) 
+        
+        conFun = casos.Function('g1',{nlsos.x},{nlsos.g(I==1)});
+        
+        % projection error
+        e = s - conFun(xi_k);
+        
+        
+        % define Q-SOS problem parameterized nonlinear constraints
+        %   min ||s-p||^2  s.t. s is SOS
+        proj_sos = struct('x',s,'g',s,'f',dot(e,e),'p',xi_k);
+        
+        opts               = [];
+        opts.Kx            = struct('lin', length(s));
+        opts.Kc            = struct('sos', length(s));
+        opts.error_on_fail = 0;
+        obj.projConPara    =  casos.sossol('S','mosek',proj_sos,opts);
+        
+
+    else
+    
+        obj.projConPara    = [];
+    
+    end
+
+
 
 end
 
