@@ -46,14 +46,21 @@ xi_new = [xi_new_lin;xi_new_sos];
 
 d = xi_new - xi_k; 
 
+d_new_lin = casos.PS.sym('d_l',base_x_lin);
+d_new_sos = casos.PS.sym('d_s',base_x_sos);
+
+d_star = [d_new_lin;d_new_sos];
+
 % search direction is decision variable of underlying Q-SDP
 sos.x = xi_new; 
 
 % Taylor Approximation constraints and evaluate at current solution
 conFun      = casos.Function('f',{nlsos.x, p0},{nlsos.g});
 derivConFun = casos.Function('f',{nlsos.x, xi_new,p0},{ dot(jacobian(nlsos.g,nlsos.x),xi_new-nlsos.x) });
+derivConFunC = casos.Function('f',{nlsos.x, d_star,p0},{ dot(jacobian(nlsos.g,nlsos.x),d_star) });
 
-sos.g = conFun(xi_k,p0) + derivConFun(xi_k, xi_new,p0); 
+sos.g = conFun(xi_k+d_star,p0) + derivConFun(xi_k, xi_new,p0) -  derivConFunC(xi_k, d_star,p0); 
+
 
 % parameterize cost in hessian
 size_bk = length(poly2basis(xi_k));
@@ -75,7 +82,7 @@ nabla_f_Fun = casos.Function('f',{nlsos.x, xi_new,p0},{ dot(jacobian(nlsos.f,nls
 sos.f =  1/2*poly2basis(d)'* reshape(B_k,[size_bk,size_bk]) * poly2basis(d) + nabla_f_Fun(xi_k, xi_new,p0); %linearize(nlsos.f,sos.x,xi_k);
 
 % extend parameter vector
-sos.p = [p0; xi_k; B_k(:)];
+sos.p = [p0; xi_k; B_k(:);d_star];
 
 % initilize Filter object
 obj.Filter = Filter([]);
@@ -100,31 +107,31 @@ obj.sparsity_g  = obj.sossolver.sparsity_g;
 obj.sparsity_gl = obj.sossolver.sparsity_gl;
 obj.sparsity_gs = obj.sossolver.sparsity_gs;
 
-%% Second-order correction
-xisoc_new_lin = casos.PS.sym('xi_ls',base_x_lin);
-xisoc_new_sos = casos.PS.sym('xi_ss',base_x_sos);
-
-xisoc_new = [xisoc_new_lin;xisoc_new_sos];
-
-dsoc = xisoc_new - xi_k; 
-
-% correction term
-correction = conFun(xi_k + xi_new ,p0) - derivConFun(xi_k, xi_new,p0);
-
-
-% % get adapted constraint
-sosSOC.g = conFun(xi_k,p0) + derivConFun(xi_k,xisoc_new,p0) + correction;
-
-sosSOC.p = [p0; xi_k; xi_new; B_k];
-
-sosSOC.x = xisoc_new;
-
-sosSOC.f =  1/2*poly2basis(dsoc)'* reshape(B_k,[size_bk,size_bk]) * poly2basis(dsoc) + nabla_f_Fun(xi_k, xisoc_new,p0); %linearize(nlsos.f,sos.x,xi_k);
-
-sosSOC.derivatives.Hf = casadi.SX(reshape(B_k,[size_bk,size_bk]));
-
-% % initialize SOS solver for SOC
-obj.solver_soc = casos.package.solvers.sossolInternal('SOS',opts.sossol,sosSOC,sosopt);
+% %% Second-order correction
+% xisoc_new_lin = casos.PS.sym('xi_ls',base_x_lin);
+% xisoc_new_sos = casos.PS.sym('xi_ss',base_x_sos);
+% 
+% xisoc_new = [xisoc_new_lin;xisoc_new_sos];
+% 
+% dsoc = xisoc_new - xi_k; 
+% 
+% % correction term
+% correction = conFun(xi_k + xi_new ,p0) - derivConFun(xi_k, xi_new,p0);
+% 
+% 
+% % % get adapted constraint
+% sosSOC.g = conFun(xi_k,p0) + derivConFun(xi_k,xisoc_new,p0) + correction;
+% 
+% sosSOC.p = [p0; xi_k; xi_new; B_k];
+% 
+% sosSOC.x = xisoc_new;
+% 
+% sosSOC.f =  1/2*poly2basis(dsoc)'* reshape(B_k,[size_bk,size_bk]) * poly2basis(dsoc) + nabla_f_Fun(xi_k, xisoc_new,p0); %linearize(nlsos.f,sos.x,xi_k);
+% 
+% sosSOC.derivatives.Hf = casadi.SX(reshape(B_k,[size_bk,size_bk]));
+% 
+% % % initialize SOS solver for SOC
+% obj.solver_soc = casos.package.solvers.sossolInternal('SOS',opts.sossol,sosSOC,sosopt);
 
 %% setup damped BFGS
 lam_gs    =  casos.PS.sym('lam_gs', obj.sparsity_gs);

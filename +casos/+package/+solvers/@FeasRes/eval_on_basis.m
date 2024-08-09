@@ -60,7 +60,7 @@ function argout = eval_on_basis(obj,argin)
         args{1} = xi_k;
     
         % set parameter to convex problem
-        args{2}  = [p0; xi_k; Bk(:)];
+        args{2}  = [p0; xi_k; Bk(:);zeros(length(xi_k),1)];
 
         % adjust bounds
         % args{3}  = argin{3} - xi_k;
@@ -182,13 +182,14 @@ function argout = eval_on_basis(obj,argin)
                        
                        % adjust parameter for soc
                        args_solver    = args;
-                       args_solver{2} = [p0; xi_k; d_corr_full; Bk(:)];
+                       args_solver{2} = [p0; xi_k; Bk(:);d_corr_full];
+        
         
                         % evaluate subproblem of SOC (convex problem)
-                       sol_soc = eval_on_basis(obj.solver_soc, args_solver);
+                       sol_soc = eval_on_basis(obj.sossolver, args_solver);
                        
                        % extract adjusted search direction
-                       d_corr = sol_soc{1};
+                       d_corr = sol_soc{1}-xi_k;
         
                        % compute new corrected search direction
                        d_corr_full = d_corr_full + d_corr;
