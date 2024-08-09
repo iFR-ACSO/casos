@@ -213,7 +213,7 @@ function argout = eval_on_basis(obj,argin)
 
                     % bring samples into the correct form i.e.
                     % pseudo_proj(x_1, x_2, ... , nInputs) 
-                    samples = num2cell(obj.opts.conVioSamp,pseudo_proj.n_in);
+                    samples = num2cell(obj.opts.conVioSamp,2);
                     
                     % evaluate
                     new_conVio = min(full(pseudo_proj(samples{:})));

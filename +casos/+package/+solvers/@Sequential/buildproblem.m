@@ -206,7 +206,7 @@ else
         a = -10;
         b =  10;
 
-        obj.opts.conVioSamp = a + (b-a)*rand(nIndet,10000);
+        obj.opts.conVioSamp = a + (b-a)*rand(nIndet,1000);
 
     end
 

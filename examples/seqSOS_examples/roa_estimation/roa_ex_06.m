@@ -155,6 +155,7 @@ sos.('g') = [s2;
 opts.Kx      = struct('lin', 2);
 opts.Kc      = struct('sos', 3);
 opts.verbose = 1;
+opts.conViolCheck = 'pseudo-projection';
 opts.sossol_options.sdpsol_options.error_on_fail = 0;
 
 profile on
