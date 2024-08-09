@@ -67,11 +67,11 @@ pcontour(subs(Vinit,x(3),0),1,[-omega_max omega_max -omega_max omega_max])
 hold on
 
 % Lyapunov function candidate
-V = casos.PS.sym('v',monomials(x,2:4));%) monomials(x,2:4));
+V = casos.PS.sym('v',monomials(x,2));%) monomials(x,2:4));
 
 % SOS multiplier
-s2    = casos.PS.sym('s2',monomials(x,2:4));
-kappa = casos.PS.sym('k',monomials(x,0:2),[3,1]);
+s2    = casos.PS.sym('s2',monomials(x,2));
+kappa = casos.PS.sym('k',monomials(x,1),[3,1]);
 
 % enforce positivity
 l = 1e-6*(x'*x);

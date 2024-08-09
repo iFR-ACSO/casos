@@ -9,6 +9,8 @@ properties (Access=private)
     
     % second-order-correction
     solver_soc
+    correctFun
+    zeroDsoc
     
     % feasibility restoration phase
     solver_feas_res

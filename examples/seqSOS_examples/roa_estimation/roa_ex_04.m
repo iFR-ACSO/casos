@@ -163,7 +163,7 @@ smpl = a + (b-a)*rand(2,10000);
 idx = find(full(gfun(smpl(1,:),smpl(2,:))) <= 0);
 plot(smpl(1,idx),smpl(2,idx),'g*')
 
-% plot(smpl(1,idx),smpl(2,idx),'r*')
+
 %% setup solver
 
 % options
