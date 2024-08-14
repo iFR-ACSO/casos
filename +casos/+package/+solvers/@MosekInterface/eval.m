@@ -30,11 +30,16 @@ msk_echo  = obj.opts.mosek_echo;
 msk_cmd = sprintf('minimize echo(%d) info statuskeys(0)',msk_echo);
 
 % call MOSEK
+solveTime_start = tic;
 [rcode,res] = mosekopt(msk_cmd,msk_prob,msk_param);
+solvetime = toc(solveTime_start);
+% res.info.MSK_DINF_OPTIMIZER_TIME
+
 
 % store info (if any)
 if isfield(res,'info')
     obj.info.mosek_info = res.info;
+    obj.info.solvetime_matlab = solvetime;
 end
 
 % pre-initialize solution struct
