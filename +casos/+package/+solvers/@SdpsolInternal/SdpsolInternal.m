@@ -79,16 +79,17 @@ methods
 
         % relax problem to smaller easier cones (LP and SOCP)
         args = struct;
-        args.dd_lbx = [];
-        args.dd_ubx = [];
-        args.dd_lbg = [];
-        args.dd_ubg = [];
+        args.dd_ubg = []; 
+        args.dd_lbg = []; 
+        args.dd_ubx = []; 
+        args.dd_lbx = []; 
         obj.map = [];
-
+        flag_reduced = 0;
         % rebuild problem from SDD to SOCP
         if isfield(opts.Kx,'sdd') || isfield(opts.Kc,'sdd')
             [sdp, args, map, opts] = sdd_reduce(obj, sdp, opts, args);
             map_SDD_2_ORIG = map;
+            flag_reduced = 1;
         else
             % if no SDD was present create an identity map
             map_SDD_2_ORIG.x = speye(length(sdp.x));
@@ -99,11 +100,13 @@ methods
         if isfield(opts.Kx,'dd') || isfield(opts.Kc,'dd')
             [sdp, args, map, opts] = dd_reduce(obj, sdp, opts, args);
             map_DD_2_ORIG = map;
+            flag_reduced = 1;
         else
             % if no DD was present create an identity map
             map_DD_2_ORIG.x = speye(length(sdp.x));
             map_DD_2_ORIG.g = speye(length(sdp.g));
         end
+
         % Create the full map
         obj.map.x = map_SDD_2_ORIG.x*map_DD_2_ORIG.x;
         obj.map.g = map_SDD_2_ORIG.g*map_DD_2_ORIG.g;
@@ -119,7 +122,7 @@ methods
         % constraint function (vectorized)
         sdp_g = sdp.g(:);
 
-        if isfield(sdp,'derivatives') && isempty(fieldnames(args))
+        if isfield(sdp,'derivatives') && ~flag_reduced 
             % use pre-computed derivatives (undocumented)
             H = sdp.derivatives.Hf;
             g = sdp.derivatives.Jf;
