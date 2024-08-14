@@ -28,17 +28,10 @@ p = casadi.MX.sym('p',sz_p);
 sz_g = size(gx);
 
 % additional bounds from DD reduction
-if isfield(args, 'dd_ubg')
-    dd_lbg = args.dd_lbg;
-    dd_ubg = args.dd_ubg;
-    dd_lbx = args.dd_lbx;
-    dd_ubx = args.dd_ubx;
-else
-    dd_lbx = [];
-    dd_ubx = [];
-    dd_lbg = [];
-    dd_ubg = [];
-end
+if ~isempty(args.dd_ubg); dd_ubg = args.dd_ubg; else; dd_ubg = []; end
+if ~isempty(args.dd_lbg); dd_lbg = args.dd_lbg; else; dd_lbg = []; end
+if ~isempty(args.dd_ubx); dd_ubx = args.dd_ubx; else; dd_ubx = []; end
+if ~isempty(args.dd_lbx); dd_lbx = args.dd_lbx; else; dd_lbx = []; end
 
 
 % linear variables
