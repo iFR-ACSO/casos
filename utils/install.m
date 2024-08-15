@@ -85,34 +85,44 @@ fprintf("\n--- Checking Mosek Installation ---\n")
 
 mosekStr = which('mosekopt');
 
-mosekInstalled = true;
 if isempty(mosekStr)
     warning('Mosek is not installed')
     mosekInstalled = false;
 else
+    mosekInstalled = true;
     fprintf(' -- Mosek is installed --\n')
 end
 
+% SCS
+fprintf("\n--- Checking SCS Installation ---\n")
 
+scsStr = which('scs');
 
+if isempty(scsStr)
+    warning('SCS is not installed')
+    scsInstalled = false;
+else
+    scsInstalled = true;
+    fprintf(' -- SCS is installed --\n')
+end
 
 % SeDuMi
 fprintf("\n--- Checking SeDuMi Installation ---\n")
 
 sedumiStr = which('sedumi');
 
-sedumiInstalled = true;
 if isempty(sedumiStr)
     warning('SeDuMi is not installed')
     sedumiInstalled = false;
 else
+    sedumiInstalled = true;
     fprintf(' -- SeDuMi is installed --\n')
 end
 
 %% Final results
 % Print overview table
-software = ["Casos"; "Casadi"; "Mosek"; "SeDuMi"];
-installed = [true; casadiInstalled; mosekInstalled; sedumiInstalled];
+software = ["Casos"; "Casadi"; "Mosek"; "SCS"; "SeDuMi"];
+installed = [true; casadiInstalled; mosekInstalled; scsInstalled; sedumiInstalled];
 fprintf('\n--- Summary ---\n\n')
 disp(table(software, installed))
 
@@ -122,7 +132,7 @@ if ~casadiInstalled
 end
 
 % error if no solver is installed
-if ~mosekInstalled && ~sedumiInstalled
+if ~mosekInstalled && ~sedumiInstalled && ~scsInstalled
     error('No solver is currently installed! Install at least one solver')
 end
 
