@@ -16,9 +16,9 @@ at={(0\figW,0\figH)},
 scale only axis,
 bar width=0.4,
 xmin=0.5,
-xmax=5.5,
-xtick={1,2,3,4,5},
-xticklabels={{$\text{Ca}\Sigma\text{oS}$},{SOSTOOLS (dpvar)},{SOSTOOLS (pvar)},{SOSOPT},{YALMIP}},
+xmax=6.5,
+xtick={1,2,3,4,5,6},
+xticklabels={{$\text{Ca}\Sigma\text{oS}$},{SOSTOOLS (dpvar)},{SOSTOOLS (pvar)},{SOSOPT},{SPOTless},{YALMIP}},
 xticklabel style={rotate=30},
 ymin=0,
 ymax=1300,
@@ -34,11 +34,12 @@ legend style={at={(0.03,0.97)}, anchor=north west, legend cell align=left, align
 2	77.0567899\\
 3	236.969953\\
 4	298.6355175\\
-5	1074.3536891\\
+5	81.4177695\\
+6	1074.3536891\\
 };
 \addplot[forget plot, color=white!15!black] table[row sep=crcr] {%
 0.5	0\\
-5.5	0\\
+6.5	0\\
 };
 \addlegendentry{Parsing/Build Time}
 
@@ -47,11 +48,12 @@ legend style={at={(0.03,0.97)}, anchor=north west, legend cell align=left, align
 2	94.781\\
 3	95.082\\
 4	102.5415141\\
-5	82.0766316\\
+5	104.988\\
+6	82.0766316\\
 };
 \addplot[forget plot, color=white!15!black] table[row sep=crcr] {%
 0.5	0\\
-5.5	0\\
+6.5	0\\
 };
 \addlegendentry{Solver Time}
 
@@ -64,25 +66,8 @@ at (axis cs:3,332.052) {332.05 s};
 \node[above, align=center]
 at (axis cs:4,401.177) {401.18 s};
 \node[above, align=center]
-at (axis cs:5,1156.43) {1156.43 s};
-\end{axis}
-
-\begin{axis}[%
-width=1.29\figW,
-height=1.29\figH,
-at={(-0.168\figW,-0.246\figH)},
-scale only axis,
-xmin=0,
-xmax=1,
-ymin=0,
-ymax=1,
-axis line style={draw=none},
-ticks=none,
-axis x line*=bottom,
-axis y line*=left,
-xmajorgrids,
-ymajorgrids,
-legend style={legend cell align=left, align=left, draw=white!15!black}
-]
+at (axis cs:5,186.406) {186.41 s};
+\node[above, align=center]
+at (axis cs:6,1156.43) {1156.43 s};
 \end{axis}
 \end{tikzpicture}%

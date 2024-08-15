@@ -7,6 +7,7 @@ addpath('./casos_ex/')
 addpath('./yalmip_ex/')
 addpath('./sostools_ex/')
 addpath('./sosopt_ex/')
+addpath('./spotless_ex/')
 % run GTM 4D example in casos
 disp('Run benchmark test for CaSoS')
 [gval_c_GTM,bval_c_GTM,solveTime_total_c_GTM,solverTime_total_c_GTM,buildTime_c_GTM] = roaEstGTM_benchCasos();
@@ -25,19 +26,23 @@ addpath(genpath('C:\Users\ac133867\Documents\MATLAB\sosopt'))
 [gval_sopt_GTM,bval_sopt_GTM,solveTime_total_sopt_GTM,solverTime_total_sopt_GTM,buildTime_sopt_GTM]= roaEstGTM_benchSosopt();
 
 
+disp('Run benchmark test for SPOTless')
+% run GTM 4D example in yalmip with default options
+[gval_sp_GTM,bval_sp_GTM,solveTime_total_sp_GTM,solverTime_total_sp_GTM,buildTime_sp_GTM] = roaEstGTM_benchSPOTless();
 
 disp('Run benchmark test for Yalmip')
 % run GTM 4D example in yalmip with default options
-% disp('Run benchmark test for YALMIP')
 defaultOpts = 0;
-[buily_GTM,bval_y_GTM,solveTime_total_y_GTM,solverTime_total_y_GTM,buildTime_y_GTM] = roaEstGTM_benchYALMIP(defaultOpts);
+[gval_y_GTM,bval_y_GTM,solveTime_total_y_GTM,solverTime_total_y_GTM,buildTime_y_GTM] = roaEstGTM_benchYALMIP(defaultOpts);
+
+
 
 %% plot result
-solvers = {'Ca\SigmaoS', 'SOSTOOLS (dpvar)', 'SOSTOOLS (pvar)' ,'SOSOPT' ,'YALMIP'};
+solvers = {'Ca\SigmaoS', 'SOSTOOLS (dpvar)', 'SOSTOOLS (pvar)' ,'SOSOPT','SPOTless' ,'YALMIP'};
 
-buildTimes  = [buildTime_c_GTM,buildTime_st_GTM,buildTime_st2_GTM, buildTime_sopt_GTM buildTime_y_GTM];               % Time spent building for each solver
-solveTimes  = [solveTime_total_c_GTM, solveTime_total_st_GTM,solveTime_total_st2_GTM, solveTime_total_sopt_GTM, solveTime_total_y_GTM];   % Time spent solving for each quasi-convex problem
-solverTimes = [solverTime_total_c_GTM,solverTime_total_st_GTM,solverTime_total_st2_GTM, solverTime_total_sopt_GTM,solverTime_total_y_GTM]; % Time spend in low-level solver 
+buildTimes  = [buildTime_c_GTM,buildTime_st_GTM,buildTime_st2_GTM, buildTime_sopt_GTM,buildTime_sp_GTM, buildTime_y_GTM];               % Time spent building for each solver
+solveTimes  = [solveTime_total_c_GTM, solveTime_total_st_GTM,solveTime_total_st2_GTM, solveTime_total_sopt_GTM,solveTime_total_sp_GTM, solveTime_total_y_GTM];   % Time spent solving for each quasi-convex problem
+solverTimes = [solverTime_total_c_GTM,solverTime_total_st_GTM,solverTime_total_st2_GTM, solverTime_total_sopt_GTM,solverTime_total_sp_GTM,solverTime_total_y_GTM]; % Time spend in low-level solver 
 
 % Combine the build and solve times into a matrix
 timeData = [buildTimes; solverTimes]';
