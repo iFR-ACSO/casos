@@ -56,7 +56,7 @@ end
 %% check for casadi
 % check if casadi is installed
 fprintf("\n--- Checking CasADi installation ---\n")
-casadiStr = which('casadiMEX.mexw64');
+casadiStr = which('casadiMEX');
 
 casadiVersionCorrect = true;
 
