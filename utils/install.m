@@ -66,20 +66,21 @@ if isempty(casadiStr) | ~exist('casadi.SX', 'class')
 else
     casadiInstalled = true;
     fprintf(' -- CasADi is installed --\n')
-    fprintf(' -- Checking CasADi version --\n')
+    
     % check if casadi.DM.sparsity_cast is available
     casadi.DM; % load
     casadiVersionStr = which('sparsity_cast');
     if isempty(casadiVersionStr)
         warning('CasADi version is not up to date')
         casadiVersionCorrect = false;
+    else
+        fprintf(' -- CasADi version is up to date --\n')
     end
 end
 
 
 %% Check for solvers
 % mosek
-
 fprintf("\n--- Checking Mosek Installation ---\n")
 
 mosekStr = which('mosekopt');
@@ -112,7 +113,8 @@ end
 % Print overview table
 software = ["Casos"; "Casadi"; "Mosek"; "SeDuMi"];
 installed = [true; casadiInstalled; mosekInstalled; sedumiInstalled];
-installationOverview = table(software, installed)
+fprintf('\n--- Summary ---\n\n')
+disp(table(software, installed))
 
 % error if CasADi is not installed
 if ~casadiInstalled
