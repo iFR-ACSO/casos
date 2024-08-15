@@ -24,28 +24,26 @@ l = 1e-6*(x'*x);
 % polynomial(indet, maxdeg, mindeg)
 [V,cv1]  = polynomial(x,4,2);
 [s1,c1]  = polynomial(x,4,2);
-[s2,c2]  = polynomial(x,4,2);
+[s2,c2]  = polynomial(x,2,0);
 
 % use default options
-if defaultOpts
+% if defaultOpts
 solverset = sdpsettings('solver','mosek', ...
                         'verbose',0);        
-else
-solverset = sdpsettings('solver','mosek', ...
-                        'verbose',0, ...
-                         'sos.traceobj',0,...   % Minimize trace of Gram matrix in problems without objective function
-                         'sos.newton',0,...     % Use Newton polytope to reduce size
-                         'sos.congruence',2,... % Block-diagonalize using congruence classes
-                         'sos.scale',0);        % scale polynomials
-end
+% else
+% solverset = sdpsettings('solver','mosek', ...
+%                         'verbose',0, ...
+%                          'sos.traceobj',0,...   % Minimize trace of Gram matrix in problems without objective function
+%                          'sos.newton',0,...     % Use Newton polytope to reduce size
+%                          'sos.congruence',2,... % Block-diagonalize using congruence classes
+%                          'sos.scale',0);        % scale polynomials
+% % end
 
 %--------------------------------------------------------------------------
 % see https://yalmip.github.io/tutorial/sumofsquaresprogramming/ on how to
 % setup constraint sos problems
 %--------------------------------------------------------------------------
 
-bval = [];
-gval = [];
 
 endTimeParse1 = [];
 endTimeParse2 = [];
@@ -53,21 +51,25 @@ endTimeParse2 = [];
 solverTime1 = [];
 solverTime2 = [];
 solverTime3 = [];
-
+bval_old = [];
 
 solveTime_start = tic;
-for iter = 1:10
-    
+for iter = 1:100
+    			% to make sure we do not use the old solution again
+				gval = [];
+				bval = [];
 
     % solve gamma-step
 
     % find largest stable level set
-    lb = -100; ub = 100;
+    lb = 0; ub = 1000;
     
-    counter1 = 0;
 
     % bisection
-    while abs(ub - lb) > 1e-3
+    % checkStart = tic;
+    relbistol = 1e-3;
+    absbistol = 1e-3;
+    while (ub-lb>absbistol && ub-lb > relbistol*abs(lb))
         startTimeParse1 = tic;
         gtry = (lb+ub)/2;
         
@@ -85,14 +87,14 @@ for iter = 1:10
         else
             ub = gtry;
         end
-        counter1 = counter1 + 1;
+
         
         % buildtime is complete time - solver time 
         endTimeParse1 = [endTimeParse1 toc(startTimeParse1)-sol1.solvertime];
         solverTime1   = [solverTime1 sol1.solvertime];
 		
     end
-
+    % toc(checkStart)
 
 
     if ~isempty(gval)
@@ -107,15 +109,16 @@ for iter = 1:10
 	% solve beta-step
 
     % find largest possible shape function
-    lb = -100; ub = 100;
+    lb = 0; ub = 1000;
 
-    counter2 = 0;
-    while abs(ub - lb) > 1e-3
+    relbistol = 1e-3;
+    absbistol = 1e-3;
+    while (ub-lb>absbistol && ub-lb > relbistol*abs(lb))
         startTimeParse2 = tic;
         btry = (lb+ub)/2;
     
         % parse problem
-        con2 = [sos(s2*(p-btry) +  gtry - Vval)
+        con2 = [sos(s2*(p-btry) +  gval - Vval)
                 sos(s2)];
        
         % solve problem
@@ -132,7 +135,7 @@ for iter = 1:10
         else
             ub = btry;
         end
-            counter2 = counter2 +1;
+
 
             endTimeParse2 = [endTimeParse2 toc(startTimeParse2)-sol2.solvertime];
             solverTime2   = [solverTime2 sol2.solvertime];
@@ -167,13 +170,21 @@ for iter = 1:10
 	
 			fprintf('Iteration %d: b = %g, g = %g.\n',iter,full(bval),full(gval));
 	
-				% to make sure we do not use the old solution again
-				gval = [];
-				bval = [];
+	
 	else
 		disp(['Problem infeasible in V-step in iteration:' num2str(iter)])
-		return
+		break
 	end
+
+   if ~isempty(bval_old)
+        if abs(full(bval-bval_old)) <= 1e-3
+            break
+        else
+            bval_old = bval;
+        end
+    else
+        bval_old = bval;
+    end
 
 
 end

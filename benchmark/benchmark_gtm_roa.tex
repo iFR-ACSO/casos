@@ -1,0 +1,88 @@
+% This file was created by matlab2tikz.
+%
+%The latest updates can be retrieved from
+%  http://www.mathworks.com/matlabcentral/fileexchange/22022-matlab2tikz-matlab2tikz
+%where you can also make suggestions and rate matlab2tikz.
+%
+\definecolor{mycolor1}{rgb}{0.00000,0.44700,0.74100}%
+\definecolor{mycolor2}{rgb}{0.85000,0.32500,0.09800}%
+%
+\begin{tikzpicture}
+
+\begin{axis}[%
+width=\figW,
+height=0.947\figH,
+at={(0\figW,0\figH)},
+scale only axis,
+bar width=0.4,
+xmin=0.5,
+xmax=5.5,
+xtick={1,2,3,4,5},
+xticklabels={{$\text{Ca}\Sigma\text{oS}$},{SOSTOOLS (dpvar)},{SOSTOOLS (pvar)},{SOSOPT},{YALMIP}},
+xticklabel style={rotate=30},
+ymin=0,
+ymax=1300,
+ylabel style={font=\color{white!15!black}},
+ylabel={Time (seconds)},
+axis background/.style={fill=white},
+xmajorgrids,
+ymajorgrids,
+legend style={at={(0.03,0.97)}, anchor=north west, legend cell align=left, align=left, draw=white!15!black}
+]
+\addplot[ybar stacked, fill=mycolor1, draw=black, area legend] table[row sep=crcr] {%
+1	0.6379775\\
+2	77.0567899\\
+3	236.969953\\
+4	298.6355175\\
+5	1074.3536891\\
+};
+\addplot[forget plot, color=white!15!black] table[row sep=crcr] {%
+0.5	0\\
+5.5	0\\
+};
+\addlegendentry{Parsing/Build Time}
+
+\addplot[ybar stacked, fill=mycolor2, draw=black, area legend] table[row sep=crcr] {%
+1	98.9979819\\
+2	94.781\\
+3	95.082\\
+4	102.5415141\\
+5	82.0766316\\
+};
+\addplot[forget plot, color=white!15!black] table[row sep=crcr] {%
+0.5	0\\
+5.5	0\\
+};
+\addlegendentry{Solver Time}
+
+\node[above, align=center]
+at (axis cs:1,99.636) {99.64 s};
+\node[above, align=center]
+at (axis cs:2,171.838) {171.84 s};
+\node[above, align=center]
+at (axis cs:3,332.052) {332.05 s};
+\node[above, align=center]
+at (axis cs:4,401.177) {401.18 s};
+\node[above, align=center]
+at (axis cs:5,1156.43) {1156.43 s};
+\end{axis}
+
+\begin{axis}[%
+width=1.29\figW,
+height=1.29\figH,
+at={(-0.168\figW,-0.246\figH)},
+scale only axis,
+xmin=0,
+xmax=1,
+ymin=0,
+ymax=1,
+axis line style={draw=none},
+ticks=none,
+axis x line*=bottom,
+axis y line*=left,
+xmajorgrids,
+ymajorgrids,
+legend style={legend cell align=left, align=left, draw=white!15!black}
+]
+\end{axis}
+\end{tikzpicture}%

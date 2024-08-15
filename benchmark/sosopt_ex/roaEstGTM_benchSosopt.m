@@ -1,11 +1,10 @@
-function [gval,bval,solveTime_total, solverTime_total,buildTime] = roaEstGTM_benchCasos()
+function [gval,bval,solveTime,solverTime,buildTime]= roaEstGTM_benchSosopt()
 
-% Estimate region of the Generic Transport Model
-% See Chakraborty et al. 2011 (CEP) for details.
+%System dynamics
+pvar x1 x2 x3 x4
 
+x= [x1; x2; x3;x4];
 
-% system states
-x = casos.Indeterminates('x',4);
 
 %% Polynomial Dynamics
 f1 = @(V,alpha,q,theta,eta,F) +1.233e-8*V.^4.*q.^2         + 4.853e-9.*alpha.^3.*F.^3    + 3.705e-5*V.^3.*alpha.*q      ...
@@ -85,17 +84,16 @@ d = ([
           convang(50, 'deg', 'rad')  %range.qhat.lebesgue.get('rad')
           convang(20, 'deg', 'rad')  %range.alpha.lebesgue.get('rad')
 ]);
-% d = ones(4,1);
+
 
 D = diag(d)^-1;
 f = subs(D*f, x, D^-1*x);
-import casos.toolboxes.sosopt.*
+
 f = cleanpoly(f, 1e-6, 0:5);
 
-A = nabla(f,x);
+A = jacobian(f,x);
 
-A0 = full(subs(A,x,zeros(4,1))); 
-% B0 = double(subs(B,[x;u],[alpha0; q0;eta0])); % check numerical values with paper
+A0 = double(subs(A,x,zeros(4,1))); 
 
 % solve Lyapunov equation
 P = lyap(A0',10*eye(4));
@@ -105,89 +103,96 @@ Vval = x'*P*x;
 
 p = x'*x*1e2;
 
+% epsilon polynomial
+l = x'*x*1e-6;
+
+bval = [];
+gval = [];
+
+endTimeParse1 = [];
+endTimeParse2 = [];
+
+solverTime1 = [];
+solverTime2 = [];
+solverTime3 = [];
+
+
+% Form bilinear constraints.  The variable t:=-gamma is used to convert
+% the maximization of gamma into a minimization of t.
+pvar t b;
+V  = polydecvar('v',monomials(x, 2:4 ));
+s1 = sosdecvar('s1',monomials(x, 1:2 ));
+s2 = sosdecvar('s2',monomials(x, 0:2 ));
 
 bval_old = [];
-buildTime_start = tic;
-% Lyapunov function candidate
-V = casos.PS.sym('v',monomials(x,2:4));
 
-% SOS multiplier
-s1 = casos.PS.sym('s1',monomials(x,1:2),'gram');
-s2 = casos.PS.sym('s2',monomials(x,0:2),'gram');
-
-% enforce positivity
-l = 1e-6*(x'*x);
-
-% level of stability
-g = casos.PS.sym('g');
-b = casos.PS.sym('b');
-
-% options
-opts = struct('sossol','mosek');
-opts.error_on_fail = 0;
-opts.conf_interval = [-1000 0];
-%% setup solver
-
-% solver 1: gamma-step
-sos1 = struct('x',s1,'f',-g,'p',V);
-sos1.('g') = s1*(V-g)-nabla(V,x)*f-l;
-
-% states + constraint are SOS cones
-opts.Kx = struct('sos', 1);
-opts.Kc = struct('sos', 1);
-
-S1 = casos.qcsossol('S1','bisection',sos1,opts);
-
-% solver 2: beta-step
-sos2 = struct('x',s2,'f',-b,'p',[V;g]);
-sos2.('g') = s2*(p-b)+g-V;
-
-% states + constraint are SOS cones
-opts.Kx = struct('sos', 1);
-opts.Kc = struct('sos', 1);
-
-S2 = casos.qcsossol('S2','bisection',sos2,opts);
-
-% solver 3: V-step
-sos3 = struct('x',V,'p',[b,g,s1,s2]);
-sos3.('g') = [V-l; 
-              s2*(p-b)+g-V; 
-              s1*(V-g)-nabla(V,x)*f-l];
-
-opts = struct;
-opts.Kx = struct('sos', 0, 'lin', 1); 
-opts.Kc = struct('sos', 3);
-
-S3 = casos.sossol('S','mosek',sos3,opts);
-
-
-buildTime = toc(buildTime_start);
-%% gamma-beta-V-iteration
 solveTime_start = tic;
 for iter = 1:100
 
-    % gamma step
-    sol1 = S1('p',Vval);
-    solvetime_all1(iter) = sum(cellfun(@(x) x.solvetime_matlab, S1.stats.iter));
-    gval = -sol1.f;
-    s1val = sol1.x;
+opts = gsosoptions;
+opts.minobj = -1000; 
+opts.maxobj = 0;
+% opts.display ='on';
+% opts.simplify = 'off';
+opts.solver = 'mosek';
+% opts.simplify = 'off';
+% opts.scaling = 'on';
 
-    % beta step
-    sol2 = S2('p',[Vval;gval]);
-    solvetime_all2(iter) = sum(cellfun(@(x) x.solvetime_matlab, S2.stats.iter));
-    bval = -sol2.f;
-    s2val = sol2.x;
+    % gamma-step    
+    startTimeParse1 = tic;
+    sosc = polyconstr;
+    sosc(1) = s1 >=0;
+    sosc(2) = s1*(Vval + t) - jacobian(Vval,x)*f - l >= 0;
+    
+    % Solve with gsosopt
+    [info,dopt] = gsosopt(sosc,x,t,opts);
 
-    % V-step
-    sol3 = S3('p',[bval,gval,s1val,s2val]);
+    s1val = subs(s1,dopt);
+    gval = -info.tbnds(2); 
+    
+    solverTime1(iter) = sum(arrayfun(@(x) x.solverinfo.solvertime, info.sdpsol));
+    endTimeParse1     = [endTimeParse1 toc(startTimeParse1)-solverTime1(iter)];
 
 
-    Vval = sol3.x;
-    solvetime_all3(iter) = S3.stats.solvetime_matlab;
+     % beta-step    
+    startTimeParse2 = tic;
+    sosc = polyconstr;
+    sosc(1) = s2 >=0;
+    sosc(2) = s2*(p + b) + gval - Vval >= 0;
+    
+    % Solve with gsosopt
+    [info,dopt] = gsosopt(sosc,x,b,opts);
+    % 
+    s2val = subs(s2,dopt);
+    bval = -info.tbnds(2); 
+    
+    solverTime2(iter) = sum(arrayfun(@(x) x.solverinfo.solvertime, info.sdpsol));
+    endTimeParse2    = [endTimeParse2 toc(startTimeParse2)-solverTime2(iter)];
+
+
+     % beta-step    
+    startTimeParse3 = tic;
+    sosc = polyconstr;
+    sosc(1) = V - l >=0;
+    sosc(2) = s1val*(V - gval) - jacobian(V,x)*f - l >= 0;
+    sosc(3) = s2val*(p - bval) + gval - V >= 0;
+    
+    % Solve with gsosopt
+    opts = sosoptions;
+    opts.solver = 'mosek';
+    % opts.simplify = 'off';
+
+    [info,dopt,~] = sosopt(sosc,x,opts);
+    solverTime3(iter) = info.sdpsol.solverinfo.solvertime;
+    endTimeParse3(iter) =  toc(startTimeParse3)-solverTime3(iter);
+    Vval = subs(V,dopt);
+
 
     fprintf('Iteration %d: b = %g, g = %g.\n',iter,full(bval),full(gval));
-
-    if ~isempty(bval_old)
+	
+				
+  
+   if ~isempty(bval_old)
         if abs(full(bval-bval_old)) <= 1e-3
             break
         else
@@ -196,8 +201,10 @@ for iter = 1:100
     else
         bval_old = bval;
     end
-
 end
-solveTime_total = toc(solveTime_start);
-solverTime_total = sum(solvetime_all1) + sum(solvetime_all2) + sum(solvetime_all3);
+
+solveTime  = toc(solveTime_start);
+buildTime  = sum(endTimeParse1) + sum(endTimeParse2) + sum(endTimeParse3);
+solverTime = sum(solverTime1) + sum(solverTime2) + sum(solverTime3);
+
 
