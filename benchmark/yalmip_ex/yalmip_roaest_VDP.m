@@ -19,9 +19,9 @@ l = 1e-6*(x'*x);
 [s1,c1]  = polynomial(x,2,2);
 [s2,c2]  = polynomial(x,0);
 
-solverset = sdpsettings('solver','sedumi', ...
+solverset = sdpsettings('solver','mosek', ...
                         'verbose',0, ...
-                         'sos.traceobj',1,...   % if not set becomes infeasible quickly; % Minimize trace of Gram matrix in problems without objective function
+                         'sos.traceobj',0,...   % if not set becomes infeasible quickly; % Minimize trace of Gram matrix in problems without objective function
                          'sos.newton',1,...     % Use Newton polytope to reduce size
                          'sos.congruence',2,... % Block-diagonalize using congruence classes
                          'sos.scale',1);        %scale polynomials
