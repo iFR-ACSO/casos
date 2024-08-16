@@ -82,14 +82,14 @@ Vold = casos.PS.sym('vo',sparsity(V));
 K    = casos.PS.sym('k',monomials([x;t],0:4));
 
 % SOS multiplier
-s1 = casos.PS.sym('s1',monomials(x,0:4));
-s2 = casos.PS.sym('s2',monomials([x;t],0:4));
-s3 = casos.PS.sym('s3',monomials([x;t],0:4));
-s4 = casos.PS.sym('s4',monomials(x,0:4));
-s5 = casos.PS.sym('s5',monomials([x;t],0:4));
-s6 = casos.PS.sym('s6',monomials([x;t],0:4));
-s7 = casos.PS.sym('s7',monomials([x;t],0:4));
-s8 = casos.PS.sym('s8',monomials([x;t],0:4));
+s1 = casos.PS.sym('s1',monomials(x,0:2),'gram');
+s2 = casos.PS.sym('s2',monomials([x;t],0:2),'gram');
+s3 = casos.PS.sym('s3',monomials([x;t],0:2),'gram');
+s4 = casos.PS.sym('s4',monomials(x,0:2),'gram');
+s5 = casos.PS.sym('s5',monomials([x;t],0:2),'gram');
+s6 = casos.PS.sym('s6',monomials([x;t],0:2),'gram');
+s7 = casos.PS.sym('s7',monomials([x;t],0:2),'gram');
+s8 = casos.PS.sym('s8',monomials([x;t],0:2),'gram');
 
 % level of stability
 b = casos.PS.sym('b');
@@ -112,7 +112,7 @@ sos1 = struct('x',[K;s2;s3;s4;s5;s6;s7;s8], ... % dec.var
               'p',V);     % parameter
 
 % constraint
-sos1.('g') = [s2;s3;s5;s6;s7;s8;s4-0.0001;...
+sos1.('g') = [s4-0.0001;...
              -(nabla(V, t) + nabla(V, x)*f + K*nabla(V, x)*g) - s2*h + s3*(V - b); ...
              -s4*rT + subs(V,t,T) - b;...
              uM - K + s5*(V - b) - s6*h; ...
@@ -120,8 +120,8 @@ sos1.('g') = [s2;s3;s5;s6;s7;s8;s4-0.0001;...
 
 
 % states + constraint are SOS cones
-opts.Kx = struct('lin', 8,'sos',0);
-opts.Kc = struct('sos', 11);
+opts.Kx = struct('lin', 1,'sos',7);
+opts.Kc = struct('sos', 5);
 
 % build first solver
 S1 = casos.qcsossol('S1','bisection',sos1,opts);
@@ -144,7 +144,7 @@ opts.Kx = struct('sos', 5, 'lin', 1);
 opts.Kc = struct('sos', 6);
 
 % build third solver
-% S2 = casos.sossol('S','mosek',sos2,opts);
+S2 = casos.sossol('S','mosek',sos2,opts);
 
 buildTime = toc(buildTime_start);
 
