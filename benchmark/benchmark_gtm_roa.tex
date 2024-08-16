@@ -11,7 +11,7 @@
 
 \begin{axis}[%
 width=\figW,
-height=0.947\figH,
+height=0.949\figH,
 at={(0\figW,0\figH)},
 scale only axis,
 bar width=0.4,
@@ -30,12 +30,12 @@ ymajorgrids,
 legend style={at={(0.03,0.97)}, anchor=north west, legend cell align=left, align=left, draw=white!15!black}
 ]
 \addplot[ybar stacked, fill=mycolor1, draw=black, area legend] table[row sep=crcr] {%
-1	0.6379775\\
-2	77.0567899\\
-3	236.969953\\
-4	298.6355175\\
-5	81.4177695\\
-6	1074.3536891\\
+1	1.8555223\\
+2	80.7984318\\
+3	229.7049816\\
+4	288.6078203\\
+5	80.3256019999999\\
+6	1142.3966195\\
 };
 \addplot[forget plot, color=white!15!black] table[row sep=crcr] {%
 0.5	0\\
@@ -44,12 +44,12 @@ legend style={at={(0.03,0.97)}, anchor=north west, legend cell align=left, align
 \addlegendentry{Parsing/Build Time}
 
 \addplot[ybar stacked, fill=mycolor2, draw=black, area legend] table[row sep=crcr] {%
-1	98.9979819\\
-2	94.781\\
-3	95.082\\
-4	102.5415141\\
-5	104.988\\
-6	82.0766316\\
+1	98.3356204\\
+2	95.4079999999999\\
+3	96.258\\
+4	103.1838609\\
+5	104.24\\
+6	82.4951217\\
 };
 \addplot[forget plot, color=white!15!black] table[row sep=crcr] {%
 0.5	0\\
@@ -58,16 +58,16 @@ legend style={at={(0.03,0.97)}, anchor=north west, legend cell align=left, align
 \addlegendentry{Solver Time}
 
 \node[above, align=center]
-at (axis cs:1,99.636) {99.64 s};
+at (axis cs:1,100.191) {100.19 s};
 \node[above, align=center]
-at (axis cs:2,171.838) {171.84 s};
+at (axis cs:2,176.206) {176.21 s};
 \node[above, align=center]
-at (axis cs:3,332.052) {332.05 s};
+at (axis cs:3,325.963) {325.96 s};
 \node[above, align=center]
-at (axis cs:4,401.177) {401.18 s};
+at (axis cs:4,391.792) {391.79 s};
 \node[above, align=center]
-at (axis cs:5,186.406) {186.41 s};
+at (axis cs:5,184.566) {184.57 s};
 \node[above, align=center]
-at (axis cs:6,1156.43) {1156.43 s};
+at (axis cs:6,1224.892) {1224.89 s};
 \end{axis}
 \end{tikzpicture}%

@@ -1,8 +1,22 @@
-function [gval,bval,solveTime,solverTime,buildTime]= roaEstGTM_benchYALMIP(defaultOpts)
+%--------------------------------------------------------------------------
+% 
+% Implementation of custom V-s-iteration for the GTM 4D ROA problem in 
+% YALMIP. The implementation in Yalmip follow the following YALMIP 
+% tutorial:
+% https://yalmip.github.io/tutorial/sumofsquaresprogramming/ on how to
+% setup constraint sos problems. 
+% More specifically section Constrained polynomial optimization
+%
+%--------------------------------------------------------------------------
 
+function [gval,bval,solverTime,buildTime]= roaEstGTM_benchYALMIP()
+
+
+% indeterminates 
 sdpvar x1 x2 x3 x4 g b
 
 x = [x1;x2;x3;x4];
+
 
 % Polynomial Dynamics
 f = GTM_dynamics(x(1),x(2),x(3),x(4));
@@ -10,92 +24,94 @@ f = GTM_dynamics(x(1),x(2),x(3),x(4));
 % shape function
 p = x'*x*1e2;
 
-% initial Lyapunov functionn
+% initial Lyapunov function candidate
 P = [395.382671347059	-23.0032507976836	3.16965275615691	29.2992065909380
     -23.0032507976836	90.4764915483638	-16.1191428789579	-132.594376986429
     3.16965275615691	-16.1191428789579	3.44002648214490	24.2292666551058
     29.2992065909380	-132.594376986429	24.2292666551058	202.114797577027];
 
+
 Vval = x'*P*x;
 
-
+% enforce positivity
 l = 1e-6*(x'*x);
+
 
 % polynomial(indet, maxdeg, mindeg)
 [V,cv1]  = polynomial(x,4,2);
 [s1,c1]  = polynomial(x,4,2);
-[s2,c2]  = polynomial(x,2,0);
+[s2,c2]  = polynomial(x,4,0);
 
-% use default options
-% if defaultOpts
+% use default options except from verbosity and select mosek as solver
 solverset = sdpsettings('solver','mosek', ...
                         'verbose',0);        
-% else
-% solverset = sdpsettings('solver','mosek', ...
-%                         'verbose',0, ...
-%                          'sos.traceobj',0,...   % Minimize trace of Gram matrix in problems without objective function
-%                          'sos.newton',0,...     % Use Newton polytope to reduce size
-%                          'sos.congruence',2,... % Block-diagonalize using congruence classes
-%                          'sos.scale',0);        % scale polynomials
-% % end
-
-%--------------------------------------------------------------------------
-% see https://yalmip.github.io/tutorial/sumofsquaresprogramming/ on how to
-% setup constraint sos problems
-%--------------------------------------------------------------------------
 
 
-endTimeParse1 = [];
-endTimeParse2 = [];
+% setup arrays
+endTimeBuild1 = [];
+endTimeBuild2 = [];
+
 
 solverTime1 = [];
 solverTime2 = [];
 solverTime3 = [];
-bval_old = [];
+bval_old    = [];
 
-solveTime_start = tic;
+% bisection tolerances (see default value of SOSOPT/GSOSOPT
+relbistol = 1e-3;
+absbistol = 1e-3;
+
+
+%% V-s-iteration
 for iter = 1:100
-    			% to make sure we do not use the old solution again
-				gval = [];
-				bval = [];
+    
+    % to make sure we do not use the old solution again
+	gval = [];
+    bval = [];
 
     % solve gamma-step
-
-    % find largest stable level set
     lb = 0; ub = 1000;
     
-
     % bisection
-    % checkStart = tic;
-    relbistol = 1e-3;
-    absbistol = 1e-3;
     while (ub-lb>absbistol && ub-lb > relbistol*abs(lb))
-        startTimeParse1 = tic;
+
+        % trial gamma
         gtry = (lb+ub)/2;
-        
-        
-        con1 = [sos(s1*(Vval-gtry) - jacobian(Vval,x)*f - l)
+
+        % start time measure
+        startTimeBuild1 = tic;
+    
+        % re-initialize sos program
+        con1 = [sos(s1*(Vval-gtry) - jacobian(Vval,x)*f - l);
                 sos(s1)];
 
-        
-        sol1 = solvesos(con1,[],solverset,c1 );
+        %  solve problem
+        sol1 = solvesos(con1,[],solverset,c1);
 
         if sol1.problem == 0
+
+            % adapt lower interval bound
             lb = gtry;
-            gval = gtry;
+
+            % store latest solution
+            gval  = gtry;
             s1val = replace(s1,c1,value(c1));
+
         else
+            % adapt upper interval bound
             ub = gtry;
         end
 
-        
-        % buildtime is complete time - solver time 
-        endTimeParse1 = [endTimeParse1 toc(startTimeParse1)-sol1.solvertime];
+
+         % buildTime is total time spend to setup constraints (i.e sos problem),
+         % do the transcription (poly --> sdp --> poly) we subtract the
+         % solver time afterwards to only consider the actual build process
+        endTimeBuild1 = [endTimeBuild1 toc(startTimeBuild1)-sol1.solvertime];
         solverTime1   = [solverTime1 sol1.solvertime];
 		
     end
-    % toc(checkStart)
-
+    toc(checkStart)
+    profile viewer
 
     if ~isempty(gval)
         % fprintf('gamma is %g.\n', gval)
@@ -111,14 +127,16 @@ for iter = 1:100
     % find largest possible shape function
     lb = 0; ub = 1000;
 
-    relbistol = 1e-3;
-    absbistol = 1e-3;
     while (ub-lb>absbistol && ub-lb > relbistol*abs(lb))
-        startTimeParse2 = tic;
+        
+        % trial beta
         btry = (lb+ub)/2;
+        
+        % start time measure
+        startTimeBuild2 = tic;
     
-        % parse problem
-        con2 = [sos(s2*(p-btry) +  gval - Vval)
+         % re-initialize sos program
+        con2 = [sos(s2*(p-btry) +  gval - Vval);
                 sos(s2)];
        
         % solve problem
@@ -126,18 +144,22 @@ for iter = 1:100
     
        
         if sol2.problem == 0
+            % adapt lower interval bound
             lb  = btry;
     
-            % make sure to keep the feasible solution
+            % store latest solution
             bval = btry;
             s2val = replace(s2,c2,value(c2));
             
         else
+            % adapt upper interval bound
             ub = btry;
         end
 
-
-            endTimeParse2 = [endTimeParse2 toc(startTimeParse2)-sol2.solvertime];
+            % buildTime is total time spend to setup constraints (i.e sos problem),
+            % do the transcription (poly --> sdp --> poly) we subtract the
+            % solver time afterwards to only consider the actual build process
+            endTimeBuild2 = [endTimeBuild2 toc(startTimeBuild2)-sol2.solvertime];
             solverTime2   = [solverTime2 sol2.solvertime];
     end
    
@@ -151,23 +173,27 @@ for iter = 1:100
 	
 
 	% solve V-step
-	startTimeParse3 = tic;
+    % start time measure
+	startTimeBuild3 = tic;
 	
-	con3 = [sos(V-l)
-			sos(s1val*(V-gval) - jacobian(V,x)*f - l)
+    % re-initialize sos program
+	con3 = [sos(V-l);
+			sos(s1val*(V-gval) - jacobian(V,x)*f - l);
 			sos(s2val*(p-bval) +  gval - V)
 			];
 	
 	
-	% solve for Lyapunov function
+	% solve sos problem
 	sol3 = solvesos(con3,[],solverset,cv1);
 	
-	endTimeParse3(iter) = toc(startTimeParse3)-sol3.solvertime;
+	endTimeBuild3(iter) = toc(startTimeBuild3)-sol3.solvertime;
 	solverTime3         = [solverTime3 sol3.solvertime];
 	
 	if sol3.problem == 0
-				Vval = replace(V,cv1,double(cv1));
-	
+            % extract solution 
+		    Vval = replace(V,cv1,double(cv1));
+
+	        % print progress
 			fprintf('Iteration %d: b = %g, g = %g.\n',iter,full(bval),full(gval));
 	
 	
@@ -175,7 +201,8 @@ for iter = 1:100
 		disp(['Problem infeasible in V-step in iteration:' num2str(iter)])
 		break
 	end
-
+   
+   % check convergence
    if ~isempty(bval_old)
         if abs(full(bval-bval_old)) <= 1e-3
             break
@@ -187,11 +214,11 @@ for iter = 1:100
     end
 
 
-end
+end % end for-loop
 
-solveTime  = toc(solveTime_start);
-buildTime  = sum(endTimeParse1) + sum(endTimeParse2) + sum(endTimeParse3);
-solverTime = sum(solverTime1) + sum(solverTime2) + sum(solverTime3);
+
+buildTime  = sum(endTimeBuild1) + sum(endTimeBuild2) + sum(endTimeBuild3);
+solverTime = sum(solverTime1)   + sum(solverTime2)   + sum(solverTime3);
  
 
-end
+end % end of function
