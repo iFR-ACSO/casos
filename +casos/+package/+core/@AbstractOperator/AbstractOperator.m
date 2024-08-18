@@ -4,9 +4,11 @@ classdef (Abstract) AbstractOperator < casos.package.core.PolynomialInterface
 properties (Access=protected)
     % linear map from in-nnz to out-nnz
     matrix;
+
+    op_sparsity;    % operator sparsity pattern
 end
 
-properties (SetAccess=private,GetAccess=public)
+properties (Dependent,GetAccess=public)
     % polynomial sparsity patterns of input and output
     sparsity_in;
     sparsity_out;
@@ -26,117 +28,115 @@ end
 
 methods
     %% Public constructor
-    function obj = AbstractOperator(M,Si,So)
+    function obj = AbstractOperator(M,varargin)
         % New operator.
         if nargin < 1
             % empty operator
-            Si = casos.Sparsity(0,0);
-            So = casos.Sparsity(0,0);
+            S = casos.package.core.OperatorSparsity(casadi.Sparsity(0,0));
             M = [];
 
         elseif isa(M,'casos.package.core.AbstractOperator')
             % copy or convert operator
-            Si = casos.Sparsity(M.sparsity_in);
-            So = casos.Sparsity(M.sparsity_out);
+            S = casos.package.core.OperatorSparsity(M.op_sparsity);
             M = M.matrix;
-        % Note: Conversion from polynomial is ambiguous
-        % elseif isa(M,'casos.package.core.GenericPolynomial')
-        %     % scalar multiplication with polynomial
-        %     assert(nargin < 2,'Too many input arguments.')
-        %     Zi = casos.Sparsity(1,1);
-        %     [M,Zo] = poly2basis(M);
+        
+        elseif isa(M,'casos.package.core.OperatorSparsity')
+            % sparsity pattern syntax
+            assert(nargin < 3, 'Too many arguments.')
 
-        elseif nargin < 2
-            % matrix multiplication
-            Si = casos.Sparsity.dense(size(M,2),1);
-            So = casos.Sparsity.dense(size(M,1),1);
-
-        elseif nargin < 3
-            % dual operator
-            Si = casos.Sparsity(Si);
-            So = casos.Sparsity.dense(size(M,1),1);
-
-        elseif nargin < 4
-            % construct operator
-            Si = casos.Sparsity(Si);
-            So = casos.Sparsity(So);
+            S = M;
+            M = obj.new_matrix(matrix_sparsity(S),varargin{:});
 
         else
-            error('Undefined syntax.')
+            S = casos.package.core.OperatorSparsity(sparsity(M),varargin{:});
         end
 
-        assert(size(M,2) == nnz(Si), 'Input dimensions mismatch.')
-        assert(size(M,1) == nnz(So), 'Output dimensions mismatch.')
+        assert(size(M,2) == nnz_in(S), 'Input dimensions mismatch.')
+        assert(size(M,1) == nnz_out(S), 'Output dimensions mismatch.')
 
         obj.matrix = obj.new_matrix(M);
-        obj.sparsity_in = Si;
-        obj.sparsity_out = So;
+        obj.op_sparsity = S;
     end
 
     %% Getter
+    function Si = get.sparsity_in(obj)
+        % Return input polynomial sparsity pattern.
+        Si = obj.op_sparsity.sparsity_in;
+    end
+
+    function So = get.sparsity_out(obj)
+        % Return output polynomial sparsity pattern.
+        So = obj.op_sparsity.sparsity_out;
+    end
+
     function varargout = size(obj,varargin)
         % Return size of operator.
-        [varargout{1:nargout}] = size(sparse(obj.numel_out,obj.numel_in),varargin{:});
+        [varargout{1:nargout}] = size(obj.op_sparsity,varargin{:});
     end
 
     function sz = size_in(obj,varargin)
         % Return input size.
-        sz = size(obj.sparsity_in,varargin{:});
+        sz = size_in(obj.op_sparsity,varargin{:});
     end
 
     function sz = size_out(obj,varargin)
         % Return output size.
-        sz = size(obj.sparsity_out,varargin{:});
+        sz = size_out(obj.op_sparsity,varargin{:});
     end
 
     function n = numel_in(obj)
         % Return number of input elements.
-        n = numel(obj.sparsity_in);
+        n = numel_in(obj.op_sparsity);
     end
 
     function n = numel_out(obj)
         % Return number of output elements.
-        n = numel(obj.sparsity_out);
+        n = numel_out(obj.op_sparsity);
     end
 
     function n = nnz_in(obj)
         % Return number input nonzeros.
-        n = nnz(obj.sparsity_in);
+        n = nnz_in(obj.op_sparsity);
     end
 
     function n = nnz_out(obj)
         % Return number of output nonzeros.
-        n = nnz(obj.sparsity_out);
+        n = nnz_out(obj.op_sparsity);
     end
 
     function n = nterm_in(obj)
         % Return number of input terms.
-        n = nterm(obj.sparsity_in);
+        n = nterm_in(obj.op_sparsity);
     end
 
     function n = nterm_out(obj)
         % Return number of output terms.
-        n = nterm_out(obj.sparsity_out);
+        n = nterm_out(obj.op_sparsity);
+    end
+
+    function S = sparsity(obj)
+        % Return (copy of) operator sparsity pattern.
+        S = casos.package.core.OperatorSparsity(obj.op_sparsity);
     end
 
     function tf = isrow(obj)
         % Check if operator is a row vector.
-        tf = (size(obj,1) == 1);
+        tf = isrow(obj.op_sparsity);
     end
 
     function tf = iscolumn(obj)
         % Check if operator is a column vector.
-        tf = (size(obj,2) == 1);
+        tf = iscolumn(obj.op_sparsity);
     end
 
     function tf = isvector(obj)
         % Check if operator is a vector.
-        tf = any(size(obj) == 1);
+        tf = isvector(obj.op_sparsity);
     end
 
     function tf = isscalar(obj)
         % Check if operator is a scalar.
-        tf = all(size(obj) == 1);
+        tf = isscalar(obj.op_sparsity);
     end
 
     function tf = is_symbolic(obj)
@@ -146,7 +146,7 @@ methods
 
     function tf = is_zerodegree(obj)
         % Check if operator is of input/output degree zero.
-        tf = (obj.sparsity_in.maxdeg == 0 && obj.sparsity_out.maxdeg == 0);
+        tf = is_zerodegree(obj.op_sparsity);
     end
 
     function tf = is_symexpr(obj)
@@ -166,30 +166,28 @@ methods
 
     function tf = is_matrix(obj)
         % Check if operator is mapping between vectors.
-        tf = (iscolumn(obj.sparsity_in) && iscolumn(obj.sparsity_out));
+        tf = is_matrix(obj.op_sparsity);
     end
 
     function tf = is_polynomial(obj)
         % Check if operator corresponds to multiplication with polynomial.
-        tf = (is_zerodegree(obj.sparsity_in) && obj.numel_in == 1);
+        tf = is_polynomial(obj.op_sparsity);
     end
 
     function tf = is_dual(obj)
         % Check if operator is a linear form (dual).
-        tf = (is_zerodegree(obj.sparsity_out) && obj.numel_out == 1);
+        tf = is_dual(obj.op_sparsity);
     end
 
     function tf = is_equal(obj,op)
         % Check if operators are equal.
-        tf = is_equal(obj.sparsity_in,op.sparsity_in) ...
-            && is_equal(obj.sparsity_out,op.sparsity_out) ...
+        tf = is_equal(obj.op_sparsity,op.op_sparsity) ...
             && is_equal(obj.matrix,op.matrix);
     end
 
     function tf = is_wellposed(obj)
         % Check if operator is well formed.
-        tf = is_wellformed(obj.sparsity_in) ...
-            && is_wellformed(obj.sparsity_out) ...
+        tf = is_wellformed(obj.op_sparsity) ...
             && size(obj.matrix,1) == obj.numel_out ...
             && size(obj.matrix,2) == obj.numel_in;
     end
