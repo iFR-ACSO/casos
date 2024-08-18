@@ -17,16 +17,34 @@ properties (Constant,Access=protected)
 end
 
 methods
-    function obj = PSFunction(name, ex_i, ex_o, name_i, name_o, varargin)
+    function obj = PSFunction(arg1, ex_i, ex_o, name_i, name_o, varargin)
         % Create new casadi function object.
+        if isa(arg1,'casadi.Function')
+            % internal constructor
+            name = arg1.name;
+
+            % set function
+            func = arg1;
+            % set sparsity patterns
+            sparsity_i = ex_i;
+            sparsity_o = ex_o;
+
+        else
+            name = arg1;
+        
+            % parse polynomial expressions
+            [sym_i,sparsity_i] = cellfun(@parse_expr, ex_i, 'UniformOutput', false);
+            [sym_o,sparsity_o] = cellfun(@parse_expr, ex_o, 'UniformOutput', false);
+
+            % define function between coefficients
+            func = casadi.Function(name, sym_i, sym_o, name_i, name_o, varargin{:});
+        end
+
         obj@casos.package.functions.FunctionInternal(name);
 
-        % parse polynomial expressions
-        [sym_i,obj.sparsity_i] = cellfun(@parse_expr, ex_i, 'UniformOutput', false);
-        [sym_o,obj.sparsity_o] = cellfun(@parse_expr, ex_o, 'UniformOutput', false);
-
-        % define function between coefficients
-        obj.func = casadi.Function(name, sym_i, sym_o, name_i, name_o, varargin{:});
+        obj.sparsity_i = sparsity_i;
+        obj.sparsity_o = sparsity_o;
+        obj.func = func;
     end
 
     %% Implement FunctionInternal
@@ -68,6 +86,32 @@ methods
     function idx = get_index_out(obj,str)
         % Index of outputs.
         idx = index_out(obj.func,str);
+    end
+
+    function J = jacobian(obj)
+        % Return Jacobian function.
+        J_func = jacobian(obj.func);
+
+        % collect input sparsity patterns for Jacobian function
+        % inputs are equal to function's inputs and outputs
+        sp_in = [obj.sparsity_i obj.sparsity_o];
+
+        % collect output sparsity pattens for Jacobian function
+        sp_out = cell(1,n_out(J_func));
+
+        for i=1:length(sp_out)
+            assert(isa(obj.sparsity_o{i},'casos.Sparsity'),'Derivatives cannot be calculated for %s.',obj.name)
+
+            % build operator sparsity pattern
+            sp_out{i} = casos.package.core.OperatorSparsity(...
+                sparsity_out(J_func,i-1), ...
+                obj.sparsity_i{i}, ...
+                obj.sparsity_o{i} ...
+            );
+        end
+
+        % return Function object
+        J = casos.Function.create(casos.package.functions.PSFunction(J_func,sp_in,sp_out));
     end
 end
 
