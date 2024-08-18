@@ -37,7 +37,7 @@ methods
             % fall back to casadi Function class
             wrap = CasadiFunction(name,ex_i,ex_o,name_i,name_o,varargin{:});
 
-        elseif any(types == 'PS') && ~any(types == 'MX')
+        elseif ~any(types == 'MX')
             % function between polynomials with symbolic coefficients
             wrap = PSFunction(name,ex_i,ex_o,name_i,name_o,varargin{:});
 

@@ -84,6 +84,12 @@ end
 function [coeffs,z] = parse_expr(p)
 % Return coefficients, monomials, and size of polynomial expression.
 
-    p = casos.PS(p);
-    [coeffs,z] = poly2basis(p);
+    if isa(p,'casos.package.core.AbstractOperator')
+        op = casos.PSOperator(p);
+        [coeffs,z] = op2basis(op);
+
+    else
+        p = casos.PS(p);
+        [coeffs,z] = poly2basis(p);
+    end
 end

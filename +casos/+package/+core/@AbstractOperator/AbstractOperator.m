@@ -45,7 +45,7 @@ methods
             assert(nargin < 3, 'Too many arguments.')
 
             S = M;
-            M = obj.new_matrix(matrix_sparsity(S),varargin{:});
+            M = obj.new_matrix(project(varargin{:},matrix_sparsity(S)));
 
         else
             S = casos.package.core.OperatorSparsity(sparsity(M),varargin{:});

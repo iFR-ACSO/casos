@@ -1,4 +1,4 @@
-classdef (InferiorClasses = {?casadi.Sparsity, ?casadi.DM, ?casadi.SX, ?casadi.MX}) ...
+classdef (InferiorClasses = {?casadi.Sparsity, ?casadi.DM, ?casadi.SX, ?casadi.MX, ?casos.PD, ?casos.PS}) ...
     OperatorSparsity < casos.package.core.PolynomialInterface
 % Operator sparsity class.
 
@@ -28,13 +28,13 @@ methods
 
         elseif nargin < 2
             % matrix multiplication pattern
-            Si = casos.Sparsity.dense(size(M,2),1);
-            So = casos.Sparsity.dense(size(M,1),1);
+            Si = casos.Sparsity.dense(size(S,2),1);
+            So = casos.Sparsity.dense(size(S,1),1);
 
         elseif nargin < 3
             % dual operator pattern
             Si = casos.Sparsity(Si);
-            So = casos.Sparsity.dense(size(M,1),1);
+            So = casos.Sparsity.dense(size(S,1),1);
 
         elseif nargin < 4
             % construct operator pattern
@@ -154,10 +154,27 @@ methods
             && size(obj.sparsity_M,2) == obj.numel_in;
     end
 
+    %% Extended interface
+    function varargout = poly2basis(M,S)
+        % Fall back to operator.
+        [varargout{1:nargout}] = op2basis(casos.package.operator(M),S);
+    end
+
+    function varargout = op2basis(M,S)
+        % Fall back to operator.
+        [varargout{1:nargout}] = op2basis(casos.package.operator(M),S);
+    end
+
     %% Display output
     function s = str(obj)
         % Return string representation.
         s = compose('[%s]->[%s],%dnz',to_char(obj.sparsity_in),to_char(obj.sparsity_out),nnz(obj.sparsity_M));
+    end
+
+    function s = signature(obj)
+        % Return signature.
+        in = signature(obj.sparsity_in); out = signature(obj.sparsity_out);
+        s = compose('(%s)->(%s),%dnz',in{:},out{:},nnz(obj.sparsity_M));
     end
 
     function print_matrix(obj)
