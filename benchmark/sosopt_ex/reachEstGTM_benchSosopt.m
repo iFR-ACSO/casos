@@ -158,6 +158,7 @@ for iter = 1:10
     % Solve with sosopt
     opts = sosoptions;
     opts.solver = 'mosek';
+    % opts.simplify = 'off';
       
     [info,dopt,~] = sosopt(sosc,[x;t],opts);
 

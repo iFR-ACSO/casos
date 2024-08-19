@@ -96,7 +96,7 @@ b = casos.PS.sym('b');
 
 T = 3;
 % t = casos.PS.sym('t');
-h = casos.PS(1*t*(T-1*t));
+h = casos.PS(t*(T-1));
 
 % options
 opts               = struct('sossol','mosek');
@@ -113,7 +113,7 @@ sos1 = struct('x',[K;s2;s3;s4;s5;s6;s7;s8], ... % dec.var
 
 % constraint
 sos1.('g') = [s4-0.0001;...
-             -(nabla(V, t) + nabla(V, x)*f + K*nabla(V, x)*g) - s2*h + s3*(V - b); ...
+             -(nabla(V, t) + nabla(V, x)*(f + g*K)) - s2*h + s3*(V - b); ...
              -s4*rT + subs(V,t,T) - b;...
              uM - K + s5*(V - b) - s6*h; ...
              K - um + s7*(V - b) - s8*h];
@@ -153,9 +153,9 @@ solvetime_all1 = zeros(100,1);
 solvetime_all2 = zeros(100,1);
 solvetime_all3 = zeros(100,1);
 
-bval_old = [];
+% bval_old = [];
 
-profile on -historysize 50000000000
+% profile on -historysize 50000000000
 %% V-s-iteration
 for iter = 1:10
 
@@ -208,5 +208,5 @@ end % end for-loop
 
 % total solver time over all iterations
 solverTime_total = sum(solvetime_all1) + sum(solvetime_all2) + sum(solvetime_all3);
-profile viewer
+% profile viewer
 end % end of function

@@ -78,8 +78,8 @@ endTimeBuild2 = [];
 
 solverTime1 = [];
 solverTime2 = [];
-solverTime3 = [];
-bval_old = [];
+% solverTime3 = [];
+% bval_old = [];
 
 
 % bisection tolerances (see default value of SOSOPT/GSOSOPT
@@ -90,12 +90,12 @@ absbistol = 1e-4;
     h = t*(T-t);
 
 %% V-s-iteration
-profile on -historysize 50000000000
+% profile on -historysize 50000000000
 for iter = 1:10
 
     % to make sure we do not use the old solution again
 	gval = [];
-    bval = [];
+    % bval = [];
 
     % solve gamma-step
 
@@ -125,6 +125,7 @@ for iter = 1:10
         [pr1,s7]  = pr1.newFreePoly(monomials([x;t],0:4));
         [pr1,s8]  = pr1.newFreePoly(monomials([x;t],0:4));
         [pr1,K]   = pr1.newFreePoly(monomials([x;t],0:4));
+        
 
 
         % add sos constraints
@@ -146,7 +147,7 @@ for iter = 1:10
          % solve problem
         opt         = spot_sdp_default_options();
         opt.verbose = 0;
- 
+        % opt.useQR = 1
         sol1 = pr1.minimize(msspoly(1),@spot_mosek,opt);
       
         % sol.status
@@ -175,7 +176,8 @@ for iter = 1:10
 		
     end
 
-
+    sum( endTimeBuild1)
+    sum(solverTime1)
     if ~isempty(gval)
         % fprintf('gamma is %g.\n', gval)
     else
@@ -257,7 +259,7 @@ for iter = 1:10
 
 
 end % end for-loop
-profile viewer
+% profile viewer
 buildTime  = sum(endTimeBuild1) + sum(endTimeBuild2);
 solverTime = sum(solverTime1) + sum(solverTime2);
  
