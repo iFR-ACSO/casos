@@ -127,24 +127,24 @@ obj.sparsity_gs = Zcon_s;
 
 % map SDP solution to SOS solution
 % symbolic SDP solution
-sdpsol.x = casadi.SX.sym('sol_x',size(obj.sdpsolver.map.x,2));
+sdpsol.x = casadi.SX.sym('sol_x',size(sdp.x));
 sdpsol.f = casadi.SX.sym('sol_f');
-sdpsol.g = casadi.SX.sym('sol_g',size(obj.sdpsolver.map.g,2));
-sdpsol.lam_x = casadi.SX.sym('sol_lam_x',size(obj.sdpsolver.map.x,2));
-sdpsol.lam_g = casadi.SX.sym('sol_lam_g',size(obj.sdpsolver.map.g,2));
+sdpsol.g = casadi.SX.sym('sol_g',size(sdp.g));
+sdpsol.lam_x = casadi.SX.sym('sol_lam_x',size(sdp.x));
+sdpsol.lam_g = casadi.SX.sym('sol_lam_g',size(sdp.g));
 sdpsol.lam_p = casadi.SX.sym('sol_lam_p',size(sdp.p));
 
 % % coordinates of SOS solution
-sossol.x = blkdiag(speye(nnz_lin_x), Mp_x, sparse(0,nnz_gram_g))*obj.sdpsolver.map.x*sdpsol.x;
+sossol.x = blkdiag(speye(nnz_lin_x), Mp_x, sparse(0,nnz_gram_g))*sdpsol.x;
 sossol.f = sdpsol.f;
 sossol.g = [
-    blkdiag(speye(nnz_lin_g), sparse(0,nnz_sos_g))*obj.sdpsolver.map.g*sdpsol.g
-    blkdiag(sparse(0,nnz_lin_x+nnz_gram_x),  Mp_g)*obj.sdpsolver.map.x*sdpsol.x
+    blkdiag(speye(nnz_lin_g), sparse(0,nnz_sos_g))*sdpsol.g
+    blkdiag(sparse(0,nnz_lin_x+nnz_gram_x),  Mp_g)*sdpsol.x
 ];
-sossol.lam_x = blkdiag(speye(nnz_lin_x), Md_x, sparse(0,nnz_gram_g))*obj.sdpsolver.map.x*sdpsol.lam_x;
+sossol.lam_x = blkdiag(speye(nnz_lin_x), Md_x, sparse(0,nnz_gram_g))*sdpsol.lam_x;
 sossol.lam_g = [
-    blkdiag(speye(nnz_lin_g), sparse(0,nnz_sos_g))*obj.sdpsolver.map.g*sdpsol.lam_g
-    blkdiag(sparse(0,nnz_lin_x+nnz_gram_x),  Md_g)*obj.sdpsolver.map.x*sdpsol.lam_x
+    blkdiag(speye(nnz_lin_g), sparse(0,nnz_sos_g))*sdpsol.lam_g
+    blkdiag(sparse(0,nnz_lin_x+nnz_gram_x),  Md_g)*sdpsol.lam_x
 ];
 
 % options for Casadi functions
