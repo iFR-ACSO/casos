@@ -1,19 +1,24 @@
 %--------------------------------------------------------------------------
 % 
 % Implementation of custom V-s-iteration for the GTM 4D ROA problem in 
-% SPOTless. Implementation is based on the examples provided in the
-% SPOTless toolbox and the manual
+% SOSTOOLS using the default dpvar data structure. 
+% Implementation is based on the examples provided in the
+% SOSTOOLS toolbox and the documentation.
 %
 %--------------------------------------------------------------------------
-function [gval,solverTime,buildTime]= reachEstGTM_benchSPOTless()
 
-% indeterminates
-x = msspoly ('x' , 4 ) ;
-t = msspoly ('t' , 1 ) ;
-x1 = x(1); % V 
-x2 = x(2); % alpha
-x3 = x(3); % q
-x4 = x(4); % theta
+function [gval,solverTime,buildTime]= reachEstGTM_benchSOSTOOLS()
+
+
+pvar x1 x2 x3 x4;
+x= [x1; x2; x3;x4];
+
+% x1 = x(1); % V 
+% x2 = x(2); % alpha
+% x3 = x(3); % q
+% x4 = x(4); % theta
+
+pvar t
 % t = casos.Indeterminates('t');
 
 % Polynomial Dynamics
@@ -73,6 +78,8 @@ uM = 10*d2r - 0.0489;
 um = -(10*d2r + 0.0489);
 
 % initialize arrays
+gval = [];
+
 endTimeBuild1 = [];
 endTimeBuild2 = [];
 
@@ -83,82 +90,71 @@ solverTime2 = [];
 relbistol = 1e-4;
 absbistol = 1e-4;
 
-T = 3;
-h = t*(T-t);
+
+
+   T = 3;
+    h = t*(T-t);
 
 %% V-s-iteration
-% profile on -historysize 50000000000
 for iter = 1:10
 
     % to make sure we do not use the old solution again
-	gval = [];
-    % bval = [];
-
+    bval = [];
+    gval = [];
+    
     % solve gamma-step
-
+    
     % find largest stable level set
     lb = 0; ub = 1;
- 
     
-    % bisection
+    % bisection 
     while (ub-lb>absbistol && ub-lb > relbistol*abs(lb))
+            
         % trial gamma
         gtry = (lb+ub)/2;
-        
+
         % start time measure
         startTimeBuild1 = tic;
+
+        % re-initialize sos program
+        prog1      = sosprogram([x;t]);
         
-        % re-initialize a spot program
-        pr1       = spotsosprog;
-        pr1       = pr1.withIndeterminate(x);
-        pr1       = pr1.withIndeterminate(t);
+        % decision variables
+        [prog1,s2] = sossosvar(prog1,monomials([x;t],0:2));
+        [prog1,s3] = sossosvar(prog1,monomials([x;t],0:2));
+        [prog1,s4] = sospolyvar(prog1,monomials(x,0:4));
+        [prog1,s5] = sossosvar(prog1,monomials([x;t],0:2));
+        [prog1,s6] = sossosvar(prog1,monomials([x;t],0:2));
+        [prog1,s7] = sossosvar(prog1,monomials([x;t],0:2));
+        [prog1,s8] = sossosvar(prog1,monomials([x;t],0:2));
+        [prog1,K] = sospolyvar(prog1,monomials([x;t],0:4));
 
-        % decision variable
-        [pr1,s2]  = pr1.newFreePoly(monomials([x;t],0:4));
-        [pr1,s3]  = pr1.newFreePoly(monomials([x;t],0:4));
-        [pr1,s4]  = pr1.newFreePoly(monomials(x,0:4));
-        [pr1,s5]  = pr1.newFreePoly(monomials([x;t],0:4));
-        [pr1,s6]  = pr1.newFreePoly(monomials([x;t],0:4));
-        [pr1,s7]  = pr1.newFreePoly(monomials([x;t],0:4));
-        [pr1,s8]  = pr1.newFreePoly(monomials([x;t],0:4));
-        [pr1,K]   = pr1.newFreePoly(monomials([x;t],0:4));
-        
+        DVxval = jacobian(Vval, x);
+        DVtval = jacobian(Vval, t);
+        % sos constraints
+        prog1 = sosineq(prog1, s4 - 0.0001 );
+        prog1 = sosineq(prog1, -(DVtval + DVxval*f + K*DVxval*g) - s2*h + s3*(Vval - gtry ) );
+        prog1 = sosineq(prog1, -s4*rT + subs(Vval,t,T) - gtry  );
+        prog1 = sosineq(prog1, uM - K + s5*(Vval - gtry ) - s6*h );
+        prog1 = sosineq(prog1, K - um + s7*(Vval - gtry ) - s8*h );
 
+        %  call solver
+        solver_opt.solver = 'mosek';
+        solver_opt.simplify = 'on';
+        [prog1,~] = sossolve(prog1,solver_opt);
+    
+        % check if feasible
+        if prog1.solinfo.info.dinf == 0 && prog1.solinfo.info.pinf == 0
 
-        % add sos constraints
-        pr1 = pr1.withSOS( s2 );
-        pr1 = pr1.withSOS( s3 );
-        pr1 = pr1.withSOS( s4 - 0.0001);
-        pr1 = pr1.withSOS( s5 );
-        pr1 = pr1.withSOS( s6 );
-        pr1 = pr1.withSOS( s7 );
-        pr1 = pr1.withSOS( s8 );
-
-        DVxval = diff(Vval, x);
-        DVtval = diff(Vval, t);
-        pr1 = pr1.withSOS(-(DVtval + DVxval*f + K*DVxval*g) - s2*h + s3*(Vval - gtry ) );
-        pr1 = pr1.withSOS( -s4*rT + subs(Vval,t,T) - gtry  );
-        pr1 = pr1.withSOS( uM - K + s5*(Vval - gtry ) - s6*h );
-        pr1 = pr1.withSOS( K - um + s7*(Vval - gtry ) - s8*h );
-
-         % solve problem
-        opt         = spot_sdp_default_options();
-        opt.verbose = 0;
-        % opt.useQR = 1
-        sol1 = pr1.minimize(msspoly(1),@spot_mosek,opt);
-      
-        % sol.status
-        if strcmp(string(sol1.info.solverInfo.itr.prosta),"PRIMAL_AND_DUAL_FEASIBLE")
             % adapt lower interval bound
-            lb = gtry;
+            lb   = gtry;
 
             % store latest solution
-            gval = gtry;
-        
-            s3val =  sol1.eval(s3);
-            s5val =  sol1.eval(s5);
-            s7val =  sol1.eval(s7);
-            Kval  = sol1.eval(K);
+            gval  = gtry;
+            s3val = sosgetsol(prog1,s3);
+            s5val = sosgetsol(prog1,s5);
+            s7val = sosgetsol(prog1,s7);
+            Kval = sosgetsol(prog1,K);
         else
             % adapt upper interval bound
             ub = gtry;
@@ -168,83 +164,70 @@ for iter = 1:10
         % buildTime is total time spend to setup constraints (i.e sos problem),
         % do the transcription (poly --> sdp --> poly) we subtract the
         % solver time afterwards to only consider the actual build process
-        endTimeBuild1 = [endTimeBuild1 toc(startTimeBuild1)-sol1.info.wtime];
-        solverTime1   = [solverTime1 sol1.info.wtime];
-		
+        endTimeBuild1 = [endTimeBuild1 toc(startTimeBuild1)-prog1.solinfo.info.cpusec];
+        solverTime1   = [solverTime1 prog1.solinfo.info.cpusec];
+	 
     end
 
-    sum( endTimeBuild1)
-    sum(solverTime1)
+
+
     if ~isempty(gval)
         % fprintf('gamma is %g.\n', gval)
     else
          disp(['Problem infeasible in gamma-step in iteration:' num2str(iter)])
-        break
+        return
     end
-   
-    
 
-	% solve V-step
+    %Solve V-step
     % start time measure
 	startTimeBuild2 = tic;
 	
     % re-initialize sos program
-    pr2       = spotsosprog;
-    pr2       = pr2.withIndeterminate(x);
-    pr2       = pr2.withIndeterminate(t);
+    prog2     = sosprogram([x;t]);
 
-    % decision variables
-    [pr2,V]    =  pr2.newFreePoly(monomials([x;t],0:4));
-    [pr2,s1]   =  pr2.newFreePoly(monomials(x,0:4));
-    [pr2,s2]   =  pr2.newFreePoly(monomials([x;t],0:4));
-    [pr2,s4]   =  pr2.newFreePoly(monomials(x,0:4));
-    [pr2,s6]   =  pr2.newFreePoly(monomials([x;t],0:4));
-    [pr2,s8]   =  pr2.newFreePoly(monomials([x;t],0:4));
-
+    % decision variable
+    [prog2,V] = sospolyvar(prog2,monomials([x;t],0:4));
+    [prog2,s1] = sossosvar(prog2,monomials(x,0:2));
+    [prog2,s2] = sossosvar(prog2,monomials([x;t],0:2));
+    [prog2,s4] = sospolyvar(prog2,monomials(x,0:4));
+    [prog2,s6] = sossosvar(prog2,monomials([x;t],0:2));
+    [prog2,s8] = sossosvar(prog2,monomials([x;t],0:2));
     % constraints
-    pr2 = pr2.withSOS( s1);
-    pr2 = pr2.withSOS( s2);
-    pr2 = pr2.withSOS( s6);
-    pr2 = pr2.withSOS( s8);
-    pr2 = pr2.withSOS( s4-0.0001  );
-    DVx = diff(V, x);
-    DVt = diff(V, t);
-    pr2 = pr2.withSOS(-(DVt + DVx*f + Kval*DVx*g) - s2*h + s3val*(V - gval));
-    pr2 = pr2.withSOS( -s4*rT + subs(V,t,T) - gval );
-    pr2 = pr2.withSOS( uM - Kval + s5val*(V - gval) - s6*h );
-    pr2 = pr2.withSOS( Kval - um + s7val*(V - gval) - s8*h );
-    pr2 = pr2.withSOS( -(subs(V,t,0)-gval) + s1*(subs(Vval,t,0)-gval) );
+    prog2 = sosineq(prog2, s4-0.0001 );
+    DVx = jacobian(V, x);
+    DVt = jacobian(V, t);
+    prog2 = sosineq(prog2, -(DVt + DVx*f + Kval*DVx*g) - s2*h + s3val*(V - gval) );
+    prog2 = sosineq(prog2, -s4*rT + subs(V,t,T) - gval );
+    prog2 = sosineq(prog2, uM - Kval + s5val*(V - gval) - s6*h );
+    prog2 = sosineq(prog2, Kval - um + s7val*(V - gval) - s8*h );
+    prog2 = sosineq(prog2, -(subs(V,t,0)-gval) + s1*(subs(Vval,t,0)-gval));
+ 
     
+    %  call solver
+    solver_opt.solver = 'mosek';
+    solver_opt.simplify = 'on';
+    [prog2,~] = sossolve(prog2,solver_opt);
 
+	
+    endTimeBuild2(iter) = toc(startTimeBuild2)-prog2.solinfo.info.cpusec;
+	solverTime2         = [solverTime2 prog2.solinfo.info.cpusec];
+	
+	if prog2.solinfo.info.dinf == 0 && prog2.solinfo.info.pinf == 0
 
-    % solve problem
-    opt         = spot_sdp_default_options();
-    opt.verbose = 0;
-    
-    sol2 = pr2.minimize(msspoly(1),@spot_mosek,opt);
-	
-    % buildTime is total time spend to setup constraints (i.e sos problem),
-    % do the transcription (poly --> sdp --> poly) we subtract the
-    % solver time afterwards to only consider the actual build process
-    endTimeBuild2(iter) = toc(startTimeBuild2)-sol2.info.wtime;
-	solverTime2         = [solverTime2 sol2.info.wtime];
-	
-	if strcmp(string(sol2.info.solverInfo.itr.prosta),"PRIMAL_AND_DUAL_FEASIBLE")
-           
-            % extract solution
-            Vval = sol2.eval(V);
-	
-			fprintf('Iteration %d: g = %g.\n',iter,full(gval));
-	
-	
+		    % extract solution 
+            Vval = sosgetsol(prog2,V);
+	        
+            % print progress
+			fprintf('Iteration %d: b = %g, g = %g.\n',iter,full(bval),full(gval));
+			
 	else
 		disp(['Problem infeasible in V-step in iteration:' num2str(iter)])
 		break
-    end
+	end
 
 
-	% check convergence
-	% if ~isempty(bval_old)
+    % check convergence
+    % if ~isempty(bval_old)
     %     if abs(full(bval-bval_old)) <= 1e-3
     %         break
     %     else
@@ -256,9 +239,9 @@ for iter = 1:10
 
 
 end % end for-loop
-% profile viewer
+
 buildTime  = sum(endTimeBuild1) + sum(endTimeBuild2);
-solverTime = sum(solverTime1) + sum(solverTime2);
+solverTime = sum(solverTime1)   + sum(solverTime2);
  
 
-end % end of function
+end

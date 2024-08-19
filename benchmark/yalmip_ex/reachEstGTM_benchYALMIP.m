@@ -1,0 +1,236 @@
+%--------------------------------------------------------------------------
+% 
+% Implementation of custom V-s-iteration for the GTM 4D ROA problem in 
+% YALMIP. The implementation in Yalmip follow the following YALMIP 
+% tutorial:
+% https://yalmip.github.io/tutorial/sumofsquaresprogramming/ on how to
+% setup constraint sos problems. 
+% More specifically section Constrained polynomial optimization
+%
+%--------------------------------------------------------------------------
+
+function [gval,solverTime,buildTime]= reachEstGTM_benchYALMIP()
+
+
+% indeterminates 
+sdpvar x1 x2 x3 x4 t b
+
+x = [x1;x2;x3;x4];
+
+
+% Polynomial Dynamics
+d2r = pi/180;
+% scale matrix
+Dmax = diag([20 20*d2r 50*d2r 20*d2r]);
+
+% scaled 4-state system
+f = [ % f1
+      - 0.01955829859645207*x1^2*x2 + 0.0006116050110168922*x1^2*x3 - 0.4597074905072323*x1*x2^2 ...
+      - 0.02143363124979007*x1*x2*x3 + 0.0913633506074555*x2^3 + 0.0104276150041391*x2^2*x4 ...
+      - 0.0104276150041391*x2*x4^2 + 0.003475871668046367*x4^3 - 0.00975287614756193*x1^2 ...
+      - 0.08801234368403432*x1*x2 - 0.001251382140034897*x1*x3 - 0.5201826057909725*x2^2 ...
+      - 0.04982793763401992*x2*x3 + 0.00180695498489715*x3^2 - 0.04388794266402869*x1 ...
+      + 0.07194181873717953*x2 - 0.00290915666614335*x3 - 0.1711592037553279*x4;...
+      % f2
+      0.05879789171572614*x1^3 + 0.6755306062430397*x1^2*x2 + 0.07878176650294093*x1^2*x3 ...
+      + 0.6715746030304725*x1*x2^2 - 0.03631259653379534*x1*x2*x4 - 0.006619604539373272*x1*x3^2 ...
+      + 0.01815629826689767*x1*x4^2 - 0.1817374041405456*x2^3  + 0.1364168103441202*x1^2 ...
+      - 1.371702883566865*x1*x2 + 0.005525130555690897*x1*x3 + 1.479555253341581*x2^2 ...
+      + 0.002672981895904953*x2*x3 + 0.07915793925313672*x2*x4 + 0.0135837161533212*x3^2 ...
+      - 0.03957896962656836*x4^2  - 0.5767816606949114*x1 - 3.236059303865032*x2 + 2.30669948822443*x3;...
+      % f3
+      - 3.582346855286648*x1^2*x2 + 0.9194217971573437*x1^2*x3 + 2.279359758657476*x1*x2^2 ...
+      - 0.3522980647489417*x2^3 - 0.07456233935706458*x1^2 - 16.12056084878992*x1*x2 ...
+      - 1.881194554322757*x1*x3 + 2.56427972848966*x2^2  - 0.33553052710679*x1 ...
+      - 18.13563095488866*x2 - 4.373316114187153*x3;...
+      % f4
+      2.5*x3];
+g = [% g1
+     - 0.01200284890938563*x1^2- 0.0672488718061946*x1*x2- 0.05401282009223534*x1 ...
+     - 0.07565498078196893*x2- 0.06076442260376476; ...
+     % g2
+     0.190652302942119*x1^2 + 0.1033082169845372*x1*x2 - 0.3900865469718997*x1 ...
+     + 0.240166275746567*x2 - 0.9068555816726751; ...
+     % g3
+     -13.57875281932966*x1^2 + 14.75731515054161*x1*x2 - 61.10438768698349*x1 ...
+     + 16.60197954435931*x2 - 68.74243614785642; ...
+     % g4
+     0
+    ];
+
+% target function
+rT = x'*Dmax'*blkdiag(1/(4)^2, 1/(pi/30)^2, 1/(pi/15)^2, 1/(pi/30)^2)*Dmax*x - 1;
+
+
+P = [4.54064415441163	0.139789072082587	-0.0107315729582360	-0.406387155887787
+     0.139789072082587	0.165595957230149	-0.00115647767230559	-0.0841739454608939
+    -0.0107315729582360	-0.00115647767230559	0.00732884319609208	0.00922486739143782
+   -0.406387155887787	-0.0841739454608939	0.00922486739143782	0.514580693591350];
+
+Vval = x'*P*x;
+
+% Trim point for elevator channel is 0.0489 rad.
+% Saturation limit for elevator channel is -10 deg to 10 deg
+uM =   10*d2r - 0.0489;
+um = -(10*d2r + 0.0489);
+
+
+% polynomial(indet, maxdeg, mindeg)
+[V,cv1]  = polynomial([x;t],4,0);
+[K,k]    = polynomial([x;t],4,0);
+[s1,c1]  = polynomial(x,4,0);
+[s2,c2]  = polynomial([x;t],4,0);
+[s3,c3]  = polynomial([x;t],4,0);
+[s4,c4]  = polynomial(x,4,0);
+[s5,c5]  = polynomial([x;t],4,0);
+[s6,c6]  = polynomial([x;t],4,0);
+[s7,c7]  = polynomial([x;t],4,0);
+[s8,c8]  = polynomial([x;t],4,0);
+
+% use default options except from verbosity and select mosek as solver
+solverset = sdpsettings('solver','mosek', ...
+                        'verbose',0);        
+
+
+% setup arrays
+endTimeBuild1 = [];
+endTimeBuild2 = [];
+
+
+solverTime1 = [];
+solverTime2 = [];
+
+
+% bisection tolerances
+relbistol = 1e-4;
+absbistol = 1e-4;
+
+T = 3;
+h = t*(T-t);
+
+%% V-s-iteration
+for iter = 1:10
+    
+    % to make sure we do not use the old solution again
+	gval = [];
+
+    % solve gamma-step
+    lb = 0; ub = 1;
+    
+    % bisection
+    while (ub-lb>absbistol && ub-lb > relbistol*abs(lb))
+
+        % trial gamma
+        gtry = (lb+ub)/2;
+
+        % start time measure
+        startTimeBuild1 = tic;
+        
+
+        DVxval = jacobian(Vval, x);
+        DVtval = jacobian(Vval, t);
+        % re-initialize sos program
+        con1 = [sos(s2);sos(s3);sos(s4 - 0.0001);sos(s5);sos(s6);sos(s7);sos(s8)
+                sos(-(DVtval + DVxval*f + K*DVxval*g) - s2*h + s3*(Vval - gtry ));
+                sos(-s4*rT + replace(Vval,t,T) - gtry);
+                sos(uM - K + s5*(Vval - gtry ) - s6*h);
+                sos(K - um + s7*(Vval - gtry ) - s8*h)];
+
+        %  solve problem
+        sol1 = solvesos(con1,[],solverset,[c2;c3;c4;c5;c6;c7;c8]);
+
+        if sol1.problem == 0
+
+            % adapt lower interval bound
+            lb = gtry;
+
+            % store latest solution
+            gval  = gtry;
+            s3val = replace(s3,c3,value(c3));
+            s5val = replace(s5,c5,value(c5));
+            s7val = replace(s7,c7,value(c7));
+            Kval = replace(K,k,value(k));
+
+        else
+            % adapt upper interval bound
+            ub = gtry;
+        end
+
+
+        % buildTime is total time spend to setup constraints (i.e sos problem),
+        % do the transcription (poly --> sdp --> poly) we subtract the
+        % solver time afterwards to only consider the actual build process
+        endTimeBuild1 = [endTimeBuild1 toc(startTimeBuild1)-sol1.solvertime];
+        solverTime1   = [solverTime1 sol1.solvertime];
+		
+    end
+    toc(checkStart)
+    profile viewer
+
+    if ~isempty(gval)
+        % fprintf('gamma is %g.\n', gval)
+    else
+         disp(['Problem infeasible in gamma-step in iteration:' num2str(iter)])
+        return
+    end
+   
+
+
+	% solve V-step
+    % start time measure
+	startTimeBuild2 = tic;
+	
+
+
+    DVx = jacbobian(V, x);
+    DVt = jacbobian(V, t);
+
+    % re-initialize sos program
+	con2 = [sos(s1);sos(s2);sos(s6);sos(s8);sos(s4-0.0001 )
+			sos(-(DVt + DVx*f + Kval*DVx*g) - s2*h + s3val*(V - gval));
+			sos(-s4*rT + replace(V,t,T) - gval);
+            sos(uM - Kval + s5val*(V - gval) - s6*h);
+            sos(Kval - um + s7val*(V - gval) - s8*h);
+            -(replace(V,t,0)-gval) + s1*(replace(Vval,t,0)-gval)
+			];
+	
+	
+	% solve sos problem
+	sol2 = solvesos(con2,[],solverset,[cv1;c1;c2;c4;c6;c8]);
+	
+    endTimeBuild2(iter) = toc(startTimeBuild2)-sol2.solvertime;
+	solverTime2         = [solverTime2 sol2.solvertime];
+	
+	if sol2.problem == 0
+            % extract solution 
+		    Vval = replace(V,cv1,double(cv1));
+
+	        % print progress
+			fprintf('Iteration %d: , g = %g.\n',iter,full(gval));
+	
+	
+	else
+		disp(['Problem infeasible in V-step in iteration:' num2str(iter)])
+		break
+	end
+   
+   % check convergence
+   % if ~isempty(bval_old)
+   %      if abs(full(bval-bval_old)) <= 1e-3
+   %          break
+   %      else
+   %          bval_old = bval;
+   %      end
+   %  else
+   %      bval_old = bval;
+   %  end
+
+
+end % end for-loop
+
+
+buildTime  = sum(endTimeBuild1) + sum(endTimeBuild2);
+solverTime = sum(solverTime1)   + sum(solverTime2) ;
+ 
+
+end % end of function
