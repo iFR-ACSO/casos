@@ -84,6 +84,7 @@ sdp.x = [Qvar_sdp; Qcon_G];
 sdp.f = sdp_f;
 sdp.g = sdp_g - blkdiag(sparse(nnz_lin_g,0), Mp_g)*Qcon_G;
 sdp.p = Qpar;
+
 % store derivatives
 sdp.derivatives.Hf = blockcat(map'*sdp_Hf*map, ...
                               sparse(nnz_lin_x+nnz_gram_x,nnz_gram_g), ...
@@ -97,16 +98,18 @@ sdpopt = opts.sdpsol_options;
 
 % define the cones in the sdp level
 sdpopt.Kx.lin = nnz_lin_x;
-if Ns~=0 || Ms~=0
-sdpopt.Kx.psd = [Ksdp_x_s(1:Ns); Ksdp_g_s(1:Ms)];
-end
-if Nds~=0 || Mds~=0
-sdpopt.Kx.dd = [Ksdp_x_s(Ns+1:Nds+Ns); Ksdp_g_s(Ms+1:Mds+Ms)];
-end
-if Nsds~=0 || Msds~=0
-sdpopt.Kx.sdd = [Ksdp_x_s(Nds+Ns+1:end); Ksdp_g_s(Mds+Ms+1:end)];  
-end
 
+% Split the matrices using mat2cell
+cellArray_x = mat2cell(Ksdp_x_s, [Ns Nds Nsds], 1);
+cellArray_g = mat2cell(Ksdp_g_s, [Ms Mds Msds], 1);
+
+% concatenate
+temp_split = cellfun(@(x, g) [x; g], cellArray_x , cellArray_g, 'UniformOutput', false);
+
+% assign to struct fields
+[sdpopt.Kx.psd, sdpopt.Kx.dd, sdpopt.Kx.sdd] = deal(temp_split{:});
+
+% assign number of linear cones in constraints
 sdpopt.Kc = struct('lin', nnz_lin_g + nnz_sos_g);
 
 % initialize SDP solver
