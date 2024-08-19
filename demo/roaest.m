@@ -1,56 +1,82 @@
-% Validate stability with LF candidate.
+% Estimate region of attraction by V-s-iteration and bisection.
 
 % system states
-x = casos.PS('x',2,1);
+x = casos.Indeterminates('x',2);
+
 % system dynamics
 f = [-x(2); x(1) + (x(1)^2 - 1)*x(2)];
+
 % Lyapunov function candidate
-V = 1.5*x(1)^2 - x(1)*x(2) + x(2)^2;
-% derivative w.r.t. time
-Vdot = nabla(V,x)*f;
+Vval = 1.5*x(1)^2 - x(1)*x(2) + x(2)^2;
+p = x'*x;
+
+% Lyapunov function candidate
+V = casos.PS.sym('v',monomials(x,2));
+
 % SOS multiplier
-s = casos.PS.sym('q',monomials(x,0:1),'gram');
+s1 = casos.PS.sym('s1',monomials(x,1),'gram');
+s2 = casos.PS.sym('s2',monomials(x,0),'gram');
+
 % enforce positivity
 l = 1e-6*(x'*x);
+
 % level of stability
 g = casos.PS.sym('g');
+b = casos.PS.sym('b');
 
-%% Bisection
-% define SOS feasibility
-sos = struct('x',s,'g',s*(V-g)-Vdot-l,'p',g);
+% options
+opts = struct('sossol','sedumi');
+
+%% Setup solver
+% solver 1: gamma-step
+sos1 = struct('x',s1,'f',-g,'p',V);
+sos1.('g') = s1*(V-g)-nabla(V,x)*f-l;
+
 % states + constraint are SOS cones
-opts.Kx.s = 1; opts.Kc.s = 1;
-% ignore infeasibility
-opts.error_on_fail = false;
+opts.Kx = struct('sos', 1);
+opts.Kc = struct('sos', 1);
 
-% solve by relaxation to SDP
-S = casos.sossol('S','sedumi',sos,opts);
+S1 = casos.qcsossol('S1','bisection',sos1,opts);
 
-% find largest stable level set
-lb = 0; ub = 10;
-% bisection
-while (ub - lb > 1e-1)
-    ptry = (lb+ub)/2;
+% solver 2: beta-step
+sos2 = struct('x',s2,'f',-b,'p',[V;g]);
+sos2.('g') = s2*(p-b)+g-V;
 
-    % evaluate parametrized SOS problem
-    sol = S('p',ptry);
+% states + constraint are SOS cones
+opts.Kx = struct('sos', 1);
+opts.Kc = struct('sos', 1);
 
-    switch (S.stats.UNIFIED_RETURN_STATUS)
-        case 'SOLVER_RET_SUCCESS', lb = ptry;
-        case {'SOLVER_RET_INFEASIBLE' 'SOLVER_RET_NAN'}, ub = ptry;
-        otherwise, error('Failed.')
-    end
+S2 = casos.qcsossol('S2','bisection',sos2,opts);
+
+% solver 3: V-step
+sos3 = struct('x',V,'p',[b,g,s1,s2]);
+sos3.('g') = [V-l; s2*(p-b)+g-V; s1*(V-g)-nabla(V,x)*f-l];
+
+opts = struct;
+opts.Kx = struct('sos', 0, 'lin', 1); 
+opts.Kc = struct('sos', 3);
+
+S3 = casos.sossol('S','sedumi',sos3,opts);
+
+%% V-s-iteration
+for iter = 1:10
+
+    % gamma step
+    sol1 = S1('p',Vval);
+
+    gval = -sol1.f;
+    s1val = sol1.x;
+
+    % beta step
+    sol2 = S2('p',[Vval;gval]);
+
+    bval = -sol2.f;
+    s2val = sol2.x;
+
+    % V-step
+    sol3 = S3('p',[bval,gval,s1val,s2val]);
+
+    Vval = sol3.x;
+
+    fprintf('Iteration %d: b = %g, g = %g.\n',iter,full(bval),full(gval));
 end
-
-fprintf('Maximal stable level set is %g.\n', lb)
-
-%% Quasiconvex optimization
-% define quasiconvex SOS problem
-qcsos = struct('x',s,'f',-g,'g',s*(V-g)-Vdot-l);
-
-% solve by bisection
-S = casos.qcsossol('S','bisection',qcsos,opts);
-% evaluate
-sol = S();
-
-fprintf('Minimum is %g.\n', double(sol.f))

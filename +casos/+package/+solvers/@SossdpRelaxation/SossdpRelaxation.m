@@ -4,20 +4,18 @@ classdef SossdpRelaxation < casos.package.solvers.SosoptCommon & matlab.mixin.Co
 properties (Access=private)
     sdpsolver;
 
-    gram_x;
-    gram_g;
-
-    basis_x_out;
-    basis_g_out;
+    gram2sos;
 end
 
 properties (Constant,Access=protected)
     sossdp_options = [casos.package.solvers.SosoptCommon.sosopt_options
         {'sdpsol_options', 'Options to be passed to the SDP solver.'}
     ];
+
+    allow_eval_on_basis = true;
 end
 
-properties (SetAccess=protected)
+properties (SetAccess=private)
     class_name = 'SossdpRelaxation';
 end
 
@@ -28,12 +26,17 @@ methods (Static)
     end
 end
 
-methods
-    out = call(obj,in);
+methods (Access=protected)
+    % internal evaluation
+    out = eval_on_basis(obj,in);
+end
 
+methods
     function obj = SossdpRelaxation(name,solver,sos,varargin)
         obj@casos.package.solvers.SosoptCommon(name,sos,varargin{:});
 
+        % default options
+        if ~isfield(obj.opts,'sdpsol_options'), obj.opts.sdpsol_options = struct; end
         % pass options to sdpsol
         if ~isfield(obj.opts.sdpsol_options,'error_on_fail')
             obj.opts.sdpsol_options.error_on_fail = obj.opts.error_on_fail;
@@ -90,13 +93,13 @@ methods (Access={?casos.package.functions.FunctionCommon, ?casos.package.functio
 
         % project to basis
         [Qin,Zin] = poly2basis(expr_in);
-        Qout = poly2basis(expr_out,obj.monom_p);
+        Qout = poly2basis(expr_out,obj.sparsity_p);
 
         % substitute
         S = copy(obj);
         S.sdpsolver = substitute(obj.sdpsolver,idx,Qin,Qout);
         % store new basis
-        S.monom_p = Zin;
+        S.sparsity_p = Zin;
     end
 end
 

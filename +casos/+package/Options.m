@@ -7,7 +7,7 @@ end
 
 methods
     function obj = Options(args)
-        % Create new Options instance from cell or struct.
+        % Create new Options instance from cell.
         if nargin < 1
             % nothing to do
         elseif isa(args,'casos.package.Options')
@@ -36,7 +36,7 @@ methods
 
     function str = info(obj,name)
         % Return description for option
-        assert(has(obj,name), 'Unkown option "%s".',name);
+        assert(has(obj,name), 'Unknown option "%s".',name);
         % description
         str = obj.entries(name,:).description{:};
     end
@@ -47,7 +47,7 @@ methods
         % check if options exist
         tf = cellfun(@(fn) has(obj,fn), fn_opts);
         % throw error
-        assert(all(tf), 'Unkown option "%s".', fn_opts{find(~tf,1)});
+        assert(all(tf), 'Unknown option "%s".', fn_opts{find(~tf,1)});
     end
 
     function print_all(obj)
@@ -57,13 +57,13 @@ methods
 
     function print_one(obj,name)
         % Print one option.
-        assert(has(obj,name), 'Unkown option "%s".',name)
+        assert(has(obj,name), 'Unknown option "%s".',name)
         % disply single option
         disp(obj.entries(name,:))
     end
 
     function disp(obj)
-        % Display Options.
+        % Display options.
         disp(obj.entries)
     end
 end

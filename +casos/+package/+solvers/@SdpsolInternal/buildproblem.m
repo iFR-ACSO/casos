@@ -29,23 +29,23 @@ sz_g = size(gx);
 
 % ensure cone has default value
 if ~isfield(opts,'Kx')
-    opts.Kx.l = prod(sz_x);
-elseif ~isfield(opts.Kx,'l')
-    opts.Kx.l = 0; 
+    opts.Kx.lin = prod(sz_x);
+elseif ~isfield(opts.Kx,'lin')
+    opts.Kx.lin = 0; 
 end
 if ~isfield(opts,'Kc')
-    opts.Kc.l = prod(sz_g);
-elseif ~isfield(opts.Kc,'l')
-    opts.Kc.l = 0;
+    opts.Kc.lin = prod(sz_g);
+elseif ~isfield(opts.Kc,'lin')
+    opts.Kc.lin = 0;
 end
 
 % linear variables
-Nx_l = opts.Kx.l;
+Nx_l = opts.Kx.lin;
 % cone variables
 Nx_c = prod(sz_x) - Nx_l;
 
 % linear constraints
-Ng_l = opts.Kc.l;
+Ng_l = opts.Kc.lin;
 % cone constraints
 Ng_c = prod(sz_g) - Ng_l;
 
@@ -71,12 +71,18 @@ cost = casadi.MX.sym('cost');
 lam_a = casadi.MX.sym('lam_a',sz_g);
 lam_x = casadi.MX.sym('lam_x',sz_x);
 
+% options for Casadi functions
+% NOTE: As per Casadi v3.6.5, functions' input and output names 
+% must be mutually exclusive unless explicity permitted.
+fopt = struct('allow_duplicate_io_names',true);
+
 % input function
 obj.fhan = casadi.Function('f', ...
             {x0 p lbx ubx cbx lbg ubg cbg lam_x0 lam_g0}, ...
             {Hp gp Ap Bp{1}+lbg Bp{1}+ubg Bp{2}+cbg lbx ubx cbx x0 lam_x0 lam_g0}, ...
             {'x0' 'p' 'lbx' 'ubx' 'cbx' 'lbg' 'ubg' 'cbg' 'lam_x0' 'lam_g0'}, ...
-            {'h' 'g' 'a' 'lba' 'uba' 'cba' 'lbx' 'ubx' 'cbx' 'x0' 'lam_x0' 'lam_a0'} ...
+            {'h' 'g' 'a' 'lba' 'uba' 'cba' 'lbx' 'ubx' 'cbx' 'x0' 'lam_x0' 'lam_a0'}, ...
+            fopt ...
 );
 
 % output function
@@ -84,7 +90,8 @@ obj.ghan = casadi.Function('g', ...
             {p x cost lam_a lam_x}, ...
             {x fx gx lam_x lam_a nan(size(p))}, ...
             {'p' 'x' 'cost' 'lam_a' 'lam_x'}, ...
-            {'x' 'f' 'g' 'lam_x' 'lam_g' 'lam_p'} ...
+            {'x' 'f' 'g' 'lam_x' 'lam_g' 'lam_p'}, ...
+            fopt ...
 );
 
 % TODO:

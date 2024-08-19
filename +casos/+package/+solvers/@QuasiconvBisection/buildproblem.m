@@ -21,10 +21,10 @@ n = length(qcsos.x);
 m = length(qcsos.g);
 
 % get cone dimensions
-if isfield(opts.Kx,'l'), Nl = opts.Kx.l; else, Nl = 0; end
-if isfield(opts.Kx,'s'), Ns = opts.Kx.s; else, Ns = 0; end
-if isfield(opts.Kc,'l'), Ml = opts.Kc.l; else, Ml = 0; end
-if isfield(opts.Kc,'s'), Ms = opts.Kc.s; else, Ms = 0; end
+Nl = get_dimension(obj.get_cones,opts.Kx,'lin');
+Ns = get_dimension(obj.get_cones,opts.Kx,'sos');
+Ml = get_dimension(obj.get_cones,opts.Kc,'lin');
+Ms = get_dimension(obj.get_cones,opts.Kc,'sos');
 
 assert(n == (Nl + Ns), 'Dimension of Kx must be equal to number of variables (%d).', n);
 assert(m == (Ml + Ms), 'Dimension of Kc must be equal to number of constraints (%d).', m)
@@ -41,19 +41,21 @@ sos.p = [qcsos.p; dvar];
 
 % SOS options
 sosopt = opts.sossol_options;
-sosopt.Kx = struct('l',Nl,'s',Ns);
-sosopt.Kc = struct('l',Ml,'s',Ms);
+sosopt.Kx = struct('lin',Nl,'sos',Ns);
+sosopt.Kc = struct('lin',Ml,'sos',Ms);
 sosopt.error_on_fail = false;
 
 % initialize convex SOS solver
-obj.sossolver = casos.package.solvers.SossolInternal('SOS',opts.sossol,sos,sosopt);
+obj.sossolver = casos.package.solvers.sossolInternal('SOS',opts.sossol,sos,sosopt);
 
 % store basis
-obj.monom_xl = basis(qcsos.x,~Is);
-obj.monom_xs = basis(qcsos.x, Is);
-obj.monom_p  = basis(qcsos.p);
-obj.monom_f  = basis(qcsos.f);
-obj.monom_gl = basis(qcsos.g,~Js);
-obj.monom_gs = basis(qcsos.g, Js);
+obj.sparsity_x  = obj.sossolver.sparsity_x;
+obj.sparsity_xl = obj.sossolver.sparsity_xl;
+obj.sparsity_xs = obj.sossolver.sparsity_xs;
+obj.sparsity_p  = sparsity(qcsos.p);
+obj.sparsity_f  = sparsity(qcsos.f);
+obj.sparsity_g  = obj.sossolver.sparsity_g;
+obj.sparsity_gl = obj.sossolver.sparsity_gl;
+obj.sparsity_gs = obj.sossolver.sparsity_gs;
 
 end

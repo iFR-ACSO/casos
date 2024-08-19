@@ -62,16 +62,16 @@ Kx = opts.Kx;
 Kc = opts.Kc;
 
 % number of variables per cone type
-Nx.l = (obj.getdimc(Kx,'l'));
-Nx.q = (obj.getdimc(Kx,'q'));
-Nx.r = (obj.getdimc(Kx,'r'));
-Nx.s = (obj.getdimc(Kx,'s'));
+Nx.l = (obj.getdimc(Kx,'lin'));
+Nx.q = (obj.getdimc(Kx,'lor'));
+Nx.r = (obj.getdimc(Kx,'rot'));
+Nx.s = (obj.getdimc(Kx,'psd'));
 
 % number of constraints per cone type
-Na.l = (obj.getdimc(Kc,'l'));
-Na.q = (obj.getdimc(Kc,'q'));
-Na.r = (obj.getdimc(Kc,'r'));
-Na.s = (obj.getdimc(Kc,'s'));
+Na.l = (obj.getdimc(Kc,'lin'));
+Na.q = (obj.getdimc(Kc,'lor'));
+Na.r = (obj.getdimc(Kc,'rot'));
+Na.s = (obj.getdimc(Kc,'psd'));
 
 % number of vector-valued variables
 Nx_v = n - sum(Nx.s.^2);
@@ -214,10 +214,14 @@ else
     acc_cost = [];
 end
 
+% options for Casadi functions
+% NOTE: As per Casadi v3.6.5, functions' input and output names 
+% must be mutually exclusive unless explicity permitted.
+fopt = struct('allow_duplicate_io_names',true);
 % return MOSEK prob structure
-obj.fhan = casadi.Function('f',struct2cell(obj.args_in),struct2cell(prob),fieldnames(obj.args_in),fieldnames(prob));
+obj.fhan = casadi.Function('f',struct2cell(obj.args_in),struct2cell(prob),fieldnames(obj.args_in),fieldnames(prob),fopt);
 % return bar values
-obj.barv = casadi.Function('v',struct2cell(obj.args_in),struct2cell(barv),fieldnames(obj.args_in),fieldnames(barv));
+obj.barv = casadi.Function('v',struct2cell(obj.args_in),struct2cell(barv),fieldnames(obj.args_in),fieldnames(barv),fopt);
 
 % build conic information
 Accs = [

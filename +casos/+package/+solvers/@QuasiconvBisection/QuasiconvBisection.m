@@ -8,6 +8,8 @@ properties (Access=private)
 
     info = struct('iter',[]);
     status = casos.package.UnifiedReturnStatus.SOLVER_RET_UNKNOWN;
+
+    log;
 end
 
 properties (Constant,Access=protected)
@@ -17,11 +19,14 @@ properties (Constant,Access=protected)
          'sossol', 'The convex sum-of-squares solver to be used in the bisection.'
          'sossol_options', 'Options to be passed to the SOS solver.'
          'tolerance_abs', 'Absolute tolerance for stopping criterion.'
-         'tolerance_rel', 'Relative tolerance for stopping criterion.'}
+         'tolerance_rel', 'Relative tolerance for stopping criterion.'
+         'verbose', 'Turn on/off iteration display.'}
     ];
+
+    allow_eval_on_basis = true;
 end
 
-properties (SetAccess=protected)
+properties (SetAccess=private)
     class_name = 'QuasiconvBisection';
 end
 
@@ -32,9 +37,12 @@ methods (Static)
     end
 end
 
-methods
-    out = call(obj,in);
+methods (Access=protected)
+    % internal evaluation
+    argout = eval_on_basis(obj,argin);
+end
 
+methods
     function obj = QuasiconvBisection(name,sos,varargin)
         obj@casos.package.solvers.SosoptCommon(name,sos,varargin{:});
     
@@ -74,6 +82,14 @@ methods
         if ~isfield(obj.opts,'max_iter'), obj.opts.max_iter = 1000; end
         if ~isfield(obj.opts,'tolerance_abs'), obj.opts.tolerance_abs = 1e-3; end
         if ~isfield(obj.opts,'tolerance_rel'), obj.opts.tolerance_rel = 1e-3; end
+        % set up logger
+        if ~isfield(obj.opts,'verbose') || ~obj.opts.verbose
+            % no display
+            obj.log = casos.package.Logger.Off;
+        else
+            % display debug messages
+            obj.log = casos.package.Logger.Debug;
+        end
     
         % build SOS problem
         buildproblem(obj,sos);
