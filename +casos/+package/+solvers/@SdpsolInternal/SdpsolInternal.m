@@ -10,16 +10,12 @@ end
 
 properties (Access=private)
     solver;
+    map;    % maps from the relaxed sdp and the orignal sdp
 end
 
 properties (Access=protected)
     fhan;
     ghan;
-end
-
-% maps from the relaxed sdp and the orignal sdp
-properties (Access=public)
-    map;
 end
 
 methods (Access=private)
