@@ -1,4 +1,4 @@
-function Lz = newton_reduce(Pdegmat, Zdegmat)
+function Lz = newton_reduce(obj, Pdegmat, Zdegmat)
 % removes monomials outside half Newton polytope
 
 % options for linprog
@@ -45,5 +45,5 @@ for i = 1:length(keep)
 end
 
 Lz = ~dontkeep;
-
+Lz = sparse(Lz);
 end
