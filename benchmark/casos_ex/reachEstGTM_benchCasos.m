@@ -96,7 +96,7 @@ b = casos.PS.sym('b');
 
 T = 3;
 % t = casos.PS.sym('t');
-h = casos.PS(t*(T-t));
+h = casos.PS(1*t*(T-t*1));
 
 % options
 opts               = struct('sossol','mosek');

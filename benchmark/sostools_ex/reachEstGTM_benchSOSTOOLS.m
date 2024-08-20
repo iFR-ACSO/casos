@@ -140,7 +140,7 @@ for iter = 1:10
 
         %  call solver
         solver_opt.solver = 'mosek';
-        solver_opt.simplify = 'on';
+        % solver_opt.simplify = 'on';
         [prog1,~] = sossolve(prog1,solver_opt);
     
         % check if feasible
@@ -205,7 +205,7 @@ for iter = 1:10
     
     %  call solver
     solver_opt.solver = 'mosek';
-    solver_opt.simplify = 'on';
+    % solver_opt.simplify = 'on';
     [prog2,~] = sossolve(prog2,solver_opt);
 
 	
