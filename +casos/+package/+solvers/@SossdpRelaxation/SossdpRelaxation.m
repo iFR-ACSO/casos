@@ -37,6 +37,7 @@ methods
 
         % default options
         if ~isfield(obj.opts,'sdpsol_options'), obj.opts.sdpsol_options = struct; end
+        if ~isfield(obj.opts,'newton'), obj.opts.newton = 0; end
         % pass options to sdpsol
         if ~isfield(obj.opts.sdpsol_options,'error_on_fail')
             obj.opts.sdpsol_options.error_on_fail = obj.opts.error_on_fail;
