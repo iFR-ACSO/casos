@@ -1,4 +1,4 @@
-function [K,S] = generate_nlink_pendulum(n, deg)
+function [K,S] = generate_nlink_pendulum(n, deg, only_poly)
 
 % Parameters
 m = 1;       % Mass of each link (kg)
@@ -63,7 +63,7 @@ u = [zeros(1,1), tau];  % Control inputs (tau_1 = 0 for the unactuated joint)
 
 % Resolve system dynamics
 % M * ddtheta + C * dtheta + G = B * tau
-M = jacobian(eqns, ddtheta);
+M = simplify(jacobian(eqns, ddtheta));
 
 AUX = arrayfun(@(idx) diff(M,theta(idx))*dtheta(idx), 1:n, 'UniformOutput', false);
 totalSum = 0;
@@ -75,7 +75,18 @@ C = jacobian(eqns, dtheta)-0.5*totalSum;
 G = subs(eqns, [ddtheta dtheta], zeros(1,2*n));
 
 % Solving for ddtheta
-ddtheta_sol = M \ (u' - C*dtheta' - G');
+if only_poly == 0
+    tic
+    ddtheta_sol = M \ (u' - C*dtheta' - G');
+    toc
+else
+    tic
+    % approximate by a polynomial 
+    temp_inv = taylor(u' - C*dtheta' - G', [theta, dtheta], 'Order', deg+1, 'ExpansionPoint', zeros(1, 2*n));
+    M = taylor(M, [theta, dtheta], 'Order', deg+1, 'ExpansionPoint', zeros(1, 2*n));
+    ddtheta_sol = simplify(M) \ simplify(temp_inv);
+    toc
+end
 
 % State derivatives
 f(1:n) = dtheta';          % dtheta/dt = dtheta
