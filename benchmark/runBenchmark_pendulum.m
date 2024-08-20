@@ -12,6 +12,8 @@ deg  = 2;
 % solve N-link Pendulum ROA with CaSoS
 [solverTimes_c,buildTimes_c,gval_arr_c] = roaEstNlinkPend_benchCasos(Nmax,deg);
 
+
+
 % solve N-link Pendulum ROA with SPOTless
 [solverTimes_sp,buildTimes_sp,gval_arr_sp]= roaEstNlinkPend_benchSPOTless(Nmax,deg);
 
