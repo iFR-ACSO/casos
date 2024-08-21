@@ -18,11 +18,11 @@ P = [395.382671347059	-23.0032507976836	3.16965275615691	29.2992065909380
 Vval = x'*P*x;
 
 % Lyapunov function candidate
-V = casos.PS.sym('v',monomials(x,2));
+V = casos.PS.sym('v',monomials(x,2:4));
 
 % SOS multiplier
-s1 = casos.PS.sym('s1',monomials(x,0:2),'gram');
-s2 = casos.PS.sym('s2',monomials(x,0:2),'gram');
+s1 = casos.PS.sym('s1',monomials(x,1:2),'gram');
+s2 = casos.PS.sym('s2',monomials(x,1:2),'gram');
 
 % enforce positivity
 l = 1e-6*(x'*x);
@@ -32,7 +32,7 @@ g = casos.PS.sym('g');
 b = casos.PS.sym('b');
 
 % options
-opts = struct('sossol','sedumi');
+opts = struct('sossol','mosek');
 
 %% setup solver
 
@@ -64,10 +64,10 @@ opts = struct;
 opts.Kx = struct('sos', 0, 'lin', 1); 
 opts.Kc = struct('sos', 3);
 
-S3 = casos.sossol('S','sedumi',sos3,opts);
+S3 = casos.sossol('S','mosek',sos3,opts);
 
 %% gamma-beta-V-iteration
-
+tic
 for iter = 1:10
 
     % gamma step
@@ -87,9 +87,12 @@ for iter = 1:10
 
 
     Vval = sol3.x;
+    
+
+    fprintf('Iteration %d: b = %g, g = %g.\n',iter,full(bval),full(gval));
 
 end
-
+toc
 %% plot stable level set
 
 figure

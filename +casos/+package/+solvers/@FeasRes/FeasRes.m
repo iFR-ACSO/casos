@@ -27,7 +27,7 @@ properties (Access=private)
  
 
     % constraint violation
-    projConPara 
+    proj_conFun 
 
     % Langrangian
     nabla_xi_L_norm

@@ -117,12 +117,12 @@ opts.Kc      = struct('sos', length(sos.g));
 opts.verbose = 1;
 
 
-% profile on
+profile on
 buildTime_in = tic;
     solver_Satellite6D  = casos.nlsossol('S','sequential',sos,opts);
 buildtime = toc(buildTime_in);
 
-% profile viewer
+profile viewer
 % solve problem
 sol = solver_Satellite6D ('x0' ,[Vinit; (x'*x)]);
 disp(['Solver buildtime: ' num2str(buildtime), ' s'])

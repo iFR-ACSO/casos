@@ -189,7 +189,7 @@ sos.('g') = [s2;
 % states + constraint are linear/SOS cones
 opts.Kx = struct('lin', 2);
 opts.Kc = struct('sos', 3);
-profile on
+
 % build sequential solver
 buildTime_in = tic;
     solver_GTM2D_ROA  = casos.nlsossol('S','sequential',sos,opts);
@@ -199,10 +199,6 @@ buildtime = toc(buildTime_in);
 
 sol = solver_GTM2D_ROA('x0',[ Vinit;  x'*x]); 
 disp(['Solver buildtime: ' num2str(buildtime), ' s'])
-
-profile viewer
-
-
 
 totalTime = buildtime + solver_GTM2D_ROA.stats.iter{end}.seqSOS_common_stats.solve_time;
 

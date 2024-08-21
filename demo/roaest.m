@@ -26,7 +26,7 @@ b = casos.PS.sym('b');
 
 % options
 opts = struct('sossol','sedumi');
-
+tic
 %% Setup solver
 % solver 1: gamma-step
 sos1 = struct('x',s1,'f',-g,'p',V);
@@ -80,3 +80,4 @@ for iter = 1:10
 
     fprintf('Iteration %d: b = %g, g = %g.\n',iter,full(bval),full(gval));
 end
+toc

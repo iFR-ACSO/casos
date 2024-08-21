@@ -140,7 +140,7 @@ opts = struct('sossol','mosek');
 
 gam = 1;
 
-g = Vinit-0.8; 
+g = Vinit-1; 
 
 cost = dot(g - (V-gam), g - (V-gam));
 
@@ -187,3 +187,4 @@ g = subs(g,[x(2);x(3)],xD(2:3));
 figure()
 hold on
 pcontour(V, gam, [-1 1 -4 4], 'b-');
+pcontour(g, 0, [-1 1 -4 4], 'k-');
