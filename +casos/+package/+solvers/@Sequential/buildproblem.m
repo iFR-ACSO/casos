@@ -252,7 +252,7 @@ else
     
     if ~isempty(s)
         
-        conFun = casos.Function('g1',{nlsos.x,p0},{nlsos.g(I==1)});
+        % conFun = casos.Function('g1',{nlsos.x,p0},{nlsos.g(I==1)});
         
         % projection error
         e = s - nlsos.g(I==1);
@@ -260,7 +260,7 @@ else
         
         % define Q-SOS problem parameterized nonlinear constraints
         %   min ||s-p||^2  s.t. s is SOS
-        proj_sos = struct('x',s,'g',s,'f',dot(e,e),'p',[xi_k;p0]);
+        proj_sos = struct('x',s,'g',s,'f',dot(e,e),'p',[nlsos.x;p0]);
         
         opts               = [];
         opts.Kx            = struct('lin', length(s));

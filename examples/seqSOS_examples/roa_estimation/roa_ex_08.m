@@ -83,7 +83,7 @@ s2 = casos.PS.sym('s2',monomials(x,2));
 l = 1e-6*(x'*x);
 
 % options
-opts = struct('sossol','scs');
+opts = struct('sossol','mosek');
 
 
 g0 = 0;

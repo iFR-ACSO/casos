@@ -223,7 +223,7 @@ for i = 0:obj.opts.max_iter
 
                 info{i+1}.filter_stats.measTime_proj_out        = 0;
                 info{i+1}.filter_stats.alpha_k                  = 1;
-                info{i+1}.filter_stats.measTime                 = measTime_feasRes_out;
+                info{i+1}.filter_stats.measTime                 = 0;
                 info{i+1}.seqSOS_common_stats.delta_prim        = nan;
                 info{i+1}.seqSOS_common_stats.delta_dual        = nan;
                 info{i+1}.seqSOS_common_stats.conViol           = curr_conVio ;
@@ -582,7 +582,7 @@ for i = 0:obj.opts.max_iter
                     info{i+1}.seqSOS_common_stats.solve_time        = toc(measTime_seqSOS_in);
                     info{i+1}.filter_stats.measTime_proj_out        = 0;
                     info{i+1}.filter_stats.alpha_k                  = alpha_k;
-                    info{i+1}.filter_stats.measTime                 = measTime_feasRes_out;
+                    info{i+1}.filter_stats.measTime                 = 0;
                     info{i+1}.seqSOS_common_stats.delta_prim        = nan;
                     info{i+1}.seqSOS_common_stats.delta_dual        = nan;
                     info{i+1}.seqSOS_common_stats.conViol           = new_conVio ;
