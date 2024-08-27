@@ -266,7 +266,7 @@ else
         opts.Kx            = struct('lin', length(s));
         opts.Kc            = struct('sos', length(s));
         opts.error_on_fail = 1;
-        obj.projConPara    =  casos.sossol('S','mosek',proj_sos,opts);
+        obj.projConPara    =  casos.sossol('S','scs',proj_sos,opts);
         
         
     else
