@@ -13,12 +13,8 @@ classdef Sequential < casos.package.solvers.SosoptCommon
         zeroDsoc
         
         % feasibility restoration phase
-        solver_feas_res
-        s0
-        conVio_0
-        feas_res_cost
-        size_s
-        size_x
+        sossolver_feas
+        sizeHessian_feas
         
         % BFGS
         BFGS_fun % function to efficiently evaluate BFGS
@@ -149,7 +145,7 @@ classdef Sequential < casos.package.solvers.SosoptCommon
             if ~isfield(obj.opts,'conViolCheck'),     	obj.opts.conViolCheck       = 'projection'; end
             if ~isfield(obj.opts,'conVioSamp'),     	obj.opts.conVioSamp         = []; end
             if ~isfield(obj.opts,'indeterminates'), 	obj.opts.indeterminates     = []; end
-            if ~isfield(obj.opts,'feasRes_actv_flag'), 	obj.opts.feasRes_actv_flag	= 0; end
+            if ~isfield(obj.opts,'feasRes_actv_flag'), 	obj.opts.feasRes_actv_flag	= 1; end
             if ~isfield(obj.opts,'debugBFGS'), 		   	obj.opts.debugBFGS 			= 0; end
             
             % set up logger
