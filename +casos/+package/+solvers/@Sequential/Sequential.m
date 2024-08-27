@@ -146,11 +146,11 @@ classdef Sequential < casos.package.solvers.SosoptCommon
             if ~isfield(obj.opts,'gamma_phi'),      obj.opts.gamma_phi            = 1; end
             if ~isfield(obj.opts,'delta '),         obj.opts.delta                = 1; end
             
-            if ~isfield(obj.opts,'conViolCheck'),     obj.opts.conViolCheck       = 'projection'; end
-            if ~isfield(obj.opts,'conVioSamp'),     obj.opts.conVioSamp           = []; end
-            if ~isfield(obj.opts,'indeterminates'), obj.opts.indeterminates       = []; end
-            if ~isfield(obj.opts,'feasRes_actv_flag'), obj.opts.feasRes_actv_flag = 1; end
-            if ~isfield(obj.opts,'debugBFGS'), obj.opts.debugBFGS = 0; end
+            if ~isfield(obj.opts,'conViolCheck'),     	obj.opts.conViolCheck       = 'projection'; end
+            if ~isfield(obj.opts,'conVioSamp'),     	obj.opts.conVioSamp         = []; end
+            if ~isfield(obj.opts,'indeterminates'), 	obj.opts.indeterminates     = []; end
+            if ~isfield(obj.opts,'feasRes_actv_flag'), 	obj.opts.feasRes_actv_flag	= 0; end
+            if ~isfield(obj.opts,'debugBFGS'), 		   	obj.opts.debugBFGS 			= 0; end
             
             % set up logger
             if ~isfield(obj.opts,'verbose') || ~obj.opts.verbose
