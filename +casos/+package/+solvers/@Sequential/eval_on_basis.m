@@ -8,9 +8,16 @@ args = argin;
 % initialize iteration info
 info = cell(1,obj.opts.max_iter);
 
-% start sequential SOS
-printf(obj.log,'debug','%-15s%-15s%-20s%-20s%-20s%-15s%-10s\n', 'Iteration', 'cost', '||pr||_inf', '||du||_inf', '||conVio||_2','alpha','||dLdx||');
-printf(obj.log,'debug','----------------------------------------------------------------------------------------------------------------------\n');
+
+printf(obj.log,'debug','------------------------------------------------------------------------------------------\n');
+printf(obj.log,'debug','\t\t Sequential Quadratic Sum-of-Squares Solver v1.0, September''24 \n');
+printf(obj.log,'debug','\t\t Institute of Flight Mechanics and Control, Univ. of Stuttgart \n');
+printf(obj.log,'debug','------------------------------------------------------------------------------------------\n');
+printf(obj.log,'debug','Problem:\n Decision variables = %d (coefficents) \n SOS constraints \t= %d \n Linear constraints = %d\n',length(args{1}), 3, 0 );
+% printf(obj.log,'debug','Settings:\n Solver:\t%s\n max_iter:\t%d \n Con. Violation Check: \t%s\n', obj.opts.sossol,obj.opts.max_iter,obj.opts.conViolCheck);
+printf(obj.log,'debug','------------------------------------------------------------------------------------------\n');
+printf(obj.log,'debug','%-8s%-15s%-15s%-15s%-15s%-10s%-10s\n', 'iter', 'obj', '||pr||_inf', '||du||_inf', '||conVio||_2','alpha','||dLdx||');
+printf(obj.log,'debug','------------------------------------------------------------------------------------------\n');
 
 % first initial guess must be provided by user!
 xi_k = args{1};
@@ -44,7 +51,6 @@ else
     curr_cost   = inf;
     
 end
-
 
 obj.Filter =  obj.Filter.initializeFilter(curr_conVio ,curr_cost);
 
@@ -114,7 +120,7 @@ for i = 0:obj.opts.max_iter
                                                    'p', [0;curr_conVio;casos.PS(polySol);obj.p0poly(p0)]);
                 
                 % check solution of feasibility restoration
-                switch (obj.solver_feas_res.stats.UNIFIED_RETURN_STATUS)
+                switch (obj.solver_feas_res.stats.UNIFIED_RETURN_STATUS_feas)
                     case UnifiedReturnStatus.SOLVER_RET_SUCCESS
                         % extract solution
                         xi_feas      = poly2basis(sol_feas_res.x(1:obj.size_x));
@@ -148,7 +154,7 @@ for i = 0:obj.opts.max_iter
                         
                         argout = sol;
                         
-                        printf(obj.log,'debug','----------------------------------------------------------------------------------------------------------------------\n');
+                        printf(obj.log,'debug','------------------------------------------------------------------------------------------\n');
                         printf(obj.log,'debug','Solution status: Problem seems infeasible\n');
                         printf(obj.log,'debug',['Solution time: ' num2str(toc(measTime_seqSOS_in)) ' s\n']);
                         
@@ -175,6 +181,7 @@ for i = 0:obj.opts.max_iter
                     
                     xi_k  = xi_feas;
                     printf(obj.log,'debug', 'Feasibility restoration iterate accepted to filter. Continue original problem \n');
+
                     continue
                     
                     
@@ -199,7 +206,7 @@ for i = 0:obj.opts.max_iter
                     
                     argout = sol;
                     
-                    printf(obj.log,'debug','----------------------------------------------------------------------------------------------------------------------\n');
+                    printf(obj.log,'debug','------------------------------------------------------------------------------------------\n');
                     printf(obj.log,'debug','Solution status: Solver stalled\n');
                     printf(obj.log,'debug',['Solution time: ' num2str(toc(measTime_seqSOS_in)) ' s\n']);
                     
@@ -211,9 +218,9 @@ for i = 0:obj.opts.max_iter
                 
             else
                 
-                printf(obj.log,'debug',['Subproblem infeasible in iteration ' num2str(i)   '. Feasibility restoration is currently turn off.\n']);
+                printf(obj.log,'debug',['Subproblem infeasible in iteration ' num2str(i)   '. Feasibility restoration is currently turned off.\n']);
                 
-                % return
+
                 info{i+1}.filter_stats.measTime_proj_out        = 0;
                 info{i+1}.filter_stats.alpha_k                  = 1;
                 info{i+1}.filter_stats.measTime                 = measTime_feasRes_out;
@@ -303,7 +310,7 @@ for i = 0:obj.opts.max_iter
                 samples = num2cell(obj.opts.conVioSamp,2);
                 
                 % evaluate
-                new_conVio = min(full(pseudo_proj(samples{:})));
+                new_conVio = min(min(full(pseudo_proj(samples{:}))));
                 
                 % if min-value is non-negative then there is no
                 % violation (based on samples)
@@ -376,12 +383,12 @@ for i = 0:obj.opts.max_iter
                 % check if new trial point can be accepted to filter
                 % and fulfills sufficient decrease conditions
                 [obj.Filter,repeat,accept_new_iter_soc] = obj.Filter.updateFilter(alpha_k,...
-                    full(casadi.DM(d_star)), ...
-                    curr_cost, ....
-                    curr_conVio,....
-                    new_cost,...
-                    new_conVio,....
-                    nabla_xi_f );
+                                                                                    full(casadi.DM(d_star)), ...
+                                                                                    curr_cost, ....
+                                                                                    curr_conVio,....
+                                                                                    new_cost,...
+                                                                                    new_conVio,....
+                                                                                    nabla_xi_f );
                 
                 if accept_new_iter_soc && ~repeat
                     
@@ -423,7 +430,7 @@ for i = 0:obj.opts.max_iter
                 
                 if ~isempty(obj.solver_feas_res)
                     printf(obj.log,'debug',['Step length below minimum step length in iteration ' num2str(i)  ...
-                        '. Go to feasibility restoration.\n']);
+                                            '. Go to feasibility restoration.\n']);
                     
                     % prepare polynomial input to high-level solver
                     polySol = obj.xk1fun(xi_k1,p0);
@@ -431,7 +438,7 @@ for i = 0:obj.opts.max_iter
                     % measure time needed in restoration
                     measTime_feasRes_in = tic;
                     
-                    zeta_val = 0;
+                    zeta_val = 0.5;
                     
                     % add the current solution to filter to ensure we are
                     % better than this point
@@ -439,45 +446,47 @@ for i = 0:obj.opts.max_iter
                     
                     
                     % solve restoration problem
-                    sol_feas_res = obj.solver_feas_res('x0',[casos.PS(polySol); ... % current solution
-                        obj.s0 ], ...          % initial guess for multiplier
-                        'p', [zeta_val; ...          % weight factor
-                        new_conVio; ...        % take current constraint violation to init. filter
-                        casos.PS(polySol); ... % current solution
-                        obj.p0poly(p0)]);      % parameter
-                    
-                    % check solution of feasibility restoration (low-level
-                    % solver
+                    sol_feas_res = obj.solver_feas_res('x0',[casos.PS(polySol); ...  % current solution
+                                                             solPara_proj.x ], ...   % initial guess for multiplier i.e. last solution from projection
+                                                        'p', [zeta_val; ...          % weight factor
+                                                              new_conVio; ...        % take current constraint violation to init. filter
+                                                              casos.PS(polySol); ... % current solution
+                                                              obj.p0poly(p0)]);      % parameter
+                                                    
+                    % check solution of feasibility restoration
                     switch (obj.solver_feas_res.stats.UNIFIED_RETURN_STATUS_feas)
                         case UnifiedReturnStatus.SOLVER_RET_SUCCESS
                             
-                            
                             % extract solution
-                            xi_feas      = poly2basis(sol_feas_res.x(1:obj.size_x));
+                            xi_feas      = sol_feas_res.x(1:obj.size_x);
                             
                             
                             % check if the new solution is acceptable to the filter
                             % of the original problem
                             measTime_Proj_in = tic;
-                            solPara_proj = obj.projConPara('p',[obj.xk1fun(xi_feas,p0);obj.p0poly(p0)]);
-                            new_conVio   = sqrt(full(solPara_proj.f));
+                                
+                                % solve for squared distance to cone
+                                solPara_proj = obj.projConPara('p',[sol_feas_res.x(1:obj.size_x);obj.p0poly(p0)]);
+
+                                % L2-norm
+                                new_conVio   = sqrt(full(solPara_proj.f));
+
                             info{i+1}.filter_stats.measTime_proj_out = toc(measTime_Proj_in);
                             
                             % check filter acceptance
                             [obj.Filter,~,accept_FeasResStep] = obj.Filter.updateFilter(alpha_k,...
-                                full(casadi.DM(xi_feas)), ...
-                                curr_cost, ....
-                                curr_conVio,....
-                                full(casadi.DM(full(obj.f(xi_feas,p0)))),...
-                                new_conVio,....
-                                full(casadi.DM(full(obj.nabla_xi_f(xi_feas,p0))))');
+                                                                                        full(casadi.DM(poly2basis(xi_feas))), ...
+                                                                                        curr_cost, ....
+                                                                                        curr_conVio,....
+                                                                                        full(casadi.DM(full(obj.f(poly2basis(xi_feas),p0)))),...
+                                                                                        new_conVio,....
+                                                                                        full(casadi.DM(full(obj.nabla_xi_f(poly2basis(xi_feas),p0))))');
                             
                             measTime_feasRes_out = toc(measTime_feasRes_in);
                             
                         otherwise
                             
-                            % feasibility restoration low-level solver
-                            % returned infeasibility
+                            % feasibility restoration returned infeasibility
                             info{i+1}.seqSOS_common_stats.solve_time = toc(measTime_seqSOS_in);
                             
                             info{i+1}.filter_stats.measTime_proj_out      = 0;
@@ -490,6 +499,7 @@ for i = 0:obj.opts.max_iter
                             info{i+1}.seqSOS_common_stats.solve_time_iter = toc(measTime_seqSOS__iter_in);
                             info(i+2:end) = [];
                             obj.info.iter = info;
+
                             obj.info.UNIFIED_RETURN_STATUS_seq = casos.package.UnifiedReturnStatus.SOLVER_RET_INFEASIBLE;
                             
                             % adjust last solution similar to iteration i.e. overwrite optimization solution
@@ -498,7 +508,7 @@ for i = 0:obj.opts.max_iter
                             
                             argout = sol;
                             
-                            printf(obj.log,'debug','----------------------------------------------------------------------------------------------------------------------\n');
+                            printf(obj.log,'debug','------------------------------------------------------------------------------------------\n');
                             printf(obj.log,'debug','Solution status: Solver stalled\n');
                             printf(obj.log,'debug',['Solution time: ' num2str(toc(measTime_seqSOS_in)) ' s\n']);
                             
@@ -518,43 +528,44 @@ for i = 0:obj.opts.max_iter
                         info{i+1}.seqSOS_common_stats.delta_prim      = nan;
                         info{i+1}.seqSOS_common_stats.delta_dual      = nan;
                         info{i+1}.seqSOS_common_stats.conViol         = new_conVio ;
-                        info{i+1}.seqSOS_common_stats.gradLang        = full(casadi.DM(full(obj.nabla_xi_L_norm(xi_feas,dual_star,p0))));
+                        info{i+1}.seqSOS_common_stats.gradLang        = full(casadi.DM(full(obj.nabla_xi_L_norm(poly2basis(xi_feas),dual_star,p0))));
                         
                         info{i+1}.seqSOS_common_stats.solve_time_iter = toc(measTime_seqSOS__iter_in);
                         
-                        xi_k  = xi_feas;
+                        xi_k  = poly2basis(xi_feas);
                         
                         printf(obj.log,'debug', 'Feasibility restoration iterate accepted to filter. Continue original problem \n');
-                        % flag to restart actual optimization from new
-                        % iterate
+
+                        % flag to restart actual optimization from new iterate
                         feasResdone = 1;
+
                         break
                         
                         
                     else
                         % we are not acceptable to filter after feasibility
                         % restoration
-                        info{i+1}.seqSOS_common_stats.solve_time = toc(measTime_seqSOS_in);
-                        
-                        info{i+1}.filter_stats.measTime_proj_out      = 0;
-                        info{i+1}.filter_stats.alpha_k                = alpha_k;
-                        info{i+1}.filter_stats.measTime               = measTime_feasRes_out;
-                        info{i+1}.seqSOS_common_stats.delta_prim      = nan;
-                        info{i+1}.seqSOS_common_stats.delta_dual      = nan;
-                        info{i+1}.seqSOS_common_stats.conViol         = new_conVio ;
-                        info{i+1}.seqSOS_common_stats.gradLang        = full(casadi.DM(full(obj.nabla_xi_L_norm(xi_feas,dual_star,p0))));
-                        info{i+1}.seqSOS_common_stats.solve_time_iter  = toc(measTime_seqSOS__iter_in);
+                        info{i+1}.seqSOS_common_stats.solve_time        = toc(measTime_seqSOS_in);
+                        info{i+1}.filter_stats.measTime_proj_out        = 0;
+                        info{i+1}.filter_stats.alpha_k                  = alpha_k;
+                        info{i+1}.filter_stats.measTime                 = measTime_feasRes_out;
+                        info{i+1}.seqSOS_common_stats.delta_prim        = nan;
+                        info{i+1}.seqSOS_common_stats.delta_dual        = nan;
+                        info{i+1}.seqSOS_common_stats.conViol           = new_conVio ;
+                        info{i+1}.seqSOS_common_stats.gradLang          = full(casadi.DM(full(obj.nabla_xi_L_norm(poly2basis(xi_feas),dual_star,p0))));
+                        info{i+1}.seqSOS_common_stats.solve_time_iter   = toc(measTime_seqSOS__iter_in);
+
                         info(i+2:end) = [];
                         obj.info.iter = info;
+
                         obj.info.UNIFIED_RETURN_STATUS_seq = casos.package.UnifiedReturnStatus.SOLVER_RET_INFEASIBLE;
                         
-                        
-                        sol{1} = xi_feas;
+                        sol{1} = poly2basis(xi_feas);
                         sol{5} = dual_k1;
                         
                         argout = sol;
                         
-                        printf(obj.log,'debug','----------------------------------------------------------------------------------------------------------------------\n');
+                        printf(obj.log,'debug','------------------------------------------------------------------------------------------\n');
                         printf(obj.log,'debug','Solution status: Solver stalled\n');
                         printf(obj.log,'debug',['Solution time: ' num2str(toc(measTime_seqSOS_in)) ' s\n']);
                         
@@ -567,18 +578,20 @@ for i = 0:obj.opts.max_iter
                     % no feasibility restoration phase active
                     printf(obj.log,'debug',['Step length below minimum step length in iteration ' num2str(i)  '. Feasibility restoration is currently turn off.\n']);
                     
-                    info{i+1}.seqSOS_common_stats.solve_time = toc(measTime_seqSOS_in);
-                    
-                    info{i+1}.filter_stats.measTime_proj_out      = 0;
-                    info{i+1}.filter_stats.alpha_k                = alpha_k;
-                    info{i+1}.filter_stats.measTime               = measTime_feasRes_out;
-                    info{i+1}.seqSOS_common_stats.delta_prim      = nan;
-                    info{i+1}.seqSOS_common_stats.delta_dual      = nan;
-                    info{i+1}.seqSOS_common_stats.conViol         = new_conVio ;
-                    info{i+1}.seqSOS_common_stats.gradLang        = full(casadi.DM(full(obj.nabla_xi_L_norm(xi_feas,dual_star,p0))));
-                    info{i+1}.seqSOS_common_stats.solve_time_iter  = toc(measTime_seqSOS__iter_in);
+                    % prepare output of additional metrics
+                    info{i+1}.seqSOS_common_stats.solve_time        = toc(measTime_seqSOS_in);
+                    info{i+1}.filter_stats.measTime_proj_out        = 0;
+                    info{i+1}.filter_stats.alpha_k                  = alpha_k;
+                    info{i+1}.filter_stats.measTime                 = measTime_feasRes_out;
+                    info{i+1}.seqSOS_common_stats.delta_prim        = nan;
+                    info{i+1}.seqSOS_common_stats.delta_dual        = nan;
+                    info{i+1}.seqSOS_common_stats.conViol           = new_conVio ;
+                    info{i+1}.seqSOS_common_stats.gradLang          = full(casadi.DM(full(obj.nabla_xi_L_norm(xi_feas,dual_star,p0))));
+                    info{i+1}.seqSOS_common_stats.solve_time_iter   = toc(measTime_seqSOS__iter_in);
+
                     info(i+2:end) = [];
                     obj.info.iter = info;
+
                     obj.info.UNIFIED_RETURN_STATUS_seq = casos.package.UnifiedReturnStatus.SOLVER_RET_INFEASIBLE;
                     
                     sol{1} = xi_k1;
@@ -586,7 +599,7 @@ for i = 0:obj.opts.max_iter
                     
                     argout = sol;
                     
-                    printf(obj.log,'debug','----------------------------------------------------------------------------------------------------------------------\n');
+                    printf(obj.log,'debug','------------------------------------------------------------------------------------------\n');
                     printf(obj.log,'debug','Solution status: Solver stalled\n');
                     printf(obj.log,'debug',['Solution time: ' num2str(toc(measTime_seqSOS_in)) ' s\n']);
                     
@@ -610,7 +623,6 @@ for i = 0:obj.opts.max_iter
     info{i+1}.filter_stats.alpha_k  = alpha_k;
     info{i+1}.filter_stats.measTime = measTime_filter_out;
     
-    
     % prepare new constraint violation/cost for next iteration (filter)
     curr_conVio = new_conVio;
     curr_cost   = new_cost;
@@ -622,8 +634,7 @@ for i = 0:obj.opts.max_iter
         dual_k1 = dual_star;
     end
     
-    
-    
+   
     %% Prepare display output
     if ~isempty(dual_k)
         
@@ -631,8 +642,8 @@ for i = 0:obj.opts.max_iter
         delta_dual_double = norm(full( (dual_k1 - dual_k)),inf);
         
         
-        printf(obj.log,'debug','%-15d%-15e%-20e%-20e%-20e%-15.4f%-18e\n',...
-            i, new_cost , delta_xi_double, delta_dual_double, new_conVio , alpha_k , full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k1,dual_star,p0))))    );
+        printf(obj.log,'debug','%-8d%-15e%-15e%-15e%-15e%-10f%-10e\n',...
+            i, new_cost , delta_xi_double, delta_dual_double, new_conVio , alpha_k , full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k1,dual_star,p0))))   );
         
         
         % store common optimization data
@@ -640,13 +651,13 @@ for i = 0:obj.opts.max_iter
         info{i+1}.seqSOS_common_stats.delta_dual  = delta_dual_double;
         info{i+1}.seqSOS_common_stats.conViol     = new_conVio;
         info{i+1}.seqSOS_common_stats.gradLang    = full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k1,dual_star,p0))));
-        
+        % 
     else
         % just for the first iteration
         delta_xi_double   = norm( full( casadi.DM(xi_k)    ), inf );
         delta_dual_double = norm( full( dual_star ), inf );
         
-        printf(obj.log,'debug','%-15d%-15e%-20e%-20e%-20e%-15.4f%-18e\n',...
+        printf(obj.log,'debug','%-8d%-15e%-15e%-15e%-15e%-10f%-10e\n',...
             i, new_cost, delta_xi_double, delta_dual_double, new_conVio, alpha_k , full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k,dual_star,p0))))   );
         
         % store common optimization data
@@ -660,11 +671,11 @@ for i = 0:obj.opts.max_iter
     
     %% check convergence criteria
     
-    optimality_flag =     max ([full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k1,dual_star,p0))))/obj.opts.optTol,new_conVio/obj.opts.conVioTol]) <= 1;
+    optimality_flag =     max([full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k1,dual_star,p0))))/obj.opts.optTol,new_conVio/obj.opts.conVioTol]) <= 1;
     
     
     % check if solution stays below tolerance for a certain number of iterations --> solved to acceptable level
-    if max ([full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k1,dual_star,p0))))/obj.opts.accTol,new_conVio/obj.opts.conVioTol/10]) <= 1
+    if max([full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k1,dual_star,p0))))/obj.opts.accTol,new_conVio/obj.opts.conVioTol/10]) <= 1
         
         counter_acceptLvl = counter_acceptLvl + 1;
         
@@ -684,6 +695,7 @@ for i = 0:obj.opts.max_iter
             
             solPara_proj    = obj.projConPara('p',[obj.xk1fun(xi_k1,p0);p0]);
             new_conVio      = sqrt(full(solPara_proj.f));
+
             % check flag again
             optimality_flag = max ([full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k1,dual_star,p0))))/obj.opts.optTol,new_conVio/obj.opts.conVioTol]) <= 1;
             
@@ -722,7 +734,7 @@ for i = 0:obj.opts.max_iter
         
         argout = sol;
         
-        printf(obj.log,'debug','----------------------------------------------------------------------------------------------------------------------\n');
+        printf(obj.log,'debug','------------------------------------------------------------------------------------------\n');
         printf(obj.log,'debug','Solution status: Optimal solution found\n');
         printf(obj.log,'debug',['Solution time: ' num2str(toc(measTime_seqSOS_in)) ' s\n']);
         
@@ -746,7 +758,7 @@ for i = 0:obj.opts.max_iter
         
         argout = sol;
         
-        printf(obj.log,'debug','----------------------------------------------------------------------------------------------------------------------\n');
+        printf(obj.log,'debug','------------------------------------------------------------------------------------------\n');
         printf(obj.log,'debug','Solution status: Solved to acceptable level\n');
         printf(obj.log,'debug',['Solution time: ' num2str(toc(measTime_seqSOS_in)) ' s\n']);
         
@@ -771,7 +783,7 @@ for i = 0:obj.opts.max_iter
         
         argout = sol;
         
-        printf(obj.log,'debug','----------------------------------------------------------------------------------------------------------------------\n');
+        printf(obj.log,'debug','------------------------------------------------------------------------------------------\n');
         printf(obj.log,'debug','Solution status: Maximum number of iterations reached\n');
         printf(obj.log,'debug',['Solution time: ' num2str(toc(measTime_seqSOS_in)) ' s\n']);
         
@@ -789,8 +801,12 @@ for i = 0:obj.opts.max_iter
     
     % prepare hessian approximation for next iteration
     Bk = dampedBFGS(obj,Bk,s,y);
-    
-    
+    if obj.opts.debugBFGS
+        info{i+1}.BFGS_info.Bk = Bk;
+        info{i+1}.BFGS_info.eig = eig(Bk);
+        info{i+1}.BFGS_info.con = cond(Bk);
+    end
+
     %% new solution becomes new linearization point
     xi_k   = xi_k1;
     dual_k = dual_k1;

@@ -49,13 +49,13 @@ classdef Filter
 
              % compute most right entry of filter
              if conVio_xi0 > 0
-             conVio_0   = max(obj.opts.maxConVio_0, obj.opts.maxConVio_0_multiplier*conVio_xi0);
+                conVio_0   = max(obj.opts.maxConVio_0, obj.opts.maxConVio_0_multiplier*conVio_xi0);
              else
                  conVio_0 = 0;
              end
 
              % minimum constraint violation for sufficient decrease
-             obj.opts.minConVio =  1e-4*max(1,conVio_0);
+             obj.opts.minConVio =  1e-2;%*max(1,conVio_0);
                 
              % initialize filter; basically an array
              obj.filter             = [cost0,conVio_0];
@@ -81,7 +81,7 @@ classdef Filter
 
             
             % check if current iterate is acceptable to filter
-            [obj,FilterAcceptFlag] = checkFilterAcceptance(obj,new_cost,new_conVio);
+            [obj,FilterAcceptFlag] = checkFilterAcceptance(obj,new_cost,new_conVio,curr_conVio);
 
             if FilterAcceptFlag
                     
@@ -126,7 +126,7 @@ classdef Filter
 
     methods (Access =private)
         % check if a new iterate can be accepted to filter or not   
-        function [obj,FilterAcceptFlag] = checkFilterAcceptance(obj,new_cost,new_conVio)
+        function [obj,FilterAcceptFlag] = checkFilterAcceptance(obj,new_cost,new_conVio,curr_conVio)
                 
               % For acceptance one cost or violation must be smaller
               % Example comparison one list entry with current trial point:
@@ -135,6 +135,9 @@ classdef Filter
               %         3) 1 0 --> cost smaller, but violation larger
               %         4) 1 1 --> both are smaller
               % --> case 2) to case 4): accept to filter 
+                
+              % envelopeFilter =  [obj.filter(:,1)- obj.opts.gamma_phi*curr_conVio , obj.filter(:,2)*(1-obj.opts.gamma_theta)];
+
               dom_logi_arr = obj.filter > [new_cost,new_conVio]; 
 
                                       

@@ -149,7 +149,7 @@ cost = dot(g - (V-1),g - (V-1)) ;
 %% setup solver
 
 % options
-opts = struct('sossol','mosek');
+opts = struct('sossol','scs');
 opts.verbose = 1;
 sos = struct('x',[V; s2],...
               'f',cost, ...

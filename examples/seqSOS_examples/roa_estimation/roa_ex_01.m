@@ -15,6 +15,9 @@
 %
 %--------------------------------------------------------------------------
 
+close all
+clear
+clc
 
 import casos.toolboxes.sosopt.*
 
@@ -146,17 +149,15 @@ g = Vinit-2;
 
 p = Vinit*10;
 
-figure()
-pcontour(p,0.01,[-4 4 -4 4],'r')
-hold on
-pcontour(Vinit,1,[-4 4 -4 4],'b')
-
 %% setup solver
 
 % options
-opts = struct('sossol','mosek');
+opts = struct('sossol','scs');
 opts.verbose = 1;
-opts.conVioSamp = 1;
+opts.debugBFGS = 1;
+
+% opts.conVioSamp = 1;
+% opts.optTol = 1e-2;
 sos = struct('x',[V; s2;s3;b],...
               'f',-b, ...
               'p',[]);
@@ -187,6 +188,7 @@ disp(['Solver buildtime: ' num2str(buildtime), ' s'])
 %% plot solver statistics
 plotSolverStats(solver_GTM2D_ROA.stats);
 
+
 %% plot sublevel set
 figure()
 pcontour(g,0,[-2 2 -2 2]*3,'k--')
@@ -195,62 +197,5 @@ Vval = sol.x(1);
 beta_val = full(casadi.DM(full(sol.x(end))));
 pcontour(sol.x(1),1,[-2 2 -2 2]*3)
 pcontour(p,beta_val,[-2 2 -2 2]*3,'r')
-
-
-totalVio = 0;
-nonLinCon = sol.g;
-
-for i = 1:length(nonLinCon)
-% Gram decision variable
-s = casos.PS.sym('q',grambasis(sol.g(i)));
-
-% projection error
-e = s - sol.g(i);
-
-% define Q-SOS problem:
-%   min ||s-p||^2 s.t. s is SOS
-
-sos = struct('x',s,'f',dot(e,e),'g',s);
-
-% states is scalar SOS cone
-opts = struct('Kx',struct('lin',length(s)),'Kc',struct('sos',length(s)));
-% opts.error_on_fail = 0;
-% solve by relaxation to SDP
-S = casos.sossol('S','mosek',sos,opts);
-
-sol_check = S();
-
-
-% if sqrt(full(sol_check.f))/1e-3 >= 1
-% formatSpec = 'Constraint number %i is violated. Value: %f \n';
-% fprintf(formatSpec,i,sqrt(full(sol_check.f)))
-% end
-
-totalVio  = totalVio +  sqrt(full(sol_check.f));
-
-end
-totalVio
-
-%
-% Gram decision variable
-s = casos.PS.sym('q',grambasis(sol.g));
-
-% projection error
-e = s - sol.g;
-
-% define Q-SOS problem:
-%   min ||s-p||^2 s.t. s is SOS
-
-sos = struct('x',s,'f',dot(e,e),'g',s);
-
-% states is scalar SOS cone
-opts = struct('Kx',struct('lin',length(s)),'Kc',struct('sos',length(s)));
-% opts.error_on_fail = 0;
-% solve by relaxation to SDP
-S = casos.sossol('S','mosek',sos,opts);
-
-sol_check = S();
-sqrt(full(sol_check.f))
-
 
 

@@ -8,6 +8,8 @@ args = cell2struct(argin',fieldnames(obj.args_in));
 if nnz(obj.args_in.h) > 0
     % compute Cholesky decomposition
     args.h = chol(args.h+speye(length(args.h))*1e-10);
+
+    % args.h = sqrtm(full(args.h+speye(length(args.h))*1e-10));
 end
 
 % evaluate problem structure

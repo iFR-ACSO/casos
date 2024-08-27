@@ -71,8 +71,10 @@ classdef Sequential < casos.package.solvers.SosoptCommon
             'conViolCheck','Decide how to check for constraint violations.'
             'conVioSamp','Sampling points provided from user for pseudo-projection'
             'indeterminates','Vector of indeterminates'
-            'verbose', ['Turn on/off iteration display.' ...
-            'feasRes_actv_flag','flag to turn on/off feasibility restoration']}
+            'verbose', 'Turn on/off iteration display.'
+            'feasRes_actv_flag','flag to turn on/off feasibility restoration'
+            'debugBFGS','Store additional information about BFGS'
+            }
             ];
         
         allow_eval_on_basis = true;
@@ -135,9 +137,9 @@ classdef Sequential < casos.package.solvers.SosoptCommon
             if ~isfield(obj.opts,'alpha_min'),      obj.opts.alpha_min            = 1e-5; end
             if ~isfield(obj.opts,'tau'),            obj.opts.tau                  = 0.5; end
             if ~isfield(obj.opts,'soc_max_iter'),   obj.opts.soc_max_iter         = 5; end
-            if ~isfield(obj.opts,'optTol'),         obj.opts.optTol               = 1e-4; end
-            if ~isfield(obj.opts,'conVioTol'),      obj.opts.conVioTol            = 1e-3; end
-            if ~isfield(obj.opts,'accTol'),         obj.opts.accTol               = 1e-2; end
+            if ~isfield(obj.opts,'optTol'),         obj.opts.optTol               = 1e-2; end
+            if ~isfield(obj.opts,'conVioTol'),      obj.opts.conVioTol            = 1e-2; end
+            if ~isfield(obj.opts,'accTol'),         obj.opts.accTol               = 1e-1; end
             if ~isfield(obj.opts,'noAccIter'),      obj.opts.noAccIter            = 15; end
             if ~isfield(obj.opts,'s_phi'),          obj.opts.s_phi                = 2.3; end
             if ~isfield(obj.opts,'s_theta'),        obj.opts.s_theta              = 1.1; end
@@ -148,7 +150,7 @@ classdef Sequential < casos.package.solvers.SosoptCommon
             if ~isfield(obj.opts,'conVioSamp'),     obj.opts.conVioSamp           = []; end
             if ~isfield(obj.opts,'indeterminates'), obj.opts.indeterminates       = []; end
             if ~isfield(obj.opts,'feasRes_actv_flag'), obj.opts.feasRes_actv_flag = 1; end
-            
+            if ~isfield(obj.opts,'debugBFGS'), obj.opts.debugBFGS = 0; end
             
             % set up logger
             if ~isfield(obj.opts,'verbose') || ~obj.opts.verbose

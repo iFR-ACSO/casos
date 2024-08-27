@@ -18,6 +18,9 @@
 %
 %--------------------------------------------------------------------------
 
+clear
+close all
+clc
 
 import casos.toolboxes.sosopt.*
 
@@ -156,19 +159,18 @@ sos.('g') = [V-l;
 opts.Kx      = struct('lin', 1,'sos',1);
 opts.Kc      = struct('sos', 2);
 opts.verbose = 1;
-opts.sossol_options.sdpsol_options.error_on_fail = 0;
+
+opts.sossol_options.sdpsol_options.error_on_fail = 1;
 
 profile on
 buildTime_in = tic;
     solver_GTM4D_ROA = casos.nlsossol('S','sequential',sos,opts);
 buildtime = toc(buildTime_in);
-% profile viewer
-% profile off
-
-profile on
+profile viewer
+% profile on
 sol = solver_GTM4D_ROA('x0' ,[Vinit; (x'*x)^2]);
 disp(['Solver buildtime: ' num2str(buildtime), ' s'])
-profile viewer
+
 %% plot solver statistics
 plotSolverStats(solver_GTM4D_ROA.stats);
 

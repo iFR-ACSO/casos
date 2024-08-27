@@ -43,7 +43,7 @@ skew = @(x) [   0  -x(3)  x(2);
 omega_max = 3*pi/180;
 
 % system dynamics
-B = @(sigma) (1-sigma'*sigma)*eye(3)+skew(sigma)+ 2*sigma*sigma';
+B = @(sigma) (1-sigma'*sigma)*eye(3)+ 2*skew(sigma)+ 2*sigma*sigma';
 
 % dynamics
 x_dot =  [-inv(J)*skew(x(1:3))*J*x(1:3) + inv(J)*u; % omega_dot
@@ -83,7 +83,7 @@ s2 = casos.PS.sym('s2',monomials(x,2));
 l = 1e-6*(x'*x);
 
 % options
-opts = struct('sossol','mosek');
+opts = struct('sossol','scs');
 
 
 g0 = 0;
@@ -117,12 +117,12 @@ opts.Kc      = struct('sos', length(sos.g));
 opts.verbose = 1;
 
 
-profile on
+% profile on
 buildTime_in = tic;
     solver_Satellite6D  = casos.nlsossol('S','sequential',sos,opts);
 buildtime = toc(buildTime_in);
 
-profile viewer
+% profile viewer
 % solve problem
 sol = solver_Satellite6D ('x0' ,[Vinit; (x'*x)]);
 disp(['Solver buildtime: ' num2str(buildtime), ' s'])

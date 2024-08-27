@@ -13,10 +13,10 @@ function argout = eval_on_basis(obj,argin)
     printf(obj.log,'debug','----------------------------------------------------------------------------------------------------------------------\n');
 
     % first initial guess must be provided by user! 
-    xi_k = args{1};
+    xi_k = full(casadi.DM(args{1}));
 
     % parameter from nonlinear problem
-    p0   = args{2};
+    p0   = full(casadi.DM(args{2}));
     
     % initialize Hessian/BFGS approximation
     Bk = eye(obj.sizeHessian(1));
@@ -28,7 +28,7 @@ function argout = eval_on_basis(obj,argin)
     % initilize filter with constrain violation of last iterate
     curr_conVio = full(casadi.DM(p0(2)));
     curr_cost   = inf;
-
+   old_cost = curr_cost;
 	obj.Filter =  obj.Filter.initializeFilter( curr_conVio ,curr_cost);
 
     % measure overall solve time
@@ -64,12 +64,12 @@ function argout = eval_on_basis(obj,argin)
         switch ( obj.sossolver.get_stats.UNIFIED_RETURN_STATUS)
             case UnifiedReturnStatus.SOLVER_RET_SUCCESS     % optimal soultion found
 
-                    d_star    = sol{1}-xi_k;
+                    d_star    = full(casadi.DM(sol{1}-xi_k));
                     dual_star = sol{5};
 
              case UnifiedReturnStatus.SOLVER_RET_UNKNOWN % feasible solution but not optimal
 
-                    d_star    = sol{1}-xi_k;
+                    d_star    = full(casadi.DM(sol{1}-xi_k));
                     dual_star = sol{5};
 
             otherwise %case UnifiedReturnStatus.SOLVER_RET_INFEASIBLE
@@ -137,14 +137,15 @@ function argout = eval_on_basis(obj,argin)
   
                 % measure time to compute projection/current constraint
                 % violation
-                new_conVio = sqrt(full(casadi.DM(obj.proj_conFun(xi_k1,p0)))) ;
-                % measTime_Proj_in = tic;
-                %     solPara_proj = obj.projConPara('p',[obj.xk1fun(xi_k1,p0)]);
-                %     new_conVio   = sqrt(full(solPara_proj.f));
-                % info{i+1}.filter_stats.measTime_proj_out = toc(measTime_Proj_in);
-
-
-
+                % new_conVio = 0; sqrt(full(casadi.DM(obj.proj_conFun(xi_k1,p0)))) ;
+                if ~isempty(obj.projConPara)
+                measTime_Proj_in = tic;
+                    solPara_proj = obj.projConPara('p',[obj.xk1fun(xi_k1,p0);obj.p0poly(p0)]);
+                    new_conVio   = sqrt(full(solPara_proj.f));
+                info{i+1}.filter_stats.measTime_proj_out = toc(measTime_Proj_in);
+                else
+                    new_conVio = 0;
+                end
                   
             % check filter acceptance
             [obj.Filter,goto_SOC,accept_new_iter] = obj.Filter.updateFilter(alpha_k,...
@@ -195,7 +196,7 @@ function argout = eval_on_basis(obj,argin)
                        nabla_xi_f   = full(casadi.DM(full(obj.nabla_xi_f(x_soc_trial,p0))))';
                        
                        % check constraint violation (projection onto SOS cone)
-                       solPara_proj = obj.projConPara('p',obj.xk1fun(x_soc_trial,p0));
+                       solPara_proj = obj.projConPara('p',[obj.xk1fun(x_soc_trial,p0);obj.p0poly(p0)]);
                        new_conVio   = sqrt(full(solPara_proj.f));
                            
                        % check if new trial point can be accepted to filter
@@ -248,7 +249,7 @@ function argout = eval_on_basis(obj,argin)
         
                         info{i+1}.filter_stats.measTime_proj_out      = 0;
                         info{i+1}.filter_stats.alpha_k                = alpha_k;
-                        info{i+1}.filter_stats.measTime               = measTime_feasRes_out;
+                        info{i+1}.filter_stats.measTime               = toc(measTime_filter_in);
                         info{i+1}.seqSOS_common_stats.delta_prim      = nan;
                         info{i+1}.seqSOS_common_stats.delta_dual      = nan;
                         info{i+1}.seqSOS_common_stats.conViol         = new_conVio ;
@@ -328,6 +329,7 @@ function argout = eval_on_basis(obj,argin)
             info{i+1}.seqSOS_common_stats.conViol     = new_conVio;
             info{i+1}.seqSOS_common_stats.gradLang    = full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k,dual_star,p0))));
            
+       
         
         end % --- end of display output ---
             
@@ -336,6 +338,8 @@ function argout = eval_on_basis(obj,argin)
         optimality_flag =     max ([full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k1,dual_star,p0))))/...
                                     obj.opts.optTol,new_conVio/obj.opts.conVioTol]) <= 1;
         
+            
+        % optimality_flag =  new_conVio/full(casadi.DM(p0(2))) <= 1 && abs(new_cost-old_cost) <= 1e-3;
 
         % check if solution stays below tolerance for a certain number of iterations --> solved to acceptable level
         if max ([full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k1,dual_star,p0))))/...
@@ -431,11 +435,11 @@ function argout = eval_on_basis(obj,argin)
         % prepare hessian approximation for next iteration
         Bk = dampedBFGS(obj,Bk,s,y);
         
-        
+     
         %% new solution becomes new linearization point
         xi_k   = xi_k1;
         dual_k = dual_k1;
-        
+        old_cost = new_cost;
         % measure time needed for one full iteration
         info{i+1}.seqSOS_common_stats.solve_time_iter  = toc(measTime_seqSOS__iter_in);
 

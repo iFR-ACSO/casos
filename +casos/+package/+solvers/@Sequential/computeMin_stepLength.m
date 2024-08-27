@@ -16,4 +16,9 @@ else
     alpha_min = obj.opts.alpha_min; % same value as gamma_theta in filter
     
 end
+
+if alpha_min <= 0
+    alpha_min = obj.opts.alpha_min;
+end
+
 end
