@@ -77,20 +77,21 @@ G = subs(eqns, [ddtheta dtheta], zeros(1,2*n));
 % Solving for ddtheta
 if only_poly == 0
     tic
-    ddtheta_sol = M \ (u' - C*dtheta' - G');
+    ddtheta_sol = vpa(M)*(u' - C*dtheta' - G');
     toc
 else
     tic
     % approximate by a polynomial 
     temp_inv = taylor(u' - C*dtheta' - G', [theta, dtheta], 'Order', deg+1, 'ExpansionPoint', zeros(1, 2*n));
     M = taylor(M, [theta, dtheta], 'Order', deg+1, 'ExpansionPoint', zeros(1, 2*n));
-    ddtheta_sol = simplify(M) \ simplify(temp_inv);
+    ddtheta_sol = vpa(simplify(M) )*simplify(temp_inv);
     toc
 end
 
 % State derivatives
 f(1:n) = dtheta';          % dtheta/dt = dtheta
 f(n+1:2*n) = ddtheta_sol;  % ddtheta/dt = solution from above
+f = simplify(f);
 
 % Convert symbolic to function
 pendulum_dyn = ['pendulum_dyn_n' num2str(n)];

@@ -7,7 +7,7 @@ n = 7;
 deg = 2;
 
 % if only the polynomial dynamics are desired, use only_poly=1 
-only_poly = 1;
+only_poly = 0;
 
 pendulum_dyn_ctrl = ['pendulum_dyn_ctrl_n' num2str(n)];
 pendulum_dyn_poly = ['pendulum_dyn_poly_n' num2str(n) '_d' num2str(deg)];
@@ -53,7 +53,7 @@ sos = struct('x',s,'f',-g,'g', s*(V-g)-nabla(V,x)*f);
 opts = struct('sossol','mosek');
 
 % constraint is scalar SOS cone
-opts.Kx = struct('sdsos', 1);
+opts.Kx = struct('sos', 1);
 opts.Kc = struct('sos', 1);
 
 % solve by relaxation to SDP
