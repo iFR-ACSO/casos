@@ -66,14 +66,14 @@ fprintf('%s:%d\n', S1.stats.UNIFIED_RETURN_STATUS, toc);
 %disp(S1.stats.UNIFIED_RETURN_STATUS)
 
 %%
-import casos.toolboxes.sosopt.*
-import casos.toolboxes.to_multipoly
-figure(1)
-V_2d = subs(V, [x(2:n); x(n+2:2*n)], zeros(2*n-2,1));
-level = full(-sol.f(1));
-pcontour(V_2d, level, [-5 5 -12 12])
-grid 
-grid minor
+% import casos.toolboxes.sosopt.*
+% import casos.toolboxes.to_multipoly
+% figure(1)
+% V_2d = subs(V, [x(2:n); x(n+2:2*n)], zeros(2*n-2,1));
+% level = full(-sol.f(1));
+% pcontour(V_2d, level, [-5 5 -12 12])
+% grid 
+% grid minor
 
 
 
