@@ -13,8 +13,9 @@ classdef Sequential < casos.package.solvers.SosoptCommon
         zeroDsoc
         
         % feasibility restoration phase
-        sossolver_feas
+        sossolver_feas 
         sizeHessian_feas
+        nabla_xi_L_feas 
         
         % BFGS
         BFGS_fun % function to efficiently evaluate BFGS

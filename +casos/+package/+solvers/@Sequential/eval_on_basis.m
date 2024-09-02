@@ -36,7 +36,7 @@ dual_k = [];
 counter_acceptLvl = 0;
 
 % flag for feasibility restoration
-feasResdone = 0;
+% feasResdone = 0;
 
 %% initilize filter
 if ~isempty(obj.projConPara)
@@ -100,8 +100,9 @@ for i = 0:obj.opts.max_iter
             d_star    = sol{1}-xi_k;
             dual_star = sol{5};
             
-        case UnifiedReturnStatus.SOLVER_RET_INFEASIBLE % actually this is otherwise
-            
+        case UnifiedReturnStatus.SOLVER_RET_INFEASIBLE % actually this is otherwise-case
+                
+                % place holder for feasibility restoration
            
                 printf(obj.log,'debug',['Subproblem infeasible in iteration ' num2str(i)   '. Feasibility restoration is currently turned off.\n']);
                 
@@ -117,10 +118,8 @@ for i = 0:obj.opts.max_iter
                 info(i+2:end)                                   = [];
                 obj.info.iter                                   = info;
                 obj.info.UNIFIED_RETURN_STATUS_seq              = casos.package.UnifiedReturnStatus.SOLVER_RET_INFEASIBLE;
-
-                sol{1} = xi_k;
-                sol{5} = dual_k1;
                 
+
                 argout = sol;
                 
                 printf(obj.log,'debug','----------------------------------------------------------------------------------------------------------------------\n');
@@ -131,7 +130,6 @@ for i = 0:obj.opts.max_iter
                 return
                                
     end
-    
     
     
     %% backtracking line search filter
@@ -161,11 +159,13 @@ for i = 0:obj.opts.max_iter
             
             % measure time to compute projection/current constraint violation
             measTime_Proj_in = tic;
+
                 % compute exact (in numerical sense) projection/squared distance 
                 solPara_proj = obj.projConPara('p',[obj.xk1fun(xi_k1,p0);obj.p0poly(p0)]);
 
                 % L2-norm
                 new_conVio   = sqrt( full( solPara_proj.f ) );
+                
             info{i+1}.filter_stats.measTime_proj_out = toc(measTime_Proj_in);
             
         else
@@ -304,38 +304,46 @@ for i = 0:obj.opts.max_iter
             
                 % got to feasability restoration if we are below alpha_min
              if alpha_k < alpha_min
-                
-             
-                    % no feasibility restoration phase active
-                    printf(obj.log,'debug',['Step length below minimum step length in iteration ' num2str(i)  '. Feasibility restoration is currently turn off.\n']);
-                    
-                    % prepare output of additional metrics
-                    info{i+1}.seqSOS_common_stats.solve_time        = toc(measTime_seqSOS_in);
-                    info{i+1}.filter_stats.measTime_proj_out        = 0;
-                    info{i+1}.filter_stats.alpha_k                  = alpha_k;
-                    info{i+1}.filter_stats.measTime                 = 0;
-                    info{i+1}.seqSOS_common_stats.delta_prim        = nan;
-                    info{i+1}.seqSOS_common_stats.delta_dual        = nan;
-                    info{i+1}.seqSOS_common_stats.conViol           = new_conVio ;
-                    info{i+1}.seqSOS_common_stats.gradLang          = full(casadi.DM(full(obj.nabla_xi_L_norm(xi_feas,dual_star,p0))));
-                    info{i+1}.seqSOS_common_stats.solve_time_iter   = toc(measTime_seqSOS__iter_in);
 
-                    info(i+2:end) = [];
-                    obj.info.iter = info;
+                    % Check if feasibility restoration phase is active
+                    if ~obj.solver_feas_res
+                            
+                        printf(obj.log,'debug',['Step length below minimum step length in iteration ' num2str(i)  '. Feasibility restoration is currently turn off.\n']);
+                        
+                        % prepare output of additional metrics
+                        info{i+1}.seqSOS_common_stats.solve_time        = toc(measTime_seqSOS_in);
+                        info{i+1}.filter_stats.measTime_proj_out        = 0;
+                        info{i+1}.filter_stats.alpha_k                  = alpha_k;
+                        info{i+1}.filter_stats.measTime                 = 0;
+                        info{i+1}.seqSOS_common_stats.delta_prim        = nan;
+                        info{i+1}.seqSOS_common_stats.delta_dual        = nan;
+                        info{i+1}.seqSOS_common_stats.conViol           = new_conVio ;
+                        info{i+1}.seqSOS_common_stats.gradLang          = full(casadi.DM(full(obj.nabla_xi_L_norm(xi_feas,dual_star,p0))));
+                        info{i+1}.seqSOS_common_stats.solve_time_iter   = toc(measTime_seqSOS__iter_in);
+    
+                        info(i+2:end) = [];
+                        obj.info.iter = info;
+    
+                        obj.info.UNIFIED_RETURN_STATUS_seq = casos.package.UnifiedReturnStatus.SOLVER_RET_INFEASIBLE;
+                        
+                        sol{1} = xi_k1;
+                        sol{5} = dual_k1;
+                        
+                        argout = sol;
+                        
+                        printf(obj.log,'debug','------------------------------------------------------------------------------------------\n');
+                        printf(obj.log,'debug','Solution status: Solver stalled\n');
+                        printf(obj.log,'debug',['Solution time: ' num2str(toc(measTime_seqSOS_in)) ' s\n']);
+                        
+                        % terminate
+                        return
 
-                    obj.info.UNIFIED_RETURN_STATUS_seq = casos.package.UnifiedReturnStatus.SOLVER_RET_INFEASIBLE;
-                    
-                    sol{1} = xi_k1;
-                    sol{5} = dual_k1;
-                    
-                    argout = sol;
-                    
-                    printf(obj.log,'debug','------------------------------------------------------------------------------------------\n');
-                    printf(obj.log,'debug','Solution status: Solver stalled\n');
-                    printf(obj.log,'debug',['Solution time: ' num2str(toc(measTime_seqSOS_in)) ' s\n']);
-                    
-                    % terminate
-                    return
+                    else
+
+                            % place holder for feasibility restoration
+  
+
+                    end
                     
                   
             end % --- end of check for alpha_min ---

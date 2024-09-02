@@ -93,7 +93,7 @@ obj.Filter = Filter([]);
 sosopt               = opts.sossol_options;
 sosopt.Kx            = struct('lin',Nl,'sos',Ns);
 sosopt.Kc            = struct('lin',Ml,'sos',Ms);
-sosopt.error_on_fail = false;
+sosopt.error_on_fail = true;
 
 % initialize convex SOS solver (subproblem)
 obj.sossolver = casos.package.solvers.sossolInternal('SOS',opts.sossol,sos,sosopt);
@@ -108,42 +108,7 @@ obj.sparsity_g  = obj.sossolver.sparsity_g;
 obj.sparsity_gl = obj.sossolver.sparsity_gl;
 obj.sparsity_gs = obj.sossolver.sparsity_gs;
 
-%% Second-order correction
 
-
-% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-%
-% We only have one SDP solver left which is parameterized in the search
-% direction!!!!!
-%
-% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-
-% xisoc_new_lin = casos.PS.sym('xi_ls',base_x_lin);
-% xisoc_new_sos = casos.PS.sym('xi_ss',base_x_sos);
-%
-% xisoc_new = [xisoc_new_lin;xisoc_new_sos];
-%
-% dsoc = xisoc_new - xi_k;
-%
-% % correction term
-% correction = conFun(xi_k + xi_new ,p0) - derivConFun(xi_k, xi_new,p0);
-%
-% obj.correctFun = casos.Function('fc',{poly2basis(xi_k), poly2basis(xi_new),poly2basis(p0)},{correction});
-%
-% % % get adapted constraint
-% sosSOC.g = derivConFun(xi_k,xisoc_new,p0) + correction;
-%
-% sosSOC.p = [p0; xi_k; xi_new; B_k(:)];
-% %
-% sosSOC.x = xisoc_new;
-
-% sosSOC.f =  1/2*poly2basis(dsoc)'* B_k * poly2basis(dsoc) + nabla_f_Fun(xi_k, xisoc_new,p0); %linearize(nlsos.f,sos.x,xi_k);
-
-% sosSOC.derivatives.Hf = casadi.SX(reshape(B_k,[size_bk,size_bk]));
-
-% % initialize SOS solver for SOC
-% obj.solver_soc = casos.package.solvers.sossolInternal('SOS',opts.sossol,sosSOC,sosopt);
 
 %% setup damped BFGS
 lam_gs    =  casos.PS.sym('lam_gs', obj.sparsity_gs);
@@ -288,93 +253,9 @@ if ~obj.opts.feasRes_actv_flag
     % feasibility restoration is not active!
     obj.solver_feas_res = [];   
 else
-        
-% we have an augmented decision variable vector
 
-% get projection multiplier of ALL constraints
-s_k_feas      = casos.PS.sym('q',grambasis(nlsos.g));
-s_new_feas    = casos.PS.sym('q',grambasis(nlsos.g));
-
-% distinguish between linear and sos decision variables
-nonLinProb_linDe_feasc = nlsos.x(1:Nl);
-nonLinProb_sosDec_feas = nlsos.x(Nl+1:end);
-
-base_x_lin = sparsity(nonLinProb_linDe_feasc);
-base_x_sos = grambasis(nonLinProb_sosDec_feas);
-
-% current iterate (just for parameterization)
-xi_k_lin_feas    = casos.PS.sym('xi_kl',base_x_lin);
-xi_k_sos_feas    = casos.PS.sym('xi_ks',base_x_sos);
-
-xi_k_feas = [xi_k_lin_feas;xi_k_sos_feas;s_k_feas];
-
-lenOrigDecVar = length([xi_k_lin_feas;xi_k_sos_feas]);
-
-% parameter
-xi_0_lin_feas    = casos.PS.sym('xi_kl',base_x_lin);
-xi_0_sos_feas    = casos.PS.sym('xi_ks',base_x_sos);
-
-xi_0_feas = [xi_0_lin_feas;xi_0_sos_feas];
-
-% new convex solution
-xi_new_lin_feas = casos.PS.sym('xi_l',base_x_lin);
-xi_new_sos_feas = casos.PS.sym('xi_s',base_x_sos);
-
-xi_new_feas = [xi_new_lin_feas;xi_new_sos_feas;s_new_feas];
-
-% search direction
-d_feas = xi_new_feas - xi_k_feas;
-
-d_new_lin_feas = casos.PS.sym('d_l',base_x_lin);
-d_new_sos_feas = casos.PS.sym('d_s',base_x_sos);
-
-d_star_feas = [d_new_lin_feas;d_new_sos_feas];
-
-% search direction is decision variable of underlying Q-SDP
-sos_feas.x = xi_new_feas;
-
-
-% adjusted cost function
-zeta = casos.PS.sym('zeta');
-conFun = casos.Function('g1',{nlsos.x,p0},{nlsos.g});
-
-e1 = s_k_feas - conFun(xi_k_feas(1:lenOrigDecVar),p0);
-e2 = xi_k_feas(1:lenOrigDecVar) - xi_0_feas;
-
-feasResCost = dot(e1,e1) + zeta*dot(e2,e2);
-
-
-% parameterize cost in hessian
-size_rk = length(poly2basis(xi_k_feas));
-
-R_k    = casos.PS.sym('b',[size_rk,size_rk]);
-
-sos_feas.derivatives.Hf = casadi.SX(R_k);
-
-% (nabla_xi_k_feas f_feas)^T * (d_feas)
-% we have several constant terms: zeta and xi_0_feas i.e. iterate where
-% restoration is invoked
-nabla_f_Fun = casos.Function('f',{xi_k_feas, xi_new_feas, p0, xi_0_feas, zeta},{ dot(jacobian(feasResCost,xi_k_feas),xi_new_feas-xi_k_feas) });
-
-sos_feas.f =  1/2*poly2basis(d_feas)'* R_k * poly2basis(d_feas) + nabla_f_Fun(xi_k_feas, xi_new_feas,p0,xi_0_feas,zeta); %linearize(nlsos.f,sos.x,xi_k);
 
  
-
-sos_feas.p = [p0; xi_k_feas;xi_0_feas;zeta;R_k(:);d_star_feas];
-sos_feas.g = [];
-
-% SOS options
-sosopt_feas               = opts.sossol_options;
-sosopt_feas.Kx            = struct('lin',length(xi_k_lin_feas),'sos',length(xi_k_sos_feas) + length(s_k_feas) );
-sosopt_feas.Kc            = struct('lin',0,'sos',length(sos_feas.g));
-sosopt_feas.error_on_fail = false;
-
-% initialize convex SOS solver (subproblem)
-obj.sossolver_feas = casos.package.solvers.sossolInternal('SOS',opts.sossol,sos_feas,sosopt_feas);
-
-
-
-
 end
 
 end

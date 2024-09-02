@@ -8,6 +8,10 @@ switch (solver)
     case 'FeasRes'
         node = casos.package.solvers.FeasRes(name,varargin{:});
 
+    case 'test'
+        node = casos.package.solvers.test(name,varargin{:});
+
+
     otherwise
         error('No such sequential solver "%s".',solver)
 end
