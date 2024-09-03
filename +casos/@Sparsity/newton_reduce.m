@@ -12,13 +12,13 @@ bfixed = [zeros(size(Pdegmat,1),1); 1];
 
 % trivial removal of monomials
 keep_trivial = ismember(Zdegmat*2,Pdegmat,'rows');
-dontkeep = false(size(keep_trivial));
+keep = true(size(keep_trivial));
 
 % try to go over each possible monomial basis and verify if it belongs to
 % the newton polytope by checking for the existance of a hyperplane 
 for i = 1:length(keep_trivial)
 
-    if keep_trivial(i) || dontkeep(i)
+    if keep_trivial(i) || ~keep(i)
         continue;
     end
     
@@ -44,10 +44,10 @@ for i = 1:length(keep_trivial)
         a = x(1:end-1);
         b = x(end);
         u = 2*Zdegmat*a - b > sqrt(eps);
-        dontkeep(u) = 1;
+        keep(u) = 0;
     end
 end
 
-Lz = ~dontkeep;
+Lz = keep;
 Lz = sparse(Lz);
 end
