@@ -5,7 +5,7 @@
 %
 %--------------------------------------------------------------------------
 
-% function [gval,bval, solverTime_total,buildTime] = roaEstGTM_benchCasos()
+function [gval,bval, solverTime_total,buildTime] = roaEstGTM_benchCasos()
 
 % system states 
 x = casos.Indeterminates('x',4);
@@ -45,8 +45,9 @@ g = casos.PS.sym('g');
 b = casos.PS.sym('b');
 
 % options
-opts               = struct('sossol','mosek');
+opts               = struct('sossol','scs');
 opts.error_on_fail = 0;
+opts.verbose = 1;
 opts.conf_interval = [-1000 0];
 
 %% setup solver
@@ -95,7 +96,7 @@ opts.Kx = struct('sos', 0, 'lin', 1);
 opts.Kc = struct('sos', 3);
 
 % build third solver
-S3 = casos.sossol('S','mosek',sos3,opts);
+S3 = casos.sossol('S','scs',sos3,opts);
 
 buildTime = toc(buildTime_start);
 
@@ -107,7 +108,7 @@ solvetime_all3 = zeros(100,1);
 bval_old = [];
 
 %% V-s-iteration
-for iter = 1:1
+for iter = 1:100
 
     % gamma step
     sol1 = S1('p',Vval);    
@@ -126,9 +127,7 @@ for iter = 1:1
     solvetime_all2(iter) = sum(cellfun(@(x) x.solvetime_matlab, S2.stats.iter));
 
     % extract solution
-    bval = -sol2.f;%--------------------------------------------------------------------------
-%
-
+    bval = -sol2.f;
     s2val = sol2.x;
 
     % V-step
@@ -158,30 +157,6 @@ end % end for-loop
 
 % total solver time over all iterations
 solverTime_total = sum(solvetime_all1) + sum(solvetime_all2) + sum(solvetime_all3);
-% end
-%%
-import casos.toolboxes.sosopt.cleanpoly
-conVal = cleanpoly([Vval-l; 
-            s2val*(p-bval)+gval-Vval; 
-        s1val*(Vval-gval)-nabla(Vval,x)*f-l],1e-10);
 
-
-% Gram decision variable
-s = casos.PS.sym('q',grambasis(conVal(3)));
-
-% projection error
-e = s - conVal(3);
-
-% define Q-SOS problem:
-%   min ||s-p||^2 s.t. s is SOS
-sos = struct('x',s,'f',dot(e,e),'g',s);
-% states is scalar SOS cone
-opts = struct('Kx',struct('lin',length(s)), ...
-              'Kc',struct('sos',length(s)));
-opts.error_on_fail = 1;
-% solve by relaxation to SDP
-S = casos.sossol('S','scs',sos,opts);
-% evaluate
-solproj = S();
-solproj.f
+end
 

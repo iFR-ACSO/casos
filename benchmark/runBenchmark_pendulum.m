@@ -1,60 +1,44 @@
-clc
 clear
 close all
+clc
 
+addpath(genpath('./pendulum'))
 
-% maximum number of states
-Nmax = 6;
-
-% degree of Taylor-Approximation; currently only pre-computed for deg = 2!
+Nmax = 5;
 deg  = 2;
 
-% solve N-link Pendulum ROA with CaSoS
-[solverTimes_c,buildTimes_c,gval_arr_c] = roaEstNlinkPend_benchCasos(Nmax,deg);
 
+%% Run benchmark Nlink pendulum in casos
+% disp('Run benchmark in CaSoS')
+[bval_array_c, solverTimes_total_c,buildTimes_c] = roaEstNlink_benchCasos(Nmax,deg);
 
+%% Run benchmark Nlink pendulum in spotless
+disp('Run benchmark in SPOTless')
+[bval_array_sp, solverTimes_total_sp,buildTimes_sp] = roaEstNlink_benchSPOTless(Nmax,deg);
 
-% solve N-link Pendulum ROA with SPOTless
-[solverTimes_sp,buildTimes_sp,gval_arr_sp]= roaEstNlinkPend_benchSPOTless(Nmax,deg);
-
-% ------------------------------------------------------------------------
-% some functions in SOSTOOLS and SOSOPT have same names; since both use
-% multipoly it might not work; remove one off them an make sure to add the
-% other one
-% ------------------------------------------------------------------------
-rmpath(genpath('C:\Users\ac133867\Documents\MATLAB\sosopt'));
-addpath(genpath('C:\Users\ac133867\Documents\MATLAB\SOSTOOLS'))
-[solverTimes_st,buildTimes_st,gval_array_st]= roaEstNlinkPend_benchSOSTOOLS(Nmax,deg);
-
-% solve N-link Pendulum ROA with SOSOPT
-% ------------------------------------------------------------------------
-% some functions in SOSTOOLS and SOSOPT have same names; since both use
-% multipoly it might not work; remove one off them an make sure to add the
-% other one
-% ------------------------------------------------------------------------
-rmpath(genpath('C:\Users\ac133867\Documents\MATLAB\SOSTOOLS'));
-addpath(genpath('C:\Users\ac133867\Documents\MATLAB\sosopt'))
-[solverTimes_sopt,buildTimes_sopt,gval_arr_sopt]= roaEstNlinkPend_benchSOSOPT(Nmax,deg);
 
 %% plotting
 figure('Name','Benchmark N-link Pedulum')
 subplot(211)
-semilogy(2:Nmax,buildTimes_c,'-o')
+semilogy((2:Nmax)*2,buildTimes_c,'-o')
 hold on
-semilogy(2:Nmax,buildTimes_sp,'-+')
-semilogy(2:Nmax,buildTimes_sopt,'-*')
-semilogy(2:Nmax,buildTimes_st,'-^')
+semilogy((2:Nmax)*2,buildTimes_sp,'-+')
+% semilogy(2:Nmax,buildTimes_sopt,'-*')
+% semilogy(2:Nmax,buildTimes_st,'-^')
 xlabel('Number of states')
 ylabel('Time [s]')
-legend('Ca\Sigmaos','SPOTless','SOSOPT','SOSTOOLS','Location','northwest')
+legend('Ca\Sigmaos','SPOTless')%,'SOSOPT','SOSTOOLS','Location','northwest')
+xticks((2:Nmax)*2) 
 title('Buildtimes')
+
 subplot(212)
-semilogy(2:Nmax,solverTimes_c,'-o')
+semilogy((2:Nmax)*2,solverTimes_total_c,'-o')
 hold on
-semilogy(2:Nmax,solverTimes_sp,'-+')
-semilogy(2:Nmax,solverTimes_sopt,'-*')
-semilogy(2:Nmax,solverTimes_st,'-^')
+semilogy((2:Nmax)*2,solverTimes_total_sp,'-+')
+% semilogy(2:Nmax,solverTimes_sopt,'-*')
+% semilogy(2:Nmax,solverTimes_st,'-^')
 xlabel('Number of states')
 ylabel('Time [s]')
-legend('Ca\Sigmaos','SPOTless','SOSOPT','SOSTOOLS','Location','northwest')
+legend('Ca\Sigmaos','SPOTless')%,'SOSOPT','SOSTOOLS','Location','northwest')
 title('Solvertimes')
+xticks((2:Nmax)*2)  % Set x-axis ticks to show labels for 2:Nmax

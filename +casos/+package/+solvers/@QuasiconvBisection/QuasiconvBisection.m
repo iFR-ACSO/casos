@@ -80,8 +80,8 @@ methods
         if ~isfield(obj.opts,'sossol_options'), obj.opts.sossol_options = struct; end
         if ~isfield(obj.opts,'conf_interval'), obj.opts.conf_interval = [-1e2 1e2]; end
         if ~isfield(obj.opts,'max_iter'), obj.opts.max_iter = 1000; end
-        if ~isfield(obj.opts,'tolerance_abs'), obj.opts.tolerance_abs = 1e-4; end
-        if ~isfield(obj.opts,'tolerance_rel'), obj.opts.tolerance_rel = 1e-4; end
+        if ~isfield(obj.opts,'tolerance_abs'), obj.opts.tolerance_abs = 1e-3; end
+        if ~isfield(obj.opts,'tolerance_rel'), obj.opts.tolerance_rel = 1e-3; end
         % set up logger
         if ~isfield(obj.opts,'verbose') || ~obj.opts.verbose
             % no display
