@@ -38,7 +38,7 @@ for i = 1:length(keep)
         if (flag > 0 && ([-q' 1]*x(:) < 0)) || flag == -3
             a = x(1:end-1);
             b = x(end);
-            u = find(a'*2*Zdegmat' - b > sqrt(eps));
+            u = a'*2*Zdegmat' - b > sqrt(eps);
             dontkeep(u) = 1;
         end
     end  
