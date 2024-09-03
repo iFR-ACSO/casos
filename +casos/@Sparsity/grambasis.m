@@ -10,7 +10,10 @@ else
     idx = find(I);
 end
 
-% if nargin < 3, useNP=0; end
+simplification = 0; % default value is 1 (simplification is always on)
+
+if nargin==3; simplification = opts.newton; end
+
 
 % get logical maps for degrees and indeterminate variables
 % -> Ldeg(i,j) is true iff p(i) has terms of degree(j)
@@ -73,7 +76,7 @@ I = any(Lz,1);
 degmat = z.degmat(I,:);
 Lz(:,~I) = [];
 % removes monomials outside half Newton polytope
-if opts.newton == 1
+if simplification == 1
     Lz = arrayfun(@(i) S.newton_reduce(S.degmat(Ldegmat(i,:),Iv),degmat), idx, 'UniformOutput', false);
     Lz = horzcat(Lz{:})';
 end
