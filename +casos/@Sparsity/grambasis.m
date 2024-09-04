@@ -1,5 +1,7 @@
-function [Z,K,z,Mp,Md] = grambasis(S,I,opts)
+function [Z,K,z,Mp,Md] = grambasis(S,I,newton)
 % Return Gram basis of polynomial vector.
+% (Newton polytope simplification)
+% newton = 1 (on) & newton = 0 (off)
 
 if nargin < 2
     lp = numel(S);
@@ -10,9 +12,8 @@ else
     idx = find(I);
 end
 
-simplification = 0; % default value is 1 (simplification is always on)
-
-if nargin==3; simplification = opts.newton; end
+simplification = 0; % default value is 0 (simplification is always off)
+if nargin==3; simplification = newton; end
 
 
 % get logical maps for degrees and indeterminate variables

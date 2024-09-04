@@ -40,12 +40,11 @@ sos.f = 0;
 sos.p = [qcsos.p; dvar];
 
 % SOS options
-sosopt = opts.sossol_options;
+sosopt.sossol_options = opts.sossol_options;
 sosopt.Kx = struct('lin',Nl,'sos',Ns);
 sosopt.Kc = struct('lin',Ml,'sos',Ms);
 sosopt.error_on_fail = false;
-if isfield(opts, 'newton'), sosopt.newton=opts.newton; end
-    
+
 % initialize convex SOS solver
 obj.sossolver = casos.package.solvers.sossolInternal('SOS',opts.sossol,sos,sosopt);
 

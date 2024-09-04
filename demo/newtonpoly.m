@@ -18,7 +18,7 @@ opts.Kc.sos = 4;
 opts.error_on_fail = false;
 
 % newton polytope simplification 
-opts.newton = 1;
+opts.sossol_options.newton = 1;
 
 % solve by relaxation to SDP
 tic
@@ -31,7 +31,7 @@ idx = 1:N_times;
 
 tic;
 arrayfun(@(i) S(), idx, 'UniformOutput', false); % solve problem
-fprintf('newton = %d || time: %ds \n', opts.newton, toc);
+fprintf('newton = %d || time: %ds \n', opts.sossol_options.newton, toc);
 
 sol = S();
 fprintf('sol.f = %d \n', full(sol.f)); % the value should be 1.7107

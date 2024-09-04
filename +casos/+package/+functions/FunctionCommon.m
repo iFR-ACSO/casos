@@ -3,8 +3,7 @@ classdef (Abstract) FunctionCommon < handle
 
 properties (Constant, Access=protected)
     options = casos.package.Options(...
-        {'error_on_fail', 'Throw exceptions when function evaluation fails (default true).';...
-        'newton', 'Monomial basis simplification with Newton polytope (default false).'});
+        {'error_on_fail', 'Throw exceptions when function evaluation fails (default true).'});
 end
 
 properties (Access=protected)
