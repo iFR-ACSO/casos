@@ -190,6 +190,11 @@ methods
     end
 
     %% Function evaluation
+    function J = jacobian(obj)
+        % Return Jacobian if supported.
+        J = jacobian(obj.wrap);
+    end
+
     function out = call(obj,args)
         % Evaluate function for given arguments.
         assert(~is_null(obj), 'Notify the developers.')

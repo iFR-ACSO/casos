@@ -1,7 +1,10 @@
-function [Z,K,z,Mp,Md] = grambasis(S,I)
+function [Z,K,z,Mp,Md] = grambasis(S,I,simplify)
 % Return Gram basis of polynomial vector.
 
-if nargin < 2
+if nargin < 3
+    simplify = false;
+end
+if nargin < 2 || isempty(I)
     lp = numel(S);
     I = true(lp,1);
     idx = 1:lp;
@@ -68,8 +71,13 @@ Lz(reshape(any(Irem,2),lz,lp)') = false;
 
 % remove unused monomials from base vector
 I = any(Lz,1);
-Lz(:,~I) = [];
 degmat = z.degmat(I,:);
+Lz(:,~I) = [];
+% removes monomials outside half Newton polytope
+if simplify
+    Lz = arrayfun(@(i) S.newton_reduce(S.degmat(Ldegmat(i,:),Iv),degmat), idx, 'UniformOutput', false);
+    Lz = horzcat(Lz{:})';
+end
 z = (build_monomials(degmat,z.indets)); % do we need this?
 
 [Z,K,Mp,Md] = gram_internal(Lz,degmat,z.indets);
