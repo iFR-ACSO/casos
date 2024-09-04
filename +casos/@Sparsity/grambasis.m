@@ -1,9 +1,10 @@
-function [Z,K,z,Mp,Md] = grambasis(S,I,newton)
+function [Z,K,z,Mp,Md] = grambasis(S,I,simplify)
 % Return Gram basis of polynomial vector.
-% (Newton polytope simplification)
-% newton = 1 (on) & newton = 0 (off)
 
-if nargin < 2
+if nargin < 3
+    simplify = false;
+end
+if nargin < 2 || isempty(I)
     lp = numel(S);
     I = true(lp,1);
     idx = 1:lp;
@@ -11,10 +12,6 @@ else
     lp = nnz(I);
     idx = find(I);
 end
-
-simplification = 0; % default value is 0 (simplification is always off)
-if nargin==3; simplification = newton; end
-
 
 % get logical maps for degrees and indeterminate variables
 % -> Ldeg(i,j) is true iff p(i) has terms of degree(j)
@@ -77,7 +74,7 @@ I = any(Lz,1);
 degmat = z.degmat(I,:);
 Lz(:,~I) = [];
 % removes monomials outside half Newton polytope
-if simplification == 1
+if simplify
     Lz = arrayfun(@(i) S.newton_reduce(S.degmat(Ldegmat(i,:),Iv),degmat), idx, 'UniformOutput', false);
     Lz = horzcat(Lz{:})';
 end

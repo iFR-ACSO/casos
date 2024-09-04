@@ -1,4 +1,4 @@
-% Test Newton polytope monomial basis reduction 
+% Demonstrate Newton polytope monomial basis reduction 
 
 x = casos.PS('x', 3, 1);
 f = casos.PS.sym('f');
@@ -18,7 +18,7 @@ opts.Kc.sos = 4;
 opts.error_on_fail = false;
 
 % newton polytope simplification 
-opts.sossol_options.newton = 1;
+opts.newton_simplify = true;
 
 % solve by relaxation to SDP
 tic
@@ -31,7 +31,7 @@ idx = 1:N_times;
 
 tic;
 arrayfun(@(i) S(), idx, 'UniformOutput', false); % solve problem
-fprintf('newton = %d || time: %ds \n', opts.sossol_options.newton, toc);
+fprintf('newton = %d || time: %ds \n', opts.newton_simplify, toc);
 
 sol = S();
 fprintf('sol.f = %d \n', full(sol.f)); % the value should be 1.7107

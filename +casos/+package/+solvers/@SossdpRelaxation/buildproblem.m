@@ -2,7 +2,7 @@ function buildproblem(obj,solver,sos)
 % Build SDP problem from SOS relaxation.
 
 opts   = obj.opts;
-newton = opts.sossol_options.newton;
+newton = opts.newton_simplify;
 
 % problem size
 n = length(sos.x);

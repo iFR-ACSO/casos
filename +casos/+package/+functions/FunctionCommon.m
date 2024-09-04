@@ -2,8 +2,7 @@ classdef (Abstract) FunctionCommon < handle
 % Common superclass for casos and casadi-derived functions.
 
 properties (Constant, Access=protected)
-    options = casos.package.Options(...
-        {'error_on_fail', 'Throw exceptions when function evaluation fails (default true).'});
+    options = casos.package.Options({'error_on_fail', 'Throw exceptions when function evaluation fails (default true).'});
 end
 
 properties (Access=protected)
