@@ -26,7 +26,6 @@ b = casos.PS.sym('b');
 
 % options
 opts = struct('sossol','sedumi');
-opts.sossol_options.newton_simplify = true;
 
 %% Setup solver
 % solver 1: gamma-step
