@@ -18,7 +18,6 @@ classdef (Abstract) SosoptCommon < casos.package.solvers.SolverCommon & casos.pa
 %
 
 properties (Constant,Access=protected)
-
     sosopt_options = casos.package.solvers.SolverCommon.solver_options;
 
     sosopt_cones = casos.package.Cones([
