@@ -98,12 +98,16 @@ opts.Kc = struct('sos', 3);
 % build third solver
 S3 = casos.sossol('S','scs',sos3,opts);
 
-buildTime = toc(buildTime_start);
+tmpbuildTime = toc(buildTime_start);
 
 % initialize arrays
 solvetime_all1 = zeros(100,1);
 solvetime_all2 = zeros(100,1);
 solvetime_all3 = zeros(100,1);
+
+buildTime1 = zeros(100,1);
+buildTime2 = zeros(100,1);
+buildTime3 = zeros(100,1);
 
 bval_old = [];
 
@@ -111,33 +115,40 @@ bval_old = [];
 for iter = 1:100
 
     % gamma step
+    startSolve1 =tic;
     sol1 = S1('p',Vval);    
-
     % get all solver times from all subiterations of the biscetion
     solvetime_all1(iter) = sum(cellfun(@(x) x.solvetime_matlab, S1.stats.iter));
+    buildTime1(iter) = toc(startSolve1) -solvetime_all1(iter);
 
     % extract solution
     gval = -sol1.f;
     s1val = sol1.x;
 
     % beta step
+    startSolve2 =tic;
     sol2 = S2('p',[Vval;gval]); 
 
     % get all solver times from all subiterations of the biscetion
     solvetime_all2(iter) = sum(cellfun(@(x) x.solvetime_matlab, S2.stats.iter));
-
+    buildTime2(iter) = toc(startSolve2) -solvetime_all2(iter);
+    
     % extract solution
     bval = -sol2.f;
     s2val = sol2.x;
 
     % V-step
+    startSolve3 =tic;
     sol3 = S3('p',[bval,gval,s1val,s2val]);
-    
+    % get solver time
+    solvetime_all3(iter) = S3.stats.solvetime_matlab;
+    buildTime3(iter) = toc(startSolve3) -solvetime_all3(iter);
+
+
     % extract solution
     Vval = sol3.x;
 
-    % get solver time
-    solvetime_all3(iter) = S3.stats.solvetime_matlab;
+
     
     % show progress 
     fprintf('Iteration %d: b = %g, g = %g.\n',iter,full(bval),full(gval));
@@ -154,6 +165,7 @@ for iter = 1:100
     end
 
 end % end for-loop
+buildTime = tmpbuildTime + sum(buildTime1) + sum(buildTime2) + sum(buildTime3);
 
 % total solver time over all iterations
 solverTime_total = sum(solvetime_all1) + sum(solvetime_all2) + sum(solvetime_all3);

@@ -72,7 +72,6 @@ Vval = x'*P*x;
 uM = 10*d2r - 0.0489;
 um = -(10*d2r + 0.0489);
 
-
 % start to measure build time of all parameterized solver
 buildTime_start = tic;
 
@@ -95,18 +94,14 @@ s8 = casos.PS.sym('s8',monomials([x;t],0:2),'gram');
 b = casos.PS.sym('b');
 
 T = 3;
-% t = casos.PS.sym('t');
 h = casos.PS(1*t*(T-t*1));
 
 % options
 opts               = struct('sossol','mosek');
 opts.error_on_fail = 0;
 opts.conf_interval = [-1 0];
-% opts.verbose = 1;
 
 %% setup solver
-% solver 1: gamma-step
-
 sos1 = struct('x',[K;s2;s3;s4;s5;s6;s7;s8], ... % dec.var
               'f',-b, ... % cost function for bisection
               'p',V);     % parameter
@@ -143,27 +138,29 @@ opts    = struct;
 opts.Kx = struct('sos', 5, 'lin', 1); 
 opts.Kc = struct('sos', 6);
 
-% build third solver
+% build second solver
 S2 = casos.sossol('S','mosek',sos2,opts);
 
-buildTime = toc(buildTime_start);
+tmpbuildTime = toc(buildTime_start);
 
 % initialize arrays
 solvetime_all1 = zeros(100,1);
 solvetime_all2 = zeros(100,1);
 solvetime_all3 = zeros(100,1);
 
-% bval_old = [];
 
-% profile on -historysize 50000000000
+buildTime1 = zeros(100,1);
+buildTime2 = zeros(100,1);
+
 %% V-s-iteration
 for iter = 1:10
 
     % gamma step
+     startSolve1 =tic;
     sol1 = S1('p',Vval);    
-
     % get all solver times from all subiterations of the biscetion
     solvetime_all1(iter) = sum(cellfun(@(x) x.solvetime_matlab, S1.stats.iter));
+    buildTime1(iter) = toc(startSolve1) -solvetime_all1(iter);
 
     % extract solution
     if strcmp(S1.stats.UNIFIED_RETURN_STATUS,'SOLVER_RET_SUCCESS') 
@@ -178,7 +175,12 @@ for iter = 1:10
     end
 
     % beta step
+    startSolve2 =tic;
     sol2 = S2('p',[gval;Kval;s3val;s5val;s7val;Vval]); 
+    % get solver time
+    solvetime_all2(iter) = S2.stats.solvetime_matlab;
+    buildTime2(iter) = toc(startSolve2) -solvetime_all2(iter);
+        
     
      if strcmp(S2.stats.UNIFIED_RETURN_STATUS,'SOLVER_RET_SUCCESS') 
            % extract solution
@@ -187,8 +189,7 @@ for iter = 1:10
            disp('Problem is infeasible in V-step! ')
         break
      end
-    % get solver time
-    solvetime_all2(iter) = S2.stats.solvetime_matlab;
+
     
     % show progress 
     fprintf('Iteration %d: , g = %g.\n',iter,full(gval));
@@ -207,6 +208,7 @@ for iter = 1:10
 end % end for-loop
 
 % total solver time over all iterations
+buildTime  = tmpbuildTime + sum(buildTime1) + + sum(buildTime2);
 solverTime_total = sum(solvetime_all1) + sum(solvetime_all2) + sum(solvetime_all3);
-% profile viewer
+
 end % end of function
