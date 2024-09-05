@@ -65,12 +65,14 @@ sos1 = struct('x',s1, ... % dec.var
               'p',V);     % parameter
 
 % constraint
-sos1.('g') = s1*(V-gval)-nabla(V,x)*f-l;
+sos1.('g') = [s1*(V-gval)-nabla(V,x)*f-l];
 
 % states + constraint are SOS cones
 opts.Kx = struct('sos', 1);
 opts.Kc = struct('sos', 1);
 opts.error_on_fail = 0;
+% opts.sdpsol_options.mosek_echo = 4;
+
 % build first solver
 S1 = casos.sossol('S1','mosek',sos1,opts);
 
@@ -113,7 +115,7 @@ opts.Kc = struct('sos', 3);
 % build third solver
 S3 = casos.sossol('S','mosek',sos3,opts);
 
-buildTimes(n-1) = toc(buildTimes_start);
+tempBuildTime = toc(buildTimes_start);
 
 % initialize arrays
 solvetime_all1 = zeros(100,1);
@@ -126,8 +128,10 @@ bval_old = [];
 for iter = 1:20
 
     % gamma step
+    s1start = tic;
     sol1 = S1('p',Vval);    
     solvetime_all1(iter) = S1.stats.solvetime_matlab;
+    buildSol1(iter) = toc(s1start)-solvetime_all1(iter);
 
     % get all solver times from all subiterations of the biscetion
     % solvetime_all1(iter) = sum(cellfun(@(x) x.solvetime_matlab, S1.stats.iter));
@@ -137,23 +141,25 @@ for iter = 1:20
     s1val = sol1.x;
 
     % beta step
+     s2start = tic;
     sol2 = S2('p',Vval); 
-
     % get all solver times from all subiterations of the biscetion
     solvetime_all2(iter) = sum(cellfun(@(x) x.solvetime_matlab, S2.stats.iter));
-
+       buildSol2(iter) = toc(s2start)-solvetime_all2(iter);
     % extract solution
     bval = -sol2.f;
     s2val = sol2.x;
 
     % V-step
+    s3start = tic;
     sol3 = S3('p',[bval,s1val,s2val]);
-    
+        solvetime_all3(iter) = S3.stats.solvetime_matlab;
+       buildSol3(iter) = toc(s3start)-solvetime_all3(iter);
     % extract solution
     Vval = sol3.x;
 
     % get solver time
-    solvetime_all3(iter) = S3.stats.solvetime_matlab;
+
     
     % show progress 
     fprintf('Iteration %d: b = %g, g = %g.\n',iter,full(bval),full(1));
@@ -176,7 +182,7 @@ bval_array(n-1)        = full(bval);
 
 % total solver time over all iterations
 solverTimes_total(n-1) = sum(solvetime_all1) + sum(solvetime_all2) + sum(solvetime_all3);
-
+buildTimes(n-1) = tempBuildTime + sum(buildSol1) + sum(buildSol2) + sum(buildSol3);
 
 % 
 % figure(199)

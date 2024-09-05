@@ -82,7 +82,7 @@ for iter = 1:20
 
          % solve problem
         opt         = spot_sdp_default_options();
-        opt.verbose = 0;
+        % opt.verbose = 4;
  
         sol1 = pr1.minimize(msspoly(1),@spot_mosek,opt);
       
