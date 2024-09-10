@@ -121,10 +121,10 @@ obj.BFGS_fun =  casadi.Function('f',{B,r,s}, {B + (r*r')/(s'*r) - (B*(s*s')*B)/(
 
 %%  Pre-compute Langrangian derivative, cost derivative etc. (needed for filter and/or convergence check)
 
-Langrangian = nlsos.f + dot(lam_gs,nlsos.g);
+Lagrangian = nlsos.f + dot(lam_gs,nlsos.g);
 
 % first order optimality condition
-dLdx = jacobian(Langrangian,nlsos.x)';
+dLdx = jacobian(Lagrangian,nlsos.x)';
 
 % gradient of Langrangian needed for BFGS and for convergence check
 [coeff_nlsos_x,sparse_nlsos] = poly2basis(nlsos.x);
@@ -147,7 +147,7 @@ obj.xk1fun = casos.Function('f1',{coeff_nlsos_x ,coeff_p0}, {nlsos.x});
 obj.p0poly = casos.Function('f2',{coeff_p0}, {p0});
 
 % identify nonlinear constraints
-I = zeros(length(nlsos.g),1);
+I = false(length(nlsos.g),1);
 for idx = 1:length(nlsos.g)
     I(idx) = ~is_linear(nlsos.g(idx),nlsos.x);
 end
@@ -178,7 +178,7 @@ if  strcmp(obj.opts.conViolCheck,'projection')
         opts_proj.Kx            = struct('lin', length(s));
         opts_proj.Kc            = struct('sos', length(s));
         opts_proj.error_on_fail = 1;
-        obj.projConPara    =  casos.sossol('S','scs',proj_sos,opts_proj);
+        obj.projConPara    =  casos.sossol('S','mosek',proj_sos,opts_proj);
         
         
     else
@@ -191,12 +191,15 @@ if  strcmp(obj.opts.conViolCheck,'projection')
 else
     % constraint violation is checked via pseudo-projection i.e. sampling
     
+    % evaluate current solution (coefficients) at provided sampling points
+    obj.pseudoProj = casos.Function('f',{coeff_nlsos_x,coeff_p0}, {nlsos.g(I)});
+    
     % did the user provide samples
     if isempty(opts.conVioSamp)
         
         % if no, we simply build a scaled (scaling set to 10)
         % unit box for all indeterminates
-        nIndet = length(sparse_nlsos.indeterminates);
+        nIndet = sparsity_out(obj.pseudoProj,0).nvars;
         
         a = -10;
         b =  10;
@@ -205,9 +208,6 @@ else
         
     end
 
-    % evaluate current solution (coefficients) at provided sampling points
-    obj.pseudoProj = casos.Function('f',{coeff_nlsos_x,coeff_p0}, {nlsos.g(I==1)});
-    
     % !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     % for the final-check, we should still use the actual projection to
     % check the result!
@@ -232,7 +232,7 @@ else
         opts_proj.Kx            = struct('lin', length(s));
         opts_proj.Kc            = struct('sos', length(s));
         opts_proj.error_on_fail = 1;
-        obj.projConPara    =  casos.sossol('S','scs',proj_sos,opts_proj);
+        obj.projConPara    =  casos.sossol('S','mosek',proj_sos,opts_proj);
         
         
     else
