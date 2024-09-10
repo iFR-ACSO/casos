@@ -152,7 +152,7 @@ p = Vinit*10;
 %% setup solver
 
 % options
-opts = struct('sossol','mosek');
+opts = struct('sossol','scs');
 opts.verbose = 1;
 opts.debugBFGS = 1;
 

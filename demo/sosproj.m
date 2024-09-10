@@ -28,7 +28,7 @@ sos = struct('x',s,'f',dot(e,e),'g',s);
 opts = struct('Kx',struct('lin',1),'Kc',struct('sos',1));
 
 % solve by relaxation to SDP
-S = casos.sossol('S','mosek',sos,opts);
+S = casos.sossol('S','scs',sos,opts);
 
 tic
 % evaluate

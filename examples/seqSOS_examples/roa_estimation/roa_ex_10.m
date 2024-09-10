@@ -40,7 +40,7 @@ gx = inv(J);
 
 [A,B] = plinearize(f + gx*u ,x , u);
 
-[K0,P] = lqr(A,B,eye(3)*0.1,eye(3)*0.01);
+[K0,P] = lqr(full(A),full(B),eye(3)*0.1,eye(3)*0.01);
 
 K = -K0*x;
 

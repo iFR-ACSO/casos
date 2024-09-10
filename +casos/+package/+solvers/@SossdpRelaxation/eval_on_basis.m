@@ -4,9 +4,10 @@ function argout = eval_on_basis(obj,argin)
 % project arguments to obtain SDP inputs
 % only linear coefficients are handled (p, lbx, ubx, lbg, ubg)
 % TODO: handle SOS inputs
-[~,p,lbx,ubx,~,lbg,ubg] = argin{:};
+[x0,p,lbx,ubx,~,lbg,ubg] = argin{:};
 
 % prepare arguments to SDP
+
 args.p = casadi.DM(p);
 args.lbx = casadi.DM(lbx);
 args.ubx = casadi.DM(ubx);

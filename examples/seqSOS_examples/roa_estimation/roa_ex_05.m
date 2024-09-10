@@ -119,7 +119,7 @@ f = cleanpoly(f,1e-6,1:5);
 
 % initial guess for control law
 [A,B] = plinearize(f ,x , u);
-[K0,P] = lqr(A,B,eye(4),eye(2));
+[K0,P] = lqr(full(A),full(B),eye(4),eye(2));
 
 K = -K0*x;
 

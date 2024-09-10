@@ -78,6 +78,10 @@ idx = [1+[I0; Ipos; Ineg]; find(~J)];
 data.A = data.A(idx,:);
 data.b = data.b(idx);
 
+if any(isnan(data.A(:))) || any(isinf(data.A(:))) 
+    error('blub') 
+end
+
 % call SCS
 [x,y_,s_,obj.info] = scs(data,K,opts);
 

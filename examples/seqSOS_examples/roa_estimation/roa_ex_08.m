@@ -52,7 +52,7 @@ x_dot =  [-inv(J)*skew(x(1:3))*J*x(1:3) + inv(J)*u; % omega_dot
 
 [A,B] = plinearize(x_dot ,x , u);
 
-[K0,P] = lqr(A,B,diag([0.1,0.1,0.1,1,1,1]),eye(3)*0.01);
+[K0,P] = lqr(full(A),full(B),diag([0.1,0.1,0.1,1,1,1]),eye(3)*0.01);
 
 K = -K0*x;
 

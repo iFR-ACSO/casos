@@ -42,7 +42,7 @@ counter_acceptLvl = 0;
 if ~isempty(obj.projConPara)
     
     % compute projection of initial guess
-    solPara_proj   = obj.projConPara('p',[obj.xk1fun(xi_k,p0);obj.p0poly(p0)]);
+    solPara_proj   = obj.projConPara('x0',-1,'p',[obj.xk1fun(xi_k,p0);obj.p0poly(p0)]);
     curr_conVio    = full(solPara_proj.f);
     
     curr_cost   = inf;
@@ -81,7 +81,7 @@ for i = 0:obj.opts.max_iter
     
     args{3}  = argin{3};
     args{4}  = argin{4};
-    %
+   
     %% evaluate convex SOS problem
     sol = eval_on_basis(obj.sossolver, args);
     
