@@ -6,7 +6,7 @@
 % SOSOPT toolbox.
 %
 %--------------------------------------------------------------------------
-function [gval,solverTime,buildTime]= reachEstGTM_benchSosopt()
+function [gval,solverTime,buildTime,Vval]= reachEstGTM_benchSosopt()
 
 % System dynamics
 x = mpvar('x',[4,1]);
@@ -192,5 +192,10 @@ end % end-for-loop
 
 buildTime  = sum(endTimeBuild1) + sum(endTimeBuild2);
 solverTime = sum(solverTime1)   + sum(solverTime2) ;
+
+
+% save the complete workspace, so people do not have to re-run execpt they
+% want to
+% save('SOSOPT_GTM_reach_bench.mat')
 
 end % end of function

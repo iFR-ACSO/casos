@@ -205,7 +205,7 @@ end
 feassosp = 1; %09/25/21 the default value, it is used for sospsimplify
 if options.simplify
 
-    fprintf('Running simplification process:\n')
+    % fprintf('Running simplification process:\n')
     if isfield(options,'frlib')
         disp('Warning: SOSTOOLS does not support use of both "psimplify" and "frlib" to simplify program; proceeding with only "psimplify".')
     end
@@ -225,8 +225,8 @@ if options.simplify
     %A,b,K -reduced matrices
     [A,b,K,~,dv2x,~,feassosp,~,removed_rows] = sospsimplify(At_full,b_full,K_full,Zmonom, dv2x,Nsosvarc, ptol);
 
-    fprintf('Old A size: %d  %d\n', size(At));
-    fprintf('New A size: %d  %d\n', size(A'));
+    %fprintf('Old A size: %d  %d\n', size(At));
+    %fprintf('New A size: %d  %d\n', size(A'));
     % 	[prg_primal] = frlib_pre(options.frlib,At',b,c,K); %interface with frlib
     At = A';  %reduced SDP matrices
     %b = b;

@@ -5,7 +5,7 @@
 %
 %--------------------------------------------------------------------------
 
-function [gval,bval, solverTime_total,buildTime] = roaEstGTM_benchCasos()
+function [gval,bval, solverTime_total,buildTime,callTime] = roaEstGTM_benchCasos()
 
 % system states 
 x = casos.Indeterminates('x',4);
@@ -45,9 +45,9 @@ g = casos.PS.sym('g');
 b = casos.PS.sym('b');
 
 % options
-opts               = struct('sossol','scs');
+opts               = struct('sossol','mosek');
 opts.error_on_fail = 0;
-opts.verbose = 1;
+opts.verbose = 0;
 opts.conf_interval = [-1000 0];
 
 %% setup solver
@@ -96,7 +96,7 @@ opts.Kx = struct('sos', 0, 'lin', 1);
 opts.Kc = struct('sos', 3);
 
 % build third solver
-S3 = casos.sossol('S','scs',sos3,opts);
+S3 = casos.sossol('S','mosek',sos3,opts);
 
 tmpbuildTime = toc(buildTime_start);
 
@@ -148,8 +148,6 @@ for iter = 1:100
     % extract solution
     Vval = sol3.x;
 
-
-    
     % show progress 
     fprintf('Iteration %d: b = %g, g = %g.\n',iter,full(bval),full(gval));
     
@@ -165,10 +163,15 @@ for iter = 1:100
     end
 
 end % end for-loop
-buildTime = tmpbuildTime + sum(buildTime1) + sum(buildTime2) + sum(buildTime3);
+callTime  = sum(buildTime1) + sum(buildTime2) + sum(buildTime3);
+buildTime = tmpbuildTime + callTime;
 
 % total solver time over all iterations
 solverTime_total = sum(solvetime_all1) + sum(solvetime_all2) + sum(solvetime_all3);
+
+% save the complete workspace, so people do not have to re-run execpt they
+% want to
+% save('Casos_GTM_ROA_bench.mat')
 
 end
 

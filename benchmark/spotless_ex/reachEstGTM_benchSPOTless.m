@@ -5,7 +5,7 @@
 % SPOTless toolbox and the manual
 %
 %--------------------------------------------------------------------------
-function [gval,solverTime,buildTime]= reachEstGTM_benchSPOTless()
+function [gval,solverTime,buildTime,Vval]= reachEstGTM_benchSPOTless()
 
 % indeterminates
 x = msspoly ('x' , 4 ) ;
@@ -173,8 +173,7 @@ for iter = 1:10
 		
     end
 
-    sum( endTimeBuild1)
-    sum(solverTime1)
+
     if ~isempty(gval)
         % fprintf('gamma is %g.\n', gval)
     else
@@ -242,23 +241,13 @@ for iter = 1:10
 		break
     end
 
-
-	% check convergence
-	% if ~isempty(bval_old)
-    %     if abs(full(bval-bval_old)) <= 1e-3
-    %         break
-    %     else
-    %         bval_old = bval;
-    %     end
-    % else
-    %     bval_old = bval;
-    % end
-
-
 end % end for-loop
 % profile viewer
 buildTime  = sum(endTimeBuild1) + sum(endTimeBuild2);
 solverTime = sum(solverTime1) + sum(solverTime2);
- 
+
+ % save the complete workspace, so people do not have to re-run execpt they
+% want to
+% save('SPOTless_GTM_reach_bench.mat')
 
 end % end of function

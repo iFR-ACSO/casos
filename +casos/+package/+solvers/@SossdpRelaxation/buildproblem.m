@@ -73,12 +73,19 @@ Qvar_mapped = map*Qvar_sdp;
 [sdp_Hf,sdp_Jf,sdp_f] = sosprob_f(Qvar_mapped);
 [sdp_Jg,sdp_g] = sosprob_g(Qvar_mapped);
 
+% scaling
+sdp_g0 = mtaylor(sdp_g,Qvar_sdp,0,0);
+scale = 1; %max(abs([sdp_Jg(:); sdp_g0]));
+
 % build SDP problem
 sdp.x = [Qvar_sdp; Qcon_G];
 sdp.f = sdp_f;
-sdp.g = sdp_g - blkdiag(sparse(nnz_lin_g,0), Mp_g)*Qcon_G;
+sdp.g = sdp_g/scale - blkdiag(sparse(nnz_lin_g,0), Mp_g)*Qcon_G;
+
 sdp.p = Qpar;
+
 % store derivatives
+% scale = 1;
 sdp.derivatives.Hf = blockcat(map'*sdp_Hf*map, ...
                               sparse(nnz_lin_x+nnz_gram_x,nnz_gram_g), ...
                               sparse(nnz_gram_g,nnz_lin_x+nnz_gram_x), ...
@@ -92,6 +99,9 @@ sdpopt.Kc = struct('lin', nnz_lin_g + nnz_sos_g);
 
 % initialize SDP solver
 obj.sdpsolver = casos.package.solvers.SdpsolInternal('SDP',solver,sdp,sdpopt);
+
+% debug: scaling
+obj.scaling = casadi.Function('s',{sdp.x sdp.p},{scale});
 
 % store basis
 obj.sparsity_x  = Zvar;

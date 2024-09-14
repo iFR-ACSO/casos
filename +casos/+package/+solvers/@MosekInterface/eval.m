@@ -12,10 +12,10 @@ msk_prob.a = sparse(prob.a);
 msk_prob.c = sparse(prob.c);
 msk_prob.f = sparse(prob.f);
 msk_prob.g = full(prob.g);
-msk_prob.blc = full(prob.blc);
-msk_prob.buc = full(prob.buc);
-msk_prob.blx = full(prob.blx);
-msk_prob.bux = full(prob.bux);
+msk_prob.blc = sparse(prob.blc);
+msk_prob.buc = sparse(prob.buc);
+msk_prob.blx = sparse(prob.blx);
+msk_prob.bux = sparse(prob.bux);
 % structures
 msk_prob.bara.val = full(data.a);
 msk_prob.barc.val = full(data.c);

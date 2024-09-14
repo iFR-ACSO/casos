@@ -232,4 +232,8 @@ buildTimes(n-1) = sum(endTimeBuild1) + sum(endTimeBuild2) + sum(endTimeBuild3);
 
 end
 
+% save the complete workspace, so people do not have to re-run execpt they
+% want to
+save('SOSTOOLS_GTM_ROA_bench.mat')
+
 end

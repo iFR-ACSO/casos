@@ -5,7 +5,7 @@
 % tutorial:
 % https://yalmip.github.io/tutorial/sumofsquaresprogramming/ on how to
 % setup constraint sos problems. 
-% More specifically section Constrained polynomial optimization
+% More specifically the section "Constrained polynomial optimization"
 %
 %--------------------------------------------------------------------------
 
@@ -17,7 +17,7 @@ sdpvar x1 x2 x3 x4 g b
 
 x = [x1;x2;x3;x4];
 
-
+% it takes very long for sdpvar to build up dyanmics!
 % Polynomial Dynamics
 f = GTM_dynamics(x(1),x(2),x(3),x(4));
 
@@ -45,6 +45,13 @@ l = 1e-6*(x'*x);
 % use default options except from verbosity and select mosek as solver
 solverset = sdpsettings('solver','mosek', ...
                         'verbose',0);        
+
+
+% solverset = sdpsettings('solver','mosek', ...
+%                         'sos.newton',0,...
+%                         'sos.congruence',0,...
+%                         'sos.scale',0,...
+%                         'verbose',0);        
 
 
 % setup arrays
@@ -110,8 +117,7 @@ for iter = 1:100
         solverTime1   = [solverTime1 sol1.solvertime];
 		
     end
-    toc(checkStart)
-    profile viewer
+
 
     if ~isempty(gval)
         % fprintf('gamma is %g.\n', gval)
@@ -220,5 +226,8 @@ end % end for-loop
 buildTime  = sum(endTimeBuild1) + sum(endTimeBuild2) + sum(endTimeBuild3);
 solverTime = sum(solverTime1)   + sum(solverTime2)   + sum(solverTime3);
  
+% save the complete workspace, so people do not have to re-run execpt they
+% want to
+% save('YALMIP_GTM_ROA_bench.mat')
 
 end % end of function

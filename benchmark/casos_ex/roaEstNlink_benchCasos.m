@@ -12,6 +12,7 @@ buildTimes          = zeros(Nmax-1,1);
 solverTimes_total   = zeros(Nmax-1,1);
 bval_array          = zeros(Nmax-1,1);
 
+% iterate of the Number of links
 for n = 2:Nmax
 
 disp(['Compute maximum ROA for the ' num2str(n) '-link pendulum'])
@@ -71,6 +72,7 @@ sos1.('g') = [s1*(V-gval)-nabla(V,x)*f-l];
 opts.Kx = struct('sos', 1);
 opts.Kc = struct('sos', 1);
 opts.error_on_fail = 0;
+opts.newton_simplify = 0;
 % opts.sdpsol_options.mosek_echo = 4;
 
 % build first solver
@@ -184,13 +186,11 @@ bval_array(n-1)        = full(bval);
 solverTimes_total(n-1) = sum(solvetime_all1) + sum(solvetime_all2) + sum(solvetime_all3);
 buildTimes(n-1) = tempBuildTime + sum(buildSol1) + sum(buildSol2) + sum(buildSol3);
 
-% 
-% figure(199)
-% clf
-% pcontour(subs(Vval,x(3:end),zeros(length(x(3:end)),1)), gval,[-1 1 -1 1])
-% hold on
-% pcontour(subs(p,x(3:end),zeros(length(x(3:end)),1)), full(bval),[-1 1 -1 1],'r')
-% pause(0.1)
+
+% save the complete workspace, so people do not have to re-run execpt they
+% want to
+save('Casos_Nlink_ROA_bench.mat')
+
 end
 end
 

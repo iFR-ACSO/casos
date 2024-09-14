@@ -14,7 +14,7 @@ buildTimes          = zeros(Nmax-1,1);
 solverTimes_total   = zeros(Nmax-1,1);
 bval_array          = zeros(Nmax-1,1);
 
-for n = 2:Nmax
+for n = Nmax
 
 disp(['Compute maximum ROA for the ' num2str(n) '-link pendulum'])
 

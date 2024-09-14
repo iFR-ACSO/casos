@@ -5,6 +5,9 @@ properties (Access=private)
     sdpsolver;
 
     gram2sos;
+
+    % debug
+    scaling;
 end
 
 properties (Constant,Access=protected)

@@ -7,7 +7,7 @@
 %
 %--------------------------------------------------------------------------
 
-function [gval,solverTime,buildTime]= reachEstGTM_benchSOSTOOLS()
+function [gval,solverTime,buildTime,Vval]= reachEstGTM_benchSOSTOOLS()
 
 
 pvar x1 x2 x3 x4;
@@ -140,7 +140,7 @@ for iter = 1:10
 
         %  call solver
         solver_opt.solver = 'mosek';
-        % solver_opt.simplify = 'on';
+        % solver_opt.simplify = 1;
         [prog1,~] = sossolve(prog1,solver_opt);
     
         % check if feasible
@@ -186,12 +186,13 @@ for iter = 1:10
     prog2     = sosprogram([x;t]);
 
     % decision variable
-    [prog2,V] = sospolyvar(prog2,monomials([x;t],0:4));
+    [prog2,V]  = sospolyvar(prog2,monomials([x;t],0:4));
     [prog2,s1] = sossosvar(prog2,monomials(x,0:2));
     [prog2,s2] = sossosvar(prog2,monomials([x;t],0:2));
     [prog2,s4] = sospolyvar(prog2,monomials(x,0:4));
     [prog2,s6] = sossosvar(prog2,monomials([x;t],0:2));
     [prog2,s8] = sossosvar(prog2,monomials([x;t],0:2));
+
     % constraints
     prog2 = sosineq(prog2, s4-0.0001 );
     DVx = jacobian(V, x);
@@ -205,7 +206,7 @@ for iter = 1:10
     
     %  call solver
     solver_opt.solver = 'mosek';
-    % solver_opt.simplify = 'on';
+    % solver_opt.simplify = 1;
     [prog2,~] = sossolve(prog2,solver_opt);
 
 	
@@ -226,22 +227,14 @@ for iter = 1:10
 	end
 
 
-    % check convergence
-    % if ~isempty(bval_old)
-    %     if abs(full(bval-bval_old)) <= 1e-3
-    %         break
-    %     else
-    %         bval_old = bval;
-    %     end
-    % else
-    %     bval_old = bval;
-    % end
-
 
 end % end for-loop
 
 buildTime  = sum(endTimeBuild1) + sum(endTimeBuild2);
 solverTime = sum(solverTime1)   + sum(solverTime2);
  
+% save the complete workspace, so people do not have to re-run execpt they
+% want to
+% save('SOSTOOLS_GTM_reach_bench.mat')
 
 end

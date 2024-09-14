@@ -230,5 +230,8 @@ end % end for-loop
 buildTime  = sum(endTimeBuild1) + sum(endTimeBuild2) + sum(endTimeBuild3);
 solverTime = sum(solverTime1) + sum(solverTime2) + sum(solverTime3);
  
+% save the complete workspace, so people do not have to re-run execpt they
+% want to
+% save('SPOTless_GTM_ROA_bench.mat')
 
 end % end of function

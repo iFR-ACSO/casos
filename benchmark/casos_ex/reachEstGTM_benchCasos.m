@@ -5,7 +5,7 @@
 %
 %--------------------------------------------------------------------------
 
-function [gval, solverTime_total,buildTime] = reachEstGTM_benchCasos()
+function [gval, solverTime_total,buildTime,Vval] = reachEstGTM_benchCasos()
 
 % system states 
 x = casos.Indeterminates('x',4);
@@ -99,6 +99,11 @@ h = casos.PS(1*t*(T-t*1));
 % options
 opts               = struct('sossol','mosek');
 opts.error_on_fail = 0;
+
+% bisection tolerances
+opts.tolerance_abs  = 1e-4;
+opts.tolerance_rel  = 1e-4;
+
 opts.conf_interval = [-1 0];
 
 %% setup solver
@@ -156,10 +161,12 @@ buildTime2 = zeros(100,1);
 for iter = 1:10
 
     % gamma step
-     startSolve1 =tic;
+    startSolve1 =tic;
     sol1 = S1('p',Vval);    
+
     % get all solver times from all subiterations of the biscetion
     solvetime_all1(iter) = sum(cellfun(@(x) x.solvetime_matlab, S1.stats.iter));
+
     buildTime1(iter) = toc(startSolve1) -solvetime_all1(iter);
 
     % extract solution
@@ -194,21 +201,17 @@ for iter = 1:10
     % show progress 
     fprintf('Iteration %d: , g = %g.\n',iter,full(gval));
     
-    % % check convergence
-    % if ~isempty(bval_old)
-    %     if abs(full(bval-bval_old)) <= 1e-3
-    %         break
-    %     else
-    %         bval_old = bval;
-    %     end
-    % else
-    %     bval_old = bval;
-    % end
 
 end % end for-loop
 
 % total solver time over all iterations
 buildTime  = tmpbuildTime + sum(buildTime1) + + sum(buildTime2);
 solverTime_total = sum(solvetime_all1) + sum(solvetime_all2) + sum(solvetime_all3);
+
+
+
+% save the complete workspace, so people do not have to re-run execpt they
+% want to
+% save('Casos_GTM_reach_bench.mat')
 
 end % end of function

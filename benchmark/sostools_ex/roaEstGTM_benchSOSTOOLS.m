@@ -80,6 +80,7 @@ for iter = 1:100
         
         %  call solver
         solver_opt.solver = 'mosek';
+        solver_opt.simplify = 1;
         [prog1,~] = sossolve(prog1,solver_opt);
     
         % check if feasible
@@ -137,6 +138,7 @@ for iter = 1:100
         
         %  call solver
         solver_opt.solver = 'mosek';
+        solver_opt.simplify = 1;
         [prog2,~]     = sossolve(prog2,solver_opt);
     
     
@@ -188,6 +190,7 @@ for iter = 1:100
     
     %  call solver
     solver_opt.solver = 'mosek';
+    solver_opt.simplify = 1;
     [prog3,~] = sossolve(prog3,solver_opt);
 
 	
@@ -225,5 +228,9 @@ end % end for-loop
 buildTime  = sum(endTimeBuild1) + sum(endTimeBuild2) + sum(endTimeBuild3);
 solverTime = sum(solverTime1)   + sum(solverTime2)   + sum(solverTime3);
  
+
+% save the complete workspace, so people do not have to re-run execpt they
+% want to
+% save('SOSTOOLS_GTM_ROA_bench.mat')
 
 end
