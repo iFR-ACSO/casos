@@ -1,7 +1,8 @@
 function buildproblem(obj,solver,sos)
 % Build SDP problem from SOS relaxation.
 
-opts = obj.opts;
+opts   = obj.opts;
+newton = opts.newton_simplify;
 
 % problem size
 n = length(sos.x);
@@ -21,9 +22,9 @@ Is = [false(Nl,1); true(Ns,1)];
 Js = [false(Ml,1); true(Ms,1)];
 
 % obtain Gram basis for decision variables
-[Zvar_s,Ksdp_x_s,~,Mp_x,Md_x] = grambasis(sparsity(sos.x),Is);
+[Zvar_s,Ksdp_x_s,~,Mp_x,Md_x] = grambasis(sparsity(sos.x),Is,newton);
 % obtain Gram basis for sum-of-squares constraints
-[Zcon_s,Ksdp_g_s,~,Mp_g,Md_g] = grambasis(sparsity(sos.g),Js);
+[Zcon_s,Ksdp_g_s,~,Mp_g,Md_g] = grambasis(sparsity(sos.g),Js,newton);
 
 % matrix decision variables for variables
 Qvar_G = casadi.SX.sym('P',sum(Ksdp_x_s.^2),1);
@@ -58,19 +59,10 @@ assert(length(Qvar) == (nnz_lin_x + nnz_sos_x), 'Sum-of-squares decision varible
 % matrix decision variables
 Qvar_sdp = [Qvar_l; Qvar_G];
 
-if isfield(sos,'derivatives')
-    % use pre-specified hessian (undocumented)
-    Hf = sos.derivatives.Hf;
-
-else
-    % hessian of objective
-    Hf = hessian(Qobj,Qvar);
-end
-
 % replace sum-of-squares decision variables
 % and pre-compute derivatives
 % gradient and hessian of objective
-sosprob_f = casadi.Function('sos_f',{Qvar},{Hf jacobian(Qobj,Qvar) Qobj},struct('allow_free',true)); %hessian_old(sosprob,0,0);
+sosprob_f = casadi.Function('sos_f',{Qvar},{hessian(Qobj,Qvar) jacobian(Qobj,Qvar) Qobj},struct('allow_free',true)); %hessian_old(sosprob,0,0);
 % jacobian of constraints
 sosprob_g = casadi.Function('sos_g',{Qvar},{jacobian(Qcon,Qvar) Qcon},struct('allow_free',true)); %jacobian_old(sosprob,0,1);
 
@@ -91,11 +83,8 @@ sdp.derivatives.Hf = blockcat(map'*sdp_Hf*map, ...
                               sparse(nnz_lin_x+nnz_gram_x,nnz_gram_g), ...
                               sparse(nnz_gram_g,nnz_lin_x+nnz_gram_x), ...
                               sparse(nnz_gram_g,nnz_gram_g));
-
-
 sdp.derivatives.Jf = horzcat(sdp_Jf*map, sparse(1,nnz_gram_g));
 sdp.derivatives.Jg = horzcat(sdp_Jg*map, -Mp_g);
-
 % SDP options
 sdpopt = opts.sdpsol_options;
 sdpopt.Kx = struct('lin', nnz_lin_x, 'psd', [Ksdp_x_s; Ksdp_g_s]);
