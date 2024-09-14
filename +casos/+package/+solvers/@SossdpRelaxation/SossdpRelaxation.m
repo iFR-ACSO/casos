@@ -9,7 +9,8 @@ end
 
 properties (Constant,Access=protected)
     sossdp_options = [casos.package.solvers.SosoptCommon.sosopt_options
-        {'sdpsol_options', 'Options to be passed to the SDP solver.'}
+        {'sdpsol_options', 'Options to be passed to the SDP solver.';...
+         'newton_simplify', 'Perform monomial basis simplification with Newton polytopes (default true).'}
     ];
 
     allow_eval_on_basis = true;
@@ -37,6 +38,8 @@ methods
 
         % default options
         if ~isfield(obj.opts,'sdpsol_options'), obj.opts.sdpsol_options = struct; end
+        if ~isfield(obj.opts,'newton_simplify'), obj.opts.newton_simplify = true; end
+        
         % pass options to sdpsol
         if ~isfield(obj.opts.sdpsol_options,'error_on_fail')
             obj.opts.sdpsol_options.error_on_fail = obj.opts.error_on_fail;
