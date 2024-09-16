@@ -80,12 +80,11 @@ methods
         args.dd_ubx = []; 
         args.dd_lbx = []; 
         obj.map = [];
-        flag_reduced = 0;
+
         % rebuild problem from SDD to SOCP
         if isfield(opts.Kx,'sdd') || isfield(opts.Kc,'sdd')
             [sdp, args, map, opts] = sdd_reduce(obj, sdp, opts, args);
             map_SDD_2_ORIG = map;
-            flag_reduced = 1;
         else
             % if no SDD was present create an identity map
             map_SDD_2_ORIG.x = speye(length(sdp.x));
@@ -96,7 +95,6 @@ methods
         if isfield(opts.Kx,'dd') || isfield(opts.Kc,'dd')
             [sdp, args, map, opts] = dd_reduce(obj, sdp, opts, args);
             map_DD_2_ORIG = map;
-            flag_reduced = 1;
         else
             % if no DD was present create an identity map
             map_DD_2_ORIG.x = speye(length(sdp.x));
@@ -118,11 +116,12 @@ methods
         % constraint function (vectorized)
         sdp_g = sdp.g(:);
 
-        if isfield(sdp,'derivatives') && ~flag_reduced 
+        if isfield(sdp,'derivatives')
             % use pre-computed derivatives (undocumented)
-            H = sdp.derivatives.Hf;
-            g = sdp.derivatives.Jf;
-            A = sdp.derivatives.Jg;
+            H = obj.map.x'*sdp.derivatives.Hf*obj.map.x;
+            g = sdp.derivatives.Jf*obj.map.x;
+            A = [sdp.derivatives.Jg*obj.map.x; 
+                 jacobian(sdp_g(size(sdp.derivatives.Jg,1)+1:end), x)];
         else
             % quadratic cost
             H = hessian(sdp.f, x);
