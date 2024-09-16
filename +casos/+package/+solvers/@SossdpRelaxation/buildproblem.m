@@ -110,6 +110,10 @@ temp_split = cellfun(@(x, g) [x; g], cellArray_x , cellArray_g, 'UniformOutput',
 % assign to struct fields
 [sdpopt.Kx.psd, sdpopt.Kx.dd, sdpopt.Kx.sdd] = deal(temp_split{:});
 
+% remove empty fields
+fieldnames_temp = fieldnames(sdpopt.Kx);
+sdpopt.Kx = rmfield(sdpopt.Kx, fieldnames_temp(structfun(@isempty, sdpopt.Kx)));
+
 % assign number of linear cones in constraints
 sdpopt.Kc = struct('lin', nnz_lin_g + nnz_sos_g);
 
