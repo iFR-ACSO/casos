@@ -84,7 +84,7 @@ for iter = 1:100
         [prog1,~] = sossolve(prog1,solver_opt);
     
         % check if feasible
-        if prog1.solinfo.info.dinf == 0 && prog1.solinfo.info.pinf == 0
+        if prog1.solinfo.info.dinf == 0 && prog1.solinfo.info.pinf == 0 && prog1.solinfo.info.feasratio >= 0.9
 
             % adapt lower interval bound
             lb   = gtry;
@@ -143,7 +143,7 @@ for iter = 1:100
         [prog2,~]     = sossolve(prog2,solver_opt);
     
     
-        if prog2.solinfo.info.dinf == 0 && prog2.solinfo.info.pinf == 0
+        if prog2.solinfo.info.dinf == 0 && prog2.solinfo.info.pinf == 0 && prog2.solinfo.info.feasratio >= 0.9
             % adapt lower interval bound
             lb    = btry;
 
@@ -198,7 +198,7 @@ for iter = 1:100
 	endTimeBuild3(iter) = toc(startTimeBuild3)-prog3.solinfo.info.cpusec;
 	solverTime3         = [solverTime3 prog3.solinfo.info.cpusec];
 	
-	if prog3.solinfo.info.dinf == 0 && prog3.solinfo.info.pinf == 0
+	if prog3.solinfo.info.dinf == 0 && prog3.solinfo.info.pinf == 0 && prog3.solinfo.info.feasratio >= 0.9
 
 		    % extract solution 
             Vval = sosgetsol(prog3,V);
