@@ -157,11 +157,11 @@ for iter = 1:100
         % buildTime is total time spend to setup constraints (i.e sos problem),
         % do the transcription (poly --> sdp --> poly) we subtract the
         % solver time afterwards to only consider the actual build process
-        endTimeBuild2 = [endTimeBuild1 toc(startTimeBuild2)-prog2.solinfo.info.cpusec];
+        endTimeBuild2 = [endTimeBuild1 toc(startTimeBuild2)-prog2.solinfo.info.wallTime];
 
         % solver time is mosek CPU time; slightly different  to tic-toc
         % measurements
-        solverTime2   = [solverTime2 prog2.solinfo.info.cpusec];
+        solverTime2   = [solverTime2 prog2.solinfo.info.wallTime];
 	 
     end
 
@@ -194,8 +194,8 @@ for iter = 1:100
     [prog3,~] = sossolve(prog3,solver_opt);
 
 	
-	endTimeBuild3(iter) = toc(startTimeBuild3)-prog3.solinfo.info.cpusec;
-	solverTime3         = [solverTime3 prog3.solinfo.info.cpusec];
+	endTimeBuild3(iter) = toc(startTimeBuild3)-prog3.solinfo.info.wallTime;
+	solverTime3         = [solverTime3 prog3.solinfo.info.wallTime];
 	
 	if prog3.solinfo.info.dinf == 0 && prog3.solinfo.info.pinf == 0
 

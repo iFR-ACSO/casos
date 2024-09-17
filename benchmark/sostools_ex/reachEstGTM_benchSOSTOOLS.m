@@ -91,9 +91,8 @@ relbistol = 1e-4;
 absbistol = 1e-4;
 
 
-
-   T = 3;
-    h = t*(T-t);
+T = 3;
+h = t*(T-t);
 
 %% V-s-iteration
 for iter = 1:10
@@ -122,7 +121,7 @@ for iter = 1:10
         % decision variables
         [prog1,s2] = sossosvar(prog1,monomials([x;t],0:2));
         [prog1,s3] = sossosvar(prog1,monomials([x;t],0:2));
-        [prog1,s4] = sospolyvar(prog1,monomials(x,0:4));
+        [prog1,s4] = sossosvar(prog1,monomials(x,0:2));
         [prog1,s5] = sossosvar(prog1,monomials([x;t],0:2));
         [prog1,s6] = sossosvar(prog1,monomials([x;t],0:2));
         [prog1,s7] = sossosvar(prog1,monomials([x;t],0:2));
@@ -140,11 +139,11 @@ for iter = 1:10
 
         %  call solver
         solver_opt.solver = 'mosek';
-        % solver_opt.simplify = 1;
+        solver_opt.simplify = 1;
         [prog1,~] = sossolve(prog1,solver_opt);
     
         % check if feasible
-        if prog1.solinfo.info.dinf == 0 && prog1.solinfo.info.pinf == 0
+        if prog1.solinfo.info.dinf == 0 && prog1.solinfo.info.pinf == 0 && prog1.solinfo.info.feasratio >= 0.9
 
             % adapt lower interval bound
             lb   = gtry;
@@ -164,8 +163,8 @@ for iter = 1:10
         % buildTime is total time spend to setup constraints (i.e sos problem),
         % do the transcription (poly --> sdp --> poly) we subtract the
         % solver time afterwards to only consider the actual build process
-        endTimeBuild1 = [endTimeBuild1 toc(startTimeBuild1)-prog1.solinfo.info.cpusec];
-        solverTime1   = [solverTime1 prog1.solinfo.info.cpusec];
+        endTimeBuild1 = [endTimeBuild1 toc(startTimeBuild1)-prog1.solinfo.info.wallTime];
+        solverTime1   = [solverTime1 prog1.solinfo.info.wallTime];
 	 
     end
 
@@ -189,7 +188,7 @@ for iter = 1:10
     [prog2,V]  = sospolyvar(prog2,monomials([x;t],0:4));
     [prog2,s1] = sossosvar(prog2,monomials(x,0:2));
     [prog2,s2] = sossosvar(prog2,monomials([x;t],0:2));
-    [prog2,s4] = sospolyvar(prog2,monomials(x,0:4));
+    [prog2,s4] = sossosvar(prog2,monomials(x,0:2));
     [prog2,s6] = sossosvar(prog2,monomials([x;t],0:2));
     [prog2,s8] = sossosvar(prog2,monomials([x;t],0:2));
 
@@ -206,14 +205,14 @@ for iter = 1:10
     
     %  call solver
     solver_opt.solver = 'mosek';
-    % solver_opt.simplify = 1;
+    solver_opt.simplify = 1;
     [prog2,~] = sossolve(prog2,solver_opt);
 
 	
-    endTimeBuild2(iter) = toc(startTimeBuild2)-prog2.solinfo.info.cpusec;
-	solverTime2         = [solverTime2 prog2.solinfo.info.cpusec];
+    endTimeBuild2(iter) = toc(startTimeBuild2)-prog2.solinfo.info.wallTime;
+	solverTime2         = [solverTime2 prog2.solinfo.info.wallTime];
 	
-	if prog2.solinfo.info.dinf == 0 && prog2.solinfo.info.pinf == 0
+	if prog2.solinfo.info.dinf == 0 && prog2.solinfo.info.pinf == 0 && prog2.solinfo.info.feasratio   >= 0.9
 
 		    % extract solution 
             Vval = sosgetsol(prog2,V);
