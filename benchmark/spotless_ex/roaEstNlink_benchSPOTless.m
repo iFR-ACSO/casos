@@ -87,7 +87,7 @@ for iter = 1:20
         sol1 = pr1.minimize(msspoly(1),@spot_mosek,opt);
       
         % sol.status
-        if strcmp(string(sol1.info.solverInfo.itr.prosta),"PRIMAL_AND_DUAL_FEASIBLE")
+        if strcmp(string(sol1.info.solverInfo.itr.prosta),"PRIMAL_AND_DUAL_FEASIBLE") && sol1.info.mosekinfo.MSK_DINF_INTPNT_OPT_STATUS > 0.9
             % adapt lower interval bound
             % lb = gtry;
 
@@ -144,7 +144,7 @@ for iter = 1:20
         sol2 = pr2.minimize(msspoly(1),@spot_mosek,opt);
     
        
-        if strcmp(string(sol2.info.solverInfo.itr.prosta),"PRIMAL_AND_DUAL_FEASIBLE")
+        if strcmp(string(sol2.info.solverInfo.itr.prosta),"PRIMAL_AND_DUAL_FEASIBLE") && sol2.info.mosekinfo.MSK_DINF_INTPNT_OPT_STATUS > 0.9
             % adapt lower interval bound
             lb  = btry;
     
@@ -201,7 +201,7 @@ for iter = 1:20
 	endTimeBuild3(iter) = toc(startTimeBuild3)-sol3.info.wtime;
 	solverTime3         = [solverTime3 sol3.info.wtime];
 	
-    if strcmp(string(sol3.info.solverInfo.itr.prosta),"PRIMAL_AND_DUAL_FEASIBLE")
+    if strcmp(string(sol3.info.solverInfo.itr.prosta),"PRIMAL_AND_DUAL_FEASIBLE") && sol3.info.mosekinfo.MSK_DINF_INTPNT_OPT_STATUS > 0.9
            
             % extract solution
             Vval = sol3.eval(V);
