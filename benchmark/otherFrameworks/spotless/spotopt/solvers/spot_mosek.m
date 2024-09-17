@@ -120,7 +120,7 @@ function [x,y,z,info] = spot_mosek(A,b,c,K,options)
     if options.verbose
         cmd = 'minimize info';
     else
-        cmd = 'minimize echo(0)';
+        cmd = 'minimize echo(0) info';
     end
     
     if isfield(options.solver_options,'mosek')
@@ -208,6 +208,7 @@ function [x,y,z,info] = spot_mosek(A,b,c,K,options)
     info.solverName = 'mosek';
     if status ~= spotsolstatus.STATUS_SOLVER_ERROR
         info.solverInfo = res.sol;
+        info.mosekinfo  = res.info;
     end
     info.status = status;
 

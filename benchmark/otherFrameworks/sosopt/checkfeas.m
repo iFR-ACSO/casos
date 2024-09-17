@@ -101,7 +101,7 @@ if fastchk == 1
             fastfeas = 0;
         end
     elseif strcmpi(solver,'mosek');
-        if solverinfo.pinf<1 && solverinfo.dinf<1
+        if solverinfo.pinf<1 && solverinfo.dinf<1 &&  solverinfo.mosekinfo.info.MSK_DINF_INTPNT_OPT_STATUS > 0.9
             fastfeas = 1;
         else
             fastfeas = 0;

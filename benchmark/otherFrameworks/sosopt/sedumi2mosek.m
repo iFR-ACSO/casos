@@ -101,7 +101,7 @@ prob.bara = Amatmsk;
 
 % Call Mosek
 solveTime = tic;
-[~,res] = mosekopt(['minimize echo(0) ' mskcmd], prob, mskparam);  
+[~,res] = mosekopt(['minimize echo(0) info ' mskcmd], prob, mskparam);  
 solverTime = toc(solveTime);
 xMos = res.sol.itr.barx;
 x = zeros(sum(L)+nS(end),1);

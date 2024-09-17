@@ -315,10 +315,15 @@ elseif strcmp(lower(options.solver),'mosek')
     % disp(['Size: ' num2str(size_At)]);
     % disp([' ']);
     prob = Sedumi2Mosek(At',b,c,K);
+    startMosek = tic;
     [~,res] = mosekopt('minimize info echo(0)',prob);
+
+    info=[];
+    info.wallTime = toc(startMosek);
+
     [x,Y] = MosekSol2SedumiSol(K,res);
     y=Y(1:size(At,2));
-    info=[];
+ 
     info.cpusec = res.info.MSK_DINF_OPTIMIZER_TIME; %OK
     info.iter = res.info.MSK_IINF_INTPNT_ITER;   %OK
     info.feasratio = res.info.MSK_DINF_INTPNT_OPT_STATUS;
