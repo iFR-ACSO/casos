@@ -84,7 +84,7 @@ K    = casos.PS.sym('k',monomials([x;t],0:4));
 s1 = casos.PS.sym('s1',monomials(x,0:2),'gram');
 s2 = casos.PS.sym('s2',monomials([x;t],0:2),'gram');
 s3 = casos.PS.sym('s3',monomials([x;t],0:2),'gram');
-s4 = casos.PS.sym('s4',monomials(x,0:2),'gram');
+s4 = casos.PS.sym('s4',monomials(x,0:4));
 s5 = casos.PS.sym('s5',monomials([x;t],0:2),'gram');
 s6 = casos.PS.sym('s6',monomials([x;t],0:2),'gram');
 s7 = casos.PS.sym('s7',monomials([x;t],0:2),'gram');
@@ -99,7 +99,7 @@ h = casos.PS(1*t*(T-t*1));
 % options
 opts               = struct('sossol','mosek');
 opts.error_on_fail = 0;
-
+% opts.verbose = 1;
 % bisection tolerances
 opts.tolerance_abs  = 1e-4;
 opts.tolerance_rel  = 1e-4;
@@ -107,7 +107,7 @@ opts.tolerance_rel  = 1e-4;
 opts.conf_interval = [-1 0];
 
 %% setup solver
-sos1 = struct('x',[K;s2;s3;s4;s5;s6;s7;s8], ... % dec.var
+sos1 = struct('x',[K;s4;s2;s3;s5;s6;s7;s8], ... % dec.var
               'f',-b, ... % cost function for bisection
               'p',V);     % parameter
 
@@ -120,7 +120,7 @@ sos1.('g') = [s4-0.0001;...
 
 
 % states + constraint are SOS cones
-opts.Kx = struct('lin', 1,'sos',7);
+opts.Kx = struct('lin', 2,'sos',6);
 opts.Kc = struct('sos', 5);
 
 % build first solver
@@ -128,7 +128,7 @@ S1 = casos.qcsossol('S1','bisection',sos1,opts);
 
 
 % solver 2: V-step
-sos2 = struct('x',[V;s1;s2;s4;s6;s8], ...        % dec.var
+sos2 = struct('x',[V;s4;s1;s2;s6;s8], ...        % dec.var
               'p',[b;K;s3;s5;s7;Vold]); % parameter
 
 % constraints
@@ -140,7 +140,7 @@ sos2.('g') = [  s4-0.0001;...
                 K - um + s7*(V - b) - s8*h];
 
 opts    = struct;
-opts.Kx = struct('sos', 5, 'lin', 1); 
+opts.Kx = struct('sos', 4, 'lin', 2); 
 opts.Kc = struct('sos', 6);
 
 % build second solver
@@ -173,7 +173,7 @@ for iter = 1:10
     if strcmp(S1.stats.UNIFIED_RETURN_STATUS,'SOLVER_RET_SUCCESS') 
         gval = -sol1.f;
         Kval =  sol1.x(1);
-        s3val = sol1.x(3);
+        s3val = sol1.x(4);
         s5val = sol1.x(5);
         s7val = sol1.x(7);
     else
@@ -205,7 +205,7 @@ for iter = 1:10
 end % end for-loop
 
 % total solver time over all iterations
-buildTime  = tmpbuildTime + sum(buildTime1) + + sum(buildTime2);
+buildTime  = tmpbuildTime + sum(buildTime1) + sum(buildTime2);
 solverTime_total = sum(solvetime_all1) + sum(solvetime_all2) + sum(solvetime_all3);
 
 
