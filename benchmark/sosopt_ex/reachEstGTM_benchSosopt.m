@@ -109,6 +109,8 @@ for iter = 1:10
     opts        = gsosoptions;
     opts.minobj = -1; 
     opts.maxobj = 0;
+    opts.absbistol = 1e-4;
+    opts.relbistol = 1e-4;
     opts.solver = 'mosek';
     % opts.simplify = 'off';
   
