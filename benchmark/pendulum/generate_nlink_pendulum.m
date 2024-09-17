@@ -1,4 +1,4 @@
-function [K,S] = generate_nlink_pendulum(n, deg, only_poly)
+function [K,S,A_lin,B_lin] = generate_nlink_pendulum(n, deg, only_poly)
 
 % Parameters
 m = 1;       % Mass of each link (kg)
@@ -129,6 +129,7 @@ R = eye(n-1);        % Control cost matrix (weight for the control inputs)
 
 % Compute the LQR controller gain matrix K
 [K, S, e] = lqr(A_lin, B_lin, Q, R);
+
 
 %% obtain taylor expansion of controlled system
 f_sym_ctrl = subs(f_sym, tau', -K*x_sym');

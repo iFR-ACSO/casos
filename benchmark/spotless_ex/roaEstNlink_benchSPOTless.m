@@ -30,7 +30,7 @@ load(['data_n' num2str(n)])
 
 % Lyapunov function candidate
 Vval = x'*P*x;
-p = x'*x*10;
+p = x'*x*100;
     
 % enforce positivity
 l = 1e-6*(x'*x);
@@ -50,7 +50,7 @@ relbistol = 1e-4;
 absbistol = 1e-4;
 
 %% V-s-iteration
-for iter = 1:20
+for iter = 1:5
 
     % to make sure we do not use the old solution again
 	gval = [];
@@ -216,15 +216,15 @@ for iter = 1:20
 
 
 	% check convergence
-    if ~isempty(bval_old)
-        if abs(full(bval-bval_old)) <= 1e-3
-            break
-        else
-            bval_old = bval;
-        end
-    else
-        bval_old = bval;
-    end
+    % if ~isempty(bval_old)
+    %     if abs(full(bval-bval_old)) <= 1e-3
+    %         break
+    %     else
+    %         bval_old = bval;
+    %     end
+    % else
+    %     bval_old = bval;
+    % end
 
 
 end % end for-loop

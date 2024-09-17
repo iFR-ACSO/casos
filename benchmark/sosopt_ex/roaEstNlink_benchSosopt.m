@@ -76,11 +76,14 @@ for iter = 1:20
 
 
     % beta-step    
-     opts = gsosoptions;
+    opts = gsosoptions;
     opts.solver = 'mosek';
 
     opts.minobj = -1000; 
     opts.maxobj = 0;
+    opts.absbistol = 1e-4;
+    opts.relbistol = 1e-4;
+    
     startTimeBuild2 = tic;
     sosc    = polyconstr;
 

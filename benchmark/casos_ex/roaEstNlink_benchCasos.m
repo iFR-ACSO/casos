@@ -13,15 +13,19 @@ solverTimes_total   = zeros(Nmax-1,1);
 bval_array          = zeros(Nmax-1,1);
 
 % iterate of the Number of links
-for n = 2:Nmax
+for n = Nmax
 
 disp(['Compute maximum ROA for the ' num2str(n) '-link pendulum'])
 % system states
-x = [];
-for j = 1:n*2
-    x = [x;casos.PS(['x_' num2str(j)],1,1)];
-end
+% x = [];
+% for j = 1:n*2
+%     x = [x;casos.PS(['x_' num2str(j)],1,1)];
+% end
 
+
+x = casos.PS('x',2*n,1);
+
+x = [x(1);x(4:10);x(2:3)];
 % system dynamics
 f = feval(['pendulum_dyn_poly_n' num2str(n) '_d' num2str(deg)],x);
 
@@ -42,7 +46,7 @@ buildTimes_start = tic;
 
 % Lyapunov function candidate
 V = casos.PS.sym('v',monomials(x,2));
-
+V_par = casos.PS.sym('v',sparsity(V));
 % SOS multiplier
 s1 = casos.PS.sym('s1',monomials(x,1:2),'gram');
 s2 = casos.PS.sym('s2',monomials(x,0:1),'gram');
@@ -50,29 +54,33 @@ s2 = casos.PS.sym('s2',monomials(x,0:1),'gram');
 % level of stability
 b = casos.PS.sym('b');
 gval = 1;
+g = casos.PS.sym('g');
 
-
-% figure(199)
-% clf
-% pcontour(subs(Vval,x(3:end),zeros(length(x(3:end)),1)), gval,[-1 1 -1 1])
-% hold on
-% pcontour(subs(p,x(3:end),zeros(length(x(3:end)),1)), full(1),[-1 1 -1 1],'r')
-% pause(0.1)
+figure(199)
+clf
+pcontour(subs(Vval,x(3:end),zeros(length(x(3:end)),1)), gval,[-1 1 -1 1],'b')
+hold on
+pcontour(subs(p,x(3:end),zeros(length(x(3:end)),1)), full(1),[-1 1 -1 1],'r')
+pause(0.1)
 
 %% setup solver
 % solver 1: gamma-step
-
-sos1 = struct('x',s1, ... % dec.var
-              'p',V);     % parameter
+% opts               = struct('sossol','mosek');
+opts.error_on_fail = 1;
+% opts.verbose = 1;
+% opts.conf_interval = [-2 0];
+% opts.tolerance_abs = 1e-4;
+% opts.tolerance_rel = 1e-4;
+sos1 = struct('x',s1,'p',V_par);     % parameter
 
 % constraint
-sos1.('g') = [s1*(V-gval)-nabla(V,x)*f-l];
+sos1.('g') = s1*(V_par-gval)-nabla(V_par,x)*f-l;
 
 % states + constraint are SOS cones
 opts.Kx = struct('sos', 1);
 opts.Kc = struct('sos', 1);
-opts.error_on_fail = 0;
-opts.newton_simplify = 0;
+% opts.error_on_fail = 0;
+% % opts.newton_simplify = 1;
 % opts.sdpsol_options.mosek_echo = 4;
 
 % build first solver
@@ -83,9 +91,10 @@ S1 = casos.sossol('S1','mosek',sos1,opts);
 opts               = struct('sossol','mosek');
 opts.error_on_fail = 0;
 opts.verbose = 0;
-opts.conf_interval = [-1000 0];
-opts.tolerance_abs = 1e-4;
-opts.tolerance_rel = 1e-4;
+% opts.conf_interval = [-1000 0];
+% opts.tolerance_abs = 1e-4;
+% opts.tolerance_rel = 1e-4;
+
 % solver 2: beta-step
 sos2 = struct('x',s2, ... % dec.var
               'f',-b, ... % cost function for bisection
@@ -131,7 +140,7 @@ for iter = 1:20
 
     % gamma step
     s1start = tic;
-    sol1 = S1('p',Vval);    
+    sol1 = S1('x0',[],'p',Vval);    
     solvetime_all1(iter) = S1.stats.solvetime_matlab;
     buildSol1(iter) = toc(s1start)-solvetime_all1(iter);
 
@@ -189,7 +198,7 @@ buildTimes(n-1) = tempBuildTime + sum(buildSol1) + sum(buildSol2) + sum(buildSol
 
 % save the complete workspace, so people do not have to re-run execpt they
 % want to
-save('Casos_Nlink_ROA_bench.mat')
+% save('Casos_Nlink_ROA_bench.mat')
 
 end
 end

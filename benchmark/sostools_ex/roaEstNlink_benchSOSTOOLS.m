@@ -14,7 +14,7 @@ buildTimes          = zeros(Nmax-1,1);
 solverTimes_total   = zeros(Nmax-1,1);
 bval_array          = zeros(Nmax-1,1);
 
-for n = 2:Nmax
+for n = Nmax
 x = mpvar('x',2*n,1);
 
 % system dynamics
@@ -50,7 +50,7 @@ relbistol = 1e-4;
 absbistol = 1e-4;
 
 %% V-s-iteration
-for iter = 1:20
+for iter = 1:5
 
     % to make sure we do not use the old solution again
     bval = [];
@@ -81,6 +81,7 @@ for iter = 1:20
         
         %  call solver
         solver_opt.solver = 'mosek';
+        solver_opt.simplify = 1;
         [prog1,~] = sossolve(prog1,solver_opt);
     
         % check if feasible
@@ -138,6 +139,7 @@ for iter = 1:20
         
         %  call solver
         solver_opt.solver = 'mosek';
+        solver_opt.simplify = 1;
         [prog2,~]     = sossolve(prog2,solver_opt);
     
     
@@ -189,6 +191,7 @@ for iter = 1:20
     
     %  call solver
     solver_opt.solver = 'mosek';
+    solver_opt.simplify = 1;
     [prog3,~] = sossolve(prog3,solver_opt);
 
 	
@@ -209,19 +212,25 @@ for iter = 1:20
 	end
 
 
-    % check convergence
-    if ~isempty(bval_old)
-        if abs(full(bval-bval_old)) <= 1e-3
-            break
-        else
-            bval_old = bval;
-        end
-    else
-        bval_old = bval;
-    end
+    % % check convergence
+    % if ~isempty(bval_old)
+    %     if abs(full(bval-bval_old)) <= 1e-3
+    %         break
+    %     else
+    %         bval_old = bval;
+    %     end
+    % else
+    %     bval_old = bval;
+    % end
 
 
 end % end for-loop
+
+figure(3)
+pcontour(subs(Vval, x(3:end), zeros( length(x(3:end)) ,1) )-1,0,[-1 1 -1 1]./5,'r')
+hold on
+pcontour(subs(p,x(3:end), zeros( length(x(3:end)) ,1) )-bval,0,[-1 1 -1 1]./5,'b')
+
 % store the last beta-value
 bval_array(n-1)        = full(bval);
 

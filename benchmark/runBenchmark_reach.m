@@ -18,7 +18,7 @@ addpath(genpath('./otherFrameworks'))
 % keep the last gamma value and the last storage function for later volume
 % computation
 
-noRuns = 1;
+noRuns = 5;
 
 % pre-allocate
 solverTime_total_c_GTM_arr = zeros(noRuns,1);

@@ -46,56 +46,56 @@ solverTime_total_c_GTM_arr(j)  = solverTime_total_c_GTM;
 buildTime_c_GTM_arr(j)         = buildTime_c_GTM;
 callTime_c_GTM_arr(j)          = callTime_c_GTM;
 
-% %% run GTM 4D example in SOSTOOLS with dpvar and pvar
-% disp('Run benchmark test for SOSTOOLS with dpvar')
-% % ------------------------------------------------------------------------
-% % some functions in SOSTOOLS and SOSOPT have same names; since both use
-% % multipoly it might not work; remove one off them an make sure to add the
-% % other one
-% % ------------------------------------------------------------------------
-% rmpath(genpath('./otherFrameworks/sosopt'));
-% addpath(genpath('./otherFrameworks/SOSTOOLS'))
-% [gval_st_GTM,bval_st_GTM,solverTime_total_st_GTM,buildTime_st_GTM]= roaEstGTM_benchSOSTOOLS();
-% 
-% solverTime_total_st_GTM_arr(j)  = solverTime_total_st_GTM;
-% buildTime_st_GTM_arr(j)         = buildTime_st_GTM;
-% 
-% % run GTM 4D example in SOSTOOLS with pvar
-% disp('Run benchmark test for SOSTOOLS with pvar')
-% [gval_st2_GTM,bval_st2_GTM,solverTime_total_st2_GTM,buildTime_st2_GTM]= roaEstGTM_benchSOSTOOLS2();
-% 
-% solverTime_total_st2_GTM_arr(j)  = solverTime_total_st2_GTM;
-% buildTime_st2_GTM_arr(j)         = buildTime_st2_GTM;
-% 
-% %% run GTM 4D example in sosopt using gsosopt
-% disp('Run benchmark test for SOSOPT using GSOSOPT')
+%% run GTM 4D example in SOSTOOLS with dpvar and pvar
+disp('Run benchmark test for SOSTOOLS with dpvar')
 % ------------------------------------------------------------------------
 % some functions in SOSTOOLS and SOSOPT have same names; since both use
 % multipoly it might not work; remove one off them an make sure to add the
 % other one
-% % ------------------------------------------------------------------------
-% rmpath(genpath('./otherFrameworks/SOSTOOLS'));
-% addpath(genpath('./otherFrameworks/sosopt'))
-% [gval_sopt_GTM,bval_sopt_GTM,solverTime_total_sopt_GTM,buildTime_sopt_GTM]= roaEstGTM_benchSosopt();
-% 
-% solverTime_total_sopt_GTM_arr(j)  = solverTime_total_sopt_GTM;
-% buildTime_sopt_GTM_arr(j)         = buildTime_sopt_GTM;
-% 
-% %% run GTM 4D example in spotless
-% disp('Run benchmark test for SPOTless')
-% % run GTM 4D example in yalmip with default options
-% [gval_sp_GTM,bval_sp_GTM,solverTime_total_sp_GTM,buildTime_sp_GTM] = roaEstGTM_benchSPOTless();
-% 
-% solverTime_total_sp_GTM_arr(j)  = solverTime_total_sp_GTM;
-% buildTime_sp_GTM_arr(j)         = buildTime_sp_GTM;
-% 
-% %% run GTM 4D example in YALMIP
-% disp('Run benchmark test for Yalmip')
-% % run GTM 4D example in yalmip with default options
-% [gval_y_GTM,bval_y_GTM,solverTime_total_y_GTM,buildTime_y_GTM] = roaEstGTM_benchYALMIP();
-% 
-% solverTime_total_y_GTM_arr(j) = solverTime_total_y_GTM;
-% buildTime_y_GTM_arr(j)        = buildTime_y_GTM;
+% ------------------------------------------------------------------------
+rmpath(genpath('./otherFrameworks/sosopt'));
+addpath(genpath('./otherFrameworks/SOSTOOLS'))
+[gval_st_GTM,bval_st_GTM,solverTime_total_st_GTM,buildTime_st_GTM]= roaEstGTM_benchSOSTOOLS();
+
+solverTime_total_st_GTM_arr(j)  = solverTime_total_st_GTM;
+buildTime_st_GTM_arr(j)         = buildTime_st_GTM;
+
+% run GTM 4D example in SOSTOOLS with pvar
+disp('Run benchmark test for SOSTOOLS with pvar')
+[gval_st2_GTM,bval_st2_GTM,solverTime_total_st2_GTM,buildTime_st2_GTM]= roaEstGTM_benchSOSTOOLS2();
+
+solverTime_total_st2_GTM_arr(j)  = solverTime_total_st2_GTM;
+buildTime_st2_GTM_arr(j)         = buildTime_st2_GTM;
+
+%% run GTM 4D example in sosopt using gsosopt
+disp('Run benchmark test for SOSOPT using GSOSOPT')
+%------------------------------------------------------------------------
+%some functions in SOSTOOLS and SOSOPT have same names; since both use
+%multipoly it might not work; remove one off them an make sure to add the
+%other one
+% ------------------------------------------------------------------------
+rmpath(genpath('./otherFrameworks/SOSTOOLS'));
+addpath(genpath('./otherFrameworks/sosopt'))
+[gval_sopt_GTM,bval_sopt_GTM,solverTime_total_sopt_GTM,buildTime_sopt_GTM]= roaEstGTM_benchSosopt();
+
+solverTime_total_sopt_GTM_arr(j)  = solverTime_total_sopt_GTM;
+buildTime_sopt_GTM_arr(j)         = buildTime_sopt_GTM;
+
+%% run GTM 4D example in spotless
+disp('Run benchmark test for SPOTless')
+% run GTM 4D example in yalmip with default options
+[gval_sp_GTM,bval_sp_GTM,solverTime_total_sp_GTM,buildTime_sp_GTM] = roaEstGTM_benchSPOTless();
+
+solverTime_total_sp_GTM_arr(j)  = solverTime_total_sp_GTM;
+buildTime_sp_GTM_arr(j)         = buildTime_sp_GTM;
+
+%% run GTM 4D example in YALMIP
+disp('Run benchmark test for Yalmip')
+% run GTM 4D example in yalmip with default options
+[gval_y_GTM,bval_y_GTM,solverTime_total_y_GTM,buildTime_y_GTM] = roaEstGTM_benchYALMIP();
+
+solverTime_total_y_GTM_arr(j) = solverTime_total_y_GTM;
+buildTime_y_GTM_arr(j)        = buildTime_y_GTM;
 
 end
 
