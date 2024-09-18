@@ -140,7 +140,7 @@ end
 methods (Access={?casos.package.core.PolynomialInterface})
     % friend class access
     [indets,ic] = combine(varargin);
-    [indets,ic] = sort(obj);
+    [indets,ia,ic] = sort(obj);
 end
 
 end
