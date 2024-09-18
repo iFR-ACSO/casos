@@ -1,8 +1,16 @@
 classdef SdpsolInternal < casos.package.solvers.SolverCallback & matlab.mixin.Copyable
 % Internal interface for convex cone (SDP) solvers.
 
+properties (Constant,Access=protected)
+    matrix_cones = casos.package.Cones([
+        casos.package.Cones.DD;
+        casos.package.Cones.SDD
+    ]);
+end
+
 properties (Access=private)
     solver;
+    map;    % maps from the relaxed sdp and the orignal sdp
 end
 
 properties (Access=protected)
@@ -11,13 +19,16 @@ properties (Access=protected)
 end
 
 methods (Access=private)
-    buildproblem(obj,prob,data,opts);
+    buildproblem(obj,prob,data,opts,args);
 end
 
 methods (Static)
     function cones = get_cones
         % Return supported cones.
-        cones = casos.package.solvers.ConicSolver.get_cones;
+        cones = [
+            casos.package.solvers.ConicSolver.get_cones
+            casos.package.solvers.SdpsolInternal.matrix_cones
+        ];
     end
 end
 
@@ -50,6 +61,50 @@ methods
             opts = struct;
         end
 
+        % ensure cone has default value
+        if ~isfield(opts,'Kx')
+            opts.Kx.lin = numel(sdp.x);
+        elseif ~isfield(opts.Kx,'lin')
+            opts.Kx.lin = 0; 
+        end
+        if ~isfield(opts,'Kc')
+            opts.Kc.lin = numel(sdp.g);
+        elseif ~isfield(opts.Kc,'lin')
+            opts.Kc.lin = 0;
+        end
+
+        % relax problem to smaller easier cones (LP and SOCP)
+        args = struct;
+        args.dd_ubg = []; 
+        args.dd_lbg = []; 
+        args.dd_ubx = []; 
+        args.dd_lbx = []; 
+        obj.map = [];
+
+        % rebuild problem from SDD to SOCP
+        if isfield(opts.Kx,'sdd') || isfield(opts.Kc,'sdd')
+            [sdp, args, map, opts] = sdd_reduce(obj, sdp, opts, args);
+            map_SDD_2_ORIG = map;
+        else
+            % if no SDD was present create an identity map
+            map_SDD_2_ORIG.x = speye(length(sdp.x));
+            map_SDD_2_ORIG.g = speye(length(sdp.g));
+        end
+
+        % rebuild problem from DD to LP
+        if isfield(opts.Kx,'dd') || isfield(opts.Kc,'dd')
+            [sdp, args, map, opts] = dd_reduce(obj, sdp, opts, args);
+            map_DD_2_ORIG = map;
+        else
+            % if no DD was present create an identity map
+            map_DD_2_ORIG.x = speye(length(sdp.x));
+            map_DD_2_ORIG.g = speye(length(sdp.g));
+        end
+
+        % Create the full map
+        obj.map.x = map_SDD_2_ORIG.x*map_DD_2_ORIG.x;
+        obj.map.g = map_SDD_2_ORIG.g*map_DD_2_ORIG.g;
+
         % decision variables
         x = sdp.x;
         % parameter
@@ -63,17 +118,17 @@ methods
 
         if isfield(sdp,'derivatives')
             % use pre-computed derivatives (undocumented)
-            H = sdp.derivatives.Hf;
-            g = sdp.derivatives.Jf;
-            A = sdp.derivatives.Jg;
-
+            H = obj.map.x'*sdp.derivatives.Hf*obj.map.x;
+            g = sdp.derivatives.Jf*obj.map.x;
+            A = [sdp.derivatives.Jg*obj.map.x; 
+                 jacobian(sdp_g(size(sdp.derivatives.Jg,1)+1:end), x)];
         else
-        % quadratic cost
-        H = hessian(sdp.f, x);
-        % linear cost
-        g = jacobian(sdp.f, x);
-        % linear constraint
-        A = jacobian(sdp_g, x);
+            % quadratic cost
+            H = hessian(sdp.f, x);
+            % linear cost
+            g = jacobian(sdp.f, x);
+            % linear constraint
+            A = jacobian(sdp_g, x);
         end
         % constant constraint
         b = -sdp_g;
@@ -93,7 +148,7 @@ methods
         prob = casadi.Function('S',{x p},{sdp.f sdp_g});
 
         % build SDP problem
-        buildproblem(obj,prob,data,opts);
+        buildproblem(obj,prob,data,opts,args);
 
         % construct CasADi callback
         construct(obj,name);
@@ -104,26 +159,79 @@ methods
         s = obj.solver.stats;
     end
 
+    %% Options & Cones
     function print_options(obj)
         % Print list of options.
         print_options(obj.solver);
+        % also print matrix cones
+        print_matrix_cones(obj);
     end
 
     function print_option(obj,name)
         % Print information about an option.
-        print_option(obj.solver,name);
+        names = split(name,'.');
+
+        if length(names) > 1 && ismember(names{1},{'Kx' 'Kc'}) && has(obj.matrix_cones,names{2})
+            % print option
+            print_one(obj.solver.get_options,names{1});
+            % print matrix cone
+            print_one(obj.matrix_cones,names{2});
+        else
+            % print option & cones
+            print_option(obj.solver,name);
+
+            if isscalar(names) && ismember(names{1},{'Kx' 'Kc'})
+                % print matrix cones
+                print_matrix_cones(obj);
+            end
+        end
     end
 
-    function has_option(obj,name)
+    function tf = has_option(obj,name)
         % Check if option "name" exists.
-        has_option(obj.solver,name);
+        tf = has_option(obj.solver,name);
+    end
+
+    function print_cones(obj)
+        % Print list of supported cones.
+        print_cones(obj.solver);
+        % also print matrix cones
+        print_matrix_cones(obj);
+    end
+
+    function print_cone(obj,name)
+        % Print information about a cone.
+        if has(obj.matrix_cones,name)
+            % print matrix cone
+            print_one(obj.matrix_cones,name);
+        else
+            % print cone from solver
+            print_cone(obj.solver,name);
+        end
+    end
+
+    function tf = has_cone(obj,name)
+        % Check if cone "name" is supported.
+        tf = has(obj.matrix_cones,name) || has_cone(obj.solver,name);
     end
 end
 
 methods (Access=protected)
+    % reduce DD constraints to LPs
+    [sdp,args,map,opts] = dd_reduce(obj,sdp,opts, args);
+
+    % reduce SDD constraints to SOCP
+    [sdp,args,map,opts] = sdd_reduce(obj,sdp,opts, args);
+
     function S = copyElement(obj)
         % Use copy constructor.
         S = casos.package.solvers.SdpsolInternal(obj);
+    end
+
+    function print_matrix_cones(obj)
+        % Print list of supported matrix cones.
+        disp('Supported Matrix Cones:')
+        print_all(obj.matrix_cones);
     end
 end
 
