@@ -46,8 +46,9 @@ methods
 
         elseif length(arg) <= 2
             % syntax Indeterminates('x',m,n)
-            N = numel(zeros(arg{:},1));
-            obj.variables = compose('%s_%d',var,1:N);
+            N = numel(zeros(arg{:},1));     % number of variables
+            l = floor(log10(N))+1;          % number of places
+            obj.variables = compose(['%s_%0' num2str(l) 'd'],var,1:N);
 
         else
             error('Undefined syntax.')
