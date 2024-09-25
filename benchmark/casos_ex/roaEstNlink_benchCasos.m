@@ -25,7 +25,7 @@ disp(['Compute maximum ROA for the ' num2str(n) '-link pendulum'])
 
 x = casos.PS('x',2*n,1);
 
-x = [x(1);x(4:10);x(2:3)];
+% x = [x(1);x(4:10);x(2:3)];
 % system dynamics
 f = feval(['pendulum_dyn_poly_n' num2str(n) '_d' num2str(deg)],x);
 
@@ -71,10 +71,10 @@ opts.error_on_fail = 1;
 % opts.conf_interval = [-2 0];
 % opts.tolerance_abs = 1e-4;
 % opts.tolerance_rel = 1e-4;
-sos1 = struct('x',s1,'p',V_par);     % parameter
+sos1 = struct('x',s1,'p',V);     % parameter
 
 % constraint
-sos1.('g') = s1*(V_par-gval)-nabla(V_par,x)*f-l;
+sos1.('g') = s1*(V-gval)-nabla(V,x)*f-l;
 
 % states + constraint are SOS cones
 opts.Kx = struct('sos', 1);
@@ -84,7 +84,7 @@ opts.Kc = struct('sos', 1);
 % opts.sdpsol_options.mosek_echo = 4;
 
 % build first solver
-S1 = casos.sossol('S1','mosek',sos1,opts);
+S1 = casos.sossol('S1','sedumi',sos1,opts);
 
 
 % options

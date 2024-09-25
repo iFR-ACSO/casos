@@ -46,25 +46,16 @@ l = 1e-6*(x'*x);
 solverset = sdpsettings('solver','mosek', ...
                         'verbose',0);        
 
-
-% solverset = sdpsettings('solver','mosek', ...
-%                         'sos.newton',0,...
-%                         'sos.congruence',0,...
-%                         'sos.scale',0,...
-%                         'verbose',0);        
-
-
 % setup arrays
 endTimeBuild1 = [];
 endTimeBuild2 = [];
-
 
 solverTime1 = [];
 solverTime2 = [];
 solverTime3 = [];
 bval_old    = [];
 
-% bisection tolerances (see default value of SOSOPT/GSOSOPT
+% bisection tolerances 
 relbistol = 1e-3;
 absbistol = 1e-3;
 
@@ -76,7 +67,7 @@ for iter = 1:100
 	gval = [];
     bval = [];
 
-    % solve gamma-step
+    %% solve gamma-step
     lb = 0; ub = 1000;
     
     % bisection
@@ -126,9 +117,8 @@ for iter = 1:100
         return
     end
    
-    
 
-	% solve beta-step
+	%% solve beta-step
 
     % find largest possible shape function
     lb = 0; ub = 1000;
@@ -178,7 +168,7 @@ for iter = 1:100
     end
 	
 
-	% solve V-step
+	%% solve V-step
     % start time measure
 	startTimeBuild3 = tic;
 	
@@ -208,7 +198,7 @@ for iter = 1:100
 		break
 	end
    
-   % check convergence
+   %% check convergence
    if ~isempty(bval_old)
         if abs(full(bval-bval_old)) <= 1e-3
             break
@@ -222,7 +212,7 @@ for iter = 1:100
 
 end % end for-loop
 
-
+%% prepare output
 buildTime  = sum(endTimeBuild1) + sum(endTimeBuild2) + sum(endTimeBuild3);
 solverTime = sum(solverTime1)   + sum(solverTime2)   + sum(solverTime3);
  

@@ -8,8 +8,6 @@
 %--------------------------------------------------------------------------
 
 function [gval,bval,solverTime,buildTime]= roaEstGTM_benchSOSTOOLS2()
-
-
 pvar x1 x2 x3 x4;
 x= [x1; x2; x3;x4];
 
@@ -24,7 +22,6 @@ P = [395.382671347059	-23.0032507976836	3.16965275615691	29.2992065909380
     -23.0032507976836	90.4764915483638	-16.1191428789579	-132.594376986429
     3.16965275615691	-16.1191428789579	3.44002648214490	24.2292666551058
     29.2992065909380	-132.594376986429	24.2292666551058	202.114797577027];
-
 
 Vval = x'*P*x;
 
@@ -44,7 +41,7 @@ solverTime3 = [];
 
 bval_old = [];
 
-% bisection tolerances (see default value of SOSOPT/GSOSOPT
+% bisection tolerances
 relbistol = 1e-3;
 absbistol = 1e-3;
 
@@ -55,7 +52,7 @@ for iter = 1:100
     bval = [];
     gval = [];
     
-    % solve gamma-step
+    %% solve gamma-step
     
     % find largest stable level set
     lb = 0; ub = 1000;
@@ -101,12 +98,10 @@ for iter = 1:100
         % buildTime is total time spend to setup constraints (i.e sos problem),
         % do the transcription (poly --> sdp --> poly) we subtract the
         % solver time afterwards to only consider the actual build process
-        endTimeBuild1 = [endTimeBuild1 toc(startTimeBuild1)-prog1.solinfo.info.cpusec];
-        solverTime1   = [solverTime1 prog1.solinfo.info.cpusec];
+        endTimeBuild1 = [endTimeBuild1 toc(startTimeBuild1)-prog1.solinfo.info.wallTime];
+        solverTime1   = [solverTime1 prog1.solinfo.info.wallTime];
 	 
     end
-
-
 
     if ~isempty(gval)
         % fprintf('gamma is %g.\n', gval)
@@ -116,8 +111,7 @@ for iter = 1:100
     end
 
 
-    % solve beta-step
-
+    %% solve beta-step
     lb = 0; ub = 1000;
     
     % bisection
@@ -136,7 +130,7 @@ for iter = 1:100
         
         % constraints
         prog2 = sosineq(prog2,s2*(p-btry ) + gval - Vval);
-
+        
         %  call solver
         solver_opt.solver = 'mosek';
         solver_opt.simplify = 1;
@@ -158,11 +152,11 @@ for iter = 1:100
         % buildTime is total time spend to setup constraints (i.e sos problem),
         % do the transcription (poly --> sdp --> poly) we subtract the
         % solver time afterwards to only consider the actual build process
-        endTimeBuild2 = [endTimeBuild1 toc(startTimeBuild2)-prog2.solinfo.info.cpusec];
+        endTimeBuild2 = [endTimeBuild2 toc(startTimeBuild2)-prog2.solinfo.info.wallTime];
 
         % solver time is mosek CPU time; slightly different  to tic-toc
         % measurements
-        solverTime2   = [solverTime2 prog2.solinfo.info.cpusec];
+        solverTime2   = [solverTime2 prog2.solinfo.info.wallTime];
 	 
     end
 
@@ -174,7 +168,7 @@ for iter = 1:100
     end
 
 
-    %Solve V-step
+    %% Solve V-step
     % start time measure
 	startTimeBuild3 = tic;
 	
@@ -182,7 +176,7 @@ for iter = 1:100
     prog3     = sosprogram(x);
 
     % decision variable
-    [prog3,V] = sospolyvar(prog3,monomials(x,2:4),[],'pvar');
+    [prog3,V] = sospolyvar(prog3,monomials(x,2:4),[]);
 
     % constraints
     prog3 = sosineq(prog3,V-l);
@@ -195,8 +189,8 @@ for iter = 1:100
     [prog3,~] = sossolve(prog3,solver_opt);
 
 	
-	endTimeBuild3(iter) = toc(startTimeBuild3)-prog3.solinfo.info.cpusec;
-	solverTime3         = [solverTime3 prog3.solinfo.info.cpusec];
+	endTimeBuild3(iter) = toc(startTimeBuild3)-prog3.solinfo.info.wallTime;
+	solverTime3         = [solverTime3 prog3.solinfo.info.wallTime];
 	
 	if prog3.solinfo.info.dinf == 0 && prog3.solinfo.info.pinf == 0 && prog3.solinfo.info.feasratio >= 0.9
 
@@ -212,7 +206,7 @@ for iter = 1:100
 	end
 
 
-    % check convergence
+    %% check convergence
     if ~isempty(bval_old)
         if abs(full(bval-bval_old)) <= 1e-3
             break
@@ -226,12 +220,13 @@ for iter = 1:100
 
 end % end for-loop
 
+
+%% prepare output
 buildTime  = sum(endTimeBuild1) + sum(endTimeBuild2) + sum(endTimeBuild3);
-solverTime = sum(solverTime1) + sum(solverTime2) + sum(solverTime3);
+solverTime = sum(solverTime1)   + sum(solverTime2)   + sum(solverTime3);
  
- 
+
 % save the complete workspace, so people do not have to re-run execpt they
 % want to
-% save('SOSTOOLS2_GTM_ROA_bench.mat')
-
+% save('SOSTOOLS_GTM_ROA_bench.mat')
 end % end of function

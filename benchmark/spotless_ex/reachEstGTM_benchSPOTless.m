@@ -14,7 +14,6 @@ x1 = x(1); % V
 x2 = x(2); % alpha
 x3 = x(3); % q
 x4 = x(4); % theta
-% t = casos.Indeterminates('t');
 
 % Polynomial Dynamics
 d2r = pi/180;
@@ -79,7 +78,7 @@ endTimeBuild2 = [];
 solverTime1 = [];
 solverTime2 = [];
 
-% bisection tolerances (see default value of SOSOPT/GSOSOPT
+% bisection tolerances 
 relbistol = 1e-4;
 absbistol = 1e-4;
 
@@ -87,12 +86,11 @@ T = 3;
 h = t*(T-t);
 
 %% V-s-iteration
-% profile on -historysize 50000000000
+
 for iter = 1:10
 
     % to make sure we do not use the old solution again
 	gval = [];
-    % bval = [];
 
     % solve gamma-step
 
@@ -123,8 +121,6 @@ for iter = 1:10
         [pr1,s8]  = pr1.newFreePoly(monomials([x;t],0:4));
         [pr1,K]   = pr1.newFreePoly(monomials([x;t],0:4));
         
-
-
         % add sos constraints
         pr1 = pr1.withSOS( s2 );
         pr1 = pr1.withSOS( s3 );
@@ -144,7 +140,7 @@ for iter = 1:10
          % solve problem
         opt         = spot_sdp_default_options();
         opt.verbose = 0;
-        % opt.useQR = 1
+       
         sol1 = pr1.minimize(msspoly(1),@spot_mosek,opt);
       
         % sol.status
@@ -159,7 +155,7 @@ for iter = 1:10
             s3val =  sol1.eval(s3);
             s5val =  sol1.eval(s5);
             s7val =  sol1.eval(s7);
-            Kval  = sol1.eval(K);
+            Kval  =  sol1.eval(K);
         else
             % adapt upper interval bound
             ub = gtry;
@@ -247,7 +243,7 @@ end % end for-loop
 buildTime  = sum(endTimeBuild1) + sum(endTimeBuild2);
 solverTime = sum(solverTime1) + sum(solverTime2);
 
- % save the complete workspace, so people do not have to re-run execpt they
+% save the complete workspace, so people do not have to re-run execpt they
 % want to
 % save('SPOTless_GTM_reach_bench.mat')
 

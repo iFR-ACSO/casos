@@ -86,22 +86,28 @@ end
 % save latest benchmark
 save('Benchmark_gtm_reach.mat')
 
+%%
 % from the five runs, take the mean value
-solverTime_total_c_GTM     = mean(solverTime_total_c_GTM_arr);
-solverTime_total_st_GTM    = mean(solverTime_total_st_GTM_arr);
-solverTime_total_sp_GTM    = mean(solverTime_total_sp_GTM_arr);
-solverTime_total_sopt_GTM  = mean(solverTime_total_sopt_GTM_arr);
+buildTime_c_GTM     = mean(buildTime_c_GTM_arr)
+solverTime_total_c_GTM     = mean(solverTime_total_c_GTM_arr)
+total_c = buildTime_c_GTM + solverTime_total_c_GTM
 
-buildTime_c_GTM     = mean(buildTime_c_GTM_arr);
-buildTime_st_GTM    = mean(buildTime_st_GTM_arr);
-buildTime_sp_GTM    = mean(buildTime_sp_GTM_arr);
-buildTime_sopt_GTM  = mean(buildTime_sopt_GTM_arr);
+buildTime_st_GTM    = mean(buildTime_st_GTM_arr)
+solverTime_total_st_GTM    = mean(solverTime_total_st_GTM_arr)
+total_st = buildTime_st_GTM + solverTime_total_st_GTM
 
+buildTime_sp_GTM    = mean(buildTime_sp_GTM_arr)
+solverTime_total_sp_GTM    = mean(solverTime_total_sp_GTM_arr)
+total_sp = buildTime_sp_GTM + solverTime_total_sp_GTM
+
+buildTime_sopt_GTM  = mean(buildTime_sopt_GTM_arr)
+solverTime_total_sopt_GTM  = mean(solverTime_total_sopt_GTM_arr)
+total_sopt = buildTime_sopt_GTM + solverTime_total_sopt_GTM
 
 
 %% plot result
 solvers = {'Ca\SigmaoS' ,'SOSTOOLS' , 'SPOTless','SOSOPT'};
-
+solvers = {'A' ,'B' , 'C','D'};
 buildTimes  = [buildTime_c_GTM,buildTime_st_GTM,buildTime_sp_GTM,buildTime_sopt_GTM];                 % Time spent building for each solver
 solverTimes = [solverTime_total_c_GTM,solverTime_total_st_GTM,solverTime_total_sp_GTM,solverTime_total_sopt_GTM]; % Time spend in low-level solver 
 
@@ -130,11 +136,11 @@ totalTimes = sum(timeData, 2);
 x = 1:length(solvers); % X positions for each bar
 
 % Loop through each bar to place the text
-for i = 1:length(x)-1
-    % The position is above the top of each stack (build + solve)
-    text(x(i), totalTimes(i), sprintf('%.2f s', totalTimes(i)), ...
-         'VerticalAlignment', 'bottom', 'HorizontalAlignment', 'center');
-end
+% for i = 1:length(x)-1
+%     % The position is above the top of each stack (build + solve)
+%     text(x(i), totalTimes(i), sprintf('%.2f s', totalTimes(i)), ...
+%          'VerticalAlignment', 'bottom', 'HorizontalAlignment', 'center');
+% end
 
 axis([0.5 length(solvers)+0.5 0 max(totalTimes)+0.1*max(totalTimes)])
 % Add a legend to indicate what each part of the stack represents
@@ -154,12 +160,12 @@ V_c_mult =  to_multipoly(V0_c-gval_c_GTM);
 % sostools and sosopt use both multipoly
 % System dynamics
 pvar x1 x2 x3 x4 t
-[vol_st,std_st]     = pvolume(subs(V_st,t,0)-gval_st_GTM,0);
+[vol_st,std_st]     = pvolume(subs(V_st,t,0)-gval_st_GTM,0)
 
 pvar x_1 x_2 x_3 x_4
-[vol_sopt,std_sopt] = pvolume(subs(V_sopt,t,0)-gval_sopt_GTM,0);
+[vol_sopt,std_sopt] = pvolume(subs(V_sopt,t,0)-gval_sopt_GTM,0)
 
-[vol_c,std_c] = pvolume(subs(V_c_mult,t,0),0);
+[vol_c,std_c] = pvolume(subs(V_c_mult,t,0),0)
 
 % plot sublevel sets
 figure(3)
@@ -174,11 +180,16 @@ yg      = linspace(domain(3),domain(4),100);
 [xg,yg] = meshgrid(xg,yg);
 x = msspoly ('x' , 4 ) ;
 t = msspoly ('t' , 1 ) ;
-V0_sp = subs(V_sp,t,0)-gval_sp_GTM;
+V0_sp = subs(V_sp,t,0);
+
+[vol_c,std_c] = pvolume_spot(V0_sp,x,gval_sp_GTM)
+
 V0_sp = subs(V0_sp,x(3:4),[0;0]);
 pgrid = double(msubs(V0_sp,x(1:2),[xg(:)'; yg(:)']));
 pgrid = reshape(pgrid,size(xg));
 contour(xg,yg,double(pgrid),[0,0],'k');
+
+
 
 grid minor
 legend('SOSOPT','CaSoS','SOSTOOLS','SPOTless')

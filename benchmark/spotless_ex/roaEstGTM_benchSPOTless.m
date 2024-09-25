@@ -48,7 +48,7 @@ for iter = 1:100
 	gval = [];
     bval = [];
 
-    % solve gamma-step
+    %% solve gamma-step
 
     % find largest stable level set
     lb = 0; ub = 1000;
@@ -108,9 +108,8 @@ for iter = 1:100
         return
     end
    
-    
-
-	% solve beta-step
+   
+	%% solve beta-step
 
     % find largest possible shape function
     lb = 0; ub = 1000;
@@ -170,7 +169,7 @@ for iter = 1:100
     end
 	
 
-	% solve V-step
+	%% solve V-step
     % start time measure
 	startTimeBuild3 = tic;
 	
@@ -213,7 +212,7 @@ for iter = 1:100
     end
 
 
-	% check convergence
+	%% check convergence
 	if ~isempty(bval_old)
         if abs(full(bval-bval_old)) <= 1e-3
             break
@@ -227,6 +226,7 @@ for iter = 1:100
 
 end % end for-loop
 
+%% prepare output
 buildTime  = sum(endTimeBuild1) + sum(endTimeBuild2) + sum(endTimeBuild3);
 solverTime = sum(solverTime1) + sum(solverTime2) + sum(solverTime3);
  

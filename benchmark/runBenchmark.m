@@ -1,10 +1,30 @@
-% script that runs the GTM 4D ROA problem with different toolboxes
+% ########################################################################
+%
+% Name:              runBenchmark.m
+% 
+% Short Description: Script that runs the ROA benchmark example described 
+%                    in [1] N-times indifferent toolbox. The mean 
+%                    computation times are compared in a bar chart. The
+%                    implemented SOS problem and derivation can be found in
+%                    [2].
+%
+% References- [1] Cunis,T., Olucak, J. - CaΣoS: A nonlinear sum-of-squares 
+%                 optimization suite
+%             [2] Chakraborty, A. et al- Nonlinear region of attraction 
+%                 analysis for flight control verification and validation,
+%                 Control Engineering Practice, 2010,
+%                 doi: 10.1016/j.conengprac.2010.12.001
+%
+% ########################################################################
 
 clc
 clear
 close all
 
-% add paths to subfolder
+% add the other toolboxes
+addpath(genpath('./otherFrameworks'))
+
+% add paths to subfolder with benchmark functions
 addpath('./casos_ex/')
 addpath('./yalmip_ex/')
 addpath('./sostools_ex/')
@@ -12,28 +32,30 @@ addpath('./sosopt_ex/')
 addpath('./spotless_ex/')
 
 %% Short description benchmark
-% make five runs to get a better mean value of the computation times; 
+% make N runs to get a better mean value of the computation times; 
 % keep the last gamma and beta value 
 
+Nruns = 1;
+
 % pre-allocate
-solverTime_total_c_GTM_arr = zeros(5,1);
-buildTime_c_GTM_arr        = zeros(5,1);
-callTime_c_GTM_arr        = zeros(5,1);
+solverTime_total_c_GTM_arr = zeros(Nruns,1);
+buildTime_c_GTM_arr        = zeros(Nruns,1);
+callTime_c_GTM_arr         = zeros(Nruns,1);
 
-solverTime_total_st_GTM_arr = zeros(5,1);
-buildTime_st_GTM_arr        = zeros(5,1);
+solverTime_total_st_GTM_arr = zeros(Nruns,1);
+buildTime_st_GTM_arr        = zeros(Nruns,1);
 
-solverTime_total_st2_GTM_arr = zeros(5,1);
-buildTime_st2_GTM_arr        = zeros(5,1);
+solverTime_total_st2_GTM_arr = zeros(Nruns,1);
+buildTime_st2_GTM_arr        = zeros(Nruns,1);
 
-solverTime_total_sp_GTM_arr = zeros(5,1);
-buildTime_sp_GTM_arr        = zeros(5,1);
+solverTime_total_sp_GTM_arr = zeros(Nruns,1);
+buildTime_sp_GTM_arr        = zeros(Nruns,1);
 
-solverTime_total_sopt_GTM_arr = zeros(5,1);
-buildTime_sopt_GTM_arr        = zeros(5,1);
+solverTime_total_sopt_GTM_arr = zeros(Nruns,1);
+buildTime_sopt_GTM_arr        = zeros(Nruns,1);
 
-solverTime_total_y_GTM_arr = zeros(5,1);
-buildTime_y_GTM_arr        = zeros(5,1);
+solverTime_total_y_GTM_arr = zeros(Nruns,1);
+buildTime_y_GTM_arr        = zeros(Nruns,1);
 
 
 for j = 1:1
@@ -43,7 +65,11 @@ disp('Run benchmark test for CaSoS')
 [gval_c_GTM,bval_c_GTM,solverTime_total_c_GTM,buildTime_c_GTM,callTime_c_GTM] = roaEstGTM_benchCasos();
 
 solverTime_total_c_GTM_arr(j)  = solverTime_total_c_GTM;
-buildTime_c_GTM_arr(j)         = buildTime_c_GTM;
+% total build time includes already the call times of casos solver
+buildTime_c_GTM_arr(j)         = buildTime_c_GTM; 
+
+% just an additional output for the interested reader/user; see comment for
+% build time
 callTime_c_GTM_arr(j)          = callTime_c_GTM;
 
 %% run GTM 4D example in SOSTOOLS with dpvar and pvar
@@ -99,15 +125,17 @@ buildTime_y_GTM_arr(j)        = buildTime_y_GTM;
 
 end
 
-% from the five runs, take the mean value
+% from the N runs, take the mean value
 solverTime_total_c_GTM     = mean(solverTime_total_c_GTM_arr);
 solverTime_total_st_GTM    = mean(solverTime_total_st_GTM_arr);
+solverTime_total_st2_GTM   = mean(solverTime_total_st2_GTM_arr);
 solverTime_total_sp_GTM    = mean(solverTime_total_sp_GTM_arr);
 solverTime_total_sopt_GTM  = mean(solverTime_total_sopt_GTM_arr);
 solverTime_total_y_GTM     = mean(solverTime_total_y_GTM_arr);
 
 buildTime_c_GTM     = mean(buildTime_c_GTM_arr);
 buildTime_st_GTM    = mean(buildTime_st_GTM_arr);
+buildTime_st2_GTM   = mean(buildTime_st2_GTM_arr);
 buildTime_sp_GTM    = mean(buildTime_sp_GTM_arr);
 buildTime_sopt_GTM  = mean(buildTime_sopt_GTM_arr);
 buildTime_y_GTM     = mean(buildTime_y_GTM_arr);
@@ -145,16 +173,20 @@ totalTimes = sum(timeData, 2);
 % Add the total times as text labels at the top of each stack
 x = 1:length(solvers); % X positions for each bar
 
-% Loop through each bar to place the text
+% Loop through each bar to place the text above
 for i = 1:length(x)
     % The position is above the top of each stack (build + solve)
     text(x(i), totalTimes(i), sprintf('%.2f s', totalTimes(i)), ...
          'VerticalAlignment', 'bottom', 'HorizontalAlignment', 'center');
 end
 
+% can be manually adjusted if necessary
 axis([0.5 length(solvers)+0.5 0 1600])
+
 % Add a legend to indicate what each part of the stack represents
 legend('Parsing/Build Time', 'Solver Time','Location', 'northwest');
 
-cleanfigure()
-matlab2tikz('benchmark_gtm_roa.tex','width','\figW','height','\figH');
+% uncomment the two lines below if you want to make a tikz figure;
+% matlab2tikz needed and added to the path!
+% cleanfigure()
+% matlab2tikz('benchmark_gtm_roa.tex','width','\figW','height','\figH');

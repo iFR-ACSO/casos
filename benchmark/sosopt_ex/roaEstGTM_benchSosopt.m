@@ -53,7 +53,7 @@ for iter = 1:100
     opts.maxobj = 0;
     opts.solver = 'mosek';
 
-    % gamma-step    
+    %% gamma-step    
     startTimeBuild1 = tic;
 
     sosc    = polyconstr;
@@ -79,7 +79,7 @@ for iter = 1:100
     endTimeBuild1     = [endTimeBuild1 toc(startTimeBuild1)-solverTime1(iter)]; 
 
 
-    % beta-step    
+    %% beta-step    
     startTimeBuild2 = tic;
     sosc    = polyconstr;
     sosc(1) = s2 >=0;
@@ -104,7 +104,7 @@ for iter = 1:100
     % solver time afterwards to only consider the actual build process
     endTimeBuild2    = [endTimeBuild2 toc(startTimeBuild2)-solverTime2(iter)];
 
-    % beta-step    
+    %% V-step    
     startTimeBuild3 = tic;
 
     sosc    = polyconstr;
@@ -132,7 +132,7 @@ for iter = 1:100
     fprintf('Iteration %d: b = %g, g = %g.\n',iter,full(bval),full(gval));
 	
 				
-	% check convergence
+	%% check convergence
 	if ~isempty(bval_old)
 			if abs(full(bval-bval_old)) <= 1e-3
 				break
@@ -145,7 +145,7 @@ for iter = 1:100
 
 end % end-for-loop
 
-
+%% prepare output
 buildTime  = sum(endTimeBuild1) + sum(endTimeBuild2) + sum(endTimeBuild3);
 solverTime = sum(solverTime1)   + sum(solverTime2)   + sum(solverTime3);
 

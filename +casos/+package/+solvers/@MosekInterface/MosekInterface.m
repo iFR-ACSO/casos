@@ -36,7 +36,7 @@ methods
 
         % default options
         if ~isfield(obj.opts,'mosek_param'), obj.opts.mosek_param = struct; end
-        if ~isfield(obj.opts,'mosek_echo'), obj.opts.mosek_echo = 4; end
+        if ~isfield(obj.opts,'mosek_echo'), obj.opts.mosek_echo = 0; end
     end
 
     function s = stats(obj)

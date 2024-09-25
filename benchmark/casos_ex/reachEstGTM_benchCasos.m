@@ -9,12 +9,13 @@ function [gval, solverTime_total,buildTime,Vval] = reachEstGTM_benchCasos()
 
 % system states 
 x = casos.Indeterminates('x',4);
+t = casos.Indeterminates('t');
 
 x1 = x(1); % V 
 x2 = x(2); % alpha
 x3 = x(3); % q
 x4 = x(4); % theta
-t = casos.Indeterminates('t');
+
 
 % Polynomial Dynamics
 d2r = pi/180;
@@ -128,8 +129,8 @@ S1 = casos.qcsossol('S1','bisection',sos1,opts);
 
 
 % solver 2: V-step
-sos2 = struct('x',[V;s4;s1;s2;s6;s8], ...        % dec.var
-              'p',[b;K;s3;s5;s7;Vold]); % parameter
+sos2 = struct('x',[V;s4;s1;s2;s6;s8], ...   % dec.var
+              'p',[b;K;s3;s5;s7;Vold]);     % parameter
 
 % constraints
 sos2.('g') = [  s4-0.0001;...
@@ -149,24 +150,26 @@ S2 = casos.sossol('S','mosek',sos2,opts);
 tmpbuildTime = toc(buildTime_start);
 
 % initialize arrays
-solvetime_all1 = zeros(100,1);
-solvetime_all2 = zeros(100,1);
-solvetime_all3 = zeros(100,1);
+solvetime_all1 = zeros(10,1);
+solvetime_all2 = zeros(10,1);
+solvetime_all3 = zeros(10,1);
 
-
-buildTime1 = zeros(100,1);
-buildTime2 = zeros(100,1);
+buildTime1 = zeros(10,1);
+buildTime2 = zeros(10,1);
 
 %% V-s-iteration
 for iter = 1:10
 
     % gamma step
     startSolve1 =tic;
+
+    % call first solver
     sol1 = S1('p',Vval);    
 
     % get all solver times from all subiterations of the biscetion
     solvetime_all1(iter) = sum(cellfun(@(x) x.solvetime_matlab, S1.stats.iter));
-
+    
+    % solver call time/ additional parse/build time
     buildTime1(iter) = toc(startSolve1) -solvetime_all1(iter);
 
     % extract solution
@@ -183,9 +186,14 @@ for iter = 1:10
 
     % beta step
     startSolve2 =tic;
+
+    % call second solver
     sol2 = S2('p',[gval;Kval;s3val;s5val;s7val;Vval]); 
+
     % get solver time
     solvetime_all2(iter) = S2.stats.solvetime_matlab;
+
+    % solver call time/ additional parse/build time
     buildTime2(iter) = toc(startSolve2) -solvetime_all2(iter);
         
     
@@ -207,8 +215,6 @@ end % end for-loop
 % total solver time over all iterations
 buildTime  = tmpbuildTime + sum(buildTime1) + sum(buildTime2);
 solverTime_total = sum(solvetime_all1) + sum(solvetime_all2) + sum(solvetime_all3);
-
-
 
 % save the complete workspace, so people do not have to re-run execpt they
 % want to
