@@ -35,6 +35,12 @@ showprogress('Branch and bound started',p.options.showprogress);
 % *************************************************************************
 % INITIALIZE DIAGNOSTICS AND DISPLAY LOGICS (LOWER VERBOSE IN SOLVERS)
 % *************************************************************************
+if p.options.verbose ~= fix(p.options.verbose)
+    p.options.print_interval = ceil(1/p.options.verbose);
+    p.options.verbose = ceil(p.options.verbose);
+else
+    p.options.print_interval = 1;
+end
 switch max(min(p.options.verbose,3),0)
 case 0
     p.options.bmibnb.verbose = 0;
@@ -63,6 +69,22 @@ end
 % solver options
 p.options = pruneOptions(p.options);
 
+% We will fake QP-support in Mosek SDP
+if strcmpi(p.solver.lowersolver.tag,'mosek')
+    if any(p.K.s)
+       p.solver.lowersolver.objective.quadratic.convex = 1;
+    end
+end
+
+% QP strengthening only done on originally quadratic models
+if any(p.variabletype>2) || ~isempty(p.evalMap)
+    p.options.bmibnb.lowerpsdfix = 0;
+end
+if ~isempty(p.solver.sdpsolver) && strcmpi(p.solver.sdpsolver.tag,'lmilab')
+    % Not, not doing SDP stuff with lmilab...
+     p.options.bmibnb.lowerpsdfix = 0;
+end
+
 timing.total = tic;
 timing.uppersolve = 0;
 timing.lowersolve = 0;
@@ -70,8 +92,7 @@ timing.lpsolve = 0;
 timing.heuristics = 0;
 if ~isempty(p.F_struc)
     if any(isnan(p.F_struc) | isinf(p.F_struc))
-        output = yalmip_default_output;
-        output.problem = 1;
+        output = createOutputStructure(1);        
         output.solved_nodes = 0;
         output.Primal       = zeros(length(p.c),1);
         output.infostr      = yalmiperror(output.problem,'BNB');
@@ -81,9 +102,38 @@ if ~isempty(p.F_struc)
     end
 end
 
+% Make the evaluation structure a bit more unified
+% by embedding all trailing arguments and creating
+% short-hand propert to evaluate function value
+for i = 1:length(p.evalMap)
+    p.evalMap{i}.properties.function = @(x)(feval(p.evalMap{i}.fcn,x,p.evalMap{i}.arg{2:end-1}));
+end
+
 p.nonshiftedQP.Q =[];
 p.nonshiftedQP.c =[];
 p.nonshiftedQP.f =[];
+% Flags used by BNB which uses common presolve
+p.binarycardinality.up = length(p.binary_variables);
+p.binarycardinality.down = 0;
+p.sdpextendable = 0;
+
+% *************************************************
+% Decide on strategy for nonlinear SDP cone
+% *************************************************
+if p.options.bmibnb.uppersdprelax < 0
+    if p.solver.uppersolver.constraint.inequalities.semidefinite.polynomial
+        % No reason to add nonlinear cuts as we have a nonlinear SDP solver
+        p.options.bmibnb.uppersdprelax = 0;
+    else
+        %Solver does not support SDP cone, so accept iterations
+        p.options.bmibnb.uppersdprelax = -p.options.bmibnb.uppersdprelax;
+    end
+elseif p.options.bmibnb.uppersdprelax > 0
+    % Remove knowledge of SP cone from upper solver
+    p.solver.uppersolver.constraint.inequalities.semidefinite.polynomial = 0;
+    p.solver.uppersolver.constraint.inequalities.semidefinite.quadratic = 0;
+    p.solver.uppersolver.constraint.inequalities.semidefinite.linear = 0;    
+end
 
 % *************************************************************************
 % Assume feasible (this property can be changed in the presolve codes
@@ -91,7 +141,7 @@ p.nonshiftedQP.f =[];
 p.feasible = 1;
 
 % *************************************************************************
-% Ensure that bond propagation is performed
+% Ensure that bound propagation is performed
 % *************************************************************************
 p.changedbounds = 1;
 
@@ -126,9 +176,9 @@ end
 % *************************************************************************
 % Add diagonal cuts from if we are going to use a cutting strategi for
 % semidefinite constraints. No reason to spend nodes on finding these and
-% we do it eary to enable detection of variable bounds
+% we do it early to enable detection of variable bounds
 % *************************************************************************
-p = addDiagonalSDPCuts(p);
+p = bounds_from_cones_to_lp(p);
 
 % *************************************************************************
 % Save information about the applicability of some bound propagation
@@ -148,8 +198,11 @@ p = compile_nonlinear_table(p);
 if p.options.bmibnb.verbose>0
 	disp('* -Extracting bounds from model');   
 end
+p = detect_quadratic_disjoints(p);
+p = detect_quadratic_disjoints_generalized(p);
+p = detect_hiddendelayedconvex_sdp(p);
 p = presolve_bounds_from_domains(p);
-p = presolve_bounds_from_modelbounds(p);
+p = presolve_bounds_from_modelbounds(p,1);
 
 % *************************************************************************
 % Start some bound propagation
@@ -170,12 +223,24 @@ p = propagate_bounds_from_evaluations(p);
 p = update_monomial_bounds(p);
 p = propagate_bounds_from_convex_quadratic_ball(p);
 
+if isempty(p.KCut.f==0) && isempty(p.KCut.l==0)
+    p = presolve_remove_repeatedrows(p);
+    p = presolve_remove_dominatedinequalities(p);
+    p = presolve_remove_equalitydominateinequality(p);
+    p = presolve_strengthen_coefficients(p);
+end
+
 % *************************************************************************
 % For quadratic nonconvex programming over linear constraints, we
 % diagonalize the problem to obtain less number of bilinear terms. Not
 % theoretically any reason to do so, but practical performance is better
+% If we are using diagonalize=-1, a choice will be made by comparing
+% two lowersolves, and those also generate feasible solutions
+% we we can use for initial upper bound
 % *************************************************************************
-p = diagonalize_quadratic_program(p);
+x_min = zeros(length(p.c),1);
+upper = inf;
+[p,timing,x_min,upper] = diagonalize_quadratic_program(p,timing,x_min,upper);
 if p.diagonalized
     p = compile_nonlinear_table(p);
 end
@@ -183,15 +248,15 @@ end
 % *************************************************************************
 % Try to generate a feasible solution, by using avialable x0 (if usex0=1),
 % or by trying the zero solution, or my trying the (lb+ub)/2 solution. Note
-% that we do this here b4efore the problem possibly is bilinearized, thus
+% that we do this here before the problem possibly is bilinearized, thus
 % avoiding to introduce possibly complicating bilinear constraints
 % *************************************************************************
-[p,x_min,upper] = initializesolution(p);
+[p,x_min,upper] = initializesolution(p,x_min,upper);
 solution_hist = [];
 if ~isinf(upper)   
     solution_hist = [solution_hist x_min(p.linears)];
     if p.options.bmibnb.verbose 
-        disp('* -Feasible solution found by heuristics');
+        disp(['* -Trivial solution constructed (objective ' num2str(upper) ')']);
     end
 end
 
@@ -230,10 +295,12 @@ if solver_can_solve(p.solver.uppersolver,p)
         p = propagate_bounds_from_equalities(p);
         p = update_monomial_bounds(p);
         if p.options.bmibnb.verbose>0
-            disp('(found a solution!)');
+            disp(['(found a solution, objective ' num2str(upper) ')']);            
         end        
     else
-        if p.options.bmibnb.verbose>0
+        if ~isinf(upper) && p.options.bmibnb.verbose>0
+            disp('(no better solution found)');
+        elseif p.options.bmibnb.verbose>0
             disp('(no solution found)');
         end
     end
@@ -286,7 +353,7 @@ p = convert_sigmonial_to_sdpfun(p);
 % *************************************************************************
 original_variables = find(p.variabletype == 0);
 [p_bilin,changed] = convert_polynomial_to_quadratic(p);
-if (p.solver.uppersolver.constraint.equalities.polynomial &  p.solver.uppersolver.objective.polynomial)
+if (p.solver.uppersolver.constraint.equalities.polynomial &&  p.solver.uppersolver.objective.polynomial)
     p_bilin.originalModel = p;
     p = p_bilin;
 else
@@ -325,8 +392,18 @@ p = compile_nonlinear_table(p);
 % *************************************************************************
 p.branch_variables = decide_branch_variables(p);
 p.branch_variables = setdiff(p.branch_variables,p.evalVariables);
-p.branch_variables = intersect(p.branch_variables,original_variables);
+if p.options.bmibnb.branchinoriginal
+    p.branch_variables = intersect(p.branch_variables,original_variables);
+end
 
+if p.diagonalized
+    if p.solver.lowersolver.objective.quadratic.convex
+        Q =  compileQuadratic(p.c,p,2);
+        convex = find(diag(Q)>=0);
+        p.branch_variables = setdiff(p.branch_variables,convex);
+    end
+end
+        
 % *************************************************************************
 % Tighten bounds (might be useful after bilinearization?)
 % *************************************************************************
@@ -370,7 +447,7 @@ p = propagate_bounds_from_monomials(p);
 p = propagate_bounds_from_evaluations(p);
 p = propagate_bounds_from_equalities(p);
 p = propagate_bounds_from_monomials(p);
-output = yalmip_default_output;
+output = createOutputStructure(0);
 
 % Detect complementary constraints
 p.complementary = [];
@@ -447,8 +524,9 @@ if p.feasible
         end
         solved_nodes = 0;
         lower = -inf;
-        lower_hist = -inf;
-        upper_hist = upper;
+        History.lower = lower;
+        History.upper = upper;
+        History.solutions = x_min;
         problem = 0;
         counter = p.counter;
     elseif ~isinf(upper) && isequal(p.options.bmibnb.lowertarget,-inf)
@@ -458,12 +536,13 @@ if p.feasible
         end
         solved_nodes = 0;
         lower = -inf;
-        lower_hist = -inf;
-        upper_hist = upper;
+        History.lower = lower;
+        History.upper = upper;
+        History.solutions = x_min;
         problem = 0;
         counter = p.counter;
     else
-        [x_min,solved_nodes,lower,upper,lower_hist,upper_hist,solution_hist,timing,counter,problem] = branch_and_bound(p,x_min,upper,timing,solution_hist);
+        [x_min,solved_nodes,lower,upper,History,timing,counter,problem] = bmibnb_branch_and_bound(p,x_min,upper,timing,solution_hist);
         
         % ********************************
         % ADJUST DIAGNOSTICS
@@ -479,14 +558,27 @@ if p.feasible
         end
     end
 else
-    counter = p.counter;
-    problem = 1;
-    x_min = repmat(nan,length(p.c),1);
-    solved_nodes = 0;
-    lower = inf;
-    lower_hist = [];
-    upper_hist = [];
-    solution_hist = [];
+    if ~isinf(upper)
+        if p.options.bmibnb.verbose>0
+            disp('* -Solution proven optimal already in root-node.');   
+        end
+        counter = p.counter;
+        problem = 0;        
+        solved_nodes = 0;
+        lower = nan;
+        History.lower = -inf;
+        History.upper = upper;
+        History.solutions = x_min;
+    else
+        counter = p.counter;
+        problem = 1;
+        x_min = repmat(nan,length(p.c),1);
+        solved_nodes = 0;
+        lower = inf;
+        History.lower = inf;
+        History.upper = inf;
+        History.solutions = [];        
+    end
 end
 
 timing.total = toc(timing.total);
@@ -499,8 +591,7 @@ end
 
 x_min = dediagonalize(p,x_min);
 
-output = yalmip_default_output;
-output.problem = problem;
+output = createOutputStructure(problem);
 output.solved_nodes = solved_nodes;
 output.Primal        = zeros(length(p.kept),1);
 output.Primal(p.kept(1:n_in))= x_min(1:n_in);
@@ -508,128 +599,13 @@ output.infostr      = yalmiperror(output.problem,'BMIBNB');
 output.solvertime   = timing.total;
 output.timing = timing;
 output.lower = lower;
-output.solveroutput.nodes = length(lower_hist);
+output.solveroutput.nodes = solved_nodes;
 output.solveroutput.counter = counter;
 output.solveroutput.timing = timing;
 output.solveroutput.lower = lower;
-output.solveroutput.lower_hist = lower_hist;
-output.solveroutput.upper_hist = upper_hist;
-output.solveroutput.solution_hist = solution_hist;
+output.solveroutput.history = History;
 output.extra.propagatedlb = lb;
 output.extra.propagatedub = ub;
-
-function pnew = diagonalize_quadratic_program(p);
-pnew = p;
-pnew.V = [];
-pnew.diagonalized = 0;
-return
-
-% No quadratic terms
-if all(p.variabletype == 0)
-    return
-end
-
-% Any polynomial terms or simple linear by some reason
-if any(p.variabletype > 2) & ~all(p.variabletype == 0) | p.options.bmibnb.diagonalize==0
-    return
-end
-
-if ~isempty(p.evalVariables)
-    return
-end
-
-if ~isempty(p.binary_variables) | ~isempty(p.integer_variables)
-    return
-end
-
-
-nonlinear = find(p.variabletype > 0);
-linear = find(p.variabletype == 0);
-if ~isempty(p.F_struc)
-    % Nonlinear terms in constraints
-    if nnz(p.F_struc(:,1 + nonlinear))> 0
-        return
-    end
-end
-
-% Find quadratic and linear terms
-used_in_c = find(p.c);
-quadraticterms = used_in_c(find(ismember(used_in_c,nonlinear)));
-Q = zeros(length(p.c),length(p.c));
-if ~isempty(quadraticterms)
-    usedinquadratic = zeros(1,length(p.c));
-    for i = 1:length(quadraticterms)
-        Qij = p.c(quadraticterms(i));
-        power_index = find(p.monomtable(quadraticterms(i),:));
-        if length(power_index) == 1
-            Q(power_index,power_index) = Qij;
-        else
-            Q(power_index(1),power_index(2)) = Qij/2;
-            Q(power_index(2),power_index(1)) = Qij/2;
-        end       
-    end
-end
-Qlin = Q(linear,linear);
-clin = p.c(linear);
-
-% Decompose Q
-[V,D] = eig(full(Qlin));
-V = real(V);
-D = real(D);
-V(abs(V)<1e-11) = 0;
-D(abs(D)<1e-11) = 0;
-lb = p.lb(linear);
-ub = p.ub(linear);
-Z = V';
-newub = sum([Z>0].*Z.*repmat(ub,1,length(Z)),2)+sum([Z<0].*Z.*repmat(lb,1,length(Z)),2);
-newlb = sum([Z>0].*Z.*repmat(lb,1,length(Z)),2)+sum([Z<0].*Z.*repmat(ub,1,length(Z)),2);
-newub(isnan(newub)) = inf;
-newlb(isnan(newlb)) = -inf;
-
-% Create new problem
-clin = V'*clin;
-
-n = length(linear);
-pnew.original_linear = linear;
-pnew.original_n = length(p.c);
-pnew.V = V;
-pnew.c = [clin;diag(D)];
-pnew.Q = spalloc(2*n,2*n,0);
-
-% find constraint polytope
-if size(p.F_struc,1)>0
-    A = -p.F_struc(:,1 + linear);
-    b = p.F_struc(:,1);
-    pnew.F_struc = [b -A*V zeros(length(b),n)];
-    Abounds = [V;-V];
-    bbounds = [ub;-lb];
-    keep = find(~isinf(bbounds));
-    if ~isempty(keep)
-        pnew.F_struc = [pnew.F_struc;bbounds(keep) -Abounds(keep,:) zeros(length(keep),n)];       
-        pnew.K.l = pnew.K.l + length(keep);
-    end
-end
-
-
-pnew.variabletype = [zeros(1,n) ones(1,n)*2];
-pnew.monomtable = [eye(n);2*eye(n)];
-pnew.monomtable(2*n,2*n) = 0;
-pnew.lb =-inf(2*n,1);
-pnew.ub = inf(2*n,1);
-pnew.lb(1:n) = newlb;
-pnew.ub(1:n) = newub;
-if length(pnew.x0)>0
-    pnew.x0 = V*p.x0;
-end
-pnew.diagonalized = 1;
-
-function x = dediagonalize(p,x);
-if isempty(p.V)
-    return
-end
-y = p.V*x(1:length(x)/2);
-x = zeros(p.original_n,1);
-x(p.original_linear) = y;
 
 
 function p = presolveloop(p,upper)
@@ -649,30 +625,10 @@ while goon && any(abs(p.ub(p.branch_variables)-p.lb(p.branch_variables))>p.optio
 end
 
 
-function p = addDiagonalSDPCuts(p)
-if ~isempty(p.K.s) && p.K.s(1) > 0 && p.solver.uppersolver.constraint.inequalities.semidefinite.linear == 0
-    top = p.K.f+p.K.l+sum(p.K.q)+1;
-    newF = [];
-    newCut = 1;
-    for i = 1:length(p.K.s)
-        n = p.K.s(i);
-        for m = 1:n
-            e = zeros(n,1);e(m)=1;
-            % FIXME: Trivial to vectorize
-            for j = 1:size(p.F_struc,2)
-                newF(newCut,j)= e'*reshape(p.F_struc(top:top+n^2-1,j),n,n)*e;
-            end
-            if ~any(newF(newCut,2:end))
-                newF = newF(1:end-1,:);
-            else
-                newCut = newCut + 1;
-            end
-        end
-        top = top+n^2;
-    end
-    
-    if ~isempty(newF)
-        p.K.l = p.K.l + size(newF,1);
-        p.F_struc = [p.F_struc(1:p.K.f,:);newF;p.F_struc(1 + p.K.f:end,:)];
-    end
+function x = dediagonalize(p,x);
+if isempty(p.V)
+    return
 end
+y = p.V*x(1:length(x)/2);
+x = zeros(p.original_n,1);
+x(p.original_linear) = y;
