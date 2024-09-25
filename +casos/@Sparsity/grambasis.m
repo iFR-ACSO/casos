@@ -74,8 +74,9 @@ I = any(Lz,1);
 degmat = z.degmat(I,:);
 Lz(:,~I) = [];
 % removes monomials outside half Newton polytope
+solver = 'linprog';
 if simplify
-    Lz = arrayfun(@(i) S.newton_reduce(S.degmat(Ldegmat(i,:),Iv),degmat), idx, 'UniformOutput', false);
+    Lz = arrayfun(@(i) S.newton_reduce(S.degmat(Ldegmat(i,:),Iv),degmat,solver), idx, 'UniformOutput', false);
     Lz = horzcat(Lz{:})';
 end
 z = (build_monomials(degmat,z.indets)); % do we need this?
