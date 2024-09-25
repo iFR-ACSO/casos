@@ -1,10 +1,13 @@
 %--------------------------------------------------------------------------
 % 
-% Implementation of custom V-s-iteration for the GTM 4D ROA problem in 
-% SOSTOOLS using the default dpvar data structure. 
+% Implementation of custom V-s-iteration for the GTM 4D reachability
+% problem in  SOSTOOLS using the default dpvar data structure. 
 % Implementation is based on the examples provided in the
 % SOSTOOLS toolbox and the documentation.
 %
+% Model and implementation of constraints based on 
+% https://github.com/heyinUCB/Backward-Reachability-Analysis-and-Control-Synthesis
+% 
 %--------------------------------------------------------------------------
 
 function [gval,solverTime,buildTime,Vval]= reachEstGTM_benchSOSTOOLS()
@@ -13,13 +16,7 @@ function [gval,solverTime,buildTime,Vval]= reachEstGTM_benchSOSTOOLS()
 pvar x1 x2 x3 x4;
 x= [x1; x2; x3;x4];
 
-% x1 = x(1); % V 
-% x2 = x(2); % alpha
-% x3 = x(3); % q
-% x4 = x(4); % theta
-
 pvar t
-% t = casos.Indeterminates('t');
 
 % Polynomial Dynamics
 d2r = pi/180;
@@ -72,8 +69,7 @@ P = [4.54064415441163	0.139789072082587	-0.0107315729582360	-0.406387155887787
 
 Vval = x'*P*x;
 
-% Trim point for elevator channel is 0.0489 rad.
-% Saturation limit for elevator channel is -10 deg to 10 deg
+% Trim  for elevator and control limits
 uM = 10*d2r - 0.0489;
 um = -(10*d2r + 0.0489);
 
@@ -101,7 +97,7 @@ for iter = 1:10
     bval = [];
     gval = [];
     
-    % solve gamma-step
+    %% solve gamma-step
     
     % find largest stable level set
     lb = 0; ub = 1;
@@ -177,7 +173,7 @@ for iter = 1:10
         return
     end
 
-    %Solve V-step
+    %% Solve V-step
     % start time measure
 	startTimeBuild2 = tic;
 	

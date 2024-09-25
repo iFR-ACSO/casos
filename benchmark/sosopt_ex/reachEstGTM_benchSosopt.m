@@ -1,9 +1,20 @@
 %--------------------------------------------------------------------------
 % 
-% Implementation of custom V-s-iteration for the GTM 4D ROA problem in 
-% SOSOPT/GSOSOPT. GSOSOPT performs the bisection.
+% Implementation of custom V-s-iteration for the GTM 4D reachability 
+% problem in SOSOPT/GSOSOPT. GSOSOPT performs the bisection.
 % Implementation is based on the example gsosoptdemo1.m provide in the
 % SOSOPT toolbox.
+%
+% Model and implementation of constraints based on 
+% https://github.com/heyinUCB/Backward-Reachability-Analysis-and-Control-Synthesis
+%
+% /////////////////////////////////////\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+% Remark: In the github repository above, Yin implemented a custom like
+% V-s-iteration and bisection, i.e., he did not use GSOSOPT. To compare the
+% toolboxes, we took his code an adjusted (different signs, variable names...)
+% in to be used with GSOSPT. It might be possible that the result differ 
+% in computation time and result due to different implementation. 
+% /////////////////////////////////////\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 %
 %--------------------------------------------------------------------------
 function [gval,solverTime,buildTime,Vval]= reachEstGTM_benchSosopt()
@@ -115,7 +126,7 @@ for iter = 1:10
     % opts.simplify = 'off';
   
 
-    % gamma-step    
+    %% gamma-step    
     startTimeBuild1 = tic;
 
     DVxval = jacobian(Vval, x);
@@ -147,7 +158,7 @@ for iter = 1:10
     endTimeBuild1     = [endTimeBuild1 toc(startTimeBuild1)-solverTime1(iter)]; 
 
 
-    % V-step    
+    %% V-step    
     startTimeBuild2 = tic;
 
     sosc    = [s1;s2;s4-0.0001;s6;s8;...
@@ -160,8 +171,7 @@ for iter = 1:10
     % Solve with sosopt
     opts = sosoptions;
     opts.solver = 'mosek';
-    % opts.simplify = 'off';
-      
+ 
     [info,dopt,~] = sosopt(sosc,[x;t],opts);
 
     % time measure of third subproblem
@@ -177,18 +187,7 @@ for iter = 1:10
 
     fprintf('Iteration %d: g = %g.\n',iter ,full(gval));
 	
-				
-	% check convergence
-	% if ~isempty(gval_old)
-		% 	if abs(full(gval-gval_old)) <= 1e-3
-			% 	break
-		% 	else
-			% 	gval_old = gval;
-		% 	end
-	% 	else
-		% 	gval_old = gval;
-	% end
-
+			
 end % end-for-loop
 
 

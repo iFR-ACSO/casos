@@ -1,15 +1,19 @@
 %--------------------------------------------------------------------------
 % 
-% Implementation of custom V-s-iteration for the GTM 4D ROA problem in 
-% SPOTless. Implementation is based on the examples provided in the
-% SPOTless toolbox and the manual
+% Implementation of custom V-s-iteration for the GTM 4D reachability 
+% problem in SPOTless. Implementation is based on the examples provided 
+% in the SPOTless toolbox and the manual.
 %
+% Model and implementation of constraints based on 
+% https://github.com/heyinUCB/Backward-Reachability-Analysis-and-Control-Synthesis
+% 
 %--------------------------------------------------------------------------
 function [gval,solverTime,buildTime,Vval]= reachEstGTM_benchSPOTless()
 
 % indeterminates
 x = msspoly ('x' , 4 ) ;
 t = msspoly ('t' , 1 ) ;
+
 x1 = x(1); % V 
 x2 = x(2); % alpha
 x3 = x(3); % q
@@ -66,8 +70,7 @@ P = [4.54064415441163	0.139789072082587	-0.0107315729582360	-0.406387155887787
 
 Vval = x'*P*x;
 
-% Trim point for elevator channel is 0.0489 rad.
-% Saturation limit for elevator channel is -10 deg to 10 deg
+% Trim for elevator and control limits
 uM = 10*d2r - 0.0489;
 um = -(10*d2r + 0.0489);
 
@@ -92,7 +95,7 @@ for iter = 1:10
     % to make sure we do not use the old solution again
 	gval = [];
 
-    % solve gamma-step
+    %% solve gamma-step
 
     % find largest stable level set
     lb = 0; ub = 1;
@@ -100,13 +103,14 @@ for iter = 1:10
     
     % bisection
     while (ub-lb>absbistol && ub-lb > relbistol*abs(lb))
+
         % trial gamma
         gtry = (lb+ub)/2;
         
         % start time measure
         startTimeBuild1 = tic;
         
-        % re-initialize a spot program
+        % re-initialize spot program
         pr1       = spotsosprog;
         pr1       = pr1.withIndeterminate(x);
         pr1       = pr1.withIndeterminate(t);
@@ -178,9 +182,7 @@ for iter = 1:10
         break
     end
    
-    
-
-	% solve V-step
+	%% solve V-step
     % start time measure
 	startTimeBuild2 = tic;
 	
@@ -211,8 +213,6 @@ for iter = 1:10
     pr2 = pr2.withSOS( Kval - um + s7val*(V - gval) - s8*h );
     pr2 = pr2.withSOS( -(subs(V,t,0)-gval) + s1*(subs(Vval,t,0)-gval) );
     
-
-
     % solve problem
     opt         = spot_sdp_default_options();
     opt.verbose = 0;

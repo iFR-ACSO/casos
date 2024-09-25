@@ -1,8 +1,12 @@
 %--------------------------------------------------------------------------
 % 
-% Implementation of custom V-s-iteration for the GTM 4D ROA problem in 
-% CaSoS. The quasi-convex solver is used to perform the bisections.
+% Implementation of custom V-s-iteration for the GTM 4D reachability 
+% problem in CaSoS. The quasi-convex solver is used to perform the 
+% bisection.
 %
+% Model and implementation of constraints based on 
+% https://github.com/heyinUCB/Backward-Reachability-Analysis-and-Control-Synthesis
+% 
 %--------------------------------------------------------------------------
 
 function [gval, solverTime_total,buildTime,Vval] = reachEstGTM_benchCasos()
@@ -15,7 +19,6 @@ x1 = x(1); % V
 x2 = x(2); % alpha
 x3 = x(3); % q
 x4 = x(4); % theta
-
 
 % Polynomial Dynamics
 d2r = pi/180;
@@ -66,11 +69,11 @@ P = [4.54064415441163	0.139789072082587	-0.0107315729582360	-0.406387155887787
     -0.0107315729582360	-0.00115647767230559	0.00732884319609208	0.00922486739143782
    -0.406387155887787	-0.0841739454608939	0.00922486739143782	0.514580693591350];
 
+% initial storage function
 Vval = x'*P*x;
 
-% Trim point for elevator channel is 0.0489 rad.
-% Saturation limit for elevator channel is -10 deg to 10 deg
-uM = 10*d2r - 0.0489;
+% Trim  for elevator and control limits
+uM =   10*d2r - 0.0489;
 um = -(10*d2r + 0.0489);
 
 % start to measure build time of all parameterized solver
@@ -85,7 +88,7 @@ K    = casos.PS.sym('k',monomials([x;t],0:4));
 s1 = casos.PS.sym('s1',monomials(x,0:2),'gram');
 s2 = casos.PS.sym('s2',monomials([x;t],0:2),'gram');
 s3 = casos.PS.sym('s3',monomials([x;t],0:2),'gram');
-s4 = casos.PS.sym('s4',monomials(x,0:4));
+s4 = casos.PS.sym('s4',monomials(x,0:2),'gram');
 s5 = casos.PS.sym('s5',monomials([x;t],0:2),'gram');
 s6 = casos.PS.sym('s6',monomials([x;t],0:2),'gram');
 s7 = casos.PS.sym('s7',monomials([x;t],0:2),'gram');
@@ -154,13 +157,13 @@ solvetime_all1 = zeros(10,1);
 solvetime_all2 = zeros(10,1);
 solvetime_all3 = zeros(10,1);
 
-buildTime1 = zeros(10,1);
-buildTime2 = zeros(10,1);
+callTime1 = zeros(10,1);
+callTime2 = zeros(10,1);
 
 %% V-s-iteration
 for iter = 1:10
 
-    % gamma step
+    %% gamma step
     startSolve1 =tic;
 
     % call first solver
@@ -170,7 +173,7 @@ for iter = 1:10
     solvetime_all1(iter) = sum(cellfun(@(x) x.solvetime_matlab, S1.stats.iter));
     
     % solver call time/ additional parse/build time
-    buildTime1(iter) = toc(startSolve1) -solvetime_all1(iter);
+    callTime1(iter) = toc(startSolve1) -solvetime_all1(iter);
 
     % extract solution
     if strcmp(S1.stats.UNIFIED_RETURN_STATUS,'SOLVER_RET_SUCCESS') 
@@ -184,7 +187,7 @@ for iter = 1:10
         break
     end
 
-    % beta step
+    %% V step
     startSolve2 =tic;
 
     % call second solver
@@ -194,7 +197,7 @@ for iter = 1:10
     solvetime_all2(iter) = S2.stats.solvetime_matlab;
 
     % solver call time/ additional parse/build time
-    buildTime2(iter) = toc(startSolve2) -solvetime_all2(iter);
+    callTime2(iter) = toc(startSolve2) -solvetime_all2(iter);
         
     
      if strcmp(S2.stats.UNIFIED_RETURN_STATUS,'SOLVER_RET_SUCCESS') 
@@ -213,8 +216,8 @@ for iter = 1:10
 end % end for-loop
 
 % total solver time over all iterations
-buildTime  = tmpbuildTime + sum(buildTime1) + sum(buildTime2);
-solverTime_total = sum(solvetime_all1) + sum(solvetime_all2) + sum(solvetime_all3);
+buildTime        = tmpbuildTime + sum(callTime1) + sum(callTime2);
+solverTime_total = sum(solvetime_all1) + sum(solvetime_all2);
 
 % save the complete workspace, so people do not have to re-run execpt they
 % want to
