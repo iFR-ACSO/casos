@@ -1,4 +1,4 @@
-% script that runs the GTM 4D reach problem with different toolboxes
+clcl% script that runs the GTM 4D reach problem with different toolboxes
 
 clc
 clear

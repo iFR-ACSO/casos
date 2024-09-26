@@ -35,7 +35,7 @@ addpath('./spotless_ex/')
 % make N runs to get a better mean value of the computation times; 
 % keep the last gamma and beta value 
 
-Nruns = 1;
+Nruns = 5;
 
 % pre-allocate
 solverTime_total_c_GTM_arr = zeros(Nruns,1);
@@ -58,7 +58,7 @@ solverTime_total_y_GTM_arr = zeros(Nruns,1);
 buildTime_y_GTM_arr        = zeros(Nruns,1);
 
 
-for j = 1:1
+for j = 1:5
 
 %% run GTM 4D example in casos
 disp('Run benchmark test for CaSoS')
@@ -188,5 +188,5 @@ legend('Parsing/Build Time', 'Solver Time','Location', 'northwest');
 
 % uncomment the two lines below if you want to make a tikz figure;
 % matlab2tikz needed and added to the path!
-% cleanfigure()
-% matlab2tikz('benchmark_gtm_roa.tex','width','\figW','height','\figH');
+cleanfigure()
+matlab2tikz('benchmark_gtm_roa.tex','width','\figW','height','\figH');

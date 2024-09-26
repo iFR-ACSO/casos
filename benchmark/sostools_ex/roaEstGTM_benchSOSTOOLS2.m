@@ -8,6 +8,8 @@
 %--------------------------------------------------------------------------
 
 function [gval,bval,solverTime,buildTime]= roaEstGTM_benchSOSTOOLS2()
+
+% need to use pvar to setup dynamics
 pvar x1 x2 x3 x4;
 x= [x1; x2; x3;x4];
 
@@ -176,7 +178,7 @@ for iter = 1:100
     prog3     = sosprogram(x);
 
     % decision variable
-    [prog3,V] = sospolyvar(prog3,monomials(x,2:4),[]);
+    [prog3,V] = sospolyvar(prog3,monomials(x,2:4),[],'pvar');
 
     % constraints
     prog3 = sosineq(prog3,V-l);

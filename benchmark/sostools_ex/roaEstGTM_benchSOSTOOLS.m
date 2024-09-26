@@ -9,7 +9,7 @@
 
 function [gval,bval,solverTime,buildTime]= roaEstGTM_benchSOSTOOLS()
 
-
+% need to use pvar to setup dynamics; constraints/ decision variables with dpvar
 pvar x1 x2 x3 x4;
 x= [x1; x2; x3;x4];
 
