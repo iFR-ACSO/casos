@@ -1,4 +1,20 @@
-clcl% script that runs the GTM 4D reach problem with different toolboxes
+% ########################################################################
+%
+% Name:              runBenchmark_reach.m
+% 
+% Short Description: Script that runs the reachability benchmark example 
+%                    described in [1] N-times indifferent toolbox. The mean 
+%                    computation times are compared in a bar chart. The
+%                    implemented SOS problem and derivation can be found in
+%                    [2].
+%
+% References- [1] Cunis,T., Olucak, J. - CaΣoS: A nonlinear sum-of-squares 
+%                 optimization suite
+%             [2] Yin, H. et al- Backward Reachability for Polynomial 
+%                 Systems on a Finite Horizon, IEEE Transactions on 
+%                 Automatic Control, 2021, doi: 10.1109/TAC.2021.3056611
+%
+% ########################################################################
 
 clc
 clear
@@ -36,7 +52,7 @@ buildTime_sopt_GTM_arr        = zeros(noRuns,1);
 
 for j = 1:noRuns
 
- disp(['Round number: ' num2str(j)])
+disp(['Round number: ' num2str(j)])
 %% run GTM 4D example in casos
 disp('Run benchmark test for CaSoS')
 [gval_c_GTM,solverTime_total_c_GTM,buildTime_c_GTM,V_c]= reachEstGTM_benchCasos();
@@ -154,7 +170,7 @@ V_c_mult =  to_multipoly(V0_c - gval_c_GTM);
 pvar x1 x2 x3 x4 t % for plotting
 [vol_st,std_st]     = pvolume(subs(V_st,t,0)-gval_st_GTM,0) % sostools
 
-pvar x_1 x_2 x_3 x_4 % for plotting
+pvar x_1 x_2 x_3 x_4 t % for plotting
 [vol_sopt,std_sopt] = pvolume(subs(V_sopt,t,0)-gval_sopt_GTM,0) % sosopt
 
 % spotless
@@ -186,5 +202,5 @@ legend('SOSOPT','CaSoS','SOSTOOLS','SPOTless')
 
 
 %% make tikz figure
-% cleanfigure()
-% matlab2tikz('benchmark_gtm_reach.tex','width','\figW','height','\figH');
+cleanfigure()
+matlab2tikz('benchmark_gtm_reach.tex','width','\figW','height','\figH');

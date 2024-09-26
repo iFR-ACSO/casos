@@ -148,7 +148,7 @@ for iter = 1:10
         sol1 = pr1.minimize(msspoly(1),@spot_mosek,opt);
       
         % sol.status
-        if strcmp(string(sol1.info.solverInfo.itr.prosta),"PRIMAL_AND_DUAL_FEASIBLE") && sol1.info.mosekinfo.MSK_DINF_INTPNT_OPT_STATUS > 0.9
+        if strcmp(string(sol1.info.solverInfo.itr.prosta),"PRIMAL_AND_DUAL_FEASIBLE")
          
             % adapt lower interval bound
             lb = gtry;
@@ -225,7 +225,7 @@ for iter = 1:10
     endTimeBuild2(iter) = toc(startTimeBuild2)-sol2.info.wtime;
 	solverTime2         = [solverTime2 sol2.info.wtime];
 	
-	if strcmp(string(sol2.info.solverInfo.itr.prosta),"PRIMAL_AND_DUAL_FEASIBLE") && sol2.info.mosekinfo.MSK_DINF_INTPNT_OPT_STATUS > 0.9
+	if strcmp(string(sol2.info.solverInfo.itr.prosta),"PRIMAL_AND_DUAL_FEASIBLE") 
            
             % extract solution
             Vval = sol2.eval(V);
