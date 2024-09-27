@@ -6,7 +6,10 @@
 %                    described in [1] N-times indifferent toolbox. The mean 
 %                    computation times are compared in a bar chart. The
 %                    implemented SOS problem and derivation can be found in
-%                    [2].
+%                    [2]. The original implemention of [2] can be found
+%                    here:https://github.com/heyinUCB/Backward-Reachability-
+%                    Analysis-and-Control-Synthesis. See comments in the
+%                    SOSOPT benchmark implementation.
 %
 % References- [1] Cunis,T., Olucak, J. - CaΣoS: A nonlinear sum-of-squares 
 %                 optimization suite
@@ -39,7 +42,6 @@ noRuns = 5;
 % pre-allocate
 solverTime_total_c_GTM_arr = zeros(noRuns,1);
 buildTime_c_GTM_arr        = zeros(noRuns,1);
-
 
 solverTime_total_st_GTM_arr = zeros(noRuns,1);
 buildTime_st_GTM_arr        = zeros(noRuns,1);
@@ -78,7 +80,6 @@ buildTime_st_GTM_arr(j)         = buildTime_st_GTM;
 disp('Run benchmark test for SPOTless')
 [gval_sp_GTM,solverTime_sp_GTM,buildTime_sp_GTM,V_sp]= reachEstGTM_benchSPOTless();
 
-
 solverTime_total_sp_GTM_arr(j)  = solverTime_sp_GTM;
 buildTime_sp_GTM_arr(j)         = buildTime_sp_GTM;
 
@@ -92,7 +93,6 @@ disp('Run benchmark test for SOSOPT')
 rmpath(genpath('./otherFrameworks/SOSTOOLS'));
 addpath(genpath('./otherFrameworks/sosopt'))
 [gval_sopt_GTM,solverTime_sopt_GTM,buildTime_sopt_GTM,V_sopt] = reachEstGTM_benchSosopt();
-
 
 solverTime_total_sopt_GTM_arr(j)  = solverTime_sopt_GTM;
 buildTime_sopt_GTM_arr(j)         = buildTime_sopt_GTM;
@@ -124,8 +124,10 @@ total_sopt                 = buildTime_sopt_GTM + solverTime_total_sopt_GTM;
 %% plot result
 % solvers = {'Ca\SigmaoS' ,'SOSTOOLS' , 'SPOTless','SOSOPT'};
 solvers = {'A' ,'B' , 'C','D'};
-buildTimes  = [buildTime_c_GTM, buildTime_st_GTM, buildTime_sp_GTM, buildTime_sopt_GTM];                             % Time spent building for each solver
-solverTimes = [solverTime_total_c_GTM, solverTime_total_st_GTM, solverTime_total_sp_GTM, solverTime_total_sopt_GTM]; % Time spend in low-level solver 
+% Time spent building/parsing for each solver
+buildTimes  = [buildTime_c_GTM, buildTime_st_GTM, buildTime_sp_GTM, buildTime_sopt_GTM];           
+% Time spend in low-level solver 
+solverTimes = [solverTime_total_c_GTM, solverTime_total_st_GTM, solverTime_total_sp_GTM, solverTime_total_sopt_GTM]; 
 
 % Combine the build and solve times into a matrix
 timeData = [buildTimes; solverTimes]';
@@ -139,7 +141,7 @@ bar(timeData, ... % actual data
 % Customize the x-axis with solver names
 set(gca, 'XTickLabel', solvers);
 
-% Add labels and title
+% Add labels 
 ylabel('Time (seconds)');
 
 % Display the figure
@@ -148,16 +150,18 @@ grid on;
 % Calculate the total times for each solver (buildTime + solverTime)
 totalTimes = sum(timeData, 2);
 
-
 axis([0.5 length(solvers)+0.5 0 max(totalTimes)+0.1*max(totalTimes)])
 % Add a legend to indicate what each part of the stack represents
 legend('Parsing/Build Time', 'Solver Time','Location', 'northwest');
 
+%% make tikz figure (matlab2tikz must be on the matlab path)
+% cleanfigure()
+% matlab2tikz('benchmark_gtm_reach.tex','width','\figW','height','\figH');
 
-%% estimate volume via Monte-Carlo-Sampling (and plotting of sublevel set)
+%% plotting of sublevel sets; here slice of scaled x1-x2
 import casos.toolboxes.to_multipoly
 pvar x_1 x_2 x_3 x_4 t % for plotting
-pvar x1 x2 x3 x4      % for plotting
+pvar x1 x2 x3 x4       % for plotting
 
 % casos
 Vc_indet = V_c.indeterminates;
@@ -167,12 +171,12 @@ V0_c = subs(V_c,Vc_indet(1),0); % V(0,x)
 V_c_mult =  to_multipoly(V0_c - gval_c_GTM);
 
 figure(3)
-pcontour(subs(V_c_mult,[x_3;x_4],[0;0]),0,[-5 5 -5 5]./5,'r')
+pcontour(subs(V_c_mult,[x_3;x_4],[0;0]),0,[-1 1 -1 1],'r')
 hold on
 % SOSTOOLS and SOSOPT both use already multipoly
-pcontour(subs(subs(V_sopt,[x_3;x_4],[0;0]),t,0)-gval_sopt_GTM,0,[-5 5 -5 5]./5,'b')
-pcontour(subs(subs(V_st,[x3;x4],[0;0]),t,0)-gval_st_GTM,0,[-5 5 -5 5]./5,'g')
-
+pcontour(subs(subs(V_sopt,[x_3;x_4],[0;0]),t,0)-gval_sopt_GTM,0,[-1 1 -1 1],'b')
+pcontour(subs(subs(V_st,[x3;x4],[0;0]),t,0)-gval_st_GTM,0,[-1 1 -1 1],'g')
+legend('Ca')
 
 % spotless needs a custom solution
 x = msspoly ('x' , 4 ) ; % for plotting
@@ -190,18 +194,15 @@ pgrid = double(msubs(V0_sp,x(1:2),[xg(:)'; yg(:)']));
 pgrid = reshape(pgrid,size(xg));
 contour(xg,yg,double(pgrid),[0,0],'k');
 grid minor
-legend('SOSOPT','CaSoS','SOSTOOLS','SPOTless')
+legend('Ca\SigmaoS' ,'SOSTOOLS' ,'SOSOPT' , 'SPOTless')
 
+%% estimate volume via Monte-Carlo-Sampling
 % compute volume; all four use a unit box as bounding region
-[vol_sp,std_sp] = pvolume_spot(V0_sp,x,gval_sp_GTM); 
-% sostools and sosopt use both multipoly
-pvar t
+
+[vol_sp,std_sp] = pvolume_spot(V0_sp,x,gval_sp_GTM);  % spot
+
+% sostools and sosopt use both multipoly; we transformed CaSoS to multipoly
 [vol_c,std_c]       = pvolume(V_c_mult,0); % casos
+pvar t
 [vol_st,std_st]     = pvolume(subs(V_st,t,0)-gval_st_GTM,0); % sostools
 [vol_sopt,std_sopt] = pvolume(subs(V_sopt,t,0)-gval_sopt_GTM,0); % sosopt
-
-
-
-%% make tikz figure
-cleanfigure()
-matlab2tikz('benchmark_gtm_reach.tex','width','\figW','height','\figH');
