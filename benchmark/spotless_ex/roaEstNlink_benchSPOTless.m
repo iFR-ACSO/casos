@@ -1,22 +1,17 @@
 %--------------------------------------------------------------------------
 % 
-% Implementation of custom V-s-iteration for the GTM 4D ROA problem in 
-% SPOTless. Implementation is based on the examples provided in the
-% SPOTless toolbox and the manual
+% Implementation of custom V-s-iteration for the N-link pendulum ROA 
+% problem in SPOTless. Implementation is based on the examples provided 
+% in the SPOTless toolbox and the manual
 %
 %--------------------------------------------------------------------------
 function [bval_array, solverTimes_total,buildTimes] = roaEstNlink_benchSPOTless(Nmax,deg)
-
-
-
 
 buildTimes          = zeros(Nmax-1,1);
 solverTimes_total   = zeros(Nmax-1,1);
 bval_array          = zeros(Nmax-1,1);
 
-for n = Nmax
-
-disp(['Compute maximum ROA for the ' num2str(n) '-link pendulum'])
+for n = 2:Nmax
 
 % system states
 x = msspoly ('x' , 2*n ) ;
@@ -24,9 +19,8 @@ x = msspoly ('x' , 2*n ) ;
 % system dynamics
 f = feval(['pendulum_dyn_poly_n' num2str(n) '_d' num2str(deg)],x);
 
-% load A and B matrix
+% load P matrix
 load(['data_n' num2str(n)])
-
 
 % Lyapunov function candidate
 Vval = x'*P*x;
@@ -42,80 +36,59 @@ endTimeBuild2 = [];
 solverTime1 = [];
 solverTime2 = [];
 solverTime3 = [];
-bval_old = [];
-
 
 % bisection tolerances 
-relbistol = 1e-4;
-absbistol = 1e-4;
+relbistol = 1e-3;
+absbistol = 1e-3;
 
 %% V-s-iteration
-for iter = 1:5
-
+for iter = 1:20
+    
     % to make sure we do not use the old solution again
-	gval = [];
     bval = [];
+    
+    %% solve s1 step
+    % start time measure
+    startTimeBuild1 = tic;
+    
+    % re-initialize a spot program
+    pr1       = spotsosprog;
+    pr1       = pr1.withIndeterminate(x);
 
-    % solve gamma-step
+    % decision variable
+    [pr1,s1]  = pr1.newFreePoly(monomials(x,2:4));
 
-    % % find largest stable level set
-    % lb = 0; ub = 1000;
-    % 
-    % % bisection
-    % while (ub-lb>absbistol && ub-lb > relbistol*abs(lb))
-    %     % trial gamma
-    %     gtry = (lb+ub)/2;
-        
-        % start time measure
-        startTimeBuild1 = tic;
-        
-        % re-initialize a spot program
-        pr1       = spotsosprog;
-        pr1       = pr1.withIndeterminate(x);
+    % add sos constraints
+    pr1 = pr1.withSOS( s1 );
+    pr1 = pr1.withSOS( s1*(Vval-1) - diff(Vval,x)*f - l );
+     
+    opt         = spot_sdp_default_options();
 
-        % decision variable
-        [pr1,s1]  = pr1.newFreePoly(monomials(x,2:4));
+    % solve problem
+    sol1 = pr1.minimize(msspoly(1),@spot_mosek,opt);
+  
+    % sol.status
+    if strcmp(string(sol1.info.solverInfo.itr.prosta),"PRIMAL_AND_DUAL_FEASIBLE") 
 
-        % add sos constraints
-        pr1 = pr1.withSOS( s1 );
-        pr1 = pr1.withSOS( s1*(Vval-1) - diff(Vval,x)*f - l );
-
-         % solve problem
-        opt         = spot_sdp_default_options();
-        % opt.verbose = 4;
- 
-        sol1 = pr1.minimize(msspoly(1),@spot_mosek,opt);
+        s1val =  sol1.eval(s1);
       
-        % sol.status
-        if strcmp(string(sol1.info.solverInfo.itr.prosta),"PRIMAL_AND_DUAL_FEASIBLE") && sol1.info.mosekinfo.MSK_DINF_INTPNT_OPT_STATUS > 0.9
-            % adapt lower interval bound
-            % lb = gtry;
+    else
 
-            % store latest solution
-            % gval = gtry;
-            s1val =  sol1.eval(s1);
-        else
-        %     % adapt upper interval bound
-        %     ub = gtry;
-            disp(['Problem infeasible in gamma-step in iteration:' num2str(iter)])
-            return
-        end
+        disp(['Problem infeasible in gamma-step in iteration:' num2str(iter)])
+        return
+    end
 
         
-        % buildTime is total time spend to setup constraints (i.e sos problem),
-        % do the transcription (poly --> sdp --> poly) we subtract the
-        % solver time afterwards to only consider the actual build process
-        endTimeBuild1 = [endTimeBuild1 toc(startTimeBuild1)-sol1.info.wtime];
-        solverTime1   = [solverTime1 sol1.info.wtime];
+    % buildTime is total time spend to setup constraints (i.e sos problem),
+    % do the transcription (poly --> sdp --> poly) we subtract the
+    % solver time afterwards to only consider the actual build process
+    endTimeBuild1 = [endTimeBuild1 toc(startTimeBuild1)-sol1.info.wtime];
+    solverTime1   = [solverTime1 sol1.info.wtime];
 		
-    % end
-
-
-   
-	% solve beta-step
+	%% solve beta-step
 
     % find largest possible shape function
-    lb = 0; ub = 1000;
+    lb = -100; ub = 100;
 
     % biscetion
     while (ub-lb>absbistol && ub-lb > relbistol*abs(lb))
@@ -144,14 +117,15 @@ for iter = 1:5
         sol2 = pr2.minimize(msspoly(1),@spot_mosek,opt);
     
        
-        if strcmp(string(sol2.info.solverInfo.itr.prosta),"PRIMAL_AND_DUAL_FEASIBLE") && sol2.info.mosekinfo.MSK_DINF_INTPNT_OPT_STATUS > 0.9
+        if strcmp(string(sol2.info.solverInfo.itr.prosta),"PRIMAL_AND_DUAL_FEASIBLE") 
             % adapt lower interval bound
             lb  = btry;
     
             % store latest solution
             bval = btry;
             s2val = sol2.eval(s2);
-            
+
+      
         else
              % adapt upper interval bound
             ub = btry;
@@ -172,7 +146,7 @@ for iter = 1:5
     end
 	
 
-	% solve V-step
+	%% solve V-step
     % start time measure
 	startTimeBuild3 = tic;
 	
@@ -201,12 +175,12 @@ for iter = 1:5
 	endTimeBuild3(iter) = toc(startTimeBuild3)-sol3.info.wtime;
 	solverTime3         = [solverTime3 sol3.info.wtime];
 	
-    if strcmp(string(sol3.info.solverInfo.itr.prosta),"PRIMAL_AND_DUAL_FEASIBLE") && sol3.info.mosekinfo.MSK_DINF_INTPNT_OPT_STATUS > 0.9
+    if strcmp(string(sol3.info.solverInfo.itr.prosta),"PRIMAL_AND_DUAL_FEASIBLE") 
            
-            % extract solution
-            Vval = sol3.eval(V);
-	
-			fprintf('Iteration %d: b = %g, g = %g.\n',iter,full(bval),full(1));
+        % extract solution
+        Vval = sol3.eval(V);
+
+		fprintf('Iteration %d: b = %g, g = %g.\n',iter,full(bval),full(1));
 	
 	
 	else
@@ -215,25 +189,44 @@ for iter = 1:5
     end
 
 
-	% check convergence
-    % if ~isempty(bval_old)
-    %     if abs(full(bval-bval_old)) <= 1e-3
-    %         break
-    %     else
-    %         bval_old = bval;
-    %     end
-    % else
-    %     bval_old = bval;
-    % end
-
-
 end % end for-loop
 
-buildTimes(n-1)  = sum(endTimeBuild1) + sum(endTimeBuild2) + sum(endTimeBuild3);
+figure()
+domain = [-5 5 -5 5]./2;
+xg      = linspace(domain(1),domain(2),100);
+yg      = linspace(domain(3),domain(4),100);
+[xg,yg] = meshgrid(xg,yg);
+V0_sp = subs(Vval,x(1:2),[0;0])-1;
+pgrid = double(msubs(V0_sp,x(3:4),[xg(:)'; yg(:)']));
+pgrid = reshape(pgrid,size(xg));
+contour(xg,yg,double(pgrid),[0,0],'k');
+grid minor
+hold on
+domain = [-5 5 -5 5]./5;
+xg      = linspace(domain(1),domain(2),100);
+yg      = linspace(domain(3),domain(4),100);
+[xg,yg] = meshgrid(xg,yg);
+V0_sp = subs(p,x(1:2),[0;0])-bval;
+pgrid = double(msubs(V0_sp,x(3:4),[xg(:)'; yg(:)']));
+pgrid = reshape(pgrid,size(xg));
+contour(xg,yg,double(pgrid),[0,0],'b');
+grid minor
+hold on
+domain = [-5 5 -5 5];
+xg      = linspace(domain(1),domain(2),100);
+yg      = linspace(domain(3),domain(4),100);
+[xg,yg] = meshgrid(xg,yg);
+V0_sp = subs(diff(Vval,x)*f,x(1:2),[0;0]);
+pgrid = double(msubs(V0_sp,x(3:4),[xg(:)'; yg(:)']));
+pgrid = reshape(pgrid,size(xg));
+contour(xg,yg,double(pgrid),[0,0],'g');
+grid minor
+
+buildTimes(n-1)        = sum(endTimeBuild1) + sum(endTimeBuild2) + sum(endTimeBuild3);
 solverTimes_total(n-1) = sum(solverTime1) + sum(solverTime2) + sum(solverTime3);
-bval_array(n-1) = bval;
+bval_array(n-1)        = bval;
+
+end % end of  for loop N-link
+
 
 end % end of function
-
-
-end

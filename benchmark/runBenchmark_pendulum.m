@@ -1,3 +1,17 @@
+% ########################################################################
+%
+% Name:              runBenchmark_pendulum.m
+% 
+% Short Description: Script that runs the ROA benchmark example for the 
+%                    N-link pendulum dynamics described in [1] N-times 
+%                    in different toolbox. The mean computation times are 
+%                    compared in a bar chart. 
+%
+% References-
+%
+% ########################################################################
+
+
 clear
 close all
 clc
@@ -14,7 +28,7 @@ addpath('./spotless_ex/')
 addpath(genpath('./otherFrameworks'))
 
 % benchmark runs from 2:Nmax
-Nmax = 5;
+Nmax = 4;
 
 % degree for polynomial approximation of nonlinear dynamics
 deg  = 2;
@@ -23,7 +37,7 @@ deg  = 2;
 disp('Run benchmark in CaSoS')
 [bval_array_c, solverTimes_total_c,buildTimes_c] = roaEstNlink_benchCasos(Nmax,deg);
 
-% %% Run benchmark Nlink pendulum in spotless
+%% Run benchmark Nlink pendulum in spotless
 disp('Run benchmark in SPOTless')
 [bval_array_sp, solverTimes_total_sp,buildTimes_sp] = roaEstNlink_benchSPOTless(Nmax,deg);
 

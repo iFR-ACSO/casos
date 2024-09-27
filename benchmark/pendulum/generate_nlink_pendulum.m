@@ -124,14 +124,9 @@ A_lin = double(subs(A, [x_sym, tau], [x_eq, u_eq]));
 B_lin = double(subs(B, [x_sym, tau], [x_eq, u_eq]));
 
 % Define the cost function weights
-if n == 1
-    Q = eye(2);
-    R = 1;
-else
-
 Q = blkdiag(eye(n), eye(n)); % State cost matrix (weights for the state variables)
 R = eye(n-1);        % Control cost matrix (weight for the control inputs)
-end
+
 % Compute the LQR controller gain matrix K
 [K, S, e] = lqr(A_lin, B_lin, Q, R);
 

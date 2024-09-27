@@ -1,7 +1,7 @@
 %--------------------------------------------------------------------------
 % 
-% Implementation of custom V-s-iteration for the GTM 4D ROA problem in 
-% SOSTOOLS using the default dpvar data structure. 
+% Implementation of custom V-s-iteration forthe N-link pendulum dynamics 
+% ROA problem in SOSTOOLS using the default dpvar data structure. 
 % Implementation is based on the examples provided in the
 % SOSTOOLS toolbox and the documentation.
 %
@@ -14,27 +14,25 @@ buildTimes          = zeros(Nmax-1,1);
 solverTimes_total   = zeros(Nmax-1,1);
 bval_array          = zeros(Nmax-1,1);
 
-for n = Nmax
+for n = 2:Nmax
+
 x = mpvar('x',2*n,1);
 
 % system dynamics
 f = feval(['pendulum_dyn_poly_n' num2str(n) '_d' num2str(deg)],x);
 
-% load A and B matrix
+% load P matrix
 load(['data_n' num2str(n)])
-
 
 % Lyapunov function candidate
 Vval = x'*P*x;
 p = x'*x*100;
     
-
 % enforce positivity
 l = 1e-6*(x'*x);
 
 % initialize arrays
 bval = [];
-
 
 endTimeBuild1 = [];
 endTimeBuild2 = [];
@@ -46,79 +44,50 @@ solverTime3 = [];
 bval_old = [];
 
 % bisection tolerances 
-relbistol = 1e-4;
-absbistol = 1e-4;
+relbistol = 1e-3;
+absbistol = 1e-3;
 
 %% V-s-iteration
-for iter = 1:5
+for iter = 1:20
 
     % to make sure we do not use the old solution again
     bval = [];
-    % gval = [];
+
+    %% solve s1-step
+
+    % start time measure
+    startTimeBuild1 = tic;
+    % re-initialize sos program
+    prog1      = sosprogram(x);
     
-    % solve gamma-step
+    % decision variables
+    [prog1,s1] = sossosvar(prog1,monomials(x,1:2));
     
-    % find largest stable level set
-    % lb = 0; ub = 1000;
-    % 
-    % % bisection 
-    % while (ub-lb>absbistol && ub-lb > relbistol*abs(lb))
-    % 
-    %     % trial gamma
-    %     gtry = (lb+ub)/2;
-
-        % start time measure
-        startTimeBuild1 = tic;
-
-        % re-initialize sos program
-        prog1      = sosprogram(x);
-        
-        % decision variables
-        [prog1,s1] = sossosvar(prog1,monomials(x,1:2));
-        
-        % sos constraints
-        prog1 = sosineq(prog1,s1*(Vval-1 ) - jacobian(Vval,x)*f - l);
-        
-        %  call solver
-        solver_opt.solver = 'mosek';
-        solver_opt.simplify = 1;
-        [prog1,~] = sossolve(prog1,solver_opt);
+    % sos constraints
+    prog1 = sosineq(prog1,s1*(Vval-1 ) - jacobian(Vval,x)*f - l);
     
-        % check if feasible
-        if prog1.solinfo.info.dinf == 0 && prog1.solinfo.info.pinf == 0 && prog1.solinfo.info.feasratio >= 0.9
+    %  call solver
+    solver_opt.solver = 'mosek';
+    solver_opt.simplify = 1;
+    [prog1,~] = sossolve(prog1,solver_opt);
 
-            % adapt lower interval bound
-            % lb   = gtry;
-
-            % store latest solution
-            % gval  = gtry;
-            s1val = sosgetsol(prog1,s1);
-        else
-            % adapt upper interval bound
-            % ub = gtry;
-        end
-
-        
-        % buildTime is total time spend to setup constraints (i.e sos problem),
-        % do the transcription (poly --> sdp --> poly) we subtract the
-        % solver time afterwards to only consider the actual build process
-        endTimeBuild1 = [endTimeBuild1 toc(startTimeBuild1)-prog1.solinfo.info.cpusec];
-        solverTime1   = [solverTime1 prog1.solinfo.info.cpusec];
+    % check if feasible
+    if prog1.solinfo.info.dinf == 0 && prog1.solinfo.info.pinf == 0 && prog1.solinfo.info.feasratio >= 0.9
+        s1val = sosgetsol(prog1,s1);
+    else
+        disp('s1 step infeasible')
+        break
+    end
+    
+    % buildTime is total time spend to setup constraints (i.e sos problem),
+    % do the transcription (poly --> sdp --> poly) we subtract the
+    % solver time afterwards to only consider the actual build process
+    endTimeBuild1 = [endTimeBuild1 toc(startTimeBuild1)-prog1.solinfo.info.wallTime];
+    solverTime1   = [solverTime1 prog1.solinfo.info.wallTime];
 	 
-    % end
 
-
-
-    % if ~isempty(gval)
-    %     % fprintf('gamma is %g.\n', gval)
-    % else
-    %      disp(['Problem infeasible in gamma-step in iteration:' num2str(iter)])
-    %     return
-    % end
-
-
-    % solve beta-step
-    lb = 0; ub = 1000;
+    %% solve beta-step
+    lb = -100; ub = 100;
     
     % bisection
     while (ub-lb>absbistol && ub-lb > relbistol*abs(lb))
@@ -138,11 +107,11 @@ for iter = 1:5
         prog2 = sosineq(prog2,s2*(p-btry ) + 1 - Vval);
         
         %  call solver
-        solver_opt.solver = 'mosek';
+        solver_opt.solver   = 'mosek';
         solver_opt.simplify = 1;
-        [prog2,~]     = sossolve(prog2,solver_opt);
+        [prog2,~]           = sossolve(prog2,solver_opt);
     
-    
+  
         if prog2.solinfo.info.dinf == 0 && prog2.solinfo.info.pinf == 0 && prog2.solinfo.info.feasratio >= 0.9
             % adapt lower interval bound
             lb    = btry;
@@ -158,11 +127,11 @@ for iter = 1:5
         % buildTime is total time spend to setup constraints (i.e sos problem),
         % do the transcription (poly --> sdp --> poly) we subtract the
         % solver time afterwards to only consider the actual build process
-        endTimeBuild2 = [endTimeBuild1 toc(startTimeBuild2)-prog2.solinfo.info.cpusec];
+        endTimeBuild2 = [endTimeBuild2 toc(startTimeBuild2)-prog2.solinfo.info.wallTime];
 
         % solver time is mosek CPU time; slightly different  to tic-toc
         % measurements
-        solverTime2   = [solverTime2 prog2.solinfo.info.cpusec];
+        solverTime2   = [solverTime2 prog2.solinfo.info.wallTime];
 	 
     end
 
@@ -174,7 +143,7 @@ for iter = 1:5
     end
 
 
-    %Solve V-step
+    %% Solve V-step
     % start time measure
 	startTimeBuild3 = tic;
 	
@@ -195,8 +164,8 @@ for iter = 1:5
     [prog3,~] = sossolve(prog3,solver_opt);
 
 	
-	endTimeBuild3(iter) = toc(startTimeBuild3)-prog3.solinfo.info.cpusec;
-	solverTime3         = [solverTime3 prog3.solinfo.info.cpusec];
+	endTimeBuild3(iter) = toc(startTimeBuild3)-prog3.solinfo.info.wallTime;
+	solverTime3         = [solverTime3 prog3.solinfo.info.wallTime];
 	
 	if prog3.solinfo.info.dinf == 0 && prog3.solinfo.info.pinf == 0 && prog3.solinfo.info.feasratio >= 0.9
 
@@ -212,37 +181,37 @@ for iter = 1:5
 	end
 
 
-    % % check convergence
-    % if ~isempty(bval_old)
-    %     if abs(full(bval-bval_old)) <= 1e-3
-    %         break
-    %     else
-    %         bval_old = bval;
-    %     end
-    % else
-    %     bval_old = bval;
-    % end
-
-
 end % end for-loop
 
-figure(3)
-pcontour(subs(Vval, x(3:end), zeros( length(x(3:end)) ,1) )-1,0,[-1 1 -1 1]./5,'r')
+figure()
+pcontour(subs(Vval,x(3:4),[0;0])-1,0,[-5 5 -5 5]./10,'b')
 hold on
-pcontour(subs(p,x(3:end), zeros( length(x(3:end)) ,1) )-bval,0,[-1 1 -1 1]./5,'b')
+pcontour(subs(p,x(3:4),[0;0])-bval,0,[-5 5 -5 5]./10,'k')
+pcontour(subs(jacobian(Vval,x)*f,x(3:4),[0;0]),0,[-5 5 -5 5]./10,'g')
+
+% Define the grid for x1 and x2
+[x1, x2] = meshgrid(-0.5:0.001:0.5, -0.5:0.001:0.5);
+
+% Since x3 = 0 and x4 = 0, the system simplifies to:
+x3_dot = -38.1613*x1 + 2.5029*x2;
+x4_dot = -31.2417*x1 + 1.6718*x2;
+
+quiver(x1, x2, x3_dot, x4_dot, 'AutoScaleFactor', 1);
+title('Vector Field for the Slice of x_1 and x_2 (x_3 = 0, x_4 = 0)');
+xlabel('x_1');
+ylabel('x_2');
+axis equal;
+grid on;
+
+
 
 % store the last beta-value
 bval_array(n-1)        = full(bval);
 
 % total solver time over all iterations
 solverTimes_total(n-1) = sum(solverTime1) + sum(solverTime2) + sum(solverTime3);
-buildTimes(n-1) = sum(endTimeBuild1) + sum(endTimeBuild2) + sum(endTimeBuild3);
+buildTimes(n-1)        = sum(endTimeBuild1) + sum(endTimeBuild2) + sum(endTimeBuild3);
 
 
-end
-
-% save the complete workspace, so people do not have to re-run execpt they
-% want to
-save('SOSTOOLS_GTM_ROA_bench.mat')
-
-end
+end % end of for loop for N-link
+end % end of function
