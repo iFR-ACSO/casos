@@ -60,24 +60,26 @@ figure('Name','Benchmark N-link Pedulum')
 subplot(211)
 semilogy((2:Nmax)*2,buildTimes_c,'-o')
 hold on
+semilogy((2:Nmax)*2,buildTimes_st,'-^')
 semilogy((2:Nmax)*2,buildTimes_sp,'-+')
 semilogy((2:Nmax)*2,buildTimes_sopt,'-*')
-semilogy((2:Nmax)*2,buildTimes_st,'-^')
+
 xlabel('Number of states')
 ylabel('Time [s]')
-legend('Ca\Sigmaos','SPOTless','SOSOPT','SOSTOOLS','Location','northwest')
+legend('Ca\Sigmaos','SOSTOOLS','SPOTless','SOSOPT','Location','northwest')
 xticks((2:Nmax)*2) 
 % title('Buildtimes')
 
 subplot(212)
 semilogy((2:Nmax)*2,solverTimes_total_c,'-o')
 hold on
+semilogy((2:Nmax)*2,solverTimes_total_st,'-^')
 semilogy((2:Nmax)*2,solverTimes_total_sp,'-+')
 semilogy((2:Nmax)*2,solverTimes_total_sopt,'-*')
-semilogy((2:Nmax)*2,solverTimes_total_st,'-^')
+
 xlabel('Number of states')
 ylabel('Time [s]')
-legend('Ca\Sigmaos','SPOTless','SOSOPT','SOSTOOLS','Location','northwest')%,'SOSOPT','SOSTOOLS','Location','northwest')
+legend('Ca\Sigmaos','SOSTOOLS','SPOTless','SOSOPT','Location','northwest')%,'SOSOPT','SOSTOOLS','Location','northwest')
 % title('Solvertimes')
 xticks((2:Nmax)*2)  % Set x-axis ticks to show labels for 2:Nmax
 
