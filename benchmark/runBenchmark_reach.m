@@ -34,7 +34,7 @@ addpath(genpath('./otherFrameworks'))
 % keep the last gamma value and the last storage function for later volume
 % computation
 
-noRuns = 1;
+noRuns = 5;
 
 % pre-allocate
 solverTime_total_c_GTM_arr = zeros(noRuns,1);
@@ -104,21 +104,21 @@ save('Benchmark_gtm_reach.mat')
 
 %% get mean computation times
 % from the five runs, take the mean value
-buildTime_c_GTM            = mean(buildTime_c_GTM_arr)
-solverTime_total_c_GTM     = mean(solverTime_total_c_GTM_arr)
-total_c                    = buildTime_c_GTM + solverTime_total_c_GTM
+buildTime_c_GTM            = mean(buildTime_c_GTM_arr);
+solverTime_total_c_GTM     = mean(solverTime_total_c_GTM_arr);
+total_c                    = buildTime_c_GTM + solverTime_total_c_GTM;
 
-buildTime_st_GTM           = mean(buildTime_st_GTM_arr)
-solverTime_total_st_GTM    = mean(solverTime_total_st_GTM_arr)
-total_st                   = buildTime_st_GTM + solverTime_total_st_GTM
+buildTime_st_GTM           = mean(buildTime_st_GTM_arr);
+solverTime_total_st_GTM    = mean(solverTime_total_st_GTM_arr);
+total_st                   = buildTime_st_GTM + solverTime_total_st_GTM;
 
-buildTime_sp_GTM           = mean(buildTime_sp_GTM_arr)
-solverTime_total_sp_GTM    = mean(solverTime_total_sp_GTM_arr)
-total_sp                   = buildTime_sp_GTM + solverTime_total_sp_GTM
+buildTime_sp_GTM           = mean(buildTime_sp_GTM_arr);
+solverTime_total_sp_GTM    = mean(solverTime_total_sp_GTM_arr);
+total_sp                   = buildTime_sp_GTM + solverTime_total_sp_GTM;
 
-buildTime_sopt_GTM         = mean(buildTime_sopt_GTM_arr)
-solverTime_total_sopt_GTM  = mean(solverTime_total_sopt_GTM_arr)
-total_sopt                 = buildTime_sopt_GTM + solverTime_total_sopt_GTM
+buildTime_sopt_GTM         = mean(buildTime_sopt_GTM_arr);
+solverTime_total_sopt_GTM  = mean(solverTime_total_sopt_GTM_arr);
+total_sopt                 = buildTime_sopt_GTM + solverTime_total_sopt_GTM;
 
 
 %% plot result
@@ -154,8 +154,10 @@ axis([0.5 length(solvers)+0.5 0 max(totalTimes)+0.1*max(totalTimes)])
 legend('Parsing/Build Time', 'Solver Time','Location', 'northwest');
 
 
-%% estimate volume via Monte-Carlo-Sampling (plotting of sublevel set)
+%% estimate volume via Monte-Carlo-Sampling (and plotting of sublevel set)
 import casos.toolboxes.to_multipoly
+pvar x_1 x_2 x_3 x_4 t % for plotting
+pvar x1 x2 x3 x4      % for plotting
 
 % casos
 Vc_indet = V_c.indeterminates;
@@ -164,28 +166,18 @@ V0_c = subs(V_c,Vc_indet(1),0); % V(0,x)
 % we use multipoly function to compute the volume also for CaSoS
 V_c_mult =  to_multipoly(V0_c - gval_c_GTM);
 
-[vol_c,std_c]       = pvolume(V_c_mult,0)
+figure(3)
+pcontour(subs(V_c_mult,[x_3;x_4],[0;0]),0,[-5 5 -5 5]./5,'r')
+hold on
+% SOSTOOLS and SOSOPT both use already multipoly
+pcontour(subs(subs(V_sopt,[x_3;x_4],[0;0]),t,0)-gval_sopt_GTM,0,[-5 5 -5 5]./5,'b')
+pcontour(subs(subs(V_st,[x3;x4],[0;0]),t,0)-gval_st_GTM,0,[-5 5 -5 5]./5,'g')
 
-% sostools and sosopt use both multipoly
-pvar x1 x2 x3 x4 t % for plotting
-[vol_st,std_st]     = pvolume(subs(V_st,t,0)-gval_st_GTM,0) % sostools
 
-pvar x_1 x_2 x_3 x_4 t % for plotting
-[vol_sopt,std_sopt] = pvolume(subs(V_sopt,t,0)-gval_sopt_GTM,0) % sosopt
-
-% spotless
+% spotless needs a custom solution
 x = msspoly ('x' , 4 ) ; % for plotting
 t = msspoly ('t' , 1 ) ;
 V0_sp = subs(V_sp,t,0);
-
-[vol_sp,std_sp] = pvolume_spot(V0_sp,x,gval_sp_GTM)
-
-%% plot sublevel sets i.e. slice of x1x2
-figure(3)
-pcontour(subs(subs(V_sopt,[x_3;x_4],[0;0]),t,0)-gval_sopt_GTM,0,[-5 5 -5 5]./5,'b')
-hold on
-pcontour(subs(V_c_mult,[x_3;x_4],[0;0]),0,[-5 5 -5 5]./5,'r')
-pcontour(subs(subs(V_st,[x3;x4],[0;0]),t,0)-gval_st_GTM,0,[-5 5 -5 5]./5,'g')
 
 % plot spotless solution
 domain = [-5 5 -5 5]./5;
@@ -199,6 +191,15 @@ pgrid = reshape(pgrid,size(xg));
 contour(xg,yg,double(pgrid),[0,0],'k');
 grid minor
 legend('SOSOPT','CaSoS','SOSTOOLS','SPOTless')
+
+% compute volume; all four use a unit box as bounding region
+[vol_sp,std_sp] = pvolume_spot(V0_sp,x,gval_sp_GTM); 
+% sostools and sosopt use both multipoly
+pvar t
+[vol_c,std_c]       = pvolume(V_c_mult,0); % casos
+[vol_st,std_st]     = pvolume(subs(V_st,t,0)-gval_st_GTM,0); % sostools
+[vol_sopt,std_sopt] = pvolume(subs(V_sopt,t,0)-gval_sopt_GTM,0); % sosopt
+
 
 
 %% make tikz figure
