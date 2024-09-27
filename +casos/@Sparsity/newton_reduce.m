@@ -4,7 +4,7 @@ function Lz = newton_reduce(obj, Pdegmat, Zdegmat, solver)
 % Programs, Peter Seiler et al.
 
 % list of available solvers for the newton polytope reduction
-list_solvers = {'linprog', 'sedumi', 'mosekopt'};
+list_solvers = {'linprog', 'sedumi', 'mosek'};
 [solver_available, solver_id] = ismember(solver,list_solvers);
 
 if solver_available==0

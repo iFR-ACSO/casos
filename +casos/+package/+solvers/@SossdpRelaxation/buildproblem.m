@@ -2,7 +2,6 @@ function buildproblem(obj,solver,sos)
 % Build SDP problem from SOS relaxation.
 
 opts   = obj.opts;
-newton = opts.newton_simplify;
 
 % problem size
 n = length(sos.x);
@@ -22,9 +21,9 @@ Is = [false(Nl,1); true(Ns,1)];
 Js = [false(Ml,1); true(Ms,1)];
 
 % obtain Gram basis for decision variables
-[Zvar_s,Ksdp_x_s,~,Mp_x,Md_x] = grambasis(sparsity(sos.x),Is,newton);
+[Zvar_s,Ksdp_x_s,~,Mp_x,Md_x] = grambasis(sparsity(sos.x),Is,opts);
 % obtain Gram basis for sum-of-squares constraints
-[Zcon_s,Ksdp_g_s,~,Mp_g,Md_g] = grambasis(sparsity(sos.g),Js,newton);
+[Zcon_s,Ksdp_g_s,~,Mp_g,Md_g] = grambasis(sparsity(sos.g),Js,opts);
 
 % matrix decision variables for variables
 Qvar_G = casadi.SX.sym('P',sum(Ksdp_x_s.^2),1);
