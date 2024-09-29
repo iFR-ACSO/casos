@@ -85,7 +85,6 @@ uM = 10*d2r - 0.0489;
 um = -(10*d2r + 0.0489);
 
 
-
 % initialize arrays
 endTimeBuild1 = [];
 endTimeBuild2 = [];
