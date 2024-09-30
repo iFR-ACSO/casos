@@ -22,7 +22,9 @@ clear
 close all
 
 % add the other toolboxes
-addpath(genpath('./otherFrameworks'))
+% addpath(genpath('./otherFrameworks'))
+
+addpath(genpath('C:\Users\ac133867\Downloads\SOSTOOLS-4.03'))
 
 % add paths to subfolder with benchmark functions
 addpath('./casos_ex/')
@@ -58,7 +60,7 @@ solverTime_total_y_GTM_arr = zeros(Nruns,1);
 buildTime_y_GTM_arr        = zeros(Nruns,1);
 
 
-for j = 1:5
+for j = 1:Nruns
 
 %% run GTM 4D example in casos
 disp('Run benchmark test for CaSoS')
@@ -69,7 +71,7 @@ solverTime_total_c_GTM_arr(j)  = solverTime_total_c_GTM;
 buildTime_c_GTM_arr(j)         = buildTime_c_GTM; 
 
 % just an additional output for the interested reader/user; see comment for
-% build time
+% build time above
 callTime_c_GTM_arr(j)          = callTime_c_GTM;
 
 %% run GTM 4D example in SOSTOOLS with dpvar and pvar
@@ -86,7 +88,7 @@ addpath(genpath('./otherFrameworks/SOSTOOLS'))
 solverTime_total_st_GTM_arr(j)  = solverTime_total_st_GTM;
 buildTime_st_GTM_arr(j)         = buildTime_st_GTM;
 
-% run GTM 4D example in SOSTOOLS with pvar
+%% run GTM 4D example in SOSTOOLS with pvar
 disp('Run benchmark test for SOSTOOLS with pvar')
 [gval_st2_GTM,bval_st2_GTM,solverTime_total_st2_GTM,buildTime_st2_GTM]= roaEstGTM_benchSOSTOOLS2();
 

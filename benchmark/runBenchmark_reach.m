@@ -196,7 +196,7 @@ contour(xg,yg,double(pgrid),[0,0],'k');
 grid minor
 legend('Ca\SigmaoS' ,'SOSTOOLS' ,'SOSOPT' , 'SPOTless')
 
-%% estimate volume via Monte-Carlo-Sampling
+%% estimate volume via Monte-Carlo-Sampling (!!! result might differ due to randomness!!!)
 % compute volume; all four use a unit box as bounding region
 
 [vol_sp,std_sp] = pvolume_spot(V0_sp,x,gval_sp_GTM);  % spot
