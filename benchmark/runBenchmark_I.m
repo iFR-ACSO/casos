@@ -22,9 +22,7 @@ clear
 close all
 
 % add the other toolboxes
-% addpath(genpath('./otherFrameworks'))
-
-addpath(genpath('C:\Users\ac133867\Downloads\SOSTOOLS-4.03'))
+addpath(genpath('./otherFrameworks'))
 
 % add paths to subfolder with benchmark functions
 addpath('./casos_ex/')
