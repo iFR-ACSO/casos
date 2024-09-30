@@ -7,7 +7,8 @@
 %                    in different toolbox. The mean computation times are 
 %                    compared in a bar chart. 
 %
-% References-
+% References- [1] Cunis,T., Olucak, J. - CaΣoS: A nonlinear sum-of-squares 
+%                 optimization suite, https://arxiv.org/abs/2409.18549
 %
 % ########################################################################
 

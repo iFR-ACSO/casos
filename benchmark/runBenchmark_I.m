@@ -9,7 +9,7 @@
 %                    [2].
 %
 % References- [1] Cunis,T., Olucak, J. - CaΣoS: A nonlinear sum-of-squares 
-%                 optimization suite
+%                 optimization suite, https://arxiv.org/abs/2409.18549
 %             [2] Chakraborty, A. et al- Nonlinear region of attraction 
 %                 analysis for flight control verification and validation,
 %                 Control Engineering Practice, 2010,

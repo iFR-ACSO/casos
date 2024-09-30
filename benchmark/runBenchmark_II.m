@@ -12,7 +12,7 @@
 %                    SOSOPT benchmark implementation.
 %
 % References- [1] Cunis,T., Olucak, J. - CaΣoS: A nonlinear sum-of-squares 
-%                 optimization suite
+%                 optimization suite, https://arxiv.org/abs/2409.18549
 %             [2] Yin, H. et al- Backward Reachability for Polynomial 
 %                 Systems on a Finite Horizon, IEEE Transactions on 
 %                 Automatic Control, 2021, doi: 10.1109/TAC.2021.3056611
