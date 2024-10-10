@@ -33,7 +33,7 @@ for ic = coeff_find(S)
 
     % string representation of coefficient and sign
     mdf = '';
-    if is_symbolic(cf)
+    if is_symbolic(cf) || ~is_regular(cf)
         % symbolic coefficient
         scf = sprintf('(%s)', str(cf));
         sgn = ' + ';
