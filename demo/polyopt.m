@@ -19,3 +19,6 @@ S = casos.sossol('S','sedumi',sos,opts);
 sol = S();
 
 fprintf('Minimum is %g.\n', full(sol.f))
+
+
+

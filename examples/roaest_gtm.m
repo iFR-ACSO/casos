@@ -43,7 +43,7 @@ sos1.('g') = s1*(V-g)-nabla(V,x)*f-l;
 % states + constraint are SOS cones
 opts.Kx = struct('sos', 1);
 opts.Kc = struct('sos', 1);
-
+opts.conf_interval = [-1000 0];
 S1 = casos.qcsossol('S1','bisection',sos1,opts);
 
 % solver 2: beta-step
@@ -53,7 +53,7 @@ sos2.('g') = s2*(p-b)+g-V;
 % states + constraint are SOS cones
 opts.Kx = struct('sos', 1);
 opts.Kc = struct('sos', 1);
-
+opts.conf_interval = [-1000 0];
 S2 = casos.qcsossol('S2','bisection',sos2,opts);
 
 % solver 3: V-step

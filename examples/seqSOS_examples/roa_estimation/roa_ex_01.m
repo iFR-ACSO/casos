@@ -74,7 +74,7 @@ f4 = @(V,alpha,q,theta,eta,F)  q;
 Kq = 0.0698;
 
 %% Trim condition
-v0      = 45;       % m/s
+v0      = 45;      % m/s
 alpha0  = 0.04924; % rad
 q0      = 0;       % rad/s
 theta0  = 0.04924; % radg
@@ -152,7 +152,7 @@ p = Vinit*10;
 %% setup solver
 
 % options
-opts = struct('sossol','scs');
+opts = struct('sossol','mosek');
 opts.verbose = 1;
 opts.debugBFGS = 1;
 

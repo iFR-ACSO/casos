@@ -149,7 +149,7 @@ cost = dot(g - (V-1),g - (V-1)) ;
 %% setup solver
 
 % options
-opts = struct('sossol','scs');
+opts = struct('sossol','mosek');
 opts.verbose = 1;
 sos = struct('x',[V; s2],...
               'f',cost, ...
@@ -175,7 +175,7 @@ buildtime = toc(buildTime_in);
 sol = solver_GTM2D_ROA('x0',[ Vinit;  x'*x]); 
 disp(['Solver buildtime: ' num2str(buildtime), ' s'])
 
-
+% sol = solver_GTM2D_ROA('x0',sol.x); 
 %% plot solver statistics
 plotSolverStats(solver_GTM2D_ROA.stats);
 
@@ -184,4 +184,44 @@ figure()
 pcontour(g,0,[-2 2 -2 2]*3,'k--')
 hold on
 pcontour(sol.x(1),1,[-2 2 -2 2]*3)
+
+
+%%
+Vval  = sol.x(1);
+s2val = sol.x(2);
+
+sol_g = [s2val; 
+         Vval-l; 
+         s2val*(Vval-1)-nabla(Vval,x)*f-l];
+
+
+isSOS(sol_g(1))
+isSOS(sol_g(2))
+isSOS(sol_g(3))
+
+for j = 1:length(sol_g)
+s = casos.PS.sym('q',grambasis(sol_g(j)));
+
+s0 = casos.PS(s.sparsity,ones(s.sparsity.nnz,1));
+
+r = casos.PS.sym('r');
+
+sos = struct('x',r,'f',r,...
+    'g',sol_g(j)+r*s0);
+
+% states is scalar SOS cone
+opts = struct('Kx',struct('lin',1),'Kc',struct('sos',1));
+
+% solve by relaxation to SDP
+S = casos.sossol('S','mosek',sos,opts);
+
+sol_check = S();
+
+if full(sol_check.f) <= 1e-7
+    feas_signed = 1
+else
+    feas_signed = 0
+end
+
+end
 
