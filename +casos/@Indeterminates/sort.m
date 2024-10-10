@@ -1,7 +1,7 @@
-function [out,I] = sort(obj)
+function [out,ia,ic] = sort(obj)
 % Sort indeterminate variables alphabetically.
 
-[vars,I] = sort(obj.variables);
+[vars,ia,ic] = unique(obj.variables);   % variables are already unique
 
 % return
 out = casos.Indeterminates;
