@@ -88,17 +88,8 @@ if ~isempty(msk_sol)
             % infeasible problem
             obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_INFEASIBLE;
             assert(~obj.opts.error_on_fail,'Problem is primal and/or dual infeasible or unbounded.')
-        case {'UNKNOWN'}
-            obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_UNKNOWN;
-            % assert(~obj.opts.error_on_fail,'Problem status unknown.')
-        case {'IllPosed'}
-            obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_ILLPosed;
-            assert(~obj.opts.error_on_fail,'Problem is ill posed.')
-        case {'PrimalInfeasibleOrUnbounded'}
-            obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_LIMITED;
-            assert(~obj.opts.error_on_fail,'Problem is Primal Infeasible Or Unbounded.')
         otherwise
-           
+            % problem status unknown or ill-posed
             obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_LIMITED;
             assert(~obj.opts.error_on_fail,'Problem status unknown (might be ill-posed).')
     end

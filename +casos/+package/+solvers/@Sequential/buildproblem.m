@@ -132,7 +132,7 @@ coeff_lam_gs                 = poly2basis(lam_gs);
 coeff_p0                     = poly2basis(p0);
 
 obj.nabla_xi_L      = casos.Function('f',{coeff_nlsos_x,coeff_lam_gs,coeff_p0}, { op2basis(dLdx) });
-obj.nabla_xi_L_norm = casos.Function('f',{coeff_nlsos_x,coeff_lam_gs,coeff_p0}, { Fnorm2(dLdx)    }); %norm(op2basis(dLdx),inf)
+obj.nabla_xi_L_norm = casos.Function('f',{coeff_nlsos_x,coeff_lam_gs,coeff_p0}, { norm(op2basis(dLdx),inf)   }); %Fnorm2(dLdx)
 
 % cost function and gradient needed for filter linesearch
 obj.f          = casos.Function('f',{coeff_nlsos_x,coeff_p0}, { nlsos.f });
@@ -157,14 +157,14 @@ if  strcmp(obj.opts.conViolCheck,'projection')
     
     
     % decision variable (linear dec. var + sos constraint)
-    s    = casos.PS.sym('q',grambasis(nlsos.g()));
+    s    = casos.PS.sym('q',grambasis(nlsos.g(I==1)));
     
     if ~isempty(s)
         
         % conFun = casos.Function('g1',{nlsos.x,p0},{nlsos.g(I==1)});
         
         % projection error
-        e = s - nlsos.g();
+        e = s - nlsos.g(I==1);
         
 
         % define Q-SOS problem parameterized nonlinear constraints
@@ -178,34 +178,8 @@ if  strcmp(obj.opts.conViolCheck,'projection')
         opts_proj.Kx            = struct('lin', length(s));
         opts_proj.Kc            = struct('sos', length(s));
         opts_proj.error_on_fail = 1;
-        obj.projConPara    =  casos.sossol('S','scs',proj_sos,opts_proj);
+        obj.projConPara    =  casos.sossol('S','mosek',proj_sos,opts_proj);
         
-        g_non = nlsos.g();
-        ProjConPara.solver = struct();
-        for j = 1:length(nlsos.g())
-                 % projection error
-                e = s(j) - g_non(j);
-                
-        
-                % define Q-SOS problem parameterized nonlinear constraints
-                %   min ||s-p||^2  s.t. s is SOS
-                proj_sos = struct('x',s,...
-                                  'g',s,...
-                                'f',dot(e,e), ...
-                                'p',[nlsos.x;p0]);
-                
-                opts_proj               = [];
-                opts_proj.Kx            = struct('lin', length(s));
-                opts_proj.Kc            = struct('sos', length(s));
-                opts_proj.error_on_fail = 1;
-
-                projConPara    = casos.sossol('S','scs',proj_sos,opts_proj);
-            
-                ProjConPara(j).solver= projConPara;
-
-              
-        end
-
         
     else
         
@@ -214,7 +188,7 @@ if  strcmp(obj.opts.conViolCheck,'projection')
     end
     
     
-elseif strcmp(obj.opts.conViolCheck,'pseudo-projection')
+else
     % constraint violation is checked via pseudo-projection i.e. sampling
     
     % evaluate current solution (coefficients) at provided sampling points
@@ -260,78 +234,28 @@ elseif strcmp(obj.opts.conViolCheck,'pseudo-projection')
         opts_proj.error_on_fail = 1;
         obj.projConPara    =  casos.sossol('S','mosek',proj_sos,opts_proj);
         
-
-
+        
     else
         
         obj.projConPara    = [];
         
     end
-
-        elseif strcmp(obj.opts.conViolCheck,'signed-distance')
-            
-
-        % Gram decision variable
-        idx = find((I>=0));
-        for j = 1:length(idx)
-
-
-
-            s  = casos.PS.sym('q',grambasis(nlsos.g(idx(j))));
-            s0 = casos.PD(s.sparsity,ones(s.sparsity.nnz,1));
-
-            r = casos.PS.sym('r');
-
-            sos = struct('x',r,'f',r,...
-                'g',nlsos.g(idx(j))+r*s0,...
-                'p',[nlsos.x;p0]);
-
-            % states is scalar SOS cone
-            opts = struct('Kx',struct('lin',1),'Kc',struct('sos',1));
-
-            % solve by relaxation to SDP
-            S = casos.sossol('S','mosek',sos,opts);
-
-            ProjConPara(j).solver= S;
-        end
-        % 
-
-            % 
-            % s  = casos.PS.sym('q',grambasis(nlsos.g(idx)));
-            % s0 = casos.PD(s.sparsity,ones(s.sparsity.nnz,1));
-            % 
-            % r = casos.PS.sym('r',length(s));
-            % 
-            % sos = struct('x',r,'f',sum(r),...
-            %     'g',nlsos.g(idx)+r.*s0,...
-            %     'p',[nlsos.x;p0]);
-            % 
-            % % states is scalar SOS cone
-            % opts = struct('Kx',struct('lin',length(sos.x)),'Kc',struct('sos',length(sos.g)));
-            % 
-            % % solve by relaxation to SDP
-            % S = casos.sossol('S','mosek',sos,opts);
-            % 
-            % ProjConPara.solver= S;
    
 end
 
-
-
- obj.projConPara =ProjConPara;
 
 %% feasibility restoration phase
 
 % Here, we only setup the adjusted underlying QP. In eval_on_basis we setup
 % the actual restoration phase
 
-% if ~obj.opts.feasRes_actv_flag
+if ~obj.opts.feasRes_actv_flag
     % feasibility restoration is not active!
     obj.solver_feas_res = [];   
-% else
+else
 
 
  
-% end
+end
 
 end
