@@ -158,17 +158,17 @@ opts.verbose = 1;
 % opts.conViolCheck = 'pseudo-projection';
 opts.sossol_options.sdpsol_options.error_on_fail = 0;
 
-% profile on
+profile on
 buildTime_in = tic;
     solver_GTM4D_ROA = casos.nlsossol('S','sequential',sos,opts);
 buildtime = toc(buildTime_in);
 % profile viewer
 % profile off
 
-% profile on
+profile on
 sol = solver_GTM4D_ROA('x0' ,[Vinit; (x'*x)^2]);
 disp(['Solver buildtime: ' num2str(buildtime), ' s'])
-% profile viewer
+profile viewer
 %% plot solver statistics
 plotSolverStats(solver_GTM4D_ROA.stats);
 
@@ -187,42 +187,3 @@ g = subs(g,[x(2);x(3)],xD(2:3));
 figure()
 hold on
 pcontour(V, gam, [-1 1 -4 4], 'b-');
-
-%%
-Vval  = sol.x(1);
-s2val = sol.x(2);
-
-sol_g = [s2val; 
-         Vval-l; 
-         s2val*(Vval-gam)-nabla(Vval,x)*f-l];
-
-
-isSOS(sol_g(1))
-isSOS(sol_g(2))
-isSOS(sol_g(3))
-
-for j = 1:length(sol_g)
-s = casos.PS.sym('q',grambasis(sol_g(j)));
-
-s0 = casos.PS(s.sparsity,ones(s.sparsity.nnz,1));
-
-r = casos.PS.sym('r');
-
-sos = struct('x',r,'f',r,...
-    'g',sol_g(j)+r*s0);
-
-% states is scalar SOS cone
-opts = struct('Kx',struct('lin',1),'Kc',struct('sos',1));
-
-% solve by relaxation to SDP
-S = casos.sossol('S','mosek',sos,opts);
-
-sol_check = S();
-
-if full(sol_check.f) <= 1e-7
-    feas_signed = 1
-else
-    feas_signed = 0
-end
-
-end

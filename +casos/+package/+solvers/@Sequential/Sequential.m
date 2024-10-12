@@ -14,7 +14,6 @@ classdef Sequential < casos.package.solvers.SosoptCommon
         
         % feasibility restoration phase
         sossolver_feas 
-        solver_feas_res
         sizeHessian_feas
         nabla_xi_L_feas 
         
@@ -132,11 +131,11 @@ classdef Sequential < casos.package.solvers.SosoptCommon
             if ~isfield(obj.opts,'sossol_options'), obj.opts.sossol_options       = struct; end
             if ~isfield(obj.opts,'max_iter'),       obj.opts.max_iter             = 1000; end
             if ~isfield(obj.opts,'alpha_max'),      obj.opts.alpha_max            = 1; end
-            if ~isfield(obj.opts,'alpha_min'),      obj.opts.alpha_min            = 1e-7; end
+            if ~isfield(obj.opts,'alpha_min'),      obj.opts.alpha_min            = 1e-5; end
             if ~isfield(obj.opts,'tau'),            obj.opts.tau                  = 0.5; end
             if ~isfield(obj.opts,'soc_max_iter'),   obj.opts.soc_max_iter         = 5; end
-            if ~isfield(obj.opts,'optTol'),         obj.opts.optTol               = 1e-3; end
-            if ~isfield(obj.opts,'conVioTol'),      obj.opts.conVioTol            = 1e-8; end
+            if ~isfield(obj.opts,'optTol'),         obj.opts.optTol               = 1e-2; end
+            if ~isfield(obj.opts,'conVioTol'),      obj.opts.conVioTol            = 1e-2; end
             if ~isfield(obj.opts,'accTol'),         obj.opts.accTol               = 1e-1; end
             if ~isfield(obj.opts,'noAccIter'),      obj.opts.noAccIter            = 15; end
             if ~isfield(obj.opts,'s_phi'),          obj.opts.s_phi                = 2.3; end
@@ -144,7 +143,7 @@ classdef Sequential < casos.package.solvers.SosoptCommon
             if ~isfield(obj.opts,'gamma_phi'),      obj.opts.gamma_phi            = 1; end
             if ~isfield(obj.opts,'delta '),         obj.opts.delta                = 1; end
             
-            if ~isfield(obj.opts,'conViolCheck'),     	obj.opts.conViolCheck       ='signed-distance'; end
+            if ~isfield(obj.opts,'conViolCheck'),     	obj.opts.conViolCheck       = 'projection'; end
             if ~isfield(obj.opts,'conVioSamp'),     	obj.opts.conVioSamp         = []; end
             if ~isfield(obj.opts,'indeterminates'), 	obj.opts.indeterminates     = []; end
             if ~isfield(obj.opts,'feasRes_actv_flag'), 	obj.opts.feasRes_actv_flag	= 1; end

@@ -41,28 +41,9 @@ counter_acceptLvl = 0;
 %% initilize filter
 if ~isempty(obj.projConPara)
     
-
-
-        % compute exact (in numerical sense) projection/squared distance 
-      for j = 1:length(obj.projConPara)
-           lowLvlSolver = obj.projConPara(j).solver;
-                    
-           solPara_proj = lowLvlSolver('p',[obj.xk1fun(casadi.DM(xi_k),p0);obj.p0poly(p0)]);
-
-           % curr_conVio(j)    =  sqrt(full(solPara_proj.f));
-        
-          % if length(obj.projConPara) > 1
-           curr_conVio(j)    = max(0,full(solPara_proj.f));
-          % else
-          %   curr_conVio    = max(0,full(solPara_proj.x));
-          % end
-     end
-
-    curr_conVio = norm(curr_conVio,inf);
-
     % compute projection of initial guess
-    % solPara_proj   = obj.projConPara('x0',-1,'p',[obj.xk1fun(xi_k,p0);obj.p0poly(p0)]);
-    % curr_conVio    = full(solPara_proj.f);
+    solPara_proj   = obj.projConPara('x0',-1,'p',[obj.xk1fun(xi_k,p0);obj.p0poly(p0)]);
+    curr_conVio    = full(solPara_proj.f);
     
     curr_cost   = inf;
     
@@ -95,11 +76,11 @@ for i = 0:obj.opts.max_iter
     args{2}  = [p0; xi_k; Bk(:);zeros(length(xi_k),1)];
     
     % adjust bounds
-    args{3}  = argin{3} - xi_k;
-    args{4}  = argin{4} - xi_k;
+    % args{3}  = argin{3} - xi_k;
+    % args{4}  = argin{4} - xi_k;
     
-    % args{3}  = argin{3};
-    % args{4}  = argin{4};
+    args{3}  = argin{3};
+    args{4}  = argin{4};
    
     %% evaluate convex SOS problem
     sol = eval_on_basis(obj.sossolver, args);
@@ -113,15 +94,9 @@ for i = 0:obj.opts.max_iter
             
             d_star    = sol{1}-xi_k;
             dual_star = sol{5};
-
-            % sol{2}
-            % sol{2} + sol{5}'*sol{3}
-
+            
         case UnifiedReturnStatus.SOLVER_RET_UNKNOWN % feasible solution but not optimal
-
-            % sol{2}
-            % sol{2} + sol{5}'*sol{3}
-
+            
             d_star    = sol{1}-xi_k;
             dual_star = sol{5};
             
@@ -185,22 +160,15 @@ for i = 0:obj.opts.max_iter
             % measure time to compute projection/current constraint violation
             measTime_Proj_in = tic;
 
-            for j = 1:length(obj.projConPara)
-                   lowLvlSolver = obj.projConPara(j).solver;
-                            
-                   solPara_proj = lowLvlSolver('p',[obj.xk1fun(xi_k1,p0);obj.p0poly(p0)]);
-        
-                   new_conVio(j)    =  sqrt(full(solPara_proj.f));
-                   % new_conVio(j)    = min(0,full(solPara_proj.f));
-            end
+                % compute exact (in numerical sense) projection/squared distance 
+                solPara_proj = obj.projConPara('p',[obj.xk1fun(xi_k1,p0);obj.p0poly(p0)]);
 
-
-              % L2-norm
-              new_conVio   = norm(new_conVio,inf);
+                % L2-norm
+                new_conVio   = sqrt( full( solPara_proj.f ) );
                 
             info{i+1}.filter_stats.measTime_proj_out = toc(measTime_Proj_in);
             
-        elseif  ~isempty(obj.projConPara) && strcmp(obj.opts.conViolCheck,'pseudo-projection')
+        else
             
             new_conVio = 0;
             
@@ -232,35 +200,6 @@ for i = 0:obj.opts.max_iter
                 end
                 info{i+1}.filter_stats.measTime_proj_out = toc(measTime_Proj_in);
             end
-        elseif ~isempty(obj.projConPara) && strcmp(obj.opts.conViolCheck,'signed-distance')
-                % measure time to compute projection/current constraint violation
-                measTime_Proj_in = tic;
-    
-                for j = 1:length(obj.projConPara)
-                       lowLvlSolver = obj.projConPara(j).solver;
-                                
-                       solPara_proj = lowLvlSolver('p',[obj.xk1fun(xi_k1,p0);obj.p0poly(p0)]);
-            
-                       % new_conVio(j)    =  sqrt(full(solPara_proj.f));
-                       new_conVio(j)    = max(0,full(solPara_proj.f));
-
-
-        
-                      if length(obj.projConPara) > 1
-                       new_conVio(j)    = max(0,full(solPara_proj.f));
-                      else
-                        new_conVio    = max(0,full(solPara_proj.x));
-                      end
-
-                end
-    
-    
-                  % L2-norm
-                  new_conVio   = norm(new_conVio,inf);
-                    
-                info{i+1}.filter_stats.measTime_proj_out = toc(measTime_Proj_in);
-            
-
             
         end
         
@@ -315,22 +254,8 @@ for i = 0:obj.opts.max_iter
                 nabla_xi_f   = full(casadi.DM(full(obj.nabla_xi_f(x_soc_trial,p0))))';
                 
                 % check constraint violation (projection onto SOS cone)
-                % solPara_proj = obj.projConPara('p',[obj.xk1fun(x_soc_trial,p0);obj.p0poly(p0)]);
-                % new_conVio   = sqrt(full(solPara_proj.f));
-
-
-                for j = 1:length(obj.projConPara)
-                    lowLvlSolver = obj.projConPara(j).solver;
-                    
-                    solPara_proj = lowLvlSolver('p',[obj.xk1fun(x_soc_trial,p0);obj.p0poly(p0)]);
-
-                    % new_conVio(j)    =  sqrt(full(solPara_proj.f));
-                    new_conVio(j)    = norm(max(0,full(solPara_proj.x)),inf);
-                end
-
-                % curr_conVio = norm(curr_conVio,inf);
-                % L2-norm
-                new_conVio   = norm(new_conVio,inf);
+                solPara_proj = obj.projConPara('p',[obj.xk1fun(x_soc_trial,p0);obj.p0poly(p0)]);
+                new_conVio   = sqrt(full(solPara_proj.f));
                 
                 % check if new trial point can be accepted to filter
                 % and fulfills sufficient decrease conditions
@@ -381,7 +306,7 @@ for i = 0:obj.opts.max_iter
              if alpha_k < alpha_min
 
                     % Check if feasibility restoration phase is active
-                    if isempty(obj.solver_feas_res)
+                    if ~obj.solver_feas_res
                             
                         printf(obj.log,'debug',['Step length below minimum step length in iteration ' num2str(i)  '. Feasibility restoration is currently turn off.\n']);
                         
@@ -393,7 +318,7 @@ for i = 0:obj.opts.max_iter
                         info{i+1}.seqSOS_common_stats.delta_prim        = nan;
                         info{i+1}.seqSOS_common_stats.delta_dual        = nan;
                         info{i+1}.seqSOS_common_stats.conViol           = new_conVio ;
-                        info{i+1}.seqSOS_common_stats.gradLang          = full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k1,dual_star,p0))));
+                        info{i+1}.seqSOS_common_stats.gradLang          = full(casadi.DM(full(obj.nabla_xi_L_norm(xi_feas,dual_star,p0))));
                         info{i+1}.seqSOS_common_stats.solve_time_iter   = toc(measTime_seqSOS__iter_in);
     
                         info(i+2:end) = [];
@@ -469,7 +394,7 @@ for i = 0:obj.opts.max_iter
         delta_dual_double = norm( full( dual_star ), inf );
         
         printf(obj.log,'debug','%-8d%-15e%-15e%-15e%-15e%-10f%-10e\n',...
-            i, new_cost, delta_xi_double, delta_dual_double, new_conVio, alpha_k , full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k1,dual_star,p0))))   );
+            i, new_cost, delta_xi_double, delta_dual_double, new_conVio, alpha_k , full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k,dual_star,p0))))   );
         
         % store common optimization data
         info{i+1}.seqSOS_common_stats.delta_prim  = delta_xi_double;
@@ -482,12 +407,19 @@ for i = 0:obj.opts.max_iter
     
     %% check convergence criteria
     
+
     optimality_flag =     max([full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k1,dual_star,p0))))/obj.opts.optTol,new_conVio/obj.opts.conVioTol,  delta_xi_double/1e-1]) <= 1;
     
     
     % check if solution stays below tolerance for a certain number of iterations --> solved to acceptable level
     if max([full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k1,dual_star,p0))))/obj.opts.accTol,new_conVio/obj.opts.conVioTol/10,  delta_xi_double/1e-1]) <= 1
-        
+
+    optimality_flag =     max([full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k1,dual_star,p0))))/obj.opts.optTol,new_conVio/obj.opts.conVioTol]) <= 1;
+    
+    
+    % check if solution stays below tolerance for a certain number of iterations --> solved to acceptable level
+    if max([full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k1,dual_star,p0))))/obj.opts.accTol,new_conVio/obj.opts.conVioTol/10]) <= 1
+
         counter_acceptLvl = counter_acceptLvl + 1;
         
     else
@@ -497,7 +429,7 @@ for i = 0:obj.opts.max_iter
     end % --- end of counter ---
     
     %% in case of pseduo-projection check solution flags with exact (in numerical sense) projection to verify
-    if (optimality_flag || counter_acceptLvl == obj.opts.noAccIter) && ~strcmp(obj.opts.conViolCheck,'projection') && ~strcmp(obj.opts.conViolCheck,'signed-distance')
+    if (optimality_flag || counter_acceptLvl == obj.opts.noAccIter) && ~strcmp(obj.opts.conViolCheck,'projection')
         if optimality_flag
             
             printf(obj.log,'debug','Solution status: Optimal solution found using pseudo-projection\n');
@@ -540,8 +472,6 @@ for i = 0:obj.opts.max_iter
         
         % adjust last solution similar to iteration i.e. overwrite optimization solution
         sol{1} = xi_k1;
-        
-   
         sol{5} = dual_k1;
         
         argout = sol;
@@ -609,7 +539,6 @@ for i = 0:obj.opts.max_iter
     
     % update BFGS
     s = full(casadi.DM(xi_k1-xi_k));
-   
     y = full(casadi.DM( full(obj.nabla_xi_L(xi_k1,dual_k1,p0) - obj.nabla_xi_L(xi_k,dual_k1,p0)))');
     
     % prepare hessian approximation for next iteration
