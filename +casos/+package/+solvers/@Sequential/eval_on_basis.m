@@ -482,11 +482,11 @@ for i = 0:obj.opts.max_iter
     
     %% check convergence criteria
     
-    optimality_flag =     max([full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k1,dual_star,p0))))/obj.opts.optTol,new_conVio/obj.opts.conVioTol, delta_dual_double,  delta_xi_double/1e-1]) <= 1;
+    optimality_flag =     max([full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k1,dual_star,p0))))/obj.opts.optTol,new_conVio/obj.opts.conVioTol,  delta_xi_double/1e-1]) <= 1;
     
     
     % check if solution stays below tolerance for a certain number of iterations --> solved to acceptable level
-    if max([full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k1,dual_star,p0))))/obj.opts.accTol,new_conVio/obj.opts.conVioTol/10 , delta_dual_double,  delta_xi_double/1e-1]) <= 1
+    if max([full(casadi.DM(full(obj.nabla_xi_L_norm(xi_k1,dual_star,p0))))/obj.opts.accTol,new_conVio/obj.opts.conVioTol/10,  delta_xi_double/1e-1]) <= 1
         
         counter_acceptLvl = counter_acceptLvl + 1;
         
