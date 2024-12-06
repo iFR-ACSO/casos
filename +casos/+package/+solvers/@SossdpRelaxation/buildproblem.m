@@ -59,12 +59,38 @@ assert(length(Qvar) == (nnz_lin_x + nnz_sos_x), 'Sum-of-squares decision varible
 % matrix decision variables
 Qvar_sdp = [Qvar_l; Qvar_G];
 
+if ~isfield(sos,'derivatives')
+        Hf = hessian(Qobj,Qvar);
+        Df = jacobian(Qobj,Qvar);
+        Dg = jacobian(Qcon,Qvar);
+else
+
+    % if isfield(sos.derivatives,'Hf')
+        Hf = op2basis(sos.derivatives.Hf);
+    % else
+        % Hf = hessian(Qobj,Qvar);
+    % end
+
+   % if isfield(sos.derivatives,'Df')
+        % Df = op2basis(sos.derivatives.Df);
+    % else
+        Df = jacobian(Qobj,Qvar);
+   % end
+
+    % if isfield(sos.derivatives,'Dg')
+        % Dg = op2basis(sos.derivatives.Dg);
+    % else
+        Dg = jacobian(Qcon,Qvar);
+    % end
+
+end
+
 % replace sum-of-squares decision variables
 % and pre-compute derivatives
 % gradient and hessian of objective
-sosprob_f = casadi.Function('sos_f',{Qvar},{hessian(Qobj,Qvar) jacobian(Qobj,Qvar) Qobj},struct('allow_free',true)); %hessian_old(sosprob,0,0);
+sosprob_f = casadi.Function('sos_f',{Qvar},{Hf Df Qobj},struct('allow_free',true)); %hessian_old(sosprob,0,0);
 % jacobian of constraints
-sosprob_g = casadi.Function('sos_g',{Qvar},{jacobian(Qcon,Qvar) Qcon},struct('allow_free',true)); %jacobian_old(sosprob,0,1);
+sosprob_g = casadi.Function('sos_g',{Qvar},{Dg Qcon},struct('allow_free',true)); %jacobian_old(sosprob,0,1);
 
 % map sum-of-squares decision variables to matrix variables
 map = blkdiag(speye(nnz_lin_x), Mp_x);
