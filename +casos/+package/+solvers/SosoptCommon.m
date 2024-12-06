@@ -168,7 +168,8 @@ methods
         in = cell(10,1);
         
         % project arguments to obtain SDP inputs
-        % only linear coefficients are handled (p, lbx, ubx, lbg, ubg)
+        % only linear coefficients are handled (x0,p, lbx, ubx, lbg, ubg)
+        in{1} = poly2basis(argin{1}, obj.sparsity_x);
         in{2} = poly2basis(argin{2}, obj.sparsity_p);
         in{3} = poly2basis(argin{3}, obj.sparsity_xl);
         in{4} = poly2basis(argin{4}, obj.sparsity_xl);
