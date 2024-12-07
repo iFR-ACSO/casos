@@ -58,11 +58,10 @@ alpha_k            = 1;
 measTime_seqSOS_in = tic;
 while iter <= obj.opts.max_iter
     
-    % display output
+    % display output 
     if ~mod(iter,10) && iter > 0
         printf(obj.log,'debug','%-8s%-15s%-15s%-15s%-15s%-10s%-10s\n', 'iter', 'obj', '||pr||_inf', '||du||_inf', '||conVio||_2','alpha','||dLdx||');
         printf(obj.log,'debug','------------------------------------------------------------------------------------------\n');
-
     end
     
     printf(obj.log,'debug','%-8d%-15e%-15e%-15e%-15e%-10f%-10e\n',...
