@@ -22,6 +22,7 @@ properties (Access=protected)
     solver_convex;
     solver_soc
     solver_conVio
+    solver_feasRes
 
     % damped BFGS
     damped_BFGS

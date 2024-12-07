@@ -162,6 +162,36 @@ obj.eval_r = casos.Function('f',{B,theta,y,s}, {theta*y+(1-theta)*B*s});
 obj.damped_BFGS =  casadi.Function('f',{B,r,s}, {B - (B*(s*s')*B)/(s'*B*s) + (r*r')/(s'*r)});
 
 
+%% feasibility restoration phase
+
+
+sos_feas = [];
+% convex decision variables
+sos_feas.x = casos.PS.sym('x_feas',base_x);
+% search direction
+d = sos_feas.x - nlsos.x;
+% quadratic cost function
+sos_feas.f = (1/2)*dot2(Hf,d,d) + dot(d,d);
+% linear constraints
+sos_feas.g = nlsos.g + dot(Dg,d);
+% parameters to subproblem
+% * parameters to nonlinear problem, current (nonlinear) solution, Hessian
+sos_feas.p = [nlsos.p; nlsos.x; B(:)];
+
+% SOS options
+sosopt               = opts.sossol_options;
+sosopt.Kx            = opts.Kx;
+sosopt.Kc            = opts.Kc;
+sosopt.error_on_fail = false;
+
+sos_feas.derivatives.Hf = Hf;
+sos_feas.derivatives.Df = Df;
+sos_feas.derivatives.Dg = Dg;
+
+% initialize convex SOS solver
+obj.solver_feasRes = casos.package.solvers.sossolInternal('SOS',opts.sossol,sos_qp,sosopt);
+
+
 %% evaluation function
 % nonlinear cost function 
 obj.eval_cost      = casos.Function('f',{poly2basis(nlsos.x),poly2basis(nlsos.p)}, { full(nlsos.f) });
