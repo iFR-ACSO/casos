@@ -122,6 +122,11 @@ sos_soc.g = dot(Dg,d) + conFun(nlsos.x + dk,nlsos.p) - dot(Dg, dk);
 % solution QP
 sos_soc.p = [nlsos.p; nlsos.x; B(:);x_star_par];
 
+sos_soc.derivatives.Hf = Hf;
+sos_soc.derivatives.Df = Df;
+sos_soc.derivatives.Dg = Dg;
+
+
 % SOS options
 sosopt = opts.sossol_options;
 sosopt.Kx = opts.Kx;
@@ -142,10 +147,13 @@ obj.eval_s = casos.Function('f',{poly2basis(nlsos.x),poly2basis(x_k1),poly2basis
 % delta gradient of Langrangian 
 obj.eval_y = casos.Function('f',{poly2basis(nlsos.x),poly2basis(x_k1),poly2basis(nlsos.p),poly2basis(lam_gs)}, {(op2basis(jacobian(Langrangian,x_k1)) - op2basis(jacobian(Langrangian,nlsos.x)) )' });
 
-theta = casadi.SX.sym('theta');
-s     = casadi.SX.sym('s',[size(B,1),1]);
-y     = casadi.SX.sym('y',[size(B,1),1]);
-r     = casadi.SX.sym('r',[size(B,1),1]);
+% using MX instead of SX is faster to build; no significant execution speed
+% during online execution (but just a few examples)
+theta = casadi.MX.sym('theta');
+s     = casadi.MX.sym('s',[size(B,1),1]);
+y     = casadi.MX.sym('y',[size(B,1),1]);
+r     = casadi.MX.sym('r',[size(B,1),1]);
+B     = casadi.MX.sym('B',[size(B,1),size(B,1)]);
 
 % Powell-damping
 obj.eval_r = casos.Function('f',{B,theta,y,s}, {theta*y+(1-theta)*B*s});
@@ -158,7 +166,7 @@ obj.damped_BFGS =  casadi.Function('f',{B,r,s}, {B - (B*(s*s')*B)/(s'*B*s) + (r*
 % nonlinear cost function 
 obj.eval_cost      = casos.Function('f',{poly2basis(nlsos.x),poly2basis(nlsos.p)}, { full(nlsos.f) });
 
-obj.eval_gradCost      = casos.Function('f',{poly2basis(nlsos.x),poly2basis(nlsos.p)}, { op2basis( jacobian(nlsos.f,nlsos.x) ) });
+obj.eval_gradCost  = casos.Function('f',{poly2basis(nlsos.x),poly2basis(nlsos.p)}, { op2basis( jacobian(nlsos.f,nlsos.x) ) });
 
 % gradient langrangian
 obj.eval_gradLang =  casos.Function('f',{poly2basis(nlsos.x),poly2basis(nlsos.p),poly2basis(lam_gs)}, {Fnorm2( jacobian(Langrangian,nlsos.x) )' });
