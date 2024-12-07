@@ -126,6 +126,17 @@ while iter <= obj.opts.max_iter
 
 end % end of while loop
 
+% display output for user
+if iter >= obj.opts.max_iter
+        printf(obj.log,'debug','------------------------------------------------------------------------------------------\n');
+        printf(obj.log,'debug','Solution status: Maximum number of iterations reached\n');
+        solveTime = toc(measTime_seqSOS_in);
+        printf(obj.log,'debug',['Solution time: ' num2str(solveTime) ' s\n']);
+        printf(obj.log,'debug',['Build time: ' num2str(obj.display_para.solver_build_time) ' s\n']);
+        printf(obj.log,'debug',['Total time: ' num2str(obj.display_para.solver_build_time+solveTime) ' s\n']);  
+end
+
+
 % assign output
 argout = sol;
 

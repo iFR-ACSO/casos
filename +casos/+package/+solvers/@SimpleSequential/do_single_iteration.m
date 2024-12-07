@@ -24,8 +24,8 @@ alpha       = 1;
 alpha_min   = 1e-6;
 s_theta     = 1.1;
 s_phi       = 2.3;
-gamma_theta = 1e-3;
-gamma_phi   = 1e-3;
+gamma_theta = 1e-2;
+gamma_phi   = 1e-2;
 delta       = 1;
 eta         = 1e-4;
 
@@ -69,11 +69,11 @@ while true
     % compute alpha_min
 
     if alpha < alpha_min
+       % invoke feasibility restoration if step-length is below minimum
        feas_res_flag = 1;
        break
     end
         
-
 
 end % end of while-loop
 
