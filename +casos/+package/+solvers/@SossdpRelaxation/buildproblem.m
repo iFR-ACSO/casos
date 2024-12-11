@@ -60,29 +60,15 @@ assert(length(Qvar) == (nnz_lin_x + nnz_sos_x), 'Sum-of-squares decision varible
 Qvar_sdp = [Qvar_l; Qvar_G];
 
 if ~isfield(sos,'derivatives')
-        Hf = hessian(Qobj,Qvar);
-        Df = jacobian(Qobj,Qvar);
-        Dg = jacobian(Qcon,Qvar);
+    % compute derivatives
+    Hf = hessian(Qobj,Qvar);
+    Df = jacobian(Qobj,Qvar);
+    Dg = jacobian(Qcon,Qvar);
 else
-
-    % if isfield(sos.derivatives,'Hf')
-        Hf = op2basis(sos.derivatives.Hf);
-    % else
-        % Hf = hessian(Qobj,Qvar);
-    % end
-
-   % if isfield(sos.derivatives,'Df')
-        % Df = op2basis(sos.derivatives.Df);
-    % else
-        Df = jacobian(Qobj,Qvar);
-   % end
-
-    % if isfield(sos.derivatives,'Dg')
-        % Dg = op2basis(sos.derivatives.Dg);
-    % else
-        Dg = jacobian(Qcon,Qvar);
-    % end
-
+    % use pre-computed derivatives (undocumented)
+    Hf = op2basis(sos.derivatives.Hf,Zvar,Zvar);
+    Df = op2basis(sos.derivatives.Df,Zobj,Zvar);
+    Dg = op2basis(sos.derivatives.Dg,Zcon,Zvar);
 end
 
 % replace sum-of-squares decision variables
