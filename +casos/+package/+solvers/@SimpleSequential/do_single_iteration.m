@@ -1,4 +1,4 @@
-function [sol_iter,sol_qp,feas_res_flag,info,obj,filter] = do_single_iteration(obj, ...
+function [sol_iter,sol_qp,feas_res_flag,info,obj,filter,Bk] = do_single_iteration(obj, ...
                                                                               iter,...
                                                                               x_k,...
                                                                               dual_k,...
@@ -37,7 +37,6 @@ while true
     % compute search direction
     dk = (x_star    - x_k);
     
-
     % check filter acceptance
     [x_k1,theta_x_k1,f_x_k1 ,filter_Acceptance] = check_filter_acceptance(obj,filter,alpha,x_k,dk,p0,args);
     
@@ -47,20 +46,21 @@ while true
         [suffDecrease_flag,f_type,amijo] = chechSuffDecrease(obj,alpha,x_star,x_k,p0,theta_xk,theta_x_k1, f_x_k1,f_xk, ...
                                                              theta_min,eta,delta,gamma_theta,gamma_phi,s_phi,s_theta);
     
-    
+        
         if suffDecrease_flag
-            % accept
+            % accept and leave while loop
             break
         end
         
         % invoke soc to avoid maratos effect, if necessary
         if ~suffDecrease_flag && alpha == 1 && theta_x_k1 >= theta_xk
-            
+
            % compute correct search direction, compute new trial point and
            % check for filter acceptance
            x_k1 = second_order_correction(obj,x_k,x_star,p0,Bk,args,filter,alpha,theta_xk,f_xk,...
                                       theta_min,eta,delta,gamma_theta,gamma_phi,s_phi,s_theta);
-
+           
+           % leave while loop if corrected step is acceptable to filter
            if ~isempty(x_k1)
                break
            end
@@ -122,6 +122,9 @@ sol_iter.dual_k1    = dual_k1;
 sol_iter.theta_x_k1 = theta_x_k1;
 sol_iter.f_x_k1     = f_x_k1;
 sol_iter.alpha_k    = alpha;
+
+
+Bk = damped_BFGS(obj,Bk,x_k,p0,sol_iter);
 
 end
 

@@ -37,7 +37,7 @@ switch (obj.solver_convex.get_stats.UNIFIED_RETURN_STATUS)
         % compute constraint violation
         % work around to get correct arguments for constrained violation check
         args_conVio     =  args;
-        args_conVio{2}  =  [p0; sol_qp{1}];
+        args_conVio{2}  =  [p0; x_k];
         args_conVio{3}  = -inf(obj.init_para.conVio.no_con,1);
         args_conVio{4}  =  inf(obj.init_para.conVio.no_con,1);
         
@@ -47,7 +47,7 @@ switch (obj.solver_convex.get_stats.UNIFIED_RETURN_STATUS)
         theta_x_k1 = full(max(0,max(sol_convio{1})));
     
         % cost at trial point
-        f_x_k1   = full(obj.eval_cost(sol_qp{1},p0));
+        f_x_k1   = full(obj.eval_cost(x_k,p0));
 
         sol_iter.theta_x_k1 = theta_x_k1;
         sol_iter.f_x_k1     = f_x_k1;
