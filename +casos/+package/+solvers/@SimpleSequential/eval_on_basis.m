@@ -3,7 +3,6 @@ function argout = eval_on_basis(obj,argin)
 
 import casos.package.UnifiedReturnStatus
 
-
 %% print output with current problem and setting
 printf(obj.log,'debug','------------------------------------------------------------------------------------------\n');
 printf(obj.log,'debug',['\t\t Ca' char(931) 'oS-Nonlinear sum-of-squares optimization suite \n']);
@@ -45,15 +44,16 @@ sol_convio = eval_on_basis(obj.solver_conVio, args_conVio);
 theta_x_k = full(max(0,max(sol_convio{1})));
 f_x_k     = full(obj.eval_cost(x_k,p0));
 
-filter = [theta_x_k, f_x_k];
+filter = [max(1,theta_x_k)*10, f_x_k];
 
 iter = 1;
 
 % just for display output in first iteration
 delta_xi_double   = norm(full( casadi.DM(x_k)),inf);
 delta_dual_double = norm(full( (dual_k)),inf);
-alpha_k            = 1;
+alpha_k           = 1;
 
+feasibility_flag = 1;
 
 measTime_seqSOS_in = tic;
 while iter <= obj.opts.max_iter
@@ -69,7 +69,7 @@ while iter <= obj.opts.max_iter
         
         
     %% check convergence (first-order optimality)
-    if full(obj.eval_gradLang(x_k,p0,dual_k)) <= 1e-5 && ...
+    if full(obj.eval_gradLang(x_k,p0,dual_k)) <= 1e-4 && ...
        theta_x_k <= 1e-7
         
         printf(obj.log,'debug','------------------------------------------------------------------------------------------\n');
@@ -78,14 +78,14 @@ while iter <= obj.opts.max_iter
         printf(obj.log,'debug',['Solution time: ' num2str(solveTime) ' s\n']);
         printf(obj.log,'debug',['Build time: ' num2str(obj.display_para.solver_build_time) ' s\n']);
         printf(obj.log,'debug',['Total time: ' num2str(obj.display_para.solver_build_time+solveTime) ' s\n']);
-       
+        feasibility_flag = 1;
         break
 
     end
 
     % compute solution of current iterate: solve Q-SDP and perform
     % linesearch
-    [sol_iter,sol_qp,feas_res_flag,info,obj,filter] = do_single_iteration(obj, ...
+    [sol_iter,sol_qp,feas_res_flag,info,obj,filter,Bk] = do_single_iteration(obj, ...
                                                                           iter,...
                                                                           x_k,...
                                                                           dual_k,...
@@ -96,15 +96,48 @@ while iter <= obj.opts.max_iter
                                                                           args, ...
                                                                           filter, ...
                                                                           info);
+
                 
     % Invoke feasibility restoration if necessary
-    if feas_res_flag 
-        % invoke feasibility restoration
-        break
-    else
+    if feas_res_flag >= 1
+        
+        % augment filter with the iterate at which we invoke restoration
+        gamma_theta = 1e-3;
+        gamma_phi   = 1e-3;
 
-       Bk = damped_BFGS(obj,Bk,x_k,p0,sol_iter);
-    
+        % augment filter 
+        filter = [filter;[theta_x_k*(1-gamma_theta), f_x_k - gamma_phi*theta_x_k]];
+        
+        % feasibility restoration phase
+        [restored_sol,~,filter,feasibility_flag] = obj.feas_res_solver.eval_extended(filter,x_k,theta_x_k,p0,obj);
+
+        if feasibility_flag
+            % continue from restored solution
+            delta_xi_double   = norm(full( restored_sol.x_k1 - x_k) ,inf);
+            delta_dual_double = norm(full( restored_sol.dual_k1 - dual_k ),inf);
+
+           x_k       = restored_sol.x_k1;
+           dual_k    = restored_sol.dual_k1;
+           theta_x_k = restored_sol.theta_x_k1;
+           f_x_k     = restored_sol.f_x_k1;
+           alpha_k   = restored_sol.alpha_k;
+            
+           % augment filter with "solution"
+           filter = [filter;[theta_x_k*(1-gamma_theta), f_x_k - gamma_phi*theta_x_k]];
+
+        else
+            % could not recover return iterate where restoration was
+            % invoked
+            sol    = sol_qp;
+        
+            sol{1} = x_k;
+            sol{5} = dual_k;
+
+            break
+        end
+
+    else
+        
        delta_xi_double   = norm(full( sol_iter.x_k1 - x_k) ,inf);
        delta_dual_double = norm(full( sol_iter.dual_k1 - dual_k ),inf);
 
@@ -118,7 +151,7 @@ while iter <= obj.opts.max_iter
     end
 
     % return last solution
-    sol =sol_qp;
+    sol    = sol_qp;
 
     sol{1} = sol_iter.x_k1;
     sol{5} = sol_iter.dual_k1;
@@ -129,6 +162,22 @@ end % end of while loop
 if iter >= obj.opts.max_iter
         printf(obj.log,'debug','------------------------------------------------------------------------------------------\n');
         printf(obj.log,'debug','Solution status: Maximum number of iterations reached\n');
+        solveTime = toc(measTime_seqSOS_in);
+        printf(obj.log,'debug',['Solution time: ' num2str(solveTime) ' s\n']);
+        printf(obj.log,'debug',['Build time: ' num2str(obj.display_para.solver_build_time) ' s\n']);
+        printf(obj.log,'debug',['Total time: ' num2str(obj.display_para.solver_build_time+solveTime) ' s\n']);  
+end
+
+if feasibility_flag == 0
+        printf(obj.log,'debug','------------------------------------------------------------------------------------------\n');
+        printf(obj.log,'debug','Solution status: Problem infeasible.\n');
+        solveTime = toc(measTime_seqSOS_in);
+        printf(obj.log,'debug',['Solution time: ' num2str(solveTime) ' s\n']);
+        printf(obj.log,'debug',['Build time: ' num2str(obj.display_para.solver_build_time) ' s\n']);
+        printf(obj.log,'debug',['Total time: ' num2str(obj.display_para.solver_build_time+solveTime) ' s\n']);  
+elseif feasibility_flag == -1
+        printf(obj.log,'debug','------------------------------------------------------------------------------------------\n');
+        printf(obj.log,'debug','Solution status: Solver stalled.\n');
         solveTime = toc(measTime_seqSOS_in);
         printf(obj.log,'debug',['Solution time: ' num2str(solveTime) ' s\n']);
         printf(obj.log,'debug',['Build time: ' num2str(obj.display_para.solver_build_time) ' s\n']);

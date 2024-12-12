@@ -71,6 +71,17 @@ obj.sparsity_gl = obj.solver_convex.sparsity_gl;
 obj.sparsity_gs = obj.solver_convex.sparsity_gs;
 
 
+% store basis in a public struct
+obj.sparsity_pat_para.sparsity_x  = obj.solver_convex.sparsity_x;
+obj.sparsity_pat_para.sparsity_xl = obj.solver_convex.sparsity_xl;
+obj.sparsity_pat_para.sparsity_xs = obj.solver_convex.sparsity_xs;
+obj.sparsity_pat_para.sparsity_p  = sparsity(nlsos.p);
+obj.sparsity_pat_para.sparsity_f  = sparsity(nlsos.f);
+obj.sparsity_pat_para.sparsity_g  = obj.solver_convex.sparsity_g;
+obj.sparsity_pat_para.sparsity_gl = obj.solver_convex.sparsity_gl;
+obj.sparsity_pat_para.sparsity_gs = obj.solver_convex.sparsity_gs;
+
+
 %% constrained violation check via signed distance
 % sparsity patterns
 base_g = sparsity(nlsos.g);
@@ -126,7 +137,6 @@ sos_soc.derivatives.Hf = Hf;
 sos_soc.derivatives.Df = Df;
 sos_soc.derivatives.Dg = Dg;
 
-
 % SOS options
 sosopt = opts.sossol_options;
 sosopt.Kx = opts.Kx;
@@ -162,40 +172,10 @@ obj.eval_r = casos.Function('f',{B,theta,y,s}, {theta*y+(1-theta)*B*s});
 obj.damped_BFGS =  casadi.Function('f',{B,r,s}, {B - (B*(s*s')*B)/(s'*B*s) + (r*r')/(s'*r)});
 
 
-%% feasibility restoration phase
-
-
-sos_feas = [];
-% convex decision variables
-sos_feas.x = casos.PS.sym('x_feas',base_x);
-% search direction
-d = sos_feas.x - nlsos.x;
-% quadratic cost function
-sos_feas.f = (1/2)*dot2(Hf,d,d) + dot(d,d);
-% linear constraints
-sos_feas.g = nlsos.g + dot(Dg,d);
-% parameters to subproblem
-% * parameters to nonlinear problem, current (nonlinear) solution, Hessian
-sos_feas.p = [nlsos.p; nlsos.x; B(:)];
-
-% SOS options
-sosopt               = opts.sossol_options;
-sosopt.Kx            = opts.Kx;
-sosopt.Kc            = opts.Kc;
-sosopt.error_on_fail = false;
-
-sos_feas.derivatives.Hf = Hf;
-sos_feas.derivatives.Df = Df;
-sos_feas.derivatives.Dg = Dg;
-
-% initialize convex SOS solver
-obj.solver_feasRes = casos.package.solvers.sossolInternal('SOS',opts.sossol,sos_qp,sosopt);
-
-
 %% evaluation function
 % nonlinear cost function 
 obj.eval_cost      = casos.Function('f',{poly2basis(nlsos.x),poly2basis(nlsos.p)}, { full(nlsos.f) });
-
+% gradient cost
 obj.eval_gradCost  = casos.Function('f',{poly2basis(nlsos.x),poly2basis(nlsos.p)}, { op2basis( jacobian(nlsos.f,nlsos.x) ) });
 
 % gradient langrangian

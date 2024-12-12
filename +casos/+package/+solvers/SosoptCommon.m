@@ -175,6 +175,7 @@ methods
         in{4} = poly2basis(argin{4}, obj.sparsity_xl);
         in{6} = poly2basis(argin{6}, obj.sparsity_gl);
         in{7} = poly2basis(argin{7}, obj.sparsity_gl);
+     
         
         % evaluate on nonzero coordinates
         out = eval_on_basis(obj,in);

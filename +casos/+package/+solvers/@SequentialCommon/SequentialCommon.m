@@ -17,12 +17,29 @@ properties (Constant,Access=protected)
     status = casos.package.UnifiedReturnStatus.SOLVER_RET_UNKNOWN;
 end
 
+% public properties to allow e.g. feasibility restoration accesses to it
+properties
+
+        solver_conVio
+
+        % functions to be evaluated (convergence check)
+        eval_cost
+
+        % linesearch
+        eval_gradCost
+
+        init_para
+
+        FeasRes_para
+        
+        sparsity_pat_para
+
+end
+
 properties (Access=protected)
     % low-level solver
     solver_convex;
     solver_soc
-    solver_conVio
-    solver_feasRes
 
     % damped BFGS
     damped_BFGS
@@ -31,14 +48,14 @@ properties (Access=protected)
     eval_r
 
     % functions to be evaluated (convergence check)
-    eval_cost
+    % eval_cost
     eval_gradLang
 
     % linesearch
-    eval_gradCost
+    % eval_gradCost
 
     % parameter needed for initialization
-    init_para
+    % init_para
 
     % parameter/data for display output
     display_para
