@@ -67,8 +67,9 @@ if ~isfield(sos,'derivatives')
 else
     % use pre-computed derivatives (undocumented)
     Hf = op2basis(sos.derivatives.Hf,Zvar,Zvar);
-    Df = op2basis(sos.derivatives.Df,Zobj,Zvar);
-    Dg = op2basis(sos.derivatives.Dg,Zcon,Zvar);
+    % Df = jacobian(Qobj,Qvar);
+    Df = op2basis(sos.derivatives.Df,Zvar,Zobj);
+    Dg = op2basis(sos.derivatives.Dg,Zvar,Zcon);
 end
 
 % replace sum-of-squares decision variables
