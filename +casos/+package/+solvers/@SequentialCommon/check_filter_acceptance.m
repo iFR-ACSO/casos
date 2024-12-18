@@ -4,7 +4,7 @@ function  [x_k1,theta_x_k1,f_x_k1 ,filter_Acceptance] = check_filter_acceptance(
     x_k1    = full(x_k     + alpha*dk);
     
     % compute constraint violation
-    % work around to get correct arguments for constrained violation check
+    % get input arguments for constrained violation check
     args_conVio     =  args;
     args_conVio{2}  =  [p0; x_k1];
     args_conVio{3}  = -inf(obj.init_para.conVio.no_con,1);
@@ -24,10 +24,11 @@ function  [x_k1,theta_x_k1,f_x_k1 ,filter_Acceptance] = check_filter_acceptance(
     
     % new point lies in forbidden region if both are larger than filter entries
     dominance_bool      = [];
+    
     dominance_bool(:,1) = theta_x_k1 >= theta_l; 
     dominance_bool(:,2) = f_x_k1     >= f_l;
     
-    % check pairs; if one means lies in forbidden region
+    % check pairs; if one, means pair lies in forbidden region
     dominance_bool = all(dominance_bool, 2);
     
     if any(dominance_bool) % means not acceptable to filter

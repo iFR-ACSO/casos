@@ -133,10 +133,10 @@ P = lyap(A0',eye(2));
 Vinit = x'*P*x;
 
 % Lyapunov function candidate
-V = casos.PS.sym('v',monomials(x,2));
+V = casos.PS.sym('v',monomials(x,2:4));
 
 % SOS multiplier
-s2 = casos.PS.sym('s2',monomials(x,2));
+s2 = casos.PS.sym('s2',monomials(x,2:4));
 
 % enforce positivity
 l = 1e-6*(x'*x);
@@ -154,7 +154,7 @@ p = Vinit*10;
 % options
 opts = struct('sossol','mosek');
 opts.verbose  = 1;
-opts.max_iter = 200;
+opts.max_iter = 300;
 
 sos = struct('x',[V; s2],...
               'f',dot(g-V,g-V), ...
@@ -174,8 +174,8 @@ buildTime_in = tic;
 buildtime = toc(buildTime_in);
 
 %% solve
-sol = solver_GTM2D_ROA('x0',[ Vinit ; x'*x;]); 
-
+sol = solver_GTM2D_ROA('x0',[ Vinit ; x'*x]); 
+% sol = solver_GTM2D_ROA('x0',sol.x); 
 %% plot sublevel set
 figure
 Vfun = to_function(sol.x(1));

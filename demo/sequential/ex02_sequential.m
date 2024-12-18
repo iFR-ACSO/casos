@@ -156,7 +156,7 @@ opts.Kx      = struct('lin', 2);
 opts.Kc      = struct('sos', 3);
 opts.verbose = 1;
 
-opts.max_iter = 250;
+opts.max_iter = 500;
 
 solver_GTM4D_ROA = casos.nlsossol('S','sequential',sos,opts);
 
