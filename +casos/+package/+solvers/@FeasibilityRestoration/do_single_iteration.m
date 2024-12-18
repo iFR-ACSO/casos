@@ -1,14 +1,14 @@
 function [sol_iter,sol_qp,feas_res_flag,info,obj,filter,Bk] = do_single_iteration(obj, ...
-                                                                                                                      iter,...
-                                                                                                                      x_k,...
-                                                                                                                      dual_k,...
-                                                                                                                      theta_xk,...
-                                                                                                                      f_xk,...
-                                                                                                                      Bk,...
-                                                                                                                      p0,...
-                                                                                                                      args, ...
-                                                                                                                      filter, ...
-                                                                                                                      info)
+                                                                              iter,...
+                                                                              x_k,...
+                                                                              dual_k,...
+                                                                              theta_xk,...
+                                                                              f_xk,...
+                                                                              Bk,...
+                                                                              p0,...
+                                                                              args, ...
+                                                                              filter, ...
+                                                                              info)
 
 %% evaluate convex SOS problem and check feasibility
 [x_star,dual_star,sol_iter,sol_qp,feas_res_flag,info] = solve_Q_SDP(obj,iter,x_k,p0,Bk,args,info);
@@ -30,7 +30,7 @@ gamma_phi   = 1e-3;
 delta       = 1;
 eta         = 1e-4;
 
-theta_min = min(filter(1,1),1)*1e-4;
+theta_min = max(filter(1,1),1)*1e-4;
 
 while true
     
@@ -43,8 +43,8 @@ while true
     if filter_Acceptance % acceptable to filter
 
          % check sufficient decrease
-        [suffDecrease_flag,f_type,amijo] = chechSuffDecrease(obj,alpha,x_star,x_k,p0,theta_xk,theta_x_k1, f_x_k1,f_xk, ...
-                                                             theta_min,eta,delta,gamma_theta,gamma_phi,s_phi,s_theta);
+        [suffDecrease_flag,f_type,amijo,filter] = chechSuffDecrease(obj,alpha,x_star,x_k,p0,theta_xk,theta_x_k1, f_x_k1,f_xk, ...
+                                                             theta_min,eta,delta,gamma_theta,gamma_phi,s_phi,s_theta,filter);
     
         
         if suffDecrease_flag
@@ -93,25 +93,25 @@ while true
 
     if alpha < alpha_min
        % invoke feasibility restoration if step-length is below minimum
-       feas_res_flag = 2;
+       feas_res_flag = 1;
        break
     end
         
 
 end % end of while-loop
 
-% augment filter if not in forbidden region
-if filter_Acceptance 
-
-   % only augment if either f-type or amijo are not fulfilled
-   if ~f_type || ~amijo
-
-     % augment filter with a small margin
-     filter = [filter;[theta_xk*(1-gamma_theta), f_xk - gamma_phi*theta_xk]];
-
-   end
-
-end
+% augment filter if not in forbidden reagion
+% if filter_Acceptance 
+% 
+%    % only augment if either f-type or amijo are not fulfilled
+%    if ~f_type || ~amijo
+% 
+%      % augment filter with a small margin
+%      filter = [filter;[theta_xk*(1-gamma_theta), f_xk - gamma_phi*theta_xk]];
+% 
+%    end
+% 
+% end
 
 % update dual variables
 dual_k1 = full(dual_k + alpha*(dual_star - dual_k));
@@ -124,6 +124,7 @@ sol_iter.f_x_k1     = f_x_k1;
 sol_iter.alpha_k    = alpha;
 
 
+% update BFGS matrix for next iteration
 Bk = damped_BFGS(obj,Bk,x_k,p0,sol_iter);
 
 end

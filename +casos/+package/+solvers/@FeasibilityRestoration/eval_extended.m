@@ -5,8 +5,7 @@ p00 = p0;
 
 % parameter for feasibility restoration: actual parameter and iterate where
 % the restoration was/is invoked
-p0 = [p00;x_R];
-
+p0 = [p00; x_R];
 
 % input arguments
 args = cell(10,1);
@@ -41,7 +40,6 @@ sol_convio = eval_on_basis(obj.solver_conVio, args_conVio);
 theta_x_k = full(max(0,max(sol_convio{1})));
 f_x_k     = full(obj.eval_cost(x_k,p0));
 
-filter = [];
 
 filter = [max(1,theta_x_k)*10, f_x_k];
 
@@ -54,6 +52,7 @@ delta_dual_double = norm(full( (dual_k)),inf);
 alpha_k            = 1;
 
 filter_Acceptance = 0;
+feasibility_flag = 0;
 
 while iter <= obj.opts.max_iter
     
@@ -62,9 +61,10 @@ while iter <= obj.opts.max_iter
 
         
     %% check convergence (acceptance to filter of original problem plus threshold for constraint violation)
-    if filter_Acceptance && ...             
+    if filter_Acceptance && suffDecrease_flag &&...             
         theta_x_k <= theta_x_R0*kappa_res
-      
+        % evaluate cost and constraint violation of original problem
+        feasibility_flag = 1;
         break
 
     end
@@ -83,7 +83,7 @@ while iter <= obj.opts.max_iter
                                                                              filter, ...
                                                                              info);
 
-
+   % check feasibility
    if feas_res_flag == 1
        % QP  of feasibility restoration is also infeasible
        feasibility_flag = 0;
@@ -94,56 +94,73 @@ while iter <= obj.opts.max_iter
        break
    else
 
-            % extract solution from feasibility restoration
-            x_k       = sol_iter.x_k1;
-            dual_k    = sol_iter.dual_k1;
-            alpha_k   = sol_iter.alpha_k;
-            % evaluate cost and constraint violation of original problem
-            feasibility_flag = 1;
+      delta_xi_double   = norm(full( sol_iter.x_k1 - x_k) ,inf);
+      delta_dual_double = norm(full( sol_iter.dual_k1 - dual_k ),inf); 
 
-            % compute constraint violation
-            args_conVio     =  args;
-            args_conVio{2}  =  [p00; x_k(solver.FeasRes_para.n_r+1:end)];
-            args_conVio{3}  = -inf(solver.init_para.conVio.no_con,1);
-            args_conVio{4}  =  inf(solver.init_para.conVio.no_con,1);
+      % extract solution from feasibility restoration
+      x_k       = sol_iter.x_k1;
+      dual_k    = sol_iter.dual_k1;
+      alpha_k   = sol_iter.alpha_k;
+
+
+      % compute constraint violation
+      args_conVio     =  args;
+      args_conVio{2}  =  [p00; x_k(solver.FeasRes_para.n_r+1:end)];
+      args_conVio{3}  = -inf(solver.init_para.conVio.no_con,1);
+      args_conVio{4}  =  inf(solver.init_para.conVio.no_con,1);
             
-            % constraint violation at trial point (constraint violation of
-            % original problem)
-            sol_convio = eval_on_basis(solver.solver_conVio, args_conVio);
+      % constraint violation at trial point (constraint violation of
+      % original problem)
+      sol_convio = eval_on_basis(solver.solver_conVio, args_conVio);
             
-            theta_x_k1 = full(max(0,max(sol_convio{1})));
+      theta_x_k1 = full(max(0,max(sol_convio{1})));
         
-            % cost (original problem) at trial point
-            f_x_k1   = full(solver.eval_cost(x_k(solver.FeasRes_para.n_r+1:end),p00));
+      % cost (original problem) at trial point
+      f_x_k1   = full(solver.eval_cost(x_k(solver.FeasRes_para.n_r+1:end),p00));
         
-            % check acceptance to filter of original problem
-            theta_l = filter_glob(:,1);
-            f_l     = filter_glob(:,2);
+     % check acceptance to filter of original problem
+     theta_l = filter_glob(:,1);
+     f_l     = filter_glob(:,2);
             
-            % new point lies in forbidden region if both are larger than filter entries
-            dominance_bool      = [];
-            dominance_bool(:,1) = theta_x_k1 >= theta_l; 
-            dominance_bool(:,2) = f_x_k1     >= f_l;
+     % new point lies in forbidden region if both are larger than filter entries
+     dominance_bool      = [];
+     dominance_bool(:,1) = theta_x_k1 >= theta_l; 
+     dominance_bool(:,2) = f_x_k1     >= f_l;
             
-            % check pairs; if one means lies in forbidden region
-            dominance_bool = all(dominance_bool, 2);
+     % check pairs; if one means both lie in forbidden region
+     dominance_bool = all(dominance_bool, 2);
             
-            if any(dominance_bool) % means not acceptable to filter
-                filter_Acceptance = 0;
+     if any(dominance_bool) % means not acceptable to filter
+         filter_Acceptance = 0;
+     else
+         filter_Acceptance = 1;
+        gamma_theta = 1e-5;
+        gamma_phi   = 1e-5;
+             % check progress w.r.t. previous iteration
+            if theta_x_k1 <= (1-gamma_theta)*theta_x_k || f_x_k1 <= f_x_k - gamma_phi*theta_x_k
+                suffDecrease_flag = 1;
             else
-                filter_Acceptance = 1;
-            end
-        
-            theta_x_k = theta_x_k1;
+                suffDecrease_flag = 0;
+            end % check if soc shall be used or if alpha needs adjustment
+
+     end
+     
+     theta_x_k = theta_x_k1;
+      
+
 
    end
 
 
-    
    iter = iter + 1;
 
-
 end % end of while
+
+
+if iter >= obj.opts.max_iter
+    % if max. number of iterations reached, the solver stalled
+    feasibility_flag = -1;
+end
 
 if feasibility_flag <= 0
             
