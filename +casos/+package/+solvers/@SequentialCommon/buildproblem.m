@@ -18,8 +18,8 @@ assert(n == (Nl + Ns), 'Dimension of Kx must be equal to number of variables (%d
 assert(m == (Ml + Ms), 'Dimension of Kc must be equal to number of constraints (%d).', m)
 
 % select sum-of-squares variables and constraints
-Is = [false(Nl,1); true(Ns,1)];
-Js = [false(Ml,1); true(Ms,1)];
+% Is = [false(Nl,1); true(Ns,1)];
+% Js = [false(Ml,1); true(Ms,1)];
 
 % sparsity patterns
 base_x = sparsity(nlsos.x);
@@ -54,7 +54,7 @@ sosopt.error_on_fail = false;
 
 
 sos_qp.derivatives.Hf = Hf;
-sos_qp.derivatives.Df = Df;
+sos_qp.derivatives.Df = Df + dot(casos.PSOperator.from_primal(d),Hf); % correct for shift in variables
 sos_qp.derivatives.Dg = Dg;
 
 % initialize convex SOS solver
@@ -70,7 +70,6 @@ obj.sparsity_g  = obj.solver_convex.sparsity_g;
 obj.sparsity_gl = obj.solver_convex.sparsity_gl;
 obj.sparsity_gs = obj.solver_convex.sparsity_gs;
 
-
 % store basis in a public struct
 obj.sparsity_pat_para.sparsity_x  = obj.solver_convex.sparsity_x;
 obj.sparsity_pat_para.sparsity_xl = obj.solver_convex.sparsity_xl;
@@ -80,6 +79,7 @@ obj.sparsity_pat_para.sparsity_f  = sparsity(nlsos.f);
 obj.sparsity_pat_para.sparsity_g  = obj.solver_convex.sparsity_g;
 obj.sparsity_pat_para.sparsity_gl = obj.solver_convex.sparsity_gl;
 obj.sparsity_pat_para.sparsity_gs = obj.solver_convex.sparsity_gs;
+
 
 
 %% constrained violation check via signed distance
@@ -134,7 +134,7 @@ sos_soc.g = dot(Dg,d) + conFun(nlsos.x + dk,nlsos.p) - dot(Dg, dk);
 sos_soc.p = [nlsos.p; nlsos.x; B(:);x_star_par];
 
 sos_soc.derivatives.Hf = Hf;
-sos_soc.derivatives.Df = Df;
+sos_soc.derivatives.Df = Df + dot(casos.PSOperator.from_primal(d),Hf);
 sos_soc.derivatives.Dg = Dg;
 
 % SOS options
@@ -179,8 +179,8 @@ obj.eval_cost      = casos.Function('f',{poly2basis(nlsos.x),poly2basis(nlsos.p)
 obj.eval_gradCost  = casos.Function('f',{poly2basis(nlsos.x),poly2basis(nlsos.p)}, { op2basis( jacobian(nlsos.f,nlsos.x) ) });
 
 % gradient langrangian
-obj.eval_gradLang =  casos.Function('f',{poly2basis(nlsos.x),poly2basis(nlsos.p),poly2basis(lam_gs)}, {Fnorm2( jacobian(Langrangian,nlsos.x) )' });
-
+obj.eval_gradLang =  casos.Function('f',{poly2basis(nlsos.x),poly2basis(nlsos.p),poly2basis(lam_gs)}, { norm(op2basis(jacobian(Langrangian,nlsos.x)),inf) }); 
+% obj.eval_gradLang =  casos.Function('f',{poly2basis(nlsos.x),poly2basis(nlsos.p),poly2basis(lam_gs)}, { Fnorm2( jacobian(Langrangian,nlsos.x) )' });
 
 %% get parameter that are needed for initilization
 obj.init_para.no_dual_var   = obj.sparsity_gs.nnz;
@@ -193,6 +193,5 @@ obj.display_para.no_decVar         = obj.solver_convex.sparsity_x.nnz;
 obj.display_para.no_sosCon         = length(nlsos.g);
 obj.display_para.solver            = obj.opts.sossol;
 obj.display_para.solver_build_time = toc(buildTime_in);
-
 
 end

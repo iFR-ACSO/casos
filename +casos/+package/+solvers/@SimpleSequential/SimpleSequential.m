@@ -49,23 +49,34 @@ methods
             nlsos.g = casos.PS(nlsos.g);
         end
 
-        % default options
-        if ~isfield(obj.opts,'sossol'), obj.opts.sossol = 'mosek'; end
-        if ~isfield(obj.opts,'sossol_options'), obj.opts.sossol_options = struct; end
-        if ~isfield(obj.opts,'tolerance_abs'), obj.opts.tolerance_abs = 1e-3; end
-        if ~isfield(obj.opts,'tolerance_rel'), obj.opts.tolerance_rel = 1e-3; end
-        if ~isfield(obj.opts,'max_iter'), obj.opts.max_iter = 10; end
-        % set up logger
-        if ~isfield(obj.opts,'verbose') || ~obj.opts.verbose
-            % no display
-            obj.log = casos.package.Logger.Off;
-        else
-            % display debug messages
-            obj.log = casos.package.Logger.Debug;
-        end
+        %% set up feasibility restoration phase
+        base_g = sparsity(nlsos.g);
+        base_x = sparsity(nlsos.x);
+        
+        r  = casos.PS.sym('r',length(nlsos.g));
+        s0 = casos.PD(base_g,ones(base_g.nnz,1));
+        
+        nlsos_feas.x = [r;nlsos.x];
+        
+        nlsos_feas.g = nlsos.g + r.*s0;
+        
+        x_R   = casos.PS.sym('x_R',base_x);
+        nlsos_feas.f = sum(r);% + 0.1/2*dot(nlsos.x-x_R,nlsos.x-x_R);
+        
+        nlsos_feas.p = [nlsos.p; x_R];
+        
+        obj.FeasRes_para.n_r = length(nlsos.g);
+        
+        
+        sosopt = obj.opts.sossol_options;
+        
+        sosopt.Kx.lin = length(nlsos_feas.x);
+        sosopt.Kc.sos = length(nlsos_feas.g);
+        sosopt.error_on_fail = false;
+        sosopt.verbose = 1;
+        sosopt.max_iter = 200;
+        obj.feas_res_solver  =  casos.package.solvers.FeasibilityRestoration('feasRes',nlsos_feas,sosopt);
 
-        % Initialize solvers
-        buildproblem(obj,nlsos);
     end
 
     function s = get_stats(obj)

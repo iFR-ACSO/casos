@@ -18,8 +18,8 @@ assert(n == (Nl + Ns), 'Dimension of Kx must be equal to number of variables (%d
 assert(m == (Ml + Ms), 'Dimension of Kc must be equal to number of constraints (%d).', m)
 
 % select sum-of-squares variables and constraints
-Is = [false(Nl,1); true(Ns,1)];
-Js = [false(Ml,1); true(Ms,1)];
+% Is = [false(Nl,1); true(Ns,1)];
+% Js = [false(Ml,1); true(Ms,1)];
 
 % sparsity patterns
 base_x = sparsity(nlsos.x);
@@ -182,32 +182,5 @@ obj.display_para.no_decVar         = obj.solver_convex.sparsity_x.nnz;
 obj.display_para.no_sosCon         = length(nlsos.g);
 obj.display_para.solver            = obj.opts.sossol;
 obj.display_para.solver_build_time = toc(buildTime_in);
-
-
-%% set up feasibility restoration phase
-base_g = sparsity(nlsos.g);
-
-r  = casos.PS.sym('r',length(nlsos.g));
-s0 = casos.PD(base_g,ones(base_g.nnz,1));
-
-nlsos_feas.x = [r;nlsos.x];
-
-nlsos_feas.g = nlsos.g + r.*s0;
-
-x_R   = casos.PS.sym('x_R',base_x);
-nlsos_feas.f = sum(r) + 1/2*dot(nlsos.x-x_R,nlsos.x-x_R);
-
-nlsos_feas.p = [nlsos.p; x_R];
-
-obj.FeasRes_para.n_r = length(nlsos.g);
-
-
-sosopt = opts.sossol_options;
-sosopt.Kx.lin = length(nlsos_feas.x);
-sosopt.Kc.sos = length(nlsos_feas.g);
-sosopt.error_on_fail = false;
-sosopt.verbose = 1;
-obj.feas_res_solver  =  casos.package.solvers.FeasibilityRestoration('feasRes',nlsos_feas,sosopt);
-
 
 end

@@ -4,8 +4,6 @@ function node = nlsossolInternal(name,solver,varargin)
 switch (solver)
     case 'sequential'
         node = casos.package.solvers.SimpleSequential(name,varargin{:});
-    case 'feasRes'
-        node = casos.package.solvers.FeasibilityRestoration(name,varargin{:});
     otherwise
         error('No such nonlinear solver "%s".',solver)
 end
