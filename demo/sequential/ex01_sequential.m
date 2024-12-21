@@ -145,27 +145,28 @@ l = 1e-6*(x'*x);
 b = casos.PS.sym('b');
 
 % minimize the quadratic distance to a given sublevel set
-g = Vinit-1.5; 
+g = Vinit-1; 
 
 p = Vinit*10;
 
 %% setup solver
 
 % options
-opts = struct('sossol','mosek');
+opts = struct('sossol','scs');
 opts.verbose  = 1;
 opts.max_iter = 300;
 
-sos = struct('x',[V; s2],...
-              'f',dot(g-V,g-V), ...
+sos = struct('x',[V; s2;b],...
+              'f',dot(g-(V-b),g-(V-b)), ...
               'p',[]);
 
 % constraints
-sos.('g') = [s2;V-l; 
-             s2*(V-1)-nabla(V,x)*f-l];
+sos.('g') = [s2;
+             V-l; 
+             s2*(V-b)-nabla(V,x)*f-l];
 
 % states + constraint are linear/SOS cones
-opts.Kx = struct('lin', 2,'sos',0);
+opts.Kx = struct('lin', 3,'sos',0);
 opts.Kc = struct('sos', 3);
 
 % build sequential solver
@@ -174,7 +175,7 @@ buildTime_in = tic;
 buildtime = toc(buildTime_in);
 
 %% solve
-sol = solver_GTM2D_ROA('x0',[ Vinit ; x'*x]); 
+sol = solver_GTM2D_ROA('x0',[ Vinit ; x'*x;1]); 
 % sol = solver_GTM2D_ROA('x0',sol.x); 
 %% plot sublevel set
 figure
@@ -182,7 +183,7 @@ Vfun = to_function(sol.x(1));
 pfun = to_function(g);
 fcontour(@(x1,x2) full(Vfun(x1,x2) ), [-2 2 -2 2 ]*2, 'b-', 'LevelList', 1)
 hold on
-fcontour(@(x1,x2)  full(pfun(x1,x2) ), [-2 2 -2 2]*2, 'r-', 'LevelList', 0)
+fcontour(@(x1,x2)  full(pfun(x1,x2) ), [-2 2 -2 2]*2, 'r-', 'LevelList', full(sol.x(end)))
 hold off
 legend('Lyapunov function','Safe set function')
 
