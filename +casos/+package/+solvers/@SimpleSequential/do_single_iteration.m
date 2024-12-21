@@ -22,7 +22,6 @@ end
 
 % To-Do parameter as options
 alpha       = 1;
-alpha_min   = 1e-7;
 s_theta     = 0.9;
 s_phi       = 2;
 gamma_theta = 1e-5;
@@ -60,12 +59,12 @@ while true
            % compute corrected search direction, compute new trial point and check for filter acceptance
            x_k1 = second_order_correction(obj,x_k,x_star,p0,Bk,args,filter,alpha,theta_xk,f_xk,...
                                       theta_min,eta,delta,gamma_theta,gamma_phi,s_phi,s_theta);
-           
+
            % leave while loop if corrected step is acceptable to filter
            if ~isempty(x_k1)
                break % means we found a solution with SOC; leave loop
            end
-              
+
         end
 
 
@@ -117,14 +116,17 @@ end % end of while-loop
 % update dual variables
 dual_k1 = full(dual_k + alpha*(dual_star - dual_k));
 
+% dual_k1 = dual_star;
 % output of current iterate
 sol_iter.x_k1       = x_k1;
 sol_iter.dual_k1    = dual_k1;
 sol_iter.theta_x_k1 = theta_x_k1;
 sol_iter.f_x_k1     = f_x_k1;
 sol_iter.alpha_k    = alpha;
+sol_iter.dual_qp    = dual_star;
 
 % update BFGS matrix for next iteration
-Bk = damped_BFGS(obj,Bk,x_k,p0,sol_iter);
+Bk = damped_BFGS(obj,Bk,x_k,p0,sol_iter,iter);
+
 
 end
