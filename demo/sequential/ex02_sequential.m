@@ -136,23 +136,26 @@ l = 1e-6*(x'*x);
 % options
 opts = struct('sossol','mosek');
 
-gam = 1;
+% gam = 1;
 
-g = Vinit-2; 
+% level of stability
+b = casos.PS.sym('b');
 
-cost = dot(g - (V-gam), g - (V-gam));
+g = Vinit - 1; 
+
+cost = dot(g - (V-b), g - (V-b));
 
 %% setup solver
-sos = struct('x',[V; s2],...
+sos = struct('x',[V; s2;b],...
               'f',cost, ...
               'p',[]);
 
 sos.('g') = [s2; 
               V-l; 
-              s2*(V-gam)-nabla(V,x)*f-l];
+              s2*(V-b)-nabla(V,x)*f-l];
 
 % states + constraint are SOS cones
-opts.Kx      = struct('lin', 2);
+opts.Kx      = struct('lin', 3);
 opts.Kc      = struct('sos', 3);
 opts.verbose = 1;
 
@@ -160,7 +163,7 @@ opts.max_iter = 500;
 
 solver_GTM4D_ROA = casos.nlsossol('S','sequential',sos,opts);
 
-sol = solver_GTM4D_ROA('x0' ,[g; (x'*x)^2]); 
+sol = solver_GTM4D_ROA('x0' ,[g; (x'*x)^2;1]); 
 
 
 
@@ -169,7 +172,7 @@ figure
 xd = D*x;
 Vfun = to_function(subs(sol.x(1),x,xd));
 pfun = to_function(subs(g,x,xd));
-fcontour(@(x2,x3) full(Vfun(0,x2,x3,0) ), [-1 1 -4 4 ], 'b-', 'LevelList', gam)
+fcontour(@(x2,x3) full(Vfun(0,x2,x3,0) ), [-1 1 -4 4 ], 'b-', 'LevelList', full(sol.x(end)))
 hold on
 fcontour(@(x2,x3)  full(pfun(0,x2,x3,0) ), [-1 1 -4 4 ], 'r-', 'LevelList', 0)
 hold off

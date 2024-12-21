@@ -117,14 +117,13 @@ f = D*subs(f, x, D^-1*x);
 
 f = cleanpoly(f,1e-6,1:5);
 
-% initial guess for control law
-% [A,B] = plinearize(f ,x , u);
 
 A = full(subs(nabla(f,x),[x;u],[x0;u0]));
 B = full(subs(nabla(f,u),[x;u],[x0;u0]));
 
 [K0,P] = lqr(full(A),full(B),eye(4),eye(2));
 
+% initial controller
 K = -K0*x;
 
 % initial Lyapunov function
@@ -146,11 +145,10 @@ l = 1e-6*(x'*x);
 % options
 opts = struct('sossol','mosek');
 
-gam = 1;
 
 g = Vinit-2; 
 
-cost = dot(g - (V-gam), g - (V-gam));
+cost = dot(g-V,g-V);
 
 
 %% setup solver
@@ -160,7 +158,7 @@ sos = struct('x',[V; s2;kappa],...
 
 sos.('g') = [s2; 
              V-l; 
-             s2*(V-gam)-nabla(V,x)*subs(f,u,kappa)-l];
+             s2*(V-1)-nabla(V,x)*subs(f,u,kappa)-l];
 
 % states + constraint are SOS cones
 opts.Kx      = struct('lin', length(sos.x));
@@ -170,11 +168,11 @@ opts.verbose = 1;
 opts.max_iter = 250;
 
 
-profile on
+% profile on
 solver_GTM_syn = casos.nlsossol('S1','sequential',sos,opts);
 
 
-profile viewer
+% profile viewer
 
 % solve problem
 sol = solver_GTM_syn('x0' ,[Vinit; (x'*x)^2;K]);
@@ -197,6 +195,6 @@ g = subs(g,[x(2);x(3)],xD(2:3));
 
 figure()
 clf
-% pcontour(g, 0, [-1 1 -4 4]*10, 'k--');
+pcontour(g, 0, [-1 1 -4 4]*10, 'k--');
 hold on
-pcontour(V, gam, [-1 1 -4 4]*2, 'b-');
+pcontour(V, 1, [-1 1 -4 4]*2, 'b-');
