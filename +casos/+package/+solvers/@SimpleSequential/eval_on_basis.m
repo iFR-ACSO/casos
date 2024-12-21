@@ -30,7 +30,7 @@ info = cell(1,obj.opts.max_iter);
 
 % initialize BFGS-matrix
 Bk     = eye(obj.init_para.size_B);
-dual_k = ones(obj.init_para.no_dual_var,1);
+dual_k = zeros(obj.init_para.no_dual_var,1);
 
 % initialize filter
 args_conVio     =  args;
@@ -54,7 +54,7 @@ alpha_k           = 1;
 
 feasibility_flag = 1;
 
-eps_conVio = 1e-8;
+eps_conVio = 1e-9; % about sqrt(eps)
 
 measTime_seqSOS_in = tic;
 while iter <= obj.opts.max_iter
@@ -65,14 +65,15 @@ while iter <= obj.opts.max_iter
         printf(obj.log,'debug','------------------------------------------------------------------------------------------\n');
     end
     
+
+     % scale = max(100,norm(full(dual_k),1)/length(dual_k))/100;
+
     printf(obj.log,'debug','%-8d%-15e%-15e%-15e%-15e%-10f%-10e\n',...
             iter, f_x_k , delta_xi_double, delta_dual_double, theta_x_k , alpha_k , full(casadi.DM( full(obj.eval_gradLang(x_k,p0,dual_k)) ))   );
         
-
-       
     %% check convergence (first-order optimality)
-    if full(obj.eval_gradLang(x_k,p0,dual_k))  <= 1e-5 && theta_x_k <= eps_conVio
-        
+    if full(obj.eval_gradLang(x_k,p0,dual_k))  <= 1e-4 && theta_x_k <= eps_conVio
+       
         printf(obj.log,'debug','------------------------------------------------------------------------------------------\n');
         printf(obj.log,'debug','Solution status: Optimal solution found\n');
         solveTime = toc(measTime_seqSOS_in);
@@ -152,10 +153,10 @@ while iter <= obj.opts.max_iter
 
        % for display output
        delta_xi_double   = norm(full( sol_iter.x_k1 - x_k) ,inf);
-       delta_dual_double = norm(full( sol_iter.dual_k1 - dual_k ),inf);
+       delta_dual_double = norm(full( sol_iter.dual_qp - dual_k ),inf);
 
        x_k       = sol_iter.x_k1;
-       dual_k    = sol_iter.dual_k1;
+       dual_k    = sol_iter.dual_qp;
        theta_x_k = sol_iter.theta_x_k1;
        f_x_k     = sol_iter.f_x_k1;
        alpha_k   = sol_iter.alpha_k;
