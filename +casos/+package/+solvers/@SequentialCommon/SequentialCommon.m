@@ -50,12 +50,8 @@ properties (Access=protected)
     % functions to be evaluated (convergence check)
     % eval_cost
     eval_gradLang
+    eval_gradLang2
 
-    % linesearch
-    % eval_gradCost
-
-    % parameter needed for initialization
-    % init_para
 
     % parameter/data for display output
     display_para
