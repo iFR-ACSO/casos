@@ -34,9 +34,14 @@ else
         % integral(c_A*x^A, r1, r2) = prod_i c_A*[r2(i)^A(i) - r1(i)^A(i)]
         deg0 = dgf(:,tf)';
     
-        % select range expressions
-        [~,I] = sort(x);
-        r = range(I,:);
+        if ~isrow(range)
+            % select range expressions
+            [~,I] = sort(x);
+            r = range(I,:);
+        else
+            % domain is hyper-cube
+            r = range;
+        end
     
         % compute exponents
         % prod_i [r2(i)^A(i) - r1(i)^A(i)]
