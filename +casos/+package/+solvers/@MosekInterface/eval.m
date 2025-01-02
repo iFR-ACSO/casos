@@ -32,6 +32,9 @@ msk_cmd = sprintf('minimize echo(%d) info statuskeys(0)',msk_echo);
 % call MOSEK
 [rcode,res] = mosekopt(msk_cmd,msk_prob,msk_param);
 
+% store return string
+obj.info.mosek_rstr = res.rcodestr;
+
 % store info (if any)
 if isfield(res,'info')
     obj.info.mosek_info = res.info;
