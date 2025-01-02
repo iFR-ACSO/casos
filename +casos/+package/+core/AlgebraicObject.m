@@ -25,6 +25,11 @@ methods
         c = plus(casos.package.polynomial(a),casos.package.polynomial(b));
     end
 
+    function c = minus(a,b)
+        % Substract algebraic objects.
+        c = minus(casos.package.polynomial(a),casos.package.polynomial(b));
+    end
+
     function c = times(a,b)
         % Multiply algebraic objects (element-wise).
         c = times(casos.package.polynomial(a),casos.package.polynomial(b));
