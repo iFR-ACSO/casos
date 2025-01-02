@@ -54,7 +54,7 @@ nnz_sos_g = nnz(Zcon_s);
 nnz_gram_x = sum(Ksdp_x_s.^2);
 nnz_gram_g = sum(Ksdp_g_s.^2);
 
-assert(length(Qvar) == (nnz_lin_x + nnz_sos_x), 'Sum-of-squares decision varibles must be in Gram form.')
+assert(length(Qvar) == (nnz_lin_x + nnz_sos_x), 'Sum-of-squares decision variables must be in Gram form.')
 
 % matrix decision variables
 Qvar_sdp = [Qvar_l; Qvar_G];
