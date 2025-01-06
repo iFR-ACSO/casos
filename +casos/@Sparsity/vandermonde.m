@@ -17,6 +17,17 @@ function V = vandermonde(S,pts)
 % where pts = (p1,...,pM) are the interpolation points and (a1,...,aN) are
 % the degrees of the monomial basis in multi-index notation.
 
+if isempty(S)
+    % empty sparsity pattern
+    V = casadi.DM(0,0);
+    return
+
+elseif is_zerodegree(S)
+    % matrix sparsity pattern
+    V = casadi.DM.eye(nnz(S));
+    return
+end
+
 assert(isscalar(S), 'Not supported.')
 
 nt = S.nterm;

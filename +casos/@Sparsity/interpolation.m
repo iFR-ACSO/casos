@@ -13,15 +13,23 @@ function [pts,P,V] = interpolation(S)
 % Applications, 57 (2009), pp. 1324-1336. Available at
 % https://doi.org/10.1016/j.camwa.2008.11.011.
 
-assert(isscalar(S), 'Not supported.')
+if isempty(S)
+    % empty sparsity pattern
+    pts = casadi.DM(1,0);
+    V = casadi.DM(0,0);
+    P = casadi.DM(0,0);
+    return
 
-if is_zerodegree(S)
-    % nothing to do
-    pts = casadi.DM(0);
-    V = casadi.DM(1);
-    P = casadi.DM(1);
+elseif is_zerodegree(S)
+    % matrix sparsity pattern
+    N = nnz(S);
+    pts = casadi.DM(1,N);
+    V = casadi.DM.eye(N);
+    P = casadi.DM.eye(N);
     return
 end
+
+assert(isscalar(S), 'Not supported.')
 
 % else
 n = S.nvars;
