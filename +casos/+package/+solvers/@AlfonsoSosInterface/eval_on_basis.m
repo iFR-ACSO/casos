@@ -7,12 +7,49 @@ function argout = eval_on_basis(obj,argin)
 [~,p,lbx,ubx,~,lbg,ubg] = argin{:};
 
 % evaluate problem structure
-prob = call(obj.fhan,struct('p',p));
+prob = call(obj.fhan,{p lbx ubx lbg ubg});
+% retrieve cones
+cone = obj.cone;
 
 % to double
-A = sparse(prob.A);
-b = sparse(prob.b);
-c = sparse(prob.c);
+A = sparse(prob{1});
+b = sparse(prob{2});
+c = sparse(prob{3});
+lbx = sparse(lbx);
+ubx = sparse(ubx);
+lbg = sparse(lbg);
+ubg = sparse(ubg);
+
+% dimensions of original problem
+nl = length(lbx);
+ml = length(lbg);
+
+% detect infinite bounds
+Iinf = isinf([lbx; ubx; lbg; ubg]);
+
+% remove trivial constraints from LMI
+I = [Iinf; false(length(c)-2*nl-2*ml,1)];
+
+% detect equality constraints
+Ilx = find(lbx == ubx);
+Ilg = find(lbg == ubg);
+% remove lower bounds
+I(Ilx) = true;
+I(2*nl+Ilg) = true;
+% remove upper bounds
+I(nl+Ilx) = true;
+I(2*nl+ml+Ilg) = true;
+
+% reorder variables in LMI
+idx = [find(~I) Ilx 2*nl+Ilg];
+
+% reorder and purge problem structure
+A = A(:,idx);
+c = c(idx);
+
+% modify cone
+cone{1}.dim = cone{1}.dim - nnz(I);
+cone{end+1} = struct('type','free','dim',length(Ilx)+length(Ilg));
 
 % options to alfonso
 opts = obj.opts.alfonso;
@@ -20,7 +57,15 @@ opts = obj.opts.alfonso;
 if ~isfield(opts,'verbose'), opts.verbose = 0; end
 
 % call alfonso
-res = alfonso_simple(c,A,b,obj.cone,[],opts);
+res = alfonso_simple(c,A,b,cone,[],opts);
+
+% assign full solution
+x = sparse(idx,1,res.x,length(I),1);
+s = sparse(idx,1,res.s,length(I),1);
+% copy slack variables for infinite lower bounds
+Iinf_lbg = find(isinf(lbg));
+s(2*nl+Iinf_lbg) = -s(2*nl+ml+Iinf_lbg);
+lbg(Iinf_lbg) = -ubg(Iinf_lbg);
 
 if res.status > 0
     % success
@@ -43,6 +88,6 @@ end
 obj.info.alfonso_status = res.statusString;
 
 % build polynomial solution
-argout = call(obj.ghan,{res.dObj res.x res.s res.y});
+argout = call(obj.ghan,{res.dObj x s res.y lbg});
 
 end
