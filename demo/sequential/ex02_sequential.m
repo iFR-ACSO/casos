@@ -122,7 +122,7 @@ P = lyap(A0',0.1*eye(4));
 Vinit = x'*P*x;
 
 % polynomial shape
-p = x'*x*1e2;
+p = x'*x;
 
 % Lyapunov function candidate
 V = casos.PS.sym('v',monomials(x,2:4));
@@ -141,7 +141,7 @@ opts = struct('sossol','mosek');
 % level of stability
 b = casos.PS.sym('b');
 
-g = Vinit - 1; 
+g = Vinit-1; 
 
 cost = dot(g - (V-b), g - (V-b));
 
@@ -162,8 +162,9 @@ opts.verbose = 1;
 opts.max_iter = 500;
 
 solver_GTM4D_ROA = casos.nlsossol('S','sequential',sos,opts);
+s20 = casos.PD(s2.sparsity,ones(s2.nnz,1));
 
-sol = solver_GTM4D_ROA('x0' ,[g; (x'*x)^2;1]); 
+sol = solver_GTM4D_ROA('x0' ,[Vinit; 0; 1]); 
 
 
 

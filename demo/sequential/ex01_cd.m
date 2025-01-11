@@ -136,7 +136,7 @@ Vinit = x'*P*x;
 V = casos.PS.sym('v',monomials(x,2:4));
 
 % SOS multiplier
-s2 = casos.PS.sym('s2',monomials(x,2:4));
+s2 = casos.PS.sym('s2',monomials(x,1:2),'gram');
 
 % enforce positivity
 l = 1e-6*(x'*x);
@@ -147,46 +147,82 @@ b = casos.PS.sym('b');
 % minimize the quadratic distance to a given sublevel set
 g = Vinit-1; 
 
-p = Vinit*10;
 
 %% setup solver
 
 % options
 opts = struct('sossol','mosek');
-opts.verbose  = 1;
-opts.max_iter = 300;
+opts = struct;
+% opts.verbose  = 1;
+% opts.max_iter = 300;
 
-sos = struct('x',[V; s2;b],...
-              'f',dot(g-(V-b),g-(V-b)), ...
-              'p',[]);
-
-% constraints
-sos.('g') = [s2;
-             V-l; 
-             s2*(V-b)-nabla(V,x)*f-l];
+b0 = 0.1;
+sos = struct('x',s2,...
+             'g',s2*(V-b)-nabla(V,x)*f-l,...
+              'p',[V;b]);
 
 % states + constraint are linear/SOS cones
-opts.Kx = struct('lin', 3,'sos',0);
-opts.Kc = struct('sos', 3);
+opts.Kx = struct('lin', 0,'sos',1);
+opts.Kc = struct('sos', 1);
 
 % build sequential solver
-buildTime_in = tic;
-    solver_GTM2D_ROA  = casos.nlsossol('S','sequential',sos,opts);
-buildtime = toc(buildTime_in);
+% buildTime_in = tic;
+tic 
+    solver_GTM2D_ROA  = casos.sossol('S','mosek',sos,opts);
+% buildtime = toc(buildTime_in);
 
-V0  = casos.PD(V.sparsity,ones(V.nnz,1));
-s20 = casos.PD(s2.sparsity,ones(s2.nnz,1));
+
+% opts.verbose  = 1;
+% opts.max_iter = 300;
+opts = struct();
+sos = struct('x',[V;b],...
+             'f',dot(g-(V-b),g-(V-b)),...
+             'g',[V-l; s2*(V-b)-nabla(V,x)*f-l],...
+              'p',s2);
+
+% states + constraint are linear/SOS cones
+opts.Kx = struct('lin', 2,'sos',0);
+opts.Kc = struct('sos', 2);
+
+% build sequential solver
+% buildTime_in = tic;
+    solver_GTM2D_ROA2  = casos.sossol('S','mosek',sos,opts);
+% buildtime = toc(buildTime_in);
 
 %% solve
-% tic
-sol = solver_GTM2D_ROA('x0',[ Vinit; x'*x;1]); 
-% toc
- % sol = solver_GTM2D_ROA('x0',sol.x); 
+
+tic
+for k = 1:100
+
+
+sol1 = solver_GTM2D_ROA('p', [Vinit;b0]); 
+
+
+sol = solver_GTM2D_ROA2('p',sol1.x); 
+
+Vinit = sol.x(1);
+b0    = full(sol.x(2));
+
+cost = full(dot(g-(Vinit-(b0)),g-(Vinit-(b0))));
+
+if k == 1
+    prevcost = cost;
+else
+    if abs(prevcost-cost) < 1e-5
+        k
+        cost
+        break
+    else
+        prevcost = cost;
+    end
+end
+end
+toc
 %% plot sublevel set
 figure
 Vfun = to_function(sol.x(1));
 pfun = to_function(g);
-fcontour(@(x1,x2) full(Vfun(x1,x2) ), [-2 2 -2 2 ]*2.5, 'b-', 'LevelList', full(sol.x(end)))
+fcontour(@(x1,x2) full(Vfun(x1,x2) ), [-2 2 -2 2 ]*2.5, 'b-', 'LevelList', b0)
 hold on
 fcontour(@(x1,x2)  full(pfun(x1,x2) ), [-2 2 -2 2]*2.5, 'r-', 'LevelList', 1)
 hold off

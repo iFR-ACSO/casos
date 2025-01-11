@@ -118,26 +118,31 @@ f = D*subs(f, x, D^-1*x);
 f = cleanpoly(f,1e-6,1:5);
 
 
-A = full(subs(nabla(f,x),[x;u],[x0;u0]));
-B = full(subs(nabla(f,u),[x;u],[x0;u0]));
+% B = full(subs(nabla(f,u),[x;u],[x0;u0]));
 
-[K0,P] = lqr(full(A),full(B),eye(4),eye(2));
+% [K0,P] = lqr(full(A),full(B),eye(4),eye(2));
 
+Kq = 0.0698;
+K = Kq*x(3);
+
+
+A = full( subs( nabla( subs(f,u(1),K) ,x) ,[x;u],[zeros(4,1);zeros(2,1)] ) );
+% A0 = full(subs(A,x,zeros(4,1))); 
+
+P = lyap(A0',0.1*eye(4));
 % initial controller
-K = -K0*x;
+% K = -K0*x;
 
 % initial Lyapunov function
 Vinit = x'*P*x;
-
-% polynomial shape
-p = x'*x*1e2;
 
 % Lyapunov function candidate
 V = casos.PS.sym('v',monomials(x,2:4));
 
 % SOS multiplier
 s2    = casos.PS.sym('s2',monomials(x,2:4));
-kappa = casos.PS.sym('kappa',monomials(x,1),[2,1]);
+kappa = casos.PS.sym('kappa',monomials(x(3),1));
+b    = casos.PS.sym('b');
 
 % enforce positivity
 l = 1e-6*(x'*x);
@@ -148,24 +153,24 @@ opts = struct('sossol','mosek');
 
 g = Vinit-2; 
 
-cost = dot(g-V,g-V);
 
+cost = dot(g-(V-b),g-(V-b));
 
 %% setup solver
-sos = struct('x',[V; s2;kappa],...
+sos = struct('x',[V; s2;kappa;b],...
               'f',cost, ...
               'p',[]);
 
 sos.('g') = [s2; 
              V-l; 
-             s2*(V-1)-nabla(V,x)*subs(f,u,kappa)-l];
+             s2*(V-b)-nabla(V,x)*subs(f,u(1),kappa)-l];
 
 % states + constraint are SOS cones
 opts.Kx      = struct('lin', length(sos.x));
 opts.Kc      = struct('sos', 3);
 opts.verbose = 1;
 
-opts.max_iter = 250;
+opts.max_iter = 100;
 
 
 % profile on
@@ -175,9 +180,10 @@ solver_GTM_syn = casos.nlsossol('S1','sequential',sos,opts);
 % profile viewer
 
 % solve problem
-sol = solver_GTM_syn('x0' ,[Vinit; (x'*x)^2;K]);
-disp(['Solver buildtime: ' num2str(buildtime), ' s'])
+sol = solver_GTM_syn('x0' ,[Vinit; (x'*x)^2; K;1]);
+% disp(['Solver buildtime: ' num2str(buildtime), ' s'])
 
+% sol = solver_GTM_syn('x0' ,sol.x);
 
 %% plot solver statistics
 % plotSolverStats(solver_GTM_syn.stats);
@@ -195,6 +201,6 @@ g = subs(g,[x(2);x(3)],xD(2:3));
 
 figure()
 clf
-pcontour(g, 0, [-1 1 -4 4]*10, 'k--');
+pcontour(V, full(sol.x(end)), [-2 2 -2 2 ]*2, 'b-');
 hold on
-pcontour(V, 1, [-1 1 -4 4]*2, 'b-');
+pcontour(g, 0, [-2 2 -2 2 ]*2, 'k-');

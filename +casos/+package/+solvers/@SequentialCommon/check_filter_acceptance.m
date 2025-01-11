@@ -1,7 +1,9 @@
-function  [x_k1,theta_x_k1,f_x_k1 ,filter_Acceptance] = check_filter_acceptance(obj,filter,alpha,x_k,dk,p0,args)
-
+function  [x_k1,theta_x_k1,f_x_k1 ,filter_Acceptance] = check_filter_acceptance(obj,filter,alpha,x_k,dual_k,dk,dkl,p0,args)
+    
+    LangrangeFilter = 0;
     % compute new solution candidate
     x_k1    = full(x_k     + alpha*dk);
+    % dual_k1 = full(dual_k  + alpha*dkl);
     
     % compute constraint violation
     % get input arguments for constrained violation check
@@ -16,7 +18,13 @@ function  [x_k1,theta_x_k1,f_x_k1 ,filter_Acceptance] = check_filter_acceptance(
     theta_x_k1 = full(max(0,max(sol_convio{1})));
 
     % cost at trial point
-    f_x_k1   = full(obj.eval_cost(x_k1,p0));
+    if LangrangeFilter 
+          L_k1     = full(obj.L(x_k1,p0,dual_k1));
+    else
+            f_x_k1   = full(obj.eval_cost(x_k1,p0));
+    end
+    
+  
 
     % check filter acceptance
     theta_l = filter(:,1);
@@ -27,6 +35,7 @@ function  [x_k1,theta_x_k1,f_x_k1 ,filter_Acceptance] = check_filter_acceptance(
     
     dominance_bool(:,1) = theta_x_k1 >= theta_l; 
     dominance_bool(:,2) = f_x_k1     >= f_l;
+    % dominance_bool(:,2) = L_k1     >= f_l;
     
     % check pairs; if one, means pair lies in forbidden region
     dominance_bool = all(dominance_bool, 2);

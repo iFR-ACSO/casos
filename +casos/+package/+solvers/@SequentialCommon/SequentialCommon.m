@@ -24,9 +24,13 @@ properties
 
         % functions to be evaluated (convergence check)
         eval_cost
-
+        hess_fun
         % linesearch
         eval_gradCost
+        
+        % Langrangian and derivative
+        L
+        dLdx 
 
         init_para
 
@@ -43,6 +47,7 @@ properties (Access=protected)
 
     % damped BFGS
     damped_BFGS
+    SR1
     eval_s
     eval_y
     eval_r

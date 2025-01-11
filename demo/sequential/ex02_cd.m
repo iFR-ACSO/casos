@@ -2,12 +2,13 @@
 %
 %
 %   Short Descirption:  Calculate an inner-estimate of the
-%                       region-of-attraction for the short-period motion 
+%                       region-of-attraction for the longitudinal motion 
 %                       of the Nasa Generic Transport Model. To increase
-%                       the size of the sublevel set a shape function is
-%                       used as an additional constraint.
+%                       the size of the sublevel set we try to minimize the
+%                       squared distance to a defined set.
 %
-%   Reference: Chakraborty, Abhijit and Seiler, Peter and Balas, Gary J.,
+%   Reference: Modified problem from:
+%              Chakraborty, Abhijit and Seiler, Peter and Balas, Gary J.,
 %              Nonlinear region of attraction analysis for flight control 
 %              verification and validation, Control Engineering Practice,
 %              2011, doi: 10.1016/j.conengprac.2010.12.001
@@ -15,14 +16,11 @@
 %
 %--------------------------------------------------------------------------
 
-close all
-clear
-clc
 
 import casos.toolboxes.sosopt.*
 
-%% system states
-x = casos.Indeterminates('x',2,1);
+% system states
+x = casos.Indeterminates('x',4,1);
 
 %% Polynomial Dynamics
 f1 = @(V,alpha,q,theta,eta,F) +1.233e-8*V.^4.*q.^2         + 4.853e-9.*alpha.^3.*F.^3    + 3.705e-5*V.^3.*alpha.*q      ...
@@ -74,7 +72,7 @@ f4 = @(V,alpha,q,theta,eta,F)  q;
 Kq = 0.0698;
 
 %% Trim condition
-v0      = 45;      % m/s
+v0      = 45;       % m/s
 alpha0  = 0.04924; % rad
 q0      = 0;       % rad/s
 theta0  = 0.04924; % radg
@@ -86,7 +84,6 @@ delta0  = 14.33;   % percent
 x0 = [v0; alpha0; q0; theta0];
 u0 = [eta0; delta0];
 
-
 % get trim point 
 f = @(x,u) [
                     f1(x(1,:),x(2,:),x(3,:),x(4,:),u(1,:),u(2,:))
@@ -95,20 +92,11 @@ f = @(x,u) [
                     f4(x(1,:),x(2,:),x(3,:),x(4,:),u(1,:),u(2,:))
 ];
 
-% find more accurate trim values  
 [x0, u0] = findtrim(f,x0, u0);
 
-% short period
-f = @(x,u) [
-                    f2(x0(1),x(1),x(2),x0(4),u0(1),u0(2))
-                    f3(x0(1),x(1),x(2),x0(4),u0(1),u0(2))
-];
-
-
 % set up dynamic system
-f = f(x+[x0(2);x0(3)],u0(1));
+f = f(x+x0,[Kq*x(3); 0]+u0);
 
-% scaling
 d = ([
           convvel(20, 'm/s', 'm/s')  %range.tas.lebesgue.get('ft/s')
           convang(20, 'deg', 'rad')  %range.gamma.lebesgue.get('rad')
@@ -117,17 +105,18 @@ d = ([
 ]);
 
 
-D = diag(d(2:3))^-1;
+D = diag(d)^-1;
+
 f = D*subs(f, x, D^-1*x);
 
-f = cleanpoly(f,1e-6,0:5);
+f = cleanpoly(f,1e-6,1:5);
 
 % use scaled dynamics to compute initial guess for lyapunov function
 A = nabla(f,x);
 
-A0 = full(subs(A,x,zeros(2,1))); 
+A0 = full(subs(A,x,zeros(4,1))); 
 
-P = lyap(A0',eye(2));
+P = lyap(A0',0.1*eye(4));
 
 % initial Lyapunov function
 Vinit = x'*P*x;
@@ -147,48 +136,102 @@ b = casos.PS.sym('b');
 % minimize the quadratic distance to a given sublevel set
 g = Vinit-1; 
 
-p = Vinit*10;
 
 %% setup solver
 
-% options
+
 opts = struct('sossol','mosek');
-opts.verbose  = 1;
-opts.max_iter = 300;
+% opts = struct;
+% opts.verbose  = 1;
+% opts.max_iter = 300;
 
-sos = struct('x',[V; s2;b],...
-              'f',dot(g-(V-b),g-(V-b)), ...
-              'p',[]);
-
-% constraints
-sos.('g') = [s2;
-             V-l; 
-             s2*(V-b)-nabla(V,x)*f-l];
+% b0 = 0.01;
+sos = struct('x',s2,...
+             'f',-b,...
+             'g',[s2;s2*(V-b)-nabla(V,x)*f-l],...
+              'p',[V]);
 
 % states + constraint are linear/SOS cones
-opts.Kx = struct('lin', 3,'sos',0);
-opts.Kc = struct('sos', 3);
+opts.Kx = struct('lin', 1,'sos',0);
+opts.Kc = struct('sos', 2);
 
 % build sequential solver
-buildTime_in = tic;
-    solver_GTM2D_ROA  = casos.nlsossol('S','sequential',sos,opts);
-buildtime = toc(buildTime_in);
+% buildTime_in = tic;
+tic
+    solver_GTM2D_ROA  = casos.qcsossol('S','bisection',sos,opts);
 
-V0  = casos.PD(V.sparsity,ones(V.nnz,1));
-s20 = casos.PD(s2.sparsity,ones(s2.nnz,1));
+    sol1 = solver_GTM2D_ROA('p', [Vinit]); 
+% options
+opts = struct('sossol','mosek');
+opts = struct;
+% opts.verbose  = 1;
+% opts.max_iter = 300;
+
+b0 =- sol1.f;
+sos = struct('x',s2,...
+             'g',s2*(V-b)-nabla(V,x)*f-l,...
+              'p',[V;b]);
+
+% states + constraint are linear/SOS cones
+opts.Kx = struct('lin', 0,'sos',1);
+opts.Kc = struct('sos', 1);
+
+% build sequential solver
+% buildTime_in = tic;
+% tic 
+    solver_GTM2D_ROA  = casos.sossol('S','mosek',sos,opts);
+% buildtime = toc(buildTime_in);
+
+
+% opts.verbose  = 1;
+% opts.max_iter = 300;
+opts = struct();
+sos = struct('x',[V;b],...
+             'f',dot(g-(V-b),g-(V-b)),...
+             'g',[V-l; s2*(V-b)-nabla(V,x)*f-l],...
+              'p',[s2]);
+
+% states + constraint are linear/SOS cones
+opts.Kx = struct('lin', 2,'sos',0);
+opts.Kc = struct('sos', 2);
+
+% build sequential solver
+% buildTime_in = tic;
+    solver_GTM2D_ROA2  = casos.sossol('S','mosek',sos,opts);
+% buildtime = toc(buildTime_in);
 
 %% solve
-% tic
-sol = solver_GTM2D_ROA('x0',[ Vinit; x'*x;1]); 
-% toc
- % sol = solver_GTM2D_ROA('x0',sol.x); 
+
+for k = 1:16
+sol1 = solver_GTM2D_ROA('p', [Vinit;b0]); 
+% sol1.f
+sol = solver_GTM2D_ROA2('p',sol1.x); 
+
+Vinit = sol.x(1);
+b0 = full(sol.x(2));
+cost = full(dot(g-(Vinit-(b0)),g-(Vinit-(b0))));
+
+if k == 1
+    prevcost = cost;
+else
+    if abs(prevcost-cost) < 1e-4
+        k
+        cost
+        break
+    else
+        prevcost = cost;
+    end
+end
+end
+toc
 %% plot sublevel set
 figure
-Vfun = to_function(sol.x(1));
-pfun = to_function(g);
-fcontour(@(x1,x2) full(Vfun(x1,x2) ), [-2 2 -2 2 ]*2.5, 'b-', 'LevelList', full(sol.x(end)))
+xd = D*x;
+Vfun = to_function(subs(sol.x(1),x,xd));
+pfun = to_function(subs(g,x,xd));
+fcontour(@(x2,x3) full(Vfun(0,x2,x3,0) ), [-1 1 -4 4 ], 'b-', 'LevelList', b0)
 hold on
-fcontour(@(x1,x2)  full(pfun(x1,x2) ), [-2 2 -2 2]*2.5, 'r-', 'LevelList', 1)
+fcontour(@(x2,x3)  full(pfun(0,x2,x3,0) ), [-1 1 -4 4 ], 'r-', 'LevelList', 0)
 hold off
 legend('Lyapunov function','Safe set function')
 

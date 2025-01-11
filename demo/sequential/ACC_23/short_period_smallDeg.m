@@ -168,6 +168,12 @@ sos.('g') = [s2;
              s2*(V-1)-nabla(V,x)*f-l;
              s1*(p-b) + 1 - V];
 
+% sos.('g') = [s2 - eps; 
+%              s1 - eps;
+%              V-l - eps; 
+%              s2*(V-1)-nabla(V,x)*f-l - eps;
+%              s1*(p-b) + 1 - V - eps];
+
 % states + constraint are linear/SOS cones
 opts.Kx = struct('lin', 4);
 opts.Kc = struct('sos', 5);
