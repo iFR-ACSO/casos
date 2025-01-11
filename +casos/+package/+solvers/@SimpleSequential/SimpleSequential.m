@@ -74,7 +74,7 @@ methods
         sosopt.Kc.sos = length(nlsos_feas.g);
         sosopt.error_on_fail = false;
         sosopt.verbose = 1;
-        sosopt.max_iter = 150;
+        sosopt.max_iter = 100;
         obj.feas_res_solver  =  casos.package.solvers.FeasibilityRestoration('feasRes',nlsos_feas,sosopt);
 
     end

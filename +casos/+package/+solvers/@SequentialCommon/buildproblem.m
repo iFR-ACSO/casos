@@ -32,7 +32,6 @@ B = casadi.SX.sym('B',nnz(base_x),nnz(base_x));
 
 Hf = casos.PSOperator(B,base_x,base_x);
 
-
 %% build quadratic SOS problem
 sos_qp = [];
 % convex decision variables
@@ -41,6 +40,7 @@ sos_qp.x = casos.PS.sym('x_convex',base_x);
 d = sos_qp.x - nlsos.x;
 % quadratic cost function
 sos_qp.f = (1/2)*dot2(Hf,d,d) + dot(Df,d);
+
 % linear constraints
 sos_qp.g = nlsos.g + dot(Dg,d);
 
@@ -83,10 +83,16 @@ obj.sparsity_pat_para.sparsity_gs = obj.solver_convex.sparsity_gs;
 
 
 %% constrained violation check via signed distance
-% sparsity patterns
-base_g = sparsity(nlsos.g);
+% sparsity patterns of nonlinear constraints
 
-r  = casos.PS.sym('r',length(nlsos.g));
+I = false(length(nlsos.g),1);
+for idx = 1:length(nlsos.g)
+    I(idx) = ~is_linear(nlsos.g(idx),nlsos.x);
+end
+
+base_g = sparsity(nlsos.g(I));
+
+r  = casos.PS.sym('r',length(nlsos.g(I)));
 s0 = casos.PD(base_g,ones(base_g.nnz,1));
 
 sos_conVio = [];
@@ -95,7 +101,7 @@ sos_conVio.x = r;
 % cost function
 sos_conVio.f = sum(r);
 % constraints
-sos_conVio.g = nlsos.g + r.*s0;
+sos_conVio.g = nlsos.g(I) + r.*s0;
 % parameters to subproblem
 % * parameters to nonlinear problem, current (nonlinear) solution
 sos_conVio.p = [nlsos.p; nlsos.x];
@@ -133,9 +139,9 @@ sos_soc.g = dot(Dg,d) + conFun(nlsos.x + dk,nlsos.p) - dot(Dg, dk);
 % solution QP
 sos_soc.p = [nlsos.p; nlsos.x; B(:);x_star_par];
 
-sos_soc.derivatives.Hf = Hf;
-sos_soc.derivatives.Df = Df + dot(casos.PSOperator.from_primal(d),Hf);
-sos_soc.derivatives.Dg = Dg;
+% sos_soc.derivatives.Hf = Hf;
+% sos_soc.derivatives.Df = Df + dot(casos.PSOperator.from_primal(d),Hf);
+% sos_soc.derivatives.Dg = Dg;
 
 % SOS options
 sosopt = opts.sossol_options;
@@ -152,13 +158,19 @@ x_k1      = casos.PS.sym('x_k1',base_x);
 
 Langrangian = nlsos.f + dot(lam_gs,nlsos.g);
 
+obj.L = casos.Function('f',{poly2basis(nlsos.x),poly2basis(nlsos.p),poly2basis(lam_gs)}, {Langrangian });
+
+Hessian      = op2basis(jacobian((op2basis(jacobian(Langrangian,nlsos.x)) )',nlsos.x));
+obj.hess_fun = casos.Function('f',{poly2basis(nlsos.x),poly2basis(nlsos.p),poly2basis(lam_gs)}, {Hessian });
+
+
 % search direction
 obj.eval_s = casos.Function('f',{poly2basis(nlsos.x),poly2basis(x_k1),poly2basis(nlsos.p)}, { poly2basis( x_k1 - nlsos.x)});
 
 % delta gradient of Langrangian 
 dLdx = casos.Function('f',{poly2basis(nlsos.x),poly2basis(nlsos.p),poly2basis(lam_gs)}, {(op2basis(jacobian(Langrangian,nlsos.x)) )' });
-
-% \nabla_x L (x_k1,lambda_k1) - \nabla_x L (x_k,lambda_k1)
+obj.dLdx = dLdx;
+% y =  \nabla_x L (x_k1,lambda_k1) - \nabla_x L (x_k,lambda_k1)
 obj.eval_y = casos.Function('f',{poly2basis(nlsos.x),poly2basis(x_k1),poly2basis(nlsos.p),poly2basis(lam_gs)}, {dLdx(poly2basis(x_k1),poly2basis(nlsos.p),poly2basis(lam_gs)) - dLdx(poly2basis(nlsos.x),poly2basis(nlsos.p),poly2basis(lam_gs)) });
 
 % using MX instead of SX is faster to build; no significant execution speed
@@ -175,6 +187,7 @@ obj.eval_r = casos.Function('f',{B,theta,y,s}, {theta*y+(1-theta)*B*s});
 % B = B + (r*r')/(s'*r) - (B*s*s'*B)/(s'*B*s)
 obj.damped_BFGS =  casadi.Function('f',{B,r,s}, {B - (B*(s*s')*B)/(s'*B*s) + (r*r')/(s'*r)});
 
+obj.SR1 =  casadi.Function('f',{B,y,s}, {B + ( (y-B*s)*(y-B*s)' )/( (y-B*s)'*s)  });
 
 %% evaluation function
 % nonlinear cost function 
@@ -196,7 +209,7 @@ obj.init_para.conVio.no_con = length(sos_conVio.g);
 
 %% get params for display output (problem size etc)
 obj.display_para.no_decVar         = obj.solver_convex.sparsity_x.nnz;
-obj.display_para.no_sosCon         = length(nlsos.g);
+obj.display_para.no_sosCon         = length(nlsos.g(I));
 obj.display_para.solver            = obj.opts.sossol;
 obj.display_para.solver_build_time = toc(buildTime_in);
 
