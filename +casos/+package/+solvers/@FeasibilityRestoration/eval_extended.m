@@ -103,7 +103,9 @@ while iter <= obj.opts.max_iter
       alpha_k   = sol_iter.alpha_k;
 
 
-      % compute constraint violation
+      % compute constraint violation --> actually redundant? The constraint
+      % violation is the same as in the original problem, so we can simply
+      % extract it 
       args_conVio     =  args;
       args_conVio{2}  =  [p00; x_k(solver.FeasRes_para.n_r+1:end)];
       args_conVio{3}  = -inf(solver.init_para.conVio.no_con,1);
@@ -115,7 +117,8 @@ while iter <= obj.opts.max_iter
             
       theta_x_k1 = full(max(0,max(sol_convio{1})));
         
-      % cost (original problem) at trial point
+      % cost (original problem) at trial point <-- correct because we need
+      % progrees compared to original problem
       f_x_k1   = full(solver.eval_cost(x_k(solver.FeasRes_para.n_r+1:end),p00));
         
      % check acceptance to filter of original problem
@@ -175,13 +178,14 @@ else
     % return solution of successful restoration
     sol    = sol_qp;
     
-    sol{1} = x_k(solver.FeasRes_para.n_r+1:end);
+    sol{1} = casadi.DM(x_k(solver.FeasRes_para.n_r+1:end));
     sol{5} = dual_k(solver.FeasRes_para.n_r+1:end);
 
     % output to original problem
     sol_iter.x_k1    = sol_iter.x_k1(solver.FeasRes_para.n_r+1:end);
     sol_iter.f_x_k1     = f_x_k1 ;
     sol_iter.theta_x_k1 = theta_x_k1;
+    % sol_iter.di
 end
 
 end % end of eval_extended

@@ -1,7 +1,30 @@
-function [suffDecrease_flag,f_type,amijo,filter] = chechSuffDecrease(obj,alpha,x_star,x_k,p0,theta_xk,theta_x_k1, f_x_k1,f_xk,L_k1,L_k,dual_k, ...
-                                                                     theta_min,eta,delta,gamma_theta,gamma_phi,s_phi,s_theta,filter)
+function [suffDecrease_flag,f_type,amijo,filter] = chechSuffDecrease(obj, ...
+                                                                    alpha, ...
+                                                                    x_star, ...
+                                                                    x_k, ...
+                                                                    p0, ...
+                                                                    theta_xk, ...
+                                                                    theta_x_k1, ...
+                                                                    f_x_k1, ...
+                                                                    f_xk, ...
+                                                                    L_k1, ...
+                                                                    L_k, ...
+                                                                    dual_k, ...
+                                                                    filter)
 
-LangrangeFilter = 0;
+
+s_theta     = obj.opts.filter_struct.s_theta ;
+s_phi       = obj.opts.filter_struct.s_phi ;
+gamma_theta = obj.opts.filter_struct.gamma_theta ;
+gamma_phi   = obj.opts.filter_struct.gamma_phi ;
+
+
+delta           = obj.opts.filter_struct.delta;
+eta             = obj.opts.filter_struct.eta;
+LangrangeFilter = obj.opts.filter_struct.LangrangeFilter;
+
+theta_min = min(filter(1,1),1)*obj.opts.filter_struct.theta_min;
+
 % search direction
 dk = x_star    - x_k;
 
@@ -10,12 +33,12 @@ nabla_f_dir = full(obj.eval_gradCost(x_k,p0)*dk);
 
 % f-type switching: descent direction + progress in cost better than con.
 % violation
-f_type = nabla_f_dir  < 0 && alpha*(-nabla_f_dir)^s_phi > delta*theta_xk^s_theta;
+f_type = alpha*nabla_f_dir  < 0 && (-alpha*nabla_f_dir)^s_phi*alpha^(1-s_phi) > delta*theta_xk^s_theta;
 
 % initialize amijo boolean
 amijo  = 0;
 
-if  f_type && theta_xk < theta_min
+if  f_type && theta_xk <= theta_min
     % check amijo-condition
     if LangrangeFilter
         amijo = L_k1 <= L_k +eta*full(( obj.dLdx(x_k,p0,dual_k))'*dk);

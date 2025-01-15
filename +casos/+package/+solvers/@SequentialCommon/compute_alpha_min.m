@@ -1,4 +1,17 @@
-function alpha_min = compute_alpha_min(obj,x_k,dk,p0,s_phi,delta,theta_xk,s_theta,gamma_theta,gamma_phi,gamma_alpha,theta_min)
+function alpha_min = compute_alpha_min(obj,x_k,dk,p0,theta_xk,filter)
+
+s_theta     = obj.opts.filter_struct.s_theta ;
+s_phi       = obj.opts.filter_struct.s_phi ;
+gamma_theta = obj.opts.filter_struct.gamma_theta ;
+gamma_phi   = obj.opts.filter_struct.gamma_phi ;
+
+gamma_alpha     = obj.opts.filter_struct.gamma_alpha;
+
+delta           = obj.opts.filter_struct.delta;
+
+LangrangeFilter = obj.opts.filter_struct.LangrangeFilter;
+
+theta_min = min(filter(1,1),1)*obj.opts.filter_struct.theta_min;
 
 % descent direction
 nabla_f_dir = full(obj.eval_gradCost(x_k,p0)*dk);

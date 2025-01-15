@@ -3,10 +3,14 @@ classdef (Abstract) SequentialCommon < casos.package.solvers.SosoptCommon
 
 properties (Constant,Access=protected)
     sequential_options = [casos.package.solvers.SosoptCommon.sosopt_options
-        {'sossol', 'The convex sum-of-squares solver to be used in the bisection.'
+        {'sossol', 'The convex sum-of-squares solver to be used in the subproblem.'
          'sossol_options', 'Options to be passed to the SOS solver.'
-         'tolerance_abs', 'Absolute tolerance for stopping criterion.'
-         'tolerance_rel', 'Relative tolerance for stopping criterion.'
+         'tolerance_con', 'Absolute tolerance for stopping criterion of constraint violation.'
+         'tolerance_opt', 'Absolute tolerance for stopping criterion of constraint violation.'
+         'filter_struct', 'Structure containing parameter for filter linesearch.'
+         'scale_BFGS0','Scaling parameter for initial BFGS matrix.'
+         'Hessian_init','Method to initialize Hessian.'
+         'hessian_approx','Hessian (Langrangian) approximation method'
          'max_iter', 'Maximum number of iterations.'
          'verbose', 'Turn on/off iteration display.'}
     ];
@@ -114,13 +118,34 @@ methods
         else
             nlsos.g = casos.PS(nlsos.g);
         end
+        
+        
+        filter_struct = struct();
 
+        filter_struct.alpha_max       = 1;
+        filter_struct.s_theta         = 0.9;
+        filter_struct.s_phi           = 2;
+        filter_struct.gamma_theta     = 1e-5;
+        filter_struct.gamma_phi       = 1e-5;
+        filter_struct.gamma_alpha     = 0.05;
+        filter_struct.delta           = 1;
+        filter_struct.eta             = 1e-4;
+        filter_struct.LangrangeFilter = 0; 
+        filter_struct.theta_min       = 1e-4;
+
+        
         % default options
-        if ~isfield(obj.opts,'sossol'), obj.opts.sossol = 'mosek'; end
-        if ~isfield(obj.opts,'sossol_options'), obj.opts.sossol_options = struct; end
-        if ~isfield(obj.opts,'tolerance_abs'), obj.opts.tolerance_abs = 1e-3; end
-        if ~isfield(obj.opts,'tolerance_rel'), obj.opts.tolerance_rel = 1e-3; end
-        if ~isfield(obj.opts,'max_iter'), obj.opts.max_iter = 10; end
+        if ~isfield(obj.opts,'sossol'), obj.opts.sossol                     = 'mosek'; end
+        if ~isfield(obj.opts,'sossol_options'), obj.opts.sossol_options     = struct; end
+        if ~isfield(obj.opts,'tolerance_con'), obj.opts.tolerance_con       = 1e-6; end
+        if ~isfield(obj.opts,'tolerance_opt'), obj.opts.tolerance_opt       = 1e-4; end
+        if ~isfield(obj.opts,'scale_BFGS0'), obj.opts.scale_BFGS0           = 1; end
+        if ~isfield(obj.opts,'Hessian_init'), obj.opts.Hessian_init         = 'Analytical'; end
+        if ~isfield(obj.opts,'hessian_approx'), obj.opts.hessian_approx     = 'EigValReg'; end
+        if ~isfield(obj.opts,'filter_struct'), obj.opts.filter_struct       = filter_struct; end
+        if ~isfield(obj.opts,'max_iter'), obj.opts.max_iter                 = 100; end
+
+        
         % set up logger
         if ~isfield(obj.opts,'verbose') || ~obj.opts.verbose
             % no display

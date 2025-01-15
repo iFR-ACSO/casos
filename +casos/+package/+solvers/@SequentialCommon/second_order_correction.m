@@ -1,5 +1,4 @@
-function [x_k1,suffDecrease_flag,f_type,amijo] = second_order_correction(obj,x_k,x_star,p0,Bk,args,filter,alpha,theta_xk,f_xk,dkl,L_k1,L_k,dual_k,...
-                                                                         theta_min,eta,delta,gamma_theta,gamma_phi,s_phi,s_theta)
+function [x_k1,suffDecrease_flag,f_type,amijo] = second_order_correction(obj,x_k,x_star,p0,Bk,args,filter,alpha,theta_xk,f_xk,dkl,L_k1,L_k,dual_k)
 
       
             % solve soc Q-SDP with adapted constraint
@@ -25,8 +24,7 @@ function [x_k1,suffDecrease_flag,f_type,amijo] = second_order_correction(obj,x_k
                     if filter_Acceptance % acceptable to filter
 
                         % check sufficient decrease
-                        [suffDecrease_flag,f_type,amijo,filter] = chechSuffDecrease(obj,alpha,x_star_soc,x_k,p0,theta_xk,theta_x_k1_soc, f_x_k1_soc,f_xk,L_k1,L_k,dual_k, ...
-                                                                                    theta_min,eta,delta,gamma_theta,gamma_phi,s_phi,s_theta,filter);
+                        [suffDecrease_flag,f_type,amijo] = chechSuffDecrease(obj,alpha,x_star_soc,x_k,p0,theta_xk,theta_x_k1_soc, f_x_k1_soc,f_xk,L_k1,L_k,dual_k,filter);
     
     
                         if suffDecrease_flag
