@@ -176,7 +176,7 @@ tic
 % opts.max_iter = 300;
 opts = struct();
 sos = struct('x',[V;b],...
-             'f',dot(g-(V-b),g-(V-b)),...
+             'f',1/2*dot(g-(V-b),g-(V-b)),...
              'g',[V-l; s2*(V-b)-nabla(V,x)*f-l],...
               'p',s2);
 
@@ -208,7 +208,7 @@ cost = full(dot(g-(Vinit-(b0)),g-(Vinit-(b0))));
 if k == 1
     prevcost = cost;
 else
-    if abs(prevcost-cost) < 1e-5
+    if abs(prevcost-cost) < 1e-4
         k
         cost
         break

@@ -152,7 +152,7 @@ p = x'*x;
 % options
 opts = struct('sossol','mosek');
 opts.verbose = 1;
-opts.max_iter = 300;
+opts.scale_BFGS0 = 1e-3;
 % opts.debugBFGS = 1;
 
 % opts.conVioSamp = 1;

@@ -147,17 +147,18 @@ b = casos.PS.sym('b');
 % minimize the quadratic distance to a given sublevel set
 g = Vinit-1; 
 
-p = Vinit*10;
-
 %% setup solver
 
 % options
 opts = struct('sossol','mosek');
 opts.verbose  = 1;
+
 opts.max_iter = 300;
+% opts.scale_BFGS0 = 1e-1;
+opts.tolerance_opt = 1e-4;
 
 sos = struct('x',[V; s2;b],...
-              'f',dot(g-(V-b),g-(V-b)), ...
+              'f',1/2*dot(g-(V-b),g-(V-b)), ...
               'p',[]);
 
 % constraints
@@ -188,7 +189,7 @@ Vfun = to_function(sol.x(1));
 pfun = to_function(g);
 fcontour(@(x1,x2) full(Vfun(x1,x2) ), [-2 2 -2 2 ]*2.5, 'b-', 'LevelList', full(sol.x(end)))
 hold on
-fcontour(@(x1,x2)  full(pfun(x1,x2) ), [-2 2 -2 2]*2.5, 'r-', 'LevelList', 1)
+fcontour(@(x1,x2)  full(pfun(x1,x2) ), [-2 2 -2 2]*2.5, 'r-', 'LevelList', 0)
 hold off
 legend('Lyapunov function','Safe set function')
 
