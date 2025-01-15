@@ -118,64 +118,110 @@ A0 = full(subs(A,x,zeros(4,1)));
 
 P = lyap(A0',0.1*eye(4));
 
-% initial Lyapunov function
-Vinit = x'*P*x;
-
-% polynomial shape
-p = x'*x;
+p = x'*x*1e2;
+Vval = x'*P*x;
 
 % Lyapunov function candidate
 V = casos.PS.sym('v',monomials(x,2:4));
 
 % SOS multiplier
-s2 = casos.PS.sym('s2',monomials(x,2:4));
+s1 = casos.PS.sym('s1',monomials(x,1:2),'gram');
+s2 = casos.PS.sym('s2',monomials(x,0:2),'gram');
 
 % enforce positivity
 l = 1e-6*(x'*x);
 
-% options
-opts = struct('sossol','mosek');
-
-% gam = 1;
-
 % level of stability
+g = casos.PS.sym('g');
 b = casos.PS.sym('b');
 
-g = Vinit-1; 
-
-cost = dot(g - (V-b), g - (V-b));
-
+% options
+opts = struct('sossol','mosek');
+opts.error_on_fail = 0;
 %% setup solver
-sos = struct('x',[V; s2;b],...
-              'f',cost, ...
-              'p',[]);
 
-sos.('g') = [s2; 
-              V-l; 
-              s2*(V-b)-nabla(V,x)*f-l];
+% solver 1: gamma-step
+sos1 = struct('x',s1,'f',-g,'p',V);
+sos1.('g') = s1*(V-g)-nabla(V,x)*f-l;
 
 % states + constraint are SOS cones
-opts.Kx      = struct('lin', 3);
-opts.Kc      = struct('sos', 3);
-opts.verbose = 1;
+opts.Kx = struct('sos', 1);
+opts.Kc = struct('sos', 1);
+opts.conf_interval = [-1000 1000];
+S1 = casos.qcsossol('S1','bisection',sos1,opts);
 
-opts.max_iter = 500;
+% solver 2: beta-step
+sos2 = struct('x',s2,'f',-b,'p',[V;g]);
+sos2.('g') = s2*(p-b)+g-V;
 
-solver_GTM4D_ROA = casos.nlsossol('S','filter-linesearch',sos,opts);
-s20 = casos.PD(s2.sparsity,ones(s2.nnz,1));
+% states + constraint are SOS cones
+opts.Kx = struct('sos', 1);
+opts.Kc = struct('sos', 1);
+opts.error_on_fail = 0;
+opts.conf_interval = [-1000 1000];
+S2 = casos.qcsossol('S2','bisection',sos2,opts);
 
-profile on
-sol = solver_GTM4D_ROA('x0' ,[Vinit; s20; 1]); 
-profile viewer
+% solver 3: V-step
+sos3 = struct('x',V,'p',[b,g,s1,s2]);
+sos3.('g') = [V-l; s2*(p-b)+g-V; s1*(V-g)-nabla(V,x)*f-l];
+
+opts = struct;
+opts.Kx = struct('sos', 0, 'lin', 1); 
+opts.Kc = struct('sos', 3);
+
+S3 = casos.sossol('S','sedumi',sos3,opts);
+
+%% gamma-beta-V-iteration
+
+tic
+for iter = 1:50
+
+    % gamma step
+    sol1 = S1('p',Vval);
+
+    gval = -sol1.f;
+    s1val = sol1.x;
+
+    % beta step
+    sol2 = S2('p',[Vval;gval]);
+
+    bval = -sol2.f
+    s2val = sol2.x;
+
+    % V-step
+    sol3 = S3('p',[bval,gval,s1val,s2val]);
 
 
-%% plot sublevel set
+    Vval = sol3.x;
+
+    if iter <= 1
+        bval_prev = full(bval);
+    else
+        if abs(full(bval)-bval_prev) < 1e-3
+            break
+        else
+            bval_prev = full(bval);
+        end
+    end
+
+end
+toc
+iter 
+
+
+%% plot stable level set
+
 figure
-xd = D*x;
-Vfun = to_function(subs(sol.x(1),x,xd));
-pfun = to_function(subs(g,x,xd));
-fcontour(@(x2,x3) full(Vfun(0,x2,x3,0) ), [-1 1 -4 4 ], 'b-', 'LevelList', full(sol.x(end)))
+Vfun = to_function(Vval);
+pfun = to_function(p);
+% fcontour(@(x,y) full(Vfun(x,y,0,0)), [-1 1], 'b-', 'LevelList', full(gval))
+% hold on
+% fcontour(@(x,y) full(pfun(x,y,0,0)), [-1 1], 'r-', 'LevelList', full(bval))
+% hold off
+% legend('Lyapunov function','shape function')
+
+fcontour(@(x,y) full(Vfun(0,x,y,0)), [-1 1 -2 2]*3, 'b-', 'LevelList', full(gval))
 hold on
-fcontour(@(x2,x3)  full(pfun(0,x2,x3,0) ), [-1 1 -4 4 ], 'r-', 'LevelList', 0)
+fcontour(@(x,y) full(pfun(0,x,y,0)), [-1 1 -2 2]*3, 'r-', 'LevelList', full(bval))
 hold off
-legend('Lyapunov function','Safe set function')
+legend('Lyapunov function','shape function')

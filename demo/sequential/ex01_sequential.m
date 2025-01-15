@@ -172,7 +172,7 @@ opts.Kc = struct('sos', 3);
 
 % build sequential solver
 buildTime_in = tic;
-    solver_GTM2D_ROA  = casos.nlsossol('S','sequential',sos,opts);
+    solver_GTM2D_ROA  = casos.nlsossol('S','filter-linesearch',sos,opts);
 buildtime = toc(buildTime_in);
 
 V0  = casos.PD(V.sparsity,ones(V.nnz,1));

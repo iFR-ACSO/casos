@@ -176,7 +176,7 @@ opts.verbose = 1;
 opts.max_iter = 100;
 
 % profile on
-solver_GTM_syn = casos.nlsossol('S1','sequential',sos,opts);
+solver_GTM_syn = casos.nlsossol('S1','filter-linesearch',sos,opts);
 
 % solve problem
 sol = solver_GTM_syn('x0' ,[Vinit; (x'*x)^2; K;1]);
