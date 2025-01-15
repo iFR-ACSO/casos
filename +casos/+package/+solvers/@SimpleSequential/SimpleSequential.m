@@ -49,7 +49,9 @@ methods
             nlsos.g = casos.PS(nlsos.g);
         end
 
-        %% set up feasibility restoration phase
+        %% set up feasibility restoration phase --> do we need all or only nonlinear
+        
+
         base_g = sparsity(nlsos.g);
         base_x = sparsity(nlsos.x);
         
@@ -61,7 +63,7 @@ methods
         nlsos_feas.g = nlsos.g + r.*s0;
         
         x_R   = casos.PS.sym('x_R',base_x);
-        nlsos_feas.f = sum(r);% + 0.1/2*dot(nlsos.x-x_R,nlsos.x-x_R);
+        nlsos_feas.f = sum(r) + 0.1/2*dot(nlsos.x-x_R,nlsos.x-x_R);
         
         nlsos_feas.p = [nlsos.p; x_R];
         

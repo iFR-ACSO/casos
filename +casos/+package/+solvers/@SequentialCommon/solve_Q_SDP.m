@@ -16,17 +16,19 @@ info{iter} = obj.solver_convex.get_stats;
 switch (obj.solver_convex.get_stats.UNIFIED_RETURN_STATUS)
 
     case UnifiedReturnStatus.SOLVER_RET_SUCCESS    % optimal solution found
+        
         x_star    = sol_qp{1};
         dual_star = sol_qp{5};
         feas_res_flag = 0;
         sol_iter = [];
 
     otherwise
-    % case UnifiedReturnStatus.SOLVER_RET_INFEASIBLE % actually this is otherwise-case
-            feas_res_flag = 1;
+        % case UnifiedReturnStatus.SOLVER_RET_INFEASIBLE % actually this is otherwise-case
+        feas_res_flag = 1;
         
         x_star      = sol_qp{1};
         dual_star   = sol_qp{5};
+        
          % store already for next iteration
         sol_iter.x_k1      = [];
         sol_iter.dual_k1   = [];
@@ -48,13 +50,7 @@ switch (obj.solver_convex.get_stats.UNIFIED_RETURN_STATUS)
 
         sol_iter.theta_x_k1 = theta_x_k1;
         sol_iter.f_x_k1     = f_x_k1;
-    % otherwise
-    % 
-    %     x_star    = sol_qp{1};
-    %     dual_star = sol_qp{5};
-    %     feas_res_flag = 0;
-    %     sol_iter = [];
-    % 
+   
 
 
 end

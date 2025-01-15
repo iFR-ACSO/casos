@@ -28,21 +28,25 @@ p0   = args{2};
 % initialize iteration info struct
 info = cell(1,obj.opts.max_iter);
 
-BFGS_scaling = 1;
+        
+% initialize BFGS-matrix; identity times scaling
+if strcmp(obj.opts.Hessian_init,'Identity')
 
-% initialize BFGS-matrix
-Bk     = eye(obj.init_para.size_B)*BFGS_scaling;
+    Bk =  eye(obj.init_para.size_B)*obj.opts.scale_BFGS0;
 
-dual_k = zeros(obj.init_para.no_dual_var,1);
+elseif strcmp(obj.opts.Hessian_init,'Analytical')
 
-H = full(obj.hess_fun(x_k,p0,dual_k));
+    dual_k = zeros(obj.init_para.no_dual_var,1);
 
-[L,D] = ldl(H);
-D_PD = diag(max(eig(D),1e-8));
+    H = full(obj.hess_fun(x_k,p0,dual_k));
 
-Bk0 = L*D_PD*L';
+    Bk = hessian_regularization(H);
 
-% initialize filter
+    
+end
+
+
+% initialize filter and first iterate 
 args_conVio     =  args;
 args_conVio{2}  =  [p0; x_k];
 args_conVio{3}  = -inf(obj.init_para.conVio.no_con,1);
@@ -51,9 +55,12 @@ args_conVio{4}  =  inf(obj.init_para.conVio.no_con,1);
 sol_convio = eval_on_basis(obj.solver_conVio, args_conVio);
 
 theta_x_k = full(max(0,max(sol_convio{1})));
+
 f_x_k     = full(obj.eval_cost(x_k,p0));
 
 L_k = full(obj.L(x_k,p0,dual_k));
+
+
 filter = [max(1,theta_x_k)*10, inf];
 
 iter = 1;
@@ -64,9 +71,6 @@ delta_dual_double = norm(full( (dual_k)),inf);
 alpha_k           = 1;
 
 feasibility_flag = 1;
-
-eps_conVio = 1e-6; % about sqrt(eps)
-eps_opt    = 1e-4;
 
 measTime_seqSOS_in = tic;
 while iter <= obj.opts.max_iter
@@ -81,10 +85,11 @@ while iter <= obj.opts.max_iter
      % scale = max(100,norm(full(dual_k),1)/length(dual_k))/100;
 
     printf(obj.log,'debug','%-8d%-15e%-15e%-15e%-15e%-10f%-10e\n',...
-            iter-1, f_x_k , delta_xi_double, delta_dual_double, theta_x_k , alpha_k , full(casadi.DM( full(obj.eval_gradLang(x_k,p0,dual_k)) ))   );
+            iter, f_x_k , delta_xi_double, delta_dual_double, theta_x_k , alpha_k , full(casadi.DM( full(obj.eval_gradLang(x_k,p0,dual_k)) ))   );
         
     %% check convergence (first-order optimality)
-    if full(obj.eval_gradLang(x_k,p0,dual_k))  <= eps_opt*max(1,full(obj.eval_gradLang(x_k,p0,dual_k))) && theta_x_k <= eps_conVio
+    if full(obj.eval_gradLang(x_k,p0,dual_k))  <= obj.opts.tolerance_opt*max(1,full(obj.eval_gradLang(x_k,p0,dual_k))) ...
+        && theta_x_k <= obj.opts.tolerance_con && feasibility_flag == 0
        
         printf(obj.log,'debug','------------------------------------------------------------------------------------------\n');
         printf(obj.log,'debug','Solution status: Optimal solution found\n');
@@ -98,36 +103,39 @@ while iter <= obj.opts.max_iter
 
     end
     
+    feasibility_flag = 0;
 
     % compute solution of current iterate: solve Q-SDP, perform linesearch and update BFGS
     [sol_iter,sol_qp,feas_res_flag,info,obj,filter,Bk] = do_single_iteration(obj, ...
-                                                                          iter,...
-                                                                          x_k,...
-                                                                          dual_k,...
-                                                                          theta_x_k,...
-                                                                          f_x_k,...
-                                                                          Bk,...
-                                                                          p0,...
-                                                                          args, ...
-                                                                          filter, ...
-                                                                          info);
+                                                                             iter,...
+                                                                             x_k,...
+                                                                             dual_k,...
+                                                                             theta_x_k,...
+                                                                             f_x_k,...
+                                                                             Bk,...
+                                                                             p0,...
+                                                                             args, ...
+                                                                             filter, ...
+                                                                             info);
 
                 
     % Invoke feasibility restoration if necessary
-    if feas_res_flag >= 1 && ... % restoration requested
-       theta_x_k > eps_conVio    % is the constraint violation larger then tolerance; otherwise restoration does not make sense
+    if feas_res_flag >= 1 && ...              % restoration requested
+       theta_x_k >  obj.opts.tolerance_con    % is the constraint violation larger then tolerance; otherwise restoration does not make sense
         
         % augment filter with the iterate at which we invoke restoration
-        gamma_theta = 1e-3;
-        gamma_phi   = 1e-3;
+        gamma_theta = obj.opts.filter_struct.gamma_theta ;
+        gamma_phi   = obj.opts.filter_struct.gamma_phi ;
 
-        % augment filter 
+        % augment filter with iterate where feas. res invoked
         filter = [filter;[theta_x_k*(1-gamma_theta), f_x_k - gamma_phi*theta_x_k]];
         
         % feasibility restoration phase
         [restored_sol,~,filter,feasibility_flag] = obj.feas_res_solver.eval_extended(filter,x_k,theta_x_k,p0,obj);
 
         if feasibility_flag >=1
+           
+            
            % continue from restored solution
            delta_xi_double   = norm(full( restored_sol.x_k1 - x_k) ,inf);
            delta_dual_double = norm(full( restored_sol.dual_k1 - dual_k ),inf);
@@ -138,6 +146,7 @@ while iter <= obj.opts.max_iter
            f_x_k     = restored_sol.f_x_k1;
            alpha_k   = restored_sol.alpha_k;
             
+           
       
         else
             % could not recover return iterate where restoration was
@@ -150,7 +159,7 @@ while iter <= obj.opts.max_iter
             break
         end
         
-    elseif feas_res_flag >= 1 &&  theta_x_k < eps_conVio
+    elseif feas_res_flag >= 1 &&  theta_x_k < obj.opts.tolerance_con
             % we are already better then treshhold i.e. restoration can't
             % make it better
             sol    = sol_qp;
@@ -161,12 +170,26 @@ while iter <= obj.opts.max_iter
                 sol{1} = x_k;
                 sol{5} = dual_k;
             else
-                 sol{1} = sol_iter.x_k1;
+                sol{1} = sol_iter.x_k1;
                 sol{5} = sol_iter.dual_k1;
             end
 
-            % stalled
-            feasibility_flag = -2;
+                if full(obj.eval_gradLang(x_k,p0,dual_k))  <= obj.opts.tolerance_opt*max(1,full(obj.eval_gradLang(x_k,p0,dual_k))) ...
+                    && theta_x_k <= obj.opts.tolerance_con 
+                        
+                            printf(obj.log,'debug','------------------------------------------------------------------------------------------\n');
+                            printf(obj.log,'debug','Solution status: Optimal solution found\n');
+                            solveTime = toc(measTime_seqSOS_in);
+                            printf(obj.log,'debug',['Solution time: ' num2str(solveTime) ' s\n']);
+                            printf(obj.log,'debug',['Build time: ' num2str(obj.display_para.solver_build_time) ' s\n']);
+                            printf(obj.log,'debug',['Total time: ' num2str(obj.display_para.solver_build_time+solveTime) ' s\n']);
+                            feasibility_flag = 1;
+
+                else
+                    % stalled
+                feasibility_flag = -2;
+
+                end
 
             break
 
@@ -192,6 +215,7 @@ while iter <= obj.opts.max_iter
     
     % exchange the primal/dual solution of QP with the accepted iterate
     sol{1} = sol_iter.x_k1;
+    sol{2} = sol_iter.f_x_k1;
     sol{5} = sol_iter.dual_k1;
 
 
@@ -243,9 +267,9 @@ elseif feasibility_flag == -2
 
 
         % print last iterate
-        printf(obj.log,'debug','%-8d%-15e%-15e%-15e%-15e%-10f%-10e\n',...
-            iter, f_x_k , delta_xi_double, delta_dual_double, theta_x_k , alpha_k , full(casadi.DM( full(obj.eval_gradLang(x_k,p0,dual_k)) ) )   );
-        
+        % printf(obj.log,'debug','%-8d%-15e%-15e%-15e%-15e%-10f%-10e\n',...
+        %     iter, f_x_k , delta_xi_double, delta_dual_double, theta_x_k , alpha_k , full(casadi.DM( full(obj.eval_gradLang(x_k,p0,dual_k)) ) )   );
+        % 
 
         printf(obj.log,'debug','------------------------------------------------------------------------------------------\n');
         printf(obj.log,'debug','Solution status: Feasible solution. Restoration not invoked because already feasible.\n');
