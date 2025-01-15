@@ -164,8 +164,9 @@ opts.max_iter = 500;
 solver_GTM4D_ROA = casos.nlsossol('S','sequential',sos,opts);
 s20 = casos.PD(s2.sparsity,ones(s2.nnz,1));
 
-sol = solver_GTM4D_ROA('x0' ,[Vinit; 0; 1]); 
-
+profile on
+sol = solver_GTM4D_ROA('x0' ,[Vinit; s20; 1]); 
+profile viewer
 
 
 %% plot sublevel set

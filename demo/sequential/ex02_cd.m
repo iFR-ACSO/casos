@@ -202,14 +202,14 @@ opts.Kc = struct('sos', 2);
 
 %% solve
 
-for k = 1:16
+for k = 1:100
 sol1 = solver_GTM2D_ROA('p', [Vinit;b0]); 
-% sol1.f
+
 sol = solver_GTM2D_ROA2('p',sol1.x); 
 
 Vinit = sol.x(1);
-b0 = full(sol.x(2));
-cost = full(dot(g-(Vinit-(b0)),g-(Vinit-(b0))));
+b0    = full(sol.x(2));
+cost  = full(sol.f); %full(dot(g-(Vinit-(b0)),g-(Vinit-(b0))));
 
 if k == 1
     prevcost = cost;

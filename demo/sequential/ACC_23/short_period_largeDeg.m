@@ -153,8 +153,9 @@ p = x'*x;
 opts = struct('sossol','mosek');
 opts.verbose = 1;
 opts.max_iter = 300;
-% opts.debugBFGS = 1;
 
+% opts.debugBFGS = 1;
+opts.tolerance_opt = 1e-3;
 % opts.conVioSamp = 1;
 % opts.optTol = 1e-2;
 sos = struct('x',[V; s2;s1;b],...
@@ -177,7 +178,7 @@ solver_GTM2D_ROA  = casos.nlsossol('S','sequential',sos,opts);
 
 
 %% solve
-sol = solver_GTM2D_ROA('x0',[ Vinit;  (x'*x)^2;  (x'*x); 1]); 
+sol = solver_GTM2D_ROA('x0',[ Vinit;  x'*x^2; x'*x; 1]); 
 % disp(['Solver buildtime: ' num2str(buildtime), ' s'])
 
 

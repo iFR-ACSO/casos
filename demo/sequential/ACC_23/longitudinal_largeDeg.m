@@ -167,7 +167,7 @@ solver_GTM4D_ROA  = casos.nlsossol('S','sequential',sos,opts);
 
 
 %% solve
-sol = solver_GTM4D_ROA('x0',[ Vinit;  (x'*x); (x'*x); 1]); 
+sol = solver_GTM4D_ROA('x0',[ Vinit;  (x'*x)^2; (x'*x); 1]); 
 % disp(['Solver buildtime: ' num2str(buildtime), ' s'])
 
 
