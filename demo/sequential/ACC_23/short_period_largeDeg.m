@@ -174,7 +174,7 @@ opts.Kx = struct('lin', 4);
 opts.Kc = struct('sos', 5);
 
 % build sequential solver
-solver_GTM2D_ROA  = casos.nlsossol('S','sequential',sos,opts);
+solver_GTM2D_ROA  = casos.nlsossol('S','filter-linesearch',sos,opts);
 
 
 %% solve

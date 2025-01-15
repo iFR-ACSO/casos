@@ -122,13 +122,14 @@ P = lyap(A0',0.1*eye(4));
 Vinit = x'*P*x;
 
 % polynomial shape
-p = x'*x;
+p = x'*eye(4)*0.1*x;
 
 % Lyapunov function candidate
 V = casos.PS.sym('v',monomials(x,2:4));
 
 % SOS multiplier
-s2 = casos.PS.sym('s2',monomials(x,2:4));
+s1 = casos.PS.sym('s1',monomials(x,2:4));
+s2 = casos.PS.sym('s2',monomials(x,2));
 
 % enforce positivity
 l = 1e-6*(x'*x);
@@ -136,46 +137,58 @@ l = 1e-6*(x'*x);
 % options
 opts = struct('sossol','mosek');
 
-% gam = 1;
-
 % level of stability
-b = casos.PS.sym('b');
+% b = casos.PS.sym('b');
+b = 1;
+g = Vinit - 2; 
 
-g = Vinit-1; 
+n0 = 4;
+
+g = ((x(1)^2/2^2))^(n0/2) + ((x(2)^2/2^2))^(n0/2) + ((x(3)^2/2^2))^(n0/2) +((x(4)^2/2^2))^(n0/2) -1;
 
 cost = dot(g - (V-b), g - (V-b));
 
 %% setup solver
-sos = struct('x',[V; s2;b],...
+sos = struct('x',[V; s1;s2],...
               'f',cost, ...
               'p',[]);
 
-sos.('g') = [s2; 
+sos.('g') = [s1; 
+             s2;
               V-l; 
-              s2*(V-b)-nabla(V,x)*f-l];
+              s1*(V-b)-nabla(V,x)*f-l;
+              s2*(V-b) - g];
 
 % states + constraint are SOS cones
 opts.Kx      = struct('lin', 3);
-opts.Kc      = struct('sos', 3);
+opts.Kc      = struct('sos', 5);
 opts.verbose = 1;
 
 opts.max_iter = 500;
 
-solver_GTM4D_ROA = casos.nlsossol('S','filter-linesearch',sos,opts);
-s20 = casos.PD(s2.sparsity,ones(s2.nnz,1));
+solver_GTM4D_ROA = casos.nlsossol('S','sequential',sos,opts);
 
-profile on
-sol = solver_GTM4D_ROA('x0' ,[Vinit; s20; 1]); 
-profile viewer
+% initial guess
+V_0  = g;
+s1_0 = (x'*x)^2;
+s2_0 = x'*x;
+
+x0 = [V_0;s1_0;s2_0];
+
+% solve
+% profile on
+sol = solver_GTM4D_ROA('x0' ,x0); 
+% profile viewer
 
 
 %% plot sublevel set
 figure
-xd = D*x;
+xd = x;
 Vfun = to_function(subs(sol.x(1),x,xd));
-pfun = to_function(subs(g,x,xd));
-fcontour(@(x2,x3) full(Vfun(0,x2,x3,0) ), [-1 1 -4 4 ], 'b-', 'LevelList', full(sol.x(end)))
+gfun = to_function(subs(g,x,xd));
+fcontour(@(x2,x3) full(Vfun(0,x2,x3,0) ), [-1 1 -2 2 ]*3, 'b-', 'LevelList', b)
 hold on
-fcontour(@(x2,x3)  full(pfun(0,x2,x3,0) ), [-1 1 -4 4 ], 'r-', 'LevelList', 0)
+% fcontour(@(x2,x3)  full(gfun(0,x2,x3,0) ), [-1 1 -2 2 ]*3, 'r-', 'LevelList', 0)
 hold off
 legend('Lyapunov function','Safe set function')
+
