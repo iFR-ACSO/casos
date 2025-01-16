@@ -462,13 +462,10 @@ methods (Access={?casos.package.core.PolynomialInterface})
     function nv = get_nvars(obj,I)
         % Get number of variables.
         [~,L] = get_indets(obj);
-        nv = nnz(any(L(I,:),1));
-    end
-
-    function nt = get_nterm(obj,I)
-        % Get number of terms.
-        [~,L] = get_degmat(obj);
-        nt = nnz(any(L(I,:),1));
+        if nargin < 2, nv = sum(L,2);
+        else
+            nv = nnz(any(L(I,:),1));
+        end
     end
 end
 
