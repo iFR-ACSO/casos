@@ -27,9 +27,11 @@ elseif is_zerodegree(S)
     V = casadi.DM.eye(N);
     P = casadi.DM.eye(N);
     return
-end
 
-assert(isscalar(S), 'Not supported.')
+elseif ~isscalar(S)
+    % return interpolation points for monomials (experimental)
+    S = monomials(S);
+end
 
 % else
 n = S.nvars;

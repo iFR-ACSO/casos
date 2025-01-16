@@ -65,17 +65,17 @@ pts_lin_g = interpolation(Zcon_l);
 pts_sos_g = interpolation(Zcon_s);
 
 % compute Vandermonde matrix for decision variables
-Vx_l = vandermonde(Zvar_l,pts_lin_x);
-Vx_s = vandermonde(Zvar_s,pts_sos_x);
+Vx_l = vandermonde2(Zvar_l,pts_lin_x);
+Vx_s = vandermonde2(Zvar_s,pts_sos_x);
 % and constraints
-Vg_l = vandermonde(Zcon_l,pts_lin_g);
-Vg_s = vandermonde(Zcon_s,pts_sos_g);
+Vg_l = vandermonde2(Zcon_l,pts_lin_g);
+Vg_s = vandermonde2(Zcon_s,pts_sos_g);
 % combined Vandermonde matrices
 Vx = blkdiag(Vx_l,Vx_s);
 Vg = blkdiag(Vg_l,Vg_s);
 
 % evaluate constraints on interpolation
-Pcon = poly2interpol(sos.g,pts_sos_g);
+Pcon = poly2interpol(sos.g,pts_sos_g,Zcon_s);
 
 % number of linear variables / constraints
 nnz_lin_x = nnz(Zvar_l);
@@ -133,8 +133,8 @@ lmi.At = [[
 ] -A{1}' +A{1}' -A{2}'];
 lmi.c  = -c_inter';
 % half-basis for SOS dual cones
-[Px,~] = qr(vandermonde(Zvar_s0,pts_sos_x));
-[Pg,~] = qr(vandermonde(Zcon_s0,pts_sos_g));
+% [Px,~] = qr(vandermonde(Zvar_s0,pts_sos_x));
+% [Pg,~] = qr(vandermonde(Zcon_s0,pts_sos_g));
 
 % remove decision variables
 fopt = struct('allow_free',true);
@@ -156,18 +156,23 @@ lmi = call(casadi.Function('lmi',{Qvar Qpar},struct2cell(lmi),{'x' 'p'},fieldnam
 prob.A = [lmi.At [casadi.DM(nnz_lin_x,nnz_sos_x); -casadi.DM.eye(nnz_sos_x)]];
 prob.b = lmi.c;
 prob.c = [lmi.b; casadi.DM(nnz_sos_x,1)];
-% linear cone (corresponds to linear polynomial constraints)
-cone{1} = struct('type','l','dim',2*nnz_lin_x+2*nnz_lin_g);
-% LMI cone 1 (corresponds to SOS constraints)
-cone{2} = struct('type','grk1lmi','dim',nnz_sos_g,'nonneg',false,'ext',false);
-cone{2}.Vs = {full(Pg')};
-cone{2}.ws = ones(nnz_sos_g,1);
-cone{2}.x0 = ones(nnz_sos_g,1);
-% LMI cone 2 (corresponds to SOS variables)
-cone{3} = struct('type','grk1lmi','dim',nnz_sos_x,'nonneg',false,'ext',false);
-cone{3}.Vs = {full(Px')};
-cone{3}.ws = ones(nnz_sos_x,1);
-cone{3}.x0 = ones(nnz_sos_x,1);
+% set cones
+cone = [
+    % linear cone (corresponds to linear polynomial constraints)
+    {struct('type','l','dim',2*nnz_lin_x+2*nnz_lin_g);}
+    % LMI cones 1 (corresponds to SOS constraints)
+    arrayfun(@(i) get_dualcone(Zcon_s,Zcon_s0,pts_sos_g,i), 1:Ms, 'UniformOutput', false)'
+    % LMI cone 2 (corresponds to SOS variables)
+    arrayfun(@(i) get_dualcone(Zvar_s,Zvar_s0,pts_sos_x,i), 1:Ns, 'UniformOutput', false)'
+];
+% cone{2} = struct('type','grk1lmi','dim',nnz_sos_g,'nonneg',false,'ext',false);
+% cone{2}.Vs = {full(Pg')};
+% cone{2}.ws = ones(nnz_sos_g,1);
+% cone{2}.x0 = ones(nnz_sos_g,1);
+% cone{3} = struct('type','grk1lmi','dim',nnz_sos_x,'nonneg',false,'ext',false);
+% cone{3}.Vs = {full(Px')};
+% cone{3}.ws = ones(nnz_sos_x,1);
+% cone{3}.x0 = ones(nnz_sos_x,1);
 
 % save problem data and cones
 obj.fhan = casadi.Function('f', ...
@@ -222,4 +227,21 @@ obj.ghan = casadi.Function('g', ...
             fopt ...
 );
 
+end
+
+function cone = get_dualcone(Z_gram,Z_half,pts,i)
+% Return dual cone structure.
+
+    % number of terms (nonzeros) in gram basis
+    nT = Z_gram.get_nterm(i);
+    % get Vandermonde matrix
+    V = vandermonde2(Z_half,pts(:,1:nT),i);
+    % orthonormalize
+    [P,~] = qr(V);
+
+    % set LMI cone
+    cone = struct('type','grk1lmi','dim',nT,'nonneg',false,'ext',false);
+    cone.Vs = {full(P')};
+    cone.ws = ones(nT,1);
+    cone.x0 = ones(nT,1);
 end
