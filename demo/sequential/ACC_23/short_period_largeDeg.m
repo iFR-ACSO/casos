@@ -154,6 +154,7 @@ opts = struct('sossol','mosek');
 opts.verbose = 1;
 opts.max_iter = 300;
 
+opts.hessian_approx = 'BFGS';
 % opts.debugBFGS = 1;
 opts.tolerance_opt = 1e-3;
 % opts.conVioSamp = 1;

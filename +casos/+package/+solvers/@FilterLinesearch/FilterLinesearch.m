@@ -51,7 +51,6 @@ methods
 
         %% set up feasibility restoration phase --> do we need all or only nonlinear
         
-
         base_g = sparsity(nlsos.g);
         base_x = sparsity(nlsos.x);
         
@@ -63,22 +62,25 @@ methods
         nlsos_feas.g = nlsos.g + r.*s0;
         
         x_R   = casos.PS.sym('x_R',base_x);
-        nlsos_feas.f = sum(r) + 0.1/2*dot(nlsos.x-x_R,nlsos.x-x_R);
+        nlsos_feas.f = sum(r) ; %+ 0.1/2*dot(nlsos.x-x_R,nlsos.x-x_R);
         
         nlsos_feas.p = [nlsos.p; x_R];
         
         obj.FeasRes_para.n_r = length(nlsos.g);
         
         
-        sosopt = obj.opts.sossol_options;
-        
-        sosopt.Kx.lin = length(nlsos_feas.x);
-        sosopt.Kc.sos = length(nlsos_feas.g);
+        sosopt               = obj.opts.sossol_options;
+        sosopt.sossol        = obj.opts.sossol;
+        sosopt.Kx.lin        = length(nlsos_feas.x);
+        sosopt.Kc.sos        = length(nlsos_feas.g);
         sosopt.error_on_fail = false;
-        sosopt.verbose = 1;
-        sosopt.max_iter = 100;
+        sosopt.verbose       = 1;
+        sosopt.max_iter      = 100;
         obj.feas_res_solver  =  casos.package.solvers.FeasibilityRestoration('feasRes',nlsos_feas,sosopt);
-
+        
+       % total build time for both actual problem and feasibility
+       % restoration
+       obj.display_para.solver_build_time      = obj.display_para.solver_build_time +obj.feas_res_solver.display_para.solver_build_time;
     end
 
     function s = get_stats(obj)

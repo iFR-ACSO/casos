@@ -23,8 +23,11 @@ sos = struct('x',s, ...
 opts = struct('Kx',struct('lin',1));
 
 % solve by relaxation to SDP
-S = casos.sossol('S','mosek',sos,opts);
+S = casos.sossol('S','clarabel',sos,opts);
 % evaluate
 sol = S();
 
 fprintf('Distance to SOS cone is %g.\n', full(sol.f))
+
+
+
