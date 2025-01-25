@@ -136,6 +136,7 @@ P = [3.95382671347060	-0.230032507976836	0.0316965275615692	0.292992065909380
 -0.230032507976836	0.904764915483640	-0.161191428789579	-1.32594376986430
 0.0316965275615692	-0.161191428789579	0.0344002648214491	0.242292666551058
 0.292992065909380	-1.32594376986430	0.242292666551058	2.02114797577027];
+
 % initial Lyapunov function
 Vinit = x'*P*x;
 
@@ -144,7 +145,7 @@ V = casos.PS.sym('v',monomials(x,2:4));
 
 % SOS multiplier
 s2    = casos.PS.sym('s2',monomials(x,2:4));
-kappa = casos.PS.sym('kappa',monomials(x(3),0:1));
+kappa = casos.PS.sym('kappa',monomials(x(3),1));
 b    = casos.PS.sym('b');
 
 % enforce positivity
@@ -154,10 +155,10 @@ l = 1e-6*(x'*x);
 opts = struct('sossol','mosek');
 
 
-g = Vinit-1; 
+g = Vinit-2; 
 
 
-cost = dot(g-(V-b),g-(V-b));
+cost = dot(g-(V-b),g-(V-b)) ;
 
 %% setup solver
 sos = struct('x',[V; s2;kappa;b],...
@@ -176,9 +177,12 @@ opts.verbose = 1;
 opts.max_iter = 100;
 
 % profile on
+tic
 solver_GTM_syn = casos.nlsossol('S1','filter-linesearch',sos,opts);
-
+toc
+% profile viewer
 % solve problem
+
 sol = solver_GTM_syn('x0' ,[Vinit; (x'*x)^2; K;1]);
 
 

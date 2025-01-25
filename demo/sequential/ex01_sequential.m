@@ -154,7 +154,6 @@ opts = struct('sossol','mosek');
 opts.verbose  = 1;
 
 opts.max_iter = 300;
-% opts.scale_BFGS0 = 1e-1;
 opts.tolerance_opt = 1e-4;
 
 sos = struct('x',[V; s2;b],...
@@ -182,7 +181,7 @@ s20 = casos.PD(s2.sparsity,ones(s2.nnz,1));
 % tic
 sol = solver_GTM2D_ROA('x0',[ Vinit; x'*x;1]); 
 % toc
- % sol = solver_GTM2D_ROA('x0',sol.x); 
+
 %% plot sublevel set
 figure
 Vfun = to_function(sol.x(1));

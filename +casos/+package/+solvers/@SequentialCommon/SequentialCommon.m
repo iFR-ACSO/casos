@@ -36,11 +36,14 @@ properties
         L
         dLdx 
 
+        conLa
+
         init_para
 
         FeasRes_para
         
         sparsity_pat_para
+        display_para
 
 end
 
@@ -63,7 +66,7 @@ properties (Access=protected)
 
 
     % parameter/data for display output
-    display_para
+    % display_para
 end
 
 properties (Access=protected)

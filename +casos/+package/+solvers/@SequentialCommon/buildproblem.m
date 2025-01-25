@@ -113,7 +113,7 @@ sosopt               = opts.sossol_options;
 sosopt.Kx.lin        = length(r);
 sosopt.Kx.sos        = 0;
 sosopt.Kc.sos        = length(sos_conVio.g);
-sosopt.error_on_fail = false;
+sosopt.error_on_fail = true;
 
 % initialize convex SOS solver
 obj.solver_conVio = casos.package.solvers.sossolInternal('SOS',opts.sossol,sos_conVio,sosopt);
@@ -160,6 +160,8 @@ x_k1      = casos.PS.sym('x_k1',base_x);
 
 Langrangian = nlsos.f + dot(lam_gs,nlsos.g);
 
+% obj.conLa = casos.Function('f',{poly2basis(nlsos.x),poly2basis(nlsos.p),poly2basis(lam_gs)}, {poly2basis(dot(lam_gs,nlsos.g)) });
+% 
 % Langrangian casos function for evaluation
 obj.L = casos.Function('f',{poly2basis(nlsos.x),poly2basis(nlsos.p),poly2basis(lam_gs)}, {Langrangian });
 

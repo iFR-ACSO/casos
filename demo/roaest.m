@@ -14,8 +14,8 @@ p = x'*x;
 V = casos.PS.sym('v',monomials(x,2));
 
 % SOS multiplier
-s1 = casos.PS.sym('s1',monomials(x,1),'gram');
-s2 = casos.PS.sym('s2',monomials(x,0),'gram');
+s1 = casos.PS.sym('s1',monomials(x,2));
+s2 = casos.PS.sym('s2',monomials(x,0));
 
 % enforce positivity
 l = 1e-6*(x'*x);
@@ -25,26 +25,26 @@ g = casos.PS.sym('g');
 b = casos.PS.sym('b');
 
 % options
-opts = struct('sossol','sedumi');
+opts = struct('sossol','clarabel');
 
 %% Setup solver
 % solver 1: gamma-step
 sos1 = struct('x',s1,'f',-g,'p',V);
-sos1.('g') = s1*(V-g)-nabla(V,x)*f-l;
+sos1.('g') = [s1;s1*(V-g)-nabla(V,x)*f-l];
 
 % states + constraint are SOS cones
-opts.Kx = struct('sos', 1);
-opts.Kc = struct('sos', 1);
+opts.Kx = struct('lin', 1);
+opts.Kc = struct('sos', 2);
 
 S1 = casos.qcsossol('S1','bisection',sos1,opts);
 
 % solver 2: beta-step
 sos2 = struct('x',s2,'f',-b,'p',[V;g]);
-sos2.('g') = s2*(p-b)+g-V;
+sos2.('g') = [s2;s2*(p-b)+g-V];
 
 % states + constraint are SOS cones
-opts.Kx = struct('sos', 1);
-opts.Kc = struct('sos', 1);
+opts.Kx = struct('lin', 1);
+opts.Kc = struct('sos', 2);
 
 S2 = casos.qcsossol('S2','bisection',sos2,opts);
 
@@ -56,7 +56,7 @@ opts = struct;
 opts.Kx = struct('sos', 0, 'lin', 1); 
 opts.Kc = struct('sos', 3);
 
-S3 = casos.sossol('S','sedumi',sos3,opts);
+S3 = casos.sossol('S','clarabel',sos3,opts);
 
 %% V-s-iteration
 for iter = 1:10

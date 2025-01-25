@@ -49,7 +49,7 @@ while true
 
      dual_k1 = dual_k + alpha*(dual_star-dual_k);
     
-    % accelerating heuristic: there might be blocking entries in the
+    % heuristic: there might be blocking entries in the
     % filter; check first-order optimality conditions to potentially aboard
     % linesearch early as possible
     if full(obj.eval_gradLang(x_k1,p0,dual_k1))  <= obj.opts.tolerance_opt*max(1,full(obj.eval_gradLang(x_k1,p0,dual_k1))) && theta_x_k1 <= obj.opts.tolerance_con

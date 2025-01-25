@@ -40,8 +40,8 @@ elseif strcmp(obj.opts.Hessian_init,'Analytical')
 
     H = full(obj.hess_fun(x_k,p0,dual_k));
 
-    Bk = hessian_regularization(H);
-
+    % Bk = hessian_regularization(H);
+    Bk = regularizeHessian(H);
     
 end
 
@@ -81,8 +81,6 @@ while iter <= obj.opts.max_iter
         printf(obj.log,'debug','------------------------------------------------------------------------------------------\n');
     end
     
-
-     % scale = max(100,norm(full(dual_k),1)/length(dual_k))/100;
 
     printf(obj.log,'debug','%-8d%-15e%-15e%-15e%-15e%-10f%-10e\n',...
             iter, f_x_k , delta_xi_double, delta_dual_double, theta_x_k , alpha_k , full(casadi.DM( full(obj.eval_gradLang(x_k,p0,dual_k)) ))   );
@@ -127,30 +125,28 @@ while iter <= obj.opts.max_iter
         gamma_theta = obj.opts.filter_struct.gamma_theta ;
         gamma_phi   = obj.opts.filter_struct.gamma_phi ;
 
-        % augment filter with iterate where feas. res invoked
+        % augment filter with iterate where feas. res invoked; this point
+        % shall be avoided in the feature
         filter = [filter;[theta_x_k*(1-gamma_theta), f_x_k - gamma_phi*theta_x_k]];
         
         % feasibility restoration phase
-        [restored_sol,~,filter,feasibility_flag] = obj.feas_res_solver.eval_extended(filter,x_k,theta_x_k,p0,obj);
+        [sol_iter,~,filter,feasibility_flag] = obj.feas_res_solver.eval_extended(filter,x_k,theta_x_k,p0,obj);
 
         if feasibility_flag >=1
            
-            
            % continue from restored solution
-           delta_xi_double   = norm(full( restored_sol.x_k1 - x_k) ,inf);
-           delta_dual_double = norm(full( restored_sol.dual_k1 - dual_k ),inf);
+           delta_xi_double   = norm(full( sol_iter.x_k1 - x_k) ,inf);
+           delta_dual_double = norm(full( sol_iter.dual_k1 - dual_k ),inf);
 
-           x_k       = restored_sol.x_k1;
-           dual_k    = restored_sol.dual_k1;
-           theta_x_k = restored_sol.theta_x_k1;
-           f_x_k     = restored_sol.f_x_k1;
-           alpha_k   = restored_sol.alpha_k;
+           x_k       = sol_iter.x_k1;
+           dual_k    = sol_iter.dual_k1;
+           theta_x_k = sol_iter.theta_x_k1;
+           f_x_k     = sol_iter.f_x_k1;
+           alpha_k   = sol_iter.alpha_k;
             
-           
-      
         else
             % could not recover return iterate where restoration was
-            % invoked
+            % invoked; return point where invoked
             sol    = sol_qp;
         
             sol{1} = x_k;
@@ -202,7 +198,7 @@ while iter <= obj.opts.max_iter
        delta_dual_double = norm(full( sol_iter.dual_qp - dual_k ),inf);
 
        x_k       = sol_iter.x_k1;
-       dual_k    = sol_iter.dual_qp;
+       dual_k    = sol_iter.dual_k1;
        theta_x_k = sol_iter.theta_x_k1;
        f_x_k     = sol_iter.f_x_k1;
        alpha_k   = sol_iter.alpha_k;
@@ -216,6 +212,8 @@ while iter <= obj.opts.max_iter
     % exchange the primal/dual solution of QP with the accepted iterate
     sol{1} = sol_iter.x_k1;
     sol{2} = sol_iter.f_x_k1;
+    % sol{3} = 
+    % sol{4} = 
     sol{5} = sol_iter.dual_k1;
 
 
@@ -235,7 +233,7 @@ if iter >= obj.opts.max_iter
 
 end
 
-if feasibility_flag == 0
+if feasibility_flag == 0 && iter < obj.opts.max_iter
         
     % print last iterate
         printf(obj.log,'debug','%-8d%-15e%-15e%-15e%-15e%-10f%-10e\n',...
@@ -248,7 +246,7 @@ if feasibility_flag == 0
         printf(obj.log,'debug',['Build time: ' num2str(obj.display_para.solver_build_time) ' s\n']);
         printf(obj.log,'debug',['Total time: ' num2str(obj.display_para.solver_build_time+solveTime) ' s\n']);  
 
-elseif feasibility_flag == -1
+elseif feasibility_flag == -1 && iter < obj.opts.max_iter
 
 
         % print last iterate
@@ -263,7 +261,7 @@ elseif feasibility_flag == -1
         printf(obj.log,'debug',['Build time: ' num2str(obj.display_para.solver_build_time) ' s\n']);
         printf(obj.log,'debug',['Total time: ' num2str(obj.display_para.solver_build_time+solveTime) ' s\n']);
 
-elseif feasibility_flag == -2
+elseif feasibility_flag == -2 && iter < obj.opts.max_iter
 
 
         % print last iterate
