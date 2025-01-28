@@ -1,14 +1,16 @@
 %% ------------------------------------------------------------------------
 %
 %
-%   Short Descirption:  Calculate an inner-estimate of the
+%   Short Description:  Calculate an inner-estimate of the
 %                       region-of-attraction for the longitudinal motion 
 %                       of the Nasa Generic Transport Model. To increase
-%                       the size of the sublevel set we try to minimize the
-%                       squared distance to a defined set.
+%                       the size of the sublevel set a shape function is
+%                       used as an additional constraint. Compared to the
+%                       original paper no bisection is performed. Instead
+%                       we try to miimize the distance to a pre-assigend
+%                       safe set.
 %
-%   Reference: Modified problem from:
-%              Chakraborty, Abhijit and Seiler, Peter and Balas, Gary J.,
+%   Reference: Chakraborty, Abhijit and Seiler, Peter and Balas, Gary J.,
 %              Nonlinear region of attraction analysis for flight control 
 %              verification and validation, Control Engineering Practice,
 %              2011, doi: 10.1016/j.conengprac.2010.12.001
@@ -136,11 +138,11 @@ l = 1e-6*(x'*x);
 % options
 opts = struct('sossol','mosek');
 
-% gam = 1;
 
 % level of stability
 b = casos.PS.sym('b');
 
+% safe set; just an example
 g = Vinit-1; 
 
 cost = dot(g - (V-b), g - (V-b));
@@ -162,10 +164,12 @@ opts.verbose = 1;
 opts.max_iter = 500;
 
 solver_GTM4D_ROA = casos.nlsossol('S','filter-linesearch',sos,opts);
-s20 = casos.PD(s2.sparsity,ones(s2.nnz,1));
 
-sol = solver_GTM4D_ROA('x0' ,[Vinit; (x'*x)^2; 1]); 
+% "normal intial guess"
+% sol = solver_GTM4D_ROA('x0' ,[Vinit; (x'*x)^2; 1]); 
 
+% "bad" initial guess
+sol = solver_GTM4D_ROA('x0' ,[0; 0; 0]); 
 
 
 %% plot sublevel set

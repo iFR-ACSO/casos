@@ -1,11 +1,14 @@
 %% ------------------------------------------------------------------------
 %
 %
-%   Short Descirption:  Calculate an inner-estimate of the
+%   Short Description:  Calculate an inner-estimate of the
 %                       region-of-attraction for the short-period motion 
 %                       of the Nasa Generic Transport Model. To increase
 %                       the size of the sublevel set a shape function is
-%                       used as an additional constraint.
+%                       used as an additional constraint. Compared to the
+%                       original paper no bisection is performed. Instead
+%                       we try to miimize the distance to a pre-assigend
+%                       safe set.
 %
 %   Reference: Chakraborty, Abhijit and Seiler, Peter and Balas, Gary J.,
 %              Nonlinear region of attraction analysis for flight control 
@@ -21,6 +24,7 @@ clc
 
 import casos.toolboxes.sosopt.*
 
+profile on
 %% system states
 x = casos.Indeterminates('x',2,1);
 
@@ -98,11 +102,13 @@ f = @(x,u) [
 % find more accurate trim values  
 [x0, u0] = findtrim(f,x0, u0);
 
+
 % short period
 f = @(x,u) [
                     f2(x0(1),x(1),x(2),x0(4),u0(1),u0(2))
                     f3(x0(1),x(1),x(2),x0(4),u0(1),u0(2))
 ];
+
 
 
 % set up dynamic system
@@ -120,9 +126,10 @@ d = ([
 D = diag(d(2:3))^-1;
 f = D*subs(f, x, D^-1*x);
 
+
 f = cleanpoly(f,1e-6,0:5);
 
-% use scaled dynamics to compute initial guess for lyapunov function
+%% use scaled dynamics to compute initial guess for lyapunov function
 A = nabla(f,x);
 
 A0 = full(subs(A,x,zeros(2,1))); 
@@ -144,8 +151,8 @@ l = 1e-6*(x'*x);
 % level of stability
 b = casos.PS.sym('b');
 
-% minimize the quadratic distance to a given sublevel set
-g = Vinit-1; 
+%% minimize the quadratic distance to a given sublevel set
+g = Vinit-1;  % just an example
 
 %% setup solver
 
@@ -169,18 +176,19 @@ sos.('g') = [s2;
 opts.Kx = struct('lin', 3,'sos',0);
 opts.Kc = struct('sos', 3);
 
-% build sequential solver
-buildTime_in = tic;
-    solver_GTM2D_ROA  = casos.nlsossol('S','filter-linesearch',sos,opts);
-buildtime = toc(buildTime_in);
+% build solver
+solver_GTM2D_ROA  = casos.nlsossol('S','filter-linesearch',sos,opts);
 
+
+
+%% solve
+
+% alternative initial guess
 V0  = casos.PD(V.sparsity,ones(V.nnz,1));
 s20 = casos.PD(s2.sparsity,ones(s2.nnz,1));
 
-%% solve
-% tic
 sol = solver_GTM2D_ROA('x0',[ Vinit; x'*x;1]); 
-% toc
+
 
 %% plot sublevel set
 figure

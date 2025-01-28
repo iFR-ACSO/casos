@@ -6,7 +6,7 @@
 %                       of the Nasa Generic Transport Model. To increase
 %                       the size of the sublevel set we try to minimize the
 %                       squared distance to a defined set. Additionally, we
-%                       synthesis a control law at the same time.
+%                       synthesis a linear control law at the same time.
 %
 %   Reference: Modified problem from:
 %              Chakraborty, Abhijit and Seiler, Peter and Balas, Gary J.,
@@ -117,21 +117,11 @@ f = D*subs(f, x, D^-1*x);
 
 f = cleanpoly(f,1e-6,1:5);
 
-
-% B = full(subs(nabla(f,u),[x;u],[x0;u0]));
-
-% [K0,P] = lqr(full(A),full(B),eye(4),eye(2));
-
+% initial simple controller
 Kq = 0.0698;
 K = 1*x(3);
 
 
-% A = full( subs( nabla( subs(f,u(1),K) ,x) ,[x;u],[zeros(4,1);zeros(2,1)] ) );
-% A0 = full(subs(A,x,zeros(4,1))); 
-
-% P = lyap(A',0.1*eye(4));
-% initial controller
-% K = -K0*x;
 P = [3.95382671347060	-0.230032507976836	0.0316965275615692	0.292992065909380
 -0.230032507976836	0.904764915483640	-0.161191428789579	-1.32594376986430
 0.0316965275615692	-0.161191428789579	0.0344002648214491	0.242292666551058
@@ -154,7 +144,7 @@ l = 1e-6*(x'*x);
 % options
 opts = struct('sossol','mosek');
 
-
+% safe set; just an example
 g = Vinit-2; 
 
 
@@ -176,21 +166,21 @@ opts.verbose = 1;
 
 opts.max_iter = 100;
 
-% profile on
-tic
+% setup solver
 solver_GTM_syn = casos.nlsossol('S1','filter-linesearch',sos,opts);
-toc
-% profile viewer
-% solve problem
 
+% solve
 sol = solver_GTM_syn('x0' ,[Vinit; (x'*x)^2; K;1]);
 
 
 %% plotting
 figure
+% re-scale
 xd = D*x;
+
 Vfun = to_function(subs(sol.x(1),x,xd));
 pfun = to_function(subs(g,x,xd));
+
 fcontour(@(x2,x3) full(Vfun(0,x2,x3,0) ), [-1 1 -4 4 ], 'b-', 'LevelList', full(sol.x(end)))
 hold on
 fcontour(@(x2,x3)  full(pfun(0,x2,x3,0) ), [-1 1 -4 4 ], 'r-', 'LevelList', 0)
