@@ -28,19 +28,19 @@ info = cell(1,obj.opts.max_iter);
 
 % initialize BFGS-matrix for feasibility restoration
 % initialize BFGS-matrix; identity times scaling
-if strcmp(obj.opts.Hessian_init,'Identity')
+% if strcmp(obj.opts.Hessian_init,'Identity')
 
     Bk =  eye(obj.init_para.size_B)*obj.opts.scale_BFGS0;
 
-elseif strcmp(obj.opts.Hessian_init,'Analytical')
-
+% elseif strcmp(obj.opts.Hessian_init,'Analytical')
+% 
     dual_k = zeros(obj.init_para.no_dual_var,1);
 
-    H = full(obj.hess_fun(x_k,p0,dual_k));
-
-    Bk = casos.package.solvers.SequentialCommon.regularizeHessian(H);
-    
-end
+%     H = full(obj.hess_fun(x_k,p0,dual_k));
+% 
+%     Bk = casos.package.solvers.SequentialCommon.regularizeHessian(H);
+% 
+% end
 
 
 % initialize filter for feasibility restoration

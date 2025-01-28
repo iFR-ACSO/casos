@@ -171,7 +171,7 @@ args_in = obj.args_in;
 if nnz(h) > 0
     
     % use casadi to compute cholesky
-    if ~opts.hessian_cholesky 
+    if strcmp(obj.opts.cholesky_method,'ana') 
 
         % only SX supports Cholesky decomposition
         H = casadi.SX.sym('H',sparsity(h));

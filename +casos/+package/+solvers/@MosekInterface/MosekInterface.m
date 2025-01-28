@@ -15,7 +15,7 @@ end
 properties (Constant, Access=protected)
     mosek_options = [casos.package.solvers.ConicSolver.conic_options
         {'mosek_param', 'Parameters to be passed to MOSEK.'
-         'mosek_cholseky','Parameter that defines how cholseky is computed (symbollically or numerically online) '
+         'cholesky_method','Parameter that defines how cholseky is computed (symbollically or numerically online) '
          'mosek_echo',  'Verbosity level passed to MOSEK (default: 0).'}
     ];
 end
@@ -38,7 +38,7 @@ methods
         % default options
         if ~isfield(obj.opts,'mosek_param'), obj.opts.mosek_param = struct; end
         if ~isfield(obj.opts,'mosek_echo'), obj.opts.mosek_echo = 0; end
-        if ~isfield(obj.opts,'mosek_cholseky'), obj.opts.mosek_cholseky = 1; end
+        if ~isfield(obj.opts,'cholesky_method'), obj.opts.cholesky_method = 'num'; end
     end
 
     function s = stats(obj)
