@@ -174,8 +174,8 @@ obj.L = casos.Function('f',{basis_nlsos_x,basis_nlsos_p,basis_lam_gs}, {Langrang
 dLdx = op2basis(jacobian(Langrangian,nlsos.x))';
 
 % Hessian of Langrangian
-
-L_xx      =op2basis(hessian(Langrangian,nlsos.x));
+% op2basis(jacobian(nlsos.f,nlsos.x))'*op2basis(jacobian(nlsos.f,nlsos.x))
+L_xx      = op2basis(hessian(Langrangian,nlsos.x));
 obj.hess_fun = casos.Function('f',{basis_nlsos_x,basis_nlsos_p,basis_lam_gs}, { L_xx });
 
 % search direction

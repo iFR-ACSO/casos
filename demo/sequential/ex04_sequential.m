@@ -1,11 +1,20 @@
-%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-%
-% 
+%% ------------------------------------------------------------------------
 %
 %
+%   Short Description:  Calculate an inner-approximation of the 
+%                       continous-time reachable set of the Van-der-Pol 
+%                       Oscillator. Instead of a bisection we try to reduce
+%                       the Euclidean distance to the scaled constraint set.
+%                       Polynomial degrees and constraint similar to
+%                       reference below.
 %
-
-% Inner-approximation reachable set Van-der-Pol Oscillator
+%   Reference: Cunis, T., Kolmanovsky, I.- Viability, viscosity, and 
+%              storage functions in model-predictive control with terminal 
+%              constraints, Automatica, 2021, 
+%              DOI: 10.1016/j.automatica.2021.109748
+%           
+%
+%--------------------------------------------------------------------------
 
 clear
 close all
@@ -13,7 +22,7 @@ clc
 
 import casos.toolboxes.sosopt.*
 
-profile on
+
 % system states
 x = casos.PS('x',2,1);
 u = casos.PS('u',1,1);
@@ -62,21 +71,18 @@ s7 = casos.PS.sym('s7',monomials([x;t],0:3));
 s8 = casos.PS.sym('s8',monomials([x;t],0:3));
 s9 = casos.PS.sym('s9',monomials(x,0:3));
 s10 = casos.PS.sym('s10',monomials(x,0:3));
+
 % options
 opts.sossol = 'mosek';
-% opts.hessian_approx = 'BFGS';
-% adjust optimality thresholds
-% opts.conVioTol = 1;
-% opts.optTol    = 1e-1;
-% opts.error_on_fail = 0;
-opts.verbose = 1;
-% opts.conViolCheck = 'pseudo';
 opts.max_iter = 100;
+opts.verbose  = 1;
+
+% zero sublevel set
 b = 0;
+
 sos = struct('x',[V; K; s1; s2; s3; s4; s5; s6;s7;s8;s9;s10],...
               'f',dot( g0-(subs(V,t,0)-b), g0-(subs(V,t,0)-b) )  , ...
               'p',[]);
-
 
 
 % constraints
@@ -101,64 +107,46 @@ sos.('g') = [s1;
 % states + constraint are linear/SOS cones
 opts.Kx = struct('lin', length(sos.x));
 opts.Kc = struct('sos', length(sos.g));
-% profile on
-% build sequential solver
-buildTime_in = tic;
-    solver_oneStepReach  = casos.nlsossol('S','filter-linesearch',sos,opts);
-buildtime = toc(buildTime_in);
-% profile viewer
-x0 = casos.PD([ Vval;  ...
-                                 x'*x; ...
-                                 x'*x; ...
-                                 x'*x; ...
-                                 x'*x;
-                                 x'*x;
-                                 x'*x;
-                                 x'*x;
-                                 x'*x;
-                                 x'*x;
-                                 x'*x;
-                                  x'*x]);
 
+% build solver
+solver_oneStepReach  = casos.nlsossol('S','filter-linesearch',sos,opts);
+
+% initial guess
+x0 = casos.PD([ Vval;  ...
+                x'*x; ...
+                x'*x; ...
+                x'*x; ...
+                x'*x;
+                x'*x;
+                x'*x;
+                x'*x;
+                x'*x;
+                x'*x;
+                x'*x;
+                x'*x]);
+
+% solve
 sol = solver_oneStepReach('x0',x0); 
 
+% augment solution with zero sublevel set (just for plotting)
 sol.x = [sol.x;0];
 
-% sol = solver_oneStepReach('x0',sol.x); 
-
-disp(['Solver buildtime: ' num2str(buildtime), ' s'])
-
-
-%%
-% isSOS(sol.g(1))
-% isSOS(sol.g(2))
-% isSOS(sol.g(3))
-% isSOS(sol.g(4))
-% isSOS(sol.g(5))
-% isSOS(sol.g(6))
-% isSOS(sol.g(7))
-% isSOS(sol.g(8))
-% % isSOS(sol.g(9))
-% isSOS(sol.g(10))
-% isSOS(sol.g(11))
-% isSOS(sol.g(12))
-% isSOS(sol.g(13))
-% isSOS(sol.g(14))
-% isSOS(sol.g(15))
-profile viewer
 
 %% plotting
 import casos.toolboxes.sosopt.*
 
 figure(1)
+% reachability storage function at t = 0s
 pcontour(subs(sol.x(1),t,0),full(casadi.DM(full(sol.x(end)))),[-1 1 -1 1],'b')
 hold on 
-pcontour(g,0,[-1 1 -1 1],'k--')
-pcontour(l,0,[-1 1 -1 1],'k')
+% reachability storage function at T = 0s
 pcontour(subs(sol.x(1),t,T),full(casadi.DM(full(sol.x(end)))),[-1 1 -1 1],'g--')
 
-% for dt = 0.1:0.1:1.9
-%     pcontour(subs(sol.x(1),t,dt),full(casadi.DM(full(sol.x(end)))),[-1 1 -1 1],'m')
-% end
+% constraint set
+pcontour(g,0,[-1 1 -1 1],'k--')
+% terminal set
+pcontour(l,0,[-1 1 -1 1],'k')
+legend('V(0,x)','V(T,x)','g(x)','l(x)')
+
 
 

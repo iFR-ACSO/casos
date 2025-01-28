@@ -1,7 +1,7 @@
 %% ------------------------------------------------------------------------
 %
 %
-%   Short Descirption:  Calculate an inner-estimate of the
+%   Short Description:  Calculate an inner-estimate of the
 %                       region-of-attraction for the short-period motion 
 %                       of the Nasa Generic Transport Model. To increase
 %                       the size of the sublevel set a shape function is
@@ -152,11 +152,10 @@ p = x'*x;
 % options
 opts = struct('sossol','mosek');
 opts.verbose = 1;
-opts.scale_BFGS0 = 1e-3;
-% opts.debugBFGS = 1;
+% opts.hessian_approx = 'BFGS';
+% opts.Hessian_init   = 'Identity';
+% opt.scale_BFGS0     = 1e-2;
 
-% opts.conVioSamp = 1;
-% opts.optTol = 1e-2;
 sos = struct('x',[V; s2;s1;b],...
               'f',-b, ...
               'p',[]);
@@ -168,11 +167,7 @@ sos.('g') = [s2;
              s2*(V-1)-nabla(V,x)*f-l;
              s1*(p-b) + 1 - V];
 
-% sos.('g') = [s2 - eps; 
-%              s1 - eps;
-%              V-l - eps; 
-%              s2*(V-1)-nabla(V,x)*f-l - eps;
-%              s1*(p-b) + 1 - V - eps];
+
 
 % states + constraint are linear/SOS cones
 opts.Kx = struct('lin', 4);

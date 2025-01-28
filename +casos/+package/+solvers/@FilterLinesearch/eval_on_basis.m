@@ -28,16 +28,15 @@ p0   = args{2};
 % initialize iteration info struct
 info = cell(1,obj.opts.max_iter);
 
-        
-% initialize BFGS-matrix; identity times scaling
-if strcmp(obj.opts.Hessian_init,'Identity')
 
+dual_k = zeros(obj.init_para.no_dual_var,1);      
+
+if strcmp(obj.opts.Hessian_init,'Identity')
+    % initialize BFGS-matrix; identity times scaling    
     Bk =  eye(obj.init_para.size_B)*obj.opts.scale_BFGS0;
 
 elseif strcmp(obj.opts.Hessian_init,'Analytical')
-
-    dual_k = zeros(obj.init_para.no_dual_var,1);
-
+    % initialize Hessian approximation with regularization
     H = full(obj.hess_fun(x_k,p0,dual_k));
 
     Bk = casos.package.solvers.SequentialCommon.regularizeHessian(H);
