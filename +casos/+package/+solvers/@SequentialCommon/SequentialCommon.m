@@ -90,6 +90,13 @@ methods (Access=protected)
     argout = eval_on_basis(obj,argin);
 end
 
+methods (Static)
+    % iteration for overloading
+    varargout = regularizeHessian(varargin);
+    varargout = hessian_regularization(varargin);
+end
+
+
 
 methods
     % Constructor

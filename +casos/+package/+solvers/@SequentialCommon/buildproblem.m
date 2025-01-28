@@ -160,24 +160,33 @@ x_k1      = casos.PS.sym('x_k1',base_x);
 
 Langrangian = nlsos.f + dot(lam_gs,nlsos.g);
 
-% obj.conLa = casos.Function('f',{poly2basis(nlsos.x),poly2basis(nlsos.p),poly2basis(lam_gs)}, {poly2basis(dot(lam_gs,nlsos.g)) });
-% 
+% obj.conLa = casos.Function('f',{poly2basis(nlsos.x),basis_nlsos_p,basis_lam_gs}, {poly2basis(dot(lam_gs,nlsos.g)) });
+
+
+basis_nlsos_x = poly2basis(nlsos.x);
+basis_xk1     = poly2basis(x_k1);
+basis_nlsos_p = poly2basis(nlsos.p);
+basis_lam_gs  = poly2basis(lam_gs);
+
 % Langrangian casos function for evaluation
-obj.L = casos.Function('f',{poly2basis(nlsos.x),poly2basis(nlsos.p),poly2basis(lam_gs)}, {Langrangian });
+obj.L = casos.Function('f',{basis_nlsos_x,basis_nlsos_p,basis_lam_gs}, {Langrangian });
+
+dLdx = op2basis(jacobian(Langrangian,nlsos.x))';
 
 % Hessian of Langrangian
-L_xx      = op2basis(jacobian((op2basis(jacobian(Langrangian,nlsos.x)) )',nlsos.x));
-obj.hess_fun = casos.Function('f',{poly2basis(nlsos.x),poly2basis(nlsos.p),poly2basis(lam_gs)}, { L_xx });
+
+L_xx      =op2basis(hessian(Langrangian,nlsos.x));
+obj.hess_fun = casos.Function('f',{basis_nlsos_x,basis_nlsos_p,basis_lam_gs}, { L_xx });
 
 % search direction
-obj.eval_s = casos.Function('f',{poly2basis(nlsos.x),poly2basis(x_k1),poly2basis(nlsos.p)}, { poly2basis( x_k1 - nlsos.x)});
+obj.eval_s = casos.Function('f',{basis_nlsos_x,basis_xk1,basis_nlsos_p}, { poly2basis( x_k1 - nlsos.x)});
 
 % delta gradient of Langrangian 
-dLdx = casos.Function('f',{poly2basis(nlsos.x),poly2basis(nlsos.p),poly2basis(lam_gs)}, {(op2basis(jacobian(Langrangian,nlsos.x)) )' });
+dLdx = casos.Function('f',{basis_nlsos_x,basis_nlsos_p,basis_lam_gs}, {dLdx });
 obj.dLdx = dLdx;
 
 % y =  \nabla_x L (x_k1,lambda_k1) - \nabla_x L (x_k,lambda_k1)
-obj.eval_y = casos.Function('f',{poly2basis(nlsos.x),poly2basis(x_k1),poly2basis(nlsos.p),poly2basis(lam_gs)}, {dLdx(poly2basis(x_k1),poly2basis(nlsos.p),poly2basis(lam_gs)) - dLdx(poly2basis(nlsos.x),poly2basis(nlsos.p),poly2basis(lam_gs)) });
+obj.eval_y = casos.Function('f',{basis_nlsos_x,basis_xk1,basis_nlsos_p,basis_lam_gs}, {dLdx(basis_xk1,basis_nlsos_p,basis_lam_gs) - dLdx(basis_nlsos_x,basis_nlsos_p,basis_lam_gs) });
 
 % using MX instead of SX is faster to build; no significant difference in
 % execution time during online execution (but just a few examples)
@@ -193,18 +202,18 @@ obj.eval_r = casos.Function('f',{B,theta,y,s}, {theta*y+(1-theta)*B*s});
 % B = B + (r*r')/(s'*r) - (B*s*s'*B)/(s'*B*s)
 obj.damped_BFGS =  casadi.Function('f',{B,r,s}, {B - (B*(s*s')*B)/(s'*B*s) + (r*r')/(s'*r)});
 
-obj.SR1 =  casadi.Function('f',{B,y,s}, {B + ( (y-B*s)*(y-B*s)' )/( (y-B*s)'*s)  });
+% obj.SR1 =  casadi.Function('f',{B,y,s}, {B + ( (y-B*s)*(y-B*s)' )/( (y-B*s)'*s)  });
 
 %% evaluation function
 % nonlinear cost function 
-obj.eval_cost      = casos.Function('f',{poly2basis(nlsos.x),poly2basis(nlsos.p)}, { full(nlsos.f) });
+obj.eval_cost      = casos.Function('f',{basis_nlsos_x,basis_nlsos_p}, { full(nlsos.f) });
 % gradient cost
-obj.eval_gradCost  = casos.Function('f',{poly2basis(nlsos.x),poly2basis(nlsos.p)}, { op2basis( jacobian(nlsos.f,nlsos.x) ) });
+obj.eval_gradCost  = casos.Function('f',{basis_nlsos_x,basis_nlsos_p}, { op2basis( jacobian(nlsos.f,nlsos.x) ) });
 
 % norm gradient langrangian
-obj.eval_gradLang =  casos.Function('f',{poly2basis(nlsos.x),poly2basis(nlsos.p),poly2basis(lam_gs)}, { Fnorm2( jacobian(Langrangian,nlsos.x) )' });
+obj.eval_gradLang =  casos.Function('f',{basis_nlsos_x,basis_nlsos_p,basis_lam_gs}, { Fnorm2( jacobian(Langrangian,nlsos.x) )' });
 
-obj.eval_gradLang2  =  casos.Function('f',{poly2basis(nlsos.x),poly2basis(nlsos.p),poly2basis(lam_gs)}, { norm(op2basis(jacobian(Langrangian,nlsos.x)),inf) }); 
+obj.eval_gradLang2  =  casos.Function('f',{basis_nlsos_x,basis_nlsos_p,basis_lam_gs}, { norm(op2basis(jacobian(Langrangian,nlsos.x)),inf) }); 
 
 %% get parameter that are needed for initilization
 obj.init_para.no_dual_var   = obj.sparsity_g.nnz;
