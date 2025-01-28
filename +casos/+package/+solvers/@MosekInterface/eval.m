@@ -3,9 +3,17 @@ function argout = eval(obj,argin)
 
 msk_prob = obj.cone;
 
+args = cell2struct(argin',fieldnames(obj.args_in));
+
+% compute cholseky numerically
+if nnz(obj.args_in.h) > 0 && obj.opts.hessian_cholesky
+    args.h = chol((args.h));
+end
+
+
 % evaluate problem structure
-prob = call(obj.fhan,cell2struct(argin',fieldnames(obj.args_in)));
-data = call(obj.barv,cell2struct(argin',fieldnames(obj.args_in)));
+prob = call(obj.fhan,args);
+data = call(obj.barv,args);
 
 % to double
 msk_prob.a = sparse(prob.a);
