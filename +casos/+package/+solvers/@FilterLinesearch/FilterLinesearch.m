@@ -69,7 +69,7 @@ methods
         obj.FeasRes_para.n_r = length(nlsos.g);
         
         
-        sosopt               = obj.opts.sossol_options;
+
         sosopt.sossol        = obj.opts.sossol;
         sosopt.Kx.lin        = length(nlsos_feas.x);
         sosopt.Kc.sos        = length(nlsos_feas.g);

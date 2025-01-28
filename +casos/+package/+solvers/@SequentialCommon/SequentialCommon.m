@@ -129,7 +129,7 @@ methods
             nlsos.g = casos.PS(nlsos.g);
         end
         
-        
+        % defaut paramet
         filter_struct = struct();
 
         filter_struct.alpha_max       = 1;
@@ -143,10 +143,12 @@ methods
         filter_struct.LangrangeFilter = 0; 
         filter_struct.theta_min       = 1e-4;
 
-        
+        % make sure cholseky option is passed
+        sossol_options0.sdpsol_options.cholesky_method = 'num';
+
         % default options
         if ~isfield(obj.opts,'sossol'), obj.opts.sossol                     = 'mosek'; end
-        if ~isfield(obj.opts,'sossol_options'), obj.opts.sossol_options     = struct; end
+        if ~isfield(obj.opts,'sossol_options'), obj.opts.sossol_options     = sossol_options0; end
         if ~isfield(obj.opts,'tolerance_con'), obj.opts.tolerance_con       = 1e-6; end
         if ~isfield(obj.opts,'tolerance_opt'), obj.opts.tolerance_opt       = 1e-4; end
         if ~isfield(obj.opts,'scale_BFGS0'), obj.opts.scale_BFGS0           = 1; end
