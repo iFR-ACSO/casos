@@ -112,7 +112,7 @@ while true
     % compute alpha_min
     alpha_min = compute_alpha_min(obj,x_k,dk,p0,theta_xk,filter);
     
-    if alpha < alpha_min  || alpha <= eps
+    if alpha < alpha_min  || alpha <= eps % just avoid too small step lengths
        % invoke feasibility restoration if step-length is below minimum
        feas_res_flag = 2;
        break
@@ -150,11 +150,11 @@ if strcmp(obj.opts.hessian_approx,'BFGS')
 elseif strcmp(obj.opts.hessian_approx,'Levenberg')
     % see Betts book
     H  = full(obj.hess_fun(x_k1,p0,dual_k1));
-    Bk = hessian_regularization(H);
+    Bk = casos.package.solvers.SequentialCommon.hessian_regularization(H);
 elseif strcmp(obj.opts.hessian_approx,'EigValReg')
     % own regularization method
     H = full(obj.hess_fun(x_k1,p0,dual_k1));
-    Bk = regularizeHessian(H);
+    Bk = casos.package.solvers.SequentialCommon.regularizeHessian(H);
 elseif strcmp(obj.opts.hessian_approx,'Mirroring')
     % Verschueren
     H = full(obj.hess_fun(x_k1,p0,dual_k1));

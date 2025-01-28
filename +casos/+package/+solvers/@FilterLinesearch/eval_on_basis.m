@@ -40,8 +40,7 @@ elseif strcmp(obj.opts.Hessian_init,'Analytical')
 
     H = full(obj.hess_fun(x_k,p0,dual_k));
 
-    % Bk = hessian_regularization(H);
-    Bk = regularizeHessian(H);
+    Bk = casos.package.solvers.SequentialCommon.regularizeHessian(H);
     
 end
 
@@ -70,18 +69,19 @@ delta_xi_double   = norm(full( casadi.DM(x_k)),inf);
 delta_dual_double = norm(full( (dual_k)),inf);
 alpha_k           = 1;
 
+
 feasibility_flag = 1;
 
 measTime_seqSOS_in = tic;
 while iter <= obj.opts.max_iter
     
-    % display output 
+    % display output header
     if ~mod(iter,10) && iter > 0
         printf(obj.log,'debug','%-8s%-15s%-15s%-15s%-15s%-10s%-10s\n', 'iter', 'obj', ['||' char(916) 'x'  '||_inf'], ['||' char(916) char(955)  '||_inf'], [char(920) '(x_k)'],char(945),'||dLdx||');
         printf(obj.log,'debug','------------------------------------------------------------------------------------------\n');
     end
     
-
+    % display output current iterate
     printf(obj.log,'debug','%-8d%-15e%-15e%-15e%-15e%-10f%-10e\n',...
             iter, f_x_k , delta_xi_double, delta_dual_double, theta_x_k , alpha_k , full(casadi.DM( full(obj.eval_gradLang(x_k,p0,dual_k)) ))   );
         
@@ -121,11 +121,11 @@ while iter <= obj.opts.max_iter
     if feas_res_flag >= 1 && ...              % restoration requested
        theta_x_k >  obj.opts.tolerance_con    % is the constraint violation larger then tolerance; otherwise restoration does not make sense
         
-        % augment filter with the iterate at which we invoke restoration
+        % parameter (just for readabilty)
         gamma_theta = obj.opts.filter_struct.gamma_theta ;
         gamma_phi   = obj.opts.filter_struct.gamma_phi ;
 
-        % augment filter with iterate where feas. res invoked; this point
+        % augment filter with iterate where restoration is invoked; this point
         % shall be avoided in the feature
         filter = [filter;[theta_x_k*(1-gamma_theta), f_x_k - gamma_phi*theta_x_k]];
         
@@ -169,7 +169,8 @@ while iter <= obj.opts.max_iter
                 sol{1} = sol_iter.x_k1;
                 sol{5} = sol_iter.dual_k1;
             end
-
+               
+                % just a final check
                 if full(obj.eval_gradLang(x_k,p0,dual_k))  <= obj.opts.tolerance_opt*max(1,full(obj.eval_gradLang(x_k,p0,dual_k))) ...
                     && theta_x_k <= obj.opts.tolerance_con 
                         
@@ -182,8 +183,8 @@ while iter <= obj.opts.max_iter
                             feasibility_flag = 1;
 
                 else
-                    % stalled
-                feasibility_flag = -2;
+                     % stalled
+                    feasibility_flag = -2;
 
                 end
 
@@ -191,11 +192,11 @@ while iter <= obj.opts.max_iter
 
 
 
-    else
+    else % continue with normal iteration
 
        % for display output
        delta_xi_double   = norm(full( sol_iter.x_k1 - x_k) ,inf);
-       delta_dual_double = norm(full( sol_iter.dual_qp - dual_k ),inf);
+       delta_dual_double = norm(full( sol_iter.dual_k1 - dual_k ),inf);
 
        x_k       = sol_iter.x_k1;
        dual_k    = sol_iter.dual_k1;
@@ -221,7 +222,7 @@ while iter <= obj.opts.max_iter
 
 end % end of while loop
 
-% display output for user
+% final display output for user
 if iter >= obj.opts.max_iter
 
         printf(obj.log,'debug','------------------------------------------------------------------------------------------\n');
@@ -262,12 +263,6 @@ elseif feasibility_flag == -1 && iter < obj.opts.max_iter
         printf(obj.log,'debug',['Total time: ' num2str(obj.display_para.solver_build_time+solveTime) ' s\n']);
 
 elseif feasibility_flag == -2 && iter < obj.opts.max_iter
-
-
-        % print last iterate
-        % printf(obj.log,'debug','%-8d%-15e%-15e%-15e%-15e%-10f%-10e\n',...
-        %     iter, f_x_k , delta_xi_double, delta_dual_double, theta_x_k , alpha_k , full(casadi.DM( full(obj.eval_gradLang(x_k,p0,dual_k)) ) )   );
-        % 
 
         printf(obj.log,'debug','------------------------------------------------------------------------------------------\n');
         printf(obj.log,'debug','Solution status: Feasible solution. Restoration not invoked because already feasible.\n');
