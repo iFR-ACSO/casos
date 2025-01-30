@@ -91,11 +91,14 @@ I = false(length(nlsos.g),1);
 for idx = 1:length(nlsos.g)
     I(idx) = ~is_linear(nlsos.g(idx),nlsos.x);
 end
-% get sparsity pattern of nonlinear constraints
-base_g = sparsity(nlsos.g(I));
+% get gram half-basis for nonlinear constraints
+[~,~,z] = grambasis(nlsos.g,I);
 
-r  = casos.PS.sym('r',length(nlsos.g(I)));
-s0 = casos.PD(base_g,ones(base_g.nnz,1));
+% build unit vectors
+base_s0 = gramunit(z);
+
+r  = casos.PS.sym('r',sum(I));
+s0 = casos.PD(base_s0);
 
 sos_conVio = [];
 % decision variables
