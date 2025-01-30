@@ -6,10 +6,18 @@ classdef FunctionArgumentType
     end
 
     enumeration
+        % vectors & matrices
         DM ('casadi.DM')
         SX ('casadi.SX')
         MX ('casadi.MX') 
+
+        % polynomials
+        PD ('casos.PD')
         PS ('casos.PS')
+
+        % operators
+        PDOperator ('casos.PDOperator')
+        PSOperator ('casos.PSOperator')
     end
 
     methods
