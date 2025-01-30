@@ -78,7 +78,16 @@ if simplify
     Lz = arrayfun(@(i) S.newton_reduce(S.degmat(Ldegmat(i,:),Iv),degmat), idx, 'UniformOutput', false);
     Lz = horzcat(Lz{:})';
 end
-z = (build_monomials(degmat,z.indets)); % do we need this?
+
+% build half-basis for each element
+[i,j] = find(Lz');
+coeffs = casadi.Sparsity.triplet(size(Lz,2),lp,i-1,j-1);
+% set output
+z = casos.Sparsity;
+[z.coeffs,z.degmat] = uniqueDeg(coeffs,degmat);
+z.indets = indets;
+z.matdim = [lp 1];
+% z = (build_monomials(degmat,z.indets)); % do we need this?
 
 [Z,K,Mp,Md] = gram_internal(Lz,degmat,z.indets);
 
