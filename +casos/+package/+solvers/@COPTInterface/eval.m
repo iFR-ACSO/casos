@@ -126,12 +126,6 @@ else
     y_copt = solution.psdpi;
 end
 
-% -------------------------------------
-% call SeDuMi
-%tic
-%[x_,y_,obj.info] = sedumi(A,b,full(c),K,opts);
-%toc
-
 % assign full solution
 x = sparse(idx,1,x_copt,length(J),1);
 y = sparse(find(~I),1,y_copt,length(I),1);

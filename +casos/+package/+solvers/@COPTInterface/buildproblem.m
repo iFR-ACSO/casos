@@ -114,10 +114,10 @@ Ix =  ones(1,Nx.l);
 % (see https://de.mathworks.com/help/matlab/ref/sort.html#bt8nojg-1-I)
 [~,idx] = sort([Iz Ia Ix]);
 
-% return SeDuMi structures A,b,c
+% return COPT structures A,b,c
 obj.fhan = casadi.Function('f',struct2cell(obj.args_in),{A(:,idx) b c(idx)},fieldnames(obj.args_in),{'A' 'b' 'c'});
 
-% parse SeDuMi solution (X,Y) into (x,cost,lam_a,lam_x)
+% parse COPT solution (X,Y) into (x,cost,lam_a,lam_x)
 X = casadi.MX.sym('x',size(c));
 Y = casadi.MX.sym('y',size(b));
 S = c - A'*Y;
