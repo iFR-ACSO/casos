@@ -13,7 +13,9 @@ switch lower(solver)
     case 'scs'
         % solve conic problem using SCS
         sol = casos.package.solvers.SCSInterface(name,conic,varargin{:});
-        
+    case 'copt'
+        % solve conic problem using COPT
+        sol = casos.package.solvers.COPTInterface(name,conic,varargin{:});
     otherwise
         error('Solver "%s" undefined.', solver)
 end
