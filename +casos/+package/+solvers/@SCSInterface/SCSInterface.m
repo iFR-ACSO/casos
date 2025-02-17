@@ -13,7 +13,8 @@ end
 
 properties (Constant, Access=protected)
     scs_options = [casos.package.solvers.ConicSolver.conic_options
-        {'scs', 'Options to be passed to SCS.'}
+        {'scs', 'Options to be passed to SCS.'
+        'cholesky_method','Parameter that defines how cholseky is computed (symbollically or numerically online) '}
     ];
 end
 
@@ -33,6 +34,7 @@ methods
 
         % default options
         if ~isfield(obj.opts,'scs'), obj.opts.scs = []; end
+        if ~isfield(obj.opts,'cholesky_method'), obj.opts.cholesky_method = 'num'; end
     end
 
     function s = stats(obj)

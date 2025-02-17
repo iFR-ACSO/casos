@@ -18,9 +18,6 @@ opts = obj.opts.scs;
 % disable verbosity by default
 if ~isfield(opts,'verbose'), opts.verbose = 0; end
 
-% opts.acceleration_lookback = 0;
-% opts.acceleration_interval = 1;
-
 % joint lower bounds
 % -A(x) + s = 0, s in [lb ub]
 lb = sparse(K.bl);
