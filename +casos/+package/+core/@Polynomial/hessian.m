@@ -7,19 +7,19 @@ if is_indet(x)
     error('Use NABLA for the polynomial Jacobian.')
 end
 
-% else:
 assert(is_symbolic(x),'Second argument must be symbolic polynomial.')
+assert(isscalar(f) && is_zerodegree(f),'Objective must be scalar variable.')
 
 % project x to basis
 [X,zi] = poly2basis(x);
 
 % project f to basis
-[F,zo] = poly2basis(f);
+F = poly2basis(f);
 
 % G is jacobian of coefficients
-G = hessian(F,X);
+H = hessian(F,X);
 
 % return operator
-D = casos.package.operator(G,zi,zi);
+D = casos.package.operator(H,zi,zi);
 
 end
