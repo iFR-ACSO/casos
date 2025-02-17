@@ -1,5 +1,21 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Short Description: 
+% 
+% Compute minimum step-length based on sufficient descrease condition, i.e.
+% check if these can be fulfilled (based on current iterate) if alpha is
+% small enough. For a derivation see equation (23) in
+%
+% Wächter, A. and Biegler, L. - On the implementation of an interior-point 
+% filter line-search algorithm for large-scale nonlinear programming,  
+% Mathematical Programming, 2006,doi: 10.1007/s10107-004-0559-y
+% 
+% Note: alpha_min can be zero!
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function alpha_min = compute_alpha_min(obj,x_k,dk,p0,theta_xk,filter)
 
+% extract options from struct; for readability oc code
 s_theta     = obj.opts.filter_struct.s_theta ;
 s_phi       = obj.opts.filter_struct.s_phi ;
 gamma_theta = obj.opts.filter_struct.gamma_theta ;
@@ -31,6 +47,7 @@ else
 
 end
 
+% scale alpha min.
  alpha_min = gamma_alpha*alpha_min;
 
 end

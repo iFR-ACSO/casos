@@ -1,3 +1,19 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Short Description: 
+% 
+% Check if new iterate fulfills sufficient decrease condition in cost and 
+% ensure that progress (decrease) in constraint violation is smaller than 
+% cost (f-type switching) and if Amijo condition is 
+% fulfilled. If not f-type, check if at least sufficient progress 
+% (both cost or constraint violation) with respect to previous iterate is 
+% given. If neither f-type nor progress with respect to previous
+% iterate, than there is no sufficient progress. In that case either a
+% second-order correction is invoked or the step-length must be reduced.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
 function [suffDecrease_flag,f_type,amijo,filter] = chechSuffDecrease(obj, ...
                                                                     alpha, ...
                                                                     x_star, ...
@@ -12,7 +28,7 @@ function [suffDecrease_flag,f_type,amijo,filter] = chechSuffDecrease(obj, ...
                                                                     dual_k, ...
                                                                     filter)
 
-
+% depack options just for readibility
 s_theta     = obj.opts.filter_struct.s_theta ;
 s_phi       = obj.opts.filter_struct.s_phi ;
 gamma_theta = obj.opts.filter_struct.gamma_theta ;
@@ -59,7 +75,7 @@ else
         suffDecrease_flag = 1;
     else
         suffDecrease_flag = 0;
-    end % check if soc shall be used or if alpha needs adjustment
+    end 
 
 end % end of check progress w.r.t. current iterate
 

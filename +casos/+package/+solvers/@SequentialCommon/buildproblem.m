@@ -87,10 +87,10 @@ obj.sparsity_pat_para.sparsity_gs = obj.solver_convex.sparsity_gs;
 % sparsity patterns of nonlinear constraints
 
 % check only the nonlinear constraints
-I = false(length(nlsos.g),1);
-for idx = 1:length(nlsos.g)
-    I(idx) = ~is_linear(nlsos.g(idx),nlsos.x);
-end
+I = true(length(nlsos.g),1);
+% for idx = 1:length(nlsos.g)
+%     I(idx) = ~is_linear(nlsos.g(idx),nlsos.x);
+% end
 % get gram half-basis for nonlinear constraints
 [~,~,z] = grambasis(nlsos.g,I);
 
@@ -226,7 +226,7 @@ obj.init_para.conVio.no_con = length(sos_conVio.g);
 
 %% get params for display output (problem size etc)
 obj.display_para.no_decVar         = obj.solver_convex.sparsity_x.nnz;
-obj.display_para.no_sosCon         = length(nlsos.g(I));
+obj.display_para.no_sosCon         = length(nlsos.g);
 obj.display_para.solver            = obj.opts.sossol;
 obj.display_para.solver_build_time = toc(buildTime_in);
 

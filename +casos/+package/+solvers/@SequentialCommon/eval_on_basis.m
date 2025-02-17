@@ -1,7 +1,7 @@
 function argout = eval_on_basis(obj,argin)
-% Evaluate bisection to solve quasiconvex SOS problem.
+% Base implementation of simple sequential
 
-import casos.package.UnifiedReturnStatus
+%import casos.package.UnifiedReturnStatus
 
 args = argin;
 

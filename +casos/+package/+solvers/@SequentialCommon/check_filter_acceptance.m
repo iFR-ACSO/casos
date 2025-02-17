@@ -1,4 +1,22 @@
-function  [x_k1,theta_x_k1,f_x_k1 ,filter_Acceptance] = check_filter_acceptance(obj,filter,alpha,x_k,dual_k,dk,dkl,p0,args)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Short Description: 
+% 
+% Check if new iterate is acceptable to filter. Compute constraint
+% violation and cost at new iterate. Compare the pair {cost constraint
+% vio.} to filter entries. If at least one of them is better in cost or
+% constrain violation, than accept.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function  [x_k1,theta_x_k1,f_x_k1 ,filter_Acceptance,all_violations] = check_filter_acceptance(obj, ...
+                                                                                               filter, ...
+                                                                                               alpha, ...
+                                                                                               x_k, ...
+                                                                                               dual_k, ...
+                                                                                               dk, ...
+                                                                                               dkl, ...
+                                                                                               p0, ...
+                                                                                               args)
     
     % use Langrange function instead of cost function in filter
     LangrangeFilter = obj.opts.filter_struct.LangrangeFilter;
@@ -12,10 +30,15 @@ function  [x_k1,theta_x_k1,f_x_k1 ,filter_Acceptance] = check_filter_acceptance(
     args_conVio{3}  = -inf(obj.init_para.conVio.no_con,1);
     args_conVio{4}  =  inf(obj.init_para.conVio.no_con,1);
     
-    % constraint violation at trial point
-    sol_convio = eval_on_basis(obj.solver_conVio, args_conVio);
     
-    theta_x_k1 = full(max(0,max(sol_convio{1})));
+    sol_convio = eval_on_basis(obj.solver_conVio, args_conVio);
+
+    % extract signed-distances
+    all_violations = sol_convio{1};
+    
+    % get the largest one
+    theta_x_k1 = full(max(0,max(all_violations)));
+        
 
     % cost at trial point
     if LangrangeFilter 
@@ -26,8 +49,7 @@ function  [x_k1,theta_x_k1,f_x_k1 ,filter_Acceptance] = check_filter_acceptance(
     end
     
   
-
-    %% check filter acceptance
+    % check filter acceptance
     % get filter inputs
     theta_l = filter(:,1);
     f_l     = filter(:,2);
@@ -43,7 +65,6 @@ function  [x_k1,theta_x_k1,f_x_k1 ,filter_Acceptance] = check_filter_acceptance(
     else
            dominance_bool(:,2) = f_x_k1  >= f_l;
     end
-    % 
     
     % check pairs; if both one, means pair lies in forbidden region
     dominance_bool = all(dominance_bool, 2);

@@ -1,3 +1,23 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Short Description: 
+% 
+% Call the actual quadratic subproblem (SDP with quadratic cost) of the
+% form 
+%   min 1/2*d'*B*d + ∇f'*d
+%   st.  ∇g(x)⋅d + g(x+d0) - ∇g(x)⋅d0 in Σ[x] 
+%       x in R[x] 
+%
+% where d = (x^* - x_k) is the search direction, d0 is the search direction
+% (coming from the actual Q-SDP) i.e., searach direction we want to correct,
+% B is the approximation of the Hessian, ∇(⋅) the first-derivative 
+% and (⋅)^* is the optimal solution.
+%
+% Remark: All decision variables are setup as regular polynomials. SOS
+% polynomials are enforced via constraints!
+%
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function [x_star_soc,dual_star_soc,skip_soc] = solve_Q_SDP_soc(obj,x_k,x_star,p0,Bk,args)
 
 import casos.package.UnifiedReturnStatus
