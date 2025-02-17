@@ -25,7 +25,7 @@ opts.Kc = struct('sos', 1);
 opts.error_on_fail = false;
 
 % solve by relaxation to SDP
-S = casos.sossol('S','clarabel',sos,opts);
+S = casos.sossol('S','sedumi',sos,opts);
 
 % find largest stable level set
 lb = 0; ub = 10;
