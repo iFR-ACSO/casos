@@ -25,7 +25,7 @@ g = casos.PS.sym('g');
 b = casos.PS.sym('b');
 
 % options
-opts = struct('sossol','clarabel');
+opts = struct('sossol','mosek');
 
 %% Setup solver
 % solver 1: gamma-step
@@ -56,7 +56,7 @@ opts = struct;
 opts.Kx = struct('sos', 0, 'lin', 1); 
 opts.Kc = struct('sos', 3);
 
-S3 = casos.sossol('S','clarabel',sos3,opts);
+S3 = casos.sossol('S','mosek',sos3,opts);
 
 %% V-s-iteration
 tic 

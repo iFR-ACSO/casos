@@ -18,16 +18,3 @@ tic
 S = casos.sossol('S','mosek',sos,opts);
 % evaluate
 sol = S();
-
-sol.x
-fprintf('Minimum is %g.\n', full(sol.f))
-toc
-
-% solve by relaxation to SDP
-tic
-S = casos.sossol('S','clarabel',sos,opts);
-% evaluate
-sol = S();
-sol.x
-fprintf('Minimum is %g.\n', full(sol.f))
-toc
