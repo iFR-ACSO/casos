@@ -1,5 +1,5 @@
 function V = sdp_vec(M, scale)
-% MOSEK/SCS-style matrix vectorization for semidefinite cone embedding.
+% Clarabel-style matrix vectorization for semidefinite cone embedding.
 %
 % This function takes a matrix
 %

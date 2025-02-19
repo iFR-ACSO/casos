@@ -1,4 +1,6 @@
 % Validate stability with LF candidate.
+clc
+clear
 
 % system states
 x = casos.Indeterminates('x',2);
@@ -37,13 +39,16 @@ while (ub - lb > 1e-1)
     sol = S('p',ptry);
 
     switch (S.stats.UNIFIED_RETURN_STATUS)
-        case 'SOLVER_RET_SUCCESS', lb = ptry;
-        case {'SOLVER_RET_INFEASIBLE' 'SOLVER_RET_NAN'}, ub = ptry;
+        case 'SOLVER_RET_SUCCESS' 
+            lb = ptry;
+            lvlset = ptry;
+        case {'SOLVER_RET_INFEASIBLE' 'SOLVER_RET_NAN'}
+            ub = ptry;
         otherwise, error('Failed.')
     end
 end
 
-fprintf('Maximal stable level set is %g.\n', lb)
+fprintf('Maximal stable level set is %g.\n', full(lvlset))
 
 %% Quasiconvex optimization
 % define quasiconvex SOS problem
@@ -55,4 +60,4 @@ S = casos.qcsossol('S','bisection',qcsos,opts);
 % evaluate
 sol = S();
 
-fprintf('Minimum is %g.\n', full(sol.f))
+fprintf('Minimum is %g.\n', -full(sol.f))

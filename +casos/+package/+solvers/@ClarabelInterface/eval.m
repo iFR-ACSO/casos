@@ -27,7 +27,7 @@ ml = length(lb)+1;
 m  = length(data.b);
 
 % reoder slack variables
-idx = 1:length(data.b);
+%idx = 1:length(data.b);
 
 % remove trivial constraints
 J = false(size(data.b));
@@ -78,106 +78,72 @@ idx = [1+[I0; Ipos; Ineg]; find(~J)];
 A = data.A(idx,:);
 b = data.b(idx);
 
-% add cones for the clarabel wrapper
+% Initialize an empty cell array for cones
+cones = cell(1, 1); 
+
+% Add zero cones for the Clarabel wrapper
 if K.z > 0
-cones = zeroConeT(K.z);
-else
-    cones = [];
+    cones{end+1} = zeroConeT(K.z);
 end
 
-
-
-for jj = 1:length(K.s)
-
-    cones = [cones;PSDTriangleConeT(K.s(jj))];
-
+% Add second order cones
+if K.q > 0
+    cones{end+1} = SecondOrderConeT(K.q);
 end
+
+% Stack PSD cones
+num_psd = length(K.s);
+if num_psd > 0
+    psd_cones = arrayfun(@PSDTriangleConeT, K.s, 'UniformOutput', false);
+    % concatenate
+    cones = [cones, psd_cones']; 
+end
+
+% Convert cell array to a proper structure 
+cones = vertcat(cones{:});
 
 % call clarabel mex
 sol = clarabel_mex(P,c,A,b,cones,opts);
 
+% extract primal, dual and slack variables
 x  = sol.x;
 z_ = sol.z;
 s_ = sol.s;
-
 
 % assign solution
 z = sparse(idx,1,z_,m,1);
 s = sparse(idx,1,s_,m,1);
 
+% get solution status
 if strcmp(sol.status,'Solved')
-        % success
+    % success
     obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_SUCCESS;
+elseif strcmp(sol.status,'AlmostSolved')
+    % success because we are feasible but did not solve until thresholds
+    obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_SUCCESS;
+elseif strcmp(sol.status,'Unsolved')
+    % unsolved
+    obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_LIMITED;
+elseif strcmp(sol.status,'MaxIterations')
+    % max iterations reached
+    obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_LIMITED;
+elseif strcmp(sol.status,'MaxTime')
+    % max time reached
+    obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_LIMITED;
+elseif strcmp(sol.status,'InsufficientProgress')
+    % InsufficientProgress
+    obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_LIMITED;
+elseif strcmp(sol.status,'Unknown')
+    % InsufficientProgress
+    obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_UNKNOWN;
+elseif strcmp(sol.status,'NumericalError')
+    % InsufficientProgress
+    obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_LIMITED;
 else
-        % primal unbounded / dual infeasible
+    % primal unbounded / dual infeasible
     obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_INFEASIBLE;
-    assert(~obj.opts.error_on_fail,'Conic problem is dual infeasible.')
+    assert(~obj.opts.error_on_fail,['Conic problem is ' sol.status])
 end
-
-
-    % 
-    % // solution status (enumeration) to string for output
-    % const char *status_str;
-    % switch (solution.status) {
-    %     case SolverStatus::Unsolved:
-    %         status_str = "Unsolved";
-    %         break;
-    %     case SolverStatus::Solved:
-    %         status_str = "Solved";
-    %         break;
-    %     case SolverStatus::PrimalInfeasible:
-    %         status_str = "PrimalInfeasible";
-    %         break;
-    %     case SolverStatus::DualInfeasible:
-    %         status_str = "DualInfeasible";
-    %         break;
-    %     case SolverStatus::AlmostSolved:
-    %         status_str = "AlmostSolved";
-    %         break;
-    %     case SolverStatus::AlmostPrimalInfeasible:
-    %         status_str = "AlmostPrimalInfeasible";
-    %         break;
-    %     case SolverStatus::AlmostDualInfeasible:
-    %         status_str = "AlmostDualInfeasible";
-    %         break;
-    %     case SolverStatus::MaxIterations:
-    %         status_str = "MaxIterations";
-    %         break;
-    %     case SolverStatus::MaxTime:
-    %         status_str = "MaxTime";
-    %         break;
-    %     case SolverStatus::NumericalError:
-    %         status_str = "NumericalError";
-    %         break;
-    %     case SolverStatus::InsufficientProgress:
-    %         status_str = "InsufficientProgress";
-    %         break;
-    %     default:
-    %         status_str = "Unknown";
-    %         break;
-    % }
-    % 
-
-
-%     % primal unbounded / dual infeasible
-%     obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_INFEASIBLE;
-%     assert(~obj.opts.error_on_fail,'Conic problem is dual infeasible.')
-% elseif status_val == -2
-%     % primal infeasible / dual unbounded
-%     obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_INFEASIBLE;
-%     assert(~obj.opts.error_on_fail,'Conic problem is primal infeasible.')
-% elseif ismember(status_val, [2 -6 -7])
-%     % inaccurate solution
-%     obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_NAN;
-%     assert(~obj.opts.error_on_fail,'Optimizer did not reach desired accuracy (Status: %s).', obj.info.status)
-% elseif status_val < -2
-%     % failure
-%     obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_LIMITED;
-%     assert(~obj.opts.error_on_fail,'Optimizer failed (Status: %s).', obj.info.status)
-% else
-%     % success
-%     obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_SUCCESS;
-% end
 
 % parse solution
 argout = call(obj.ghan,[argin {x z s}]);

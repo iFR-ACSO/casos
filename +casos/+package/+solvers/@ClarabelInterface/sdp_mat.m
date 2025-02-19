@@ -1,5 +1,5 @@
 function M = sdp_mat(V, scale)
-% MOSEK/SCS-style matrix de-vectorization for semidefinite cone embedding.
+% Clarabel-style matrix de-vectorization for semidefinite cone embedding.
 %
 % This function takes a matrix
 % 
