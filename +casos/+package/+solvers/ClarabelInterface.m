@@ -21,7 +21,7 @@ methods
 
         % default options
         % see default setting structure of Clarabel MATLAB interface
-        if ~isfield(obj.opts,'Clarabel'), obj.opts.Clarabel = DefaultSettings; end
+        if ~isfield(obj.opts,'clarabel'), obj.opts.clarabel = DefaultSettings; end
     end
 end
 
@@ -39,7 +39,7 @@ methods (Access=protected)
 
  
         % options to SCS
-        opts = obj.opts.Clarabel;
+        opts = obj.opts.clarabel;
 
         
         % Initialize an empty cell array for cones
