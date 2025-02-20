@@ -50,16 +50,9 @@ end
 % Default contour
 if isempty(v)
     v = 1;
-elseif ~isa(v, 'double')
-    if isa(v, 'casos.PD')
-        try
-            v = full(v); % Attempt conversion
-        catch
-            error('Cannot convert v from casos.PD to double.');
-        end
-    else
-        error('v must be of type double or convertible from casos.PD.');
-    end
+elseif ~isa(v, 'double') 
+    assert(v.is_constant, 'Level set value must be a constant');
+    v = full(casos.PD(v));
 end
 
 % Default npts
@@ -75,19 +68,19 @@ if isempty(domain)
 else
     % Extract variables and bounds from the domain
     nvar = size(domain,1); 
-    var  = domain(:,1);             % First column: variables
-    xmin = full(domain(:,2));       % Second column: lower bounds
-    xmax = full(domain(:,3));       % Third column: upper bounds
+    var  = domain(:,1);                             % First column: variables
+    bounds = horzcat(domain(:,2), domain(:,3));     % Get domain bounds
 
-    % Validate variable type and convert bounds if necessary
-    if isa(var,'casos.PS') || isa(var,'casos.PD')
-        % Convert xmin and xmax to full numerical arrays if they are CasADi objects
-        xmin = full(casadi.DM(xmin));       
-        xmax = full(casadi.DM(xmax));       
-    elseif ~isa(var, 'casos.Indeterminates')
-        error(['First column of the domain must be a vector of ' ...
-            'indeterminate variables (or PS, PD).']);
-    end
+    % Check whether an object can be converted to casos.Indeterminates
+    assert(is_indet(var), 'First column of the domain must be a vector of indeterminate variables.');
+
+    % Check if the domain does not contain symbolic variables
+    assert(bounds.is_constant, 'Domain must not contain symbolic variables.');
+
+    % Convert bounds to PD followed by conversion to double via full
+    bounds = full(casos.PD(bounds));
+
+    [xmin, xmax] = deal(bounds(:,1), bounds(:,2));
 
     % Convert variables to indeterminates (preserves sorting)
     indets = casos.Indeterminates(var);
@@ -113,10 +106,10 @@ xpts = (xmin+xdiff.*rand(nvar, npts))';
 % Convert matrix columns to a cell array, each cell contains one column
 columnCells = mat2cell(xpts, size(xpts, 1), ones(1, size(xpts, 2)));
 
-% from casos poly to casadi function
+% From casos poly to casadi function
 polyFun = to_function(p);
 
-% evaluate casadi function
+% Evaluate casadi function
 pv = full(polyFun(columnCells{:}));
 
 % Estimate Volume and Standard Deviation
