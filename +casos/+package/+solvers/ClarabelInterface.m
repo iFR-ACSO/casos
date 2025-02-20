@@ -37,27 +37,34 @@ methods (Access=protected)
     function [x,z,s] = call_solver(obj,data,K)
         % Call Clarabel solver.
 
-        cones = [];
-
+ 
         % options to SCS
-        opts = obj.opts.clarabel;
+        opts = obj.opts.Clarabel;
 
-        % add zero cones
+        
+        % Initialize an empty cell array for cones
+        cones = cell(1, 1); 
+
+        % Add zero cones for the Clarabel wrapper
         if K.z > 0
-            cones(end+1,:) = zeroConeT(K.z);
+            cones{end+1} = zeroConeT(K.z);
         end
-        
-        % add second order cones
+
+        % Add second order cones
         if K.q > 0
-            cones(end+1,:) = SecondOrderConeT(K.q);
+            cones{end+1} = SecondOrderConeT(K.q);
         end
-        
-        % stack PSD cones
-        if ~isempty(K.s)
+
+        % Stack PSD cones
+        num_psd = length(K.s);
+        if num_psd > 0
             psd_cones = arrayfun(@PSDTriangleConeT, K.s, 'UniformOutput', false);
             % concatenate
-            cones = vertcat(cones, psd_cones{:}); 
+            cones = [cones, psd_cones']; 
         end
+
+        % Convert cell array to a proper structure 
+        cones = vertcat(cones{:});
         
         % call clarabel mex
         sol = clarabel_mex(data.P,data.c,data.A,data.b,cones,opts);
@@ -66,7 +73,16 @@ methods (Access=protected)
         x  = sol.x;
         z = sol.z;
         s = sol.s;
-
+        
+        % extract infos
+        clarabel_info.solve_time = sol.solve_time;
+        clarabel_info.status     = sol.status;
+        clarabel_info.iterations = sol.iterations;
+        clarabel_info.r_prim     = sol.r_prim;
+        clarabel_info.r_dual     = sol.r_dual;
+       
+        obj.info.clarabel_info = clarabel_info;
+       
         % get solution status
         if strcmp(sol.status,'Solved')
             % success
