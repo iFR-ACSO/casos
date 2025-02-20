@@ -1,7 +1,7 @@
 function buildproblem(obj)
-% Construct Clarabel problem description (P,A,b,c,K) from problem structure.
-% See: https://clarabel.org/stable/ or http://arxiv.org/pdf/2405.12762
-% Clarabel solves semidefinite problems in the form 
+% Construct SCS problem description (P,A,b,c,K) from problem structure.
+%
+% SCS solves semidefinite problems in the form
 %
 %   min 1/2*x'*P*x + c'*x 
 %   s.t. A*x + s = b, s in K
@@ -85,15 +85,12 @@ Na.s = (obj.getdimc(Kc,'psd'));
 %     0 + t = 1
 %
 % such that (t,sba,sbx) in Kb = {(t,s) | t*[lba;lbx] <= s <= t*[uba;ubx]}.
-%Nx_c = n - Nx.l;
-%Na_c = m - Na.l;
-
 A = [sparse(1,n); -a; -speye(n)];
 b = [1; sparse(Na.l,1); -cba; sparse(Nx.l,1); -cbx];
 c = g;
 P = h;
 
-% set cone for Clarabel
+% set cone for SCS
 K.bl = [lba; lbx];
 K.bu = [uba; ubx];
 K.q = [Na.q Nx.q];
@@ -107,23 +104,23 @@ Ix = [ones(1,Nx.l) 2*ones(1,sum(Nx.q)) 3*ones(1,sum(Nx.s.^2))];
 
 [~,idx] = sort([0 Ia Ix]);
 
-% Clarabel-style vectorization of PSD cone
+% SCS-style vectorization of PSD cone
 Ac = mat2cell(A(idx,:),[1+Na.l+Nx.l sum(K.q) sum(K.s.^2)],n);
 bc = mat2cell(b(idx)  ,[1+Na.l+Nx.l sum(K.q) sum(K.s.^2)],1);
 % vector-based vectorization
 Ac_s = cellfun(@obj.sdp_vec, mat2cell(Ac{3},K.s.^2,n), 'UniformOutput', false);
 bc_s = cellfun(@obj.sdp_vec, mat2cell(bc{3},K.s.^2,1), 'UniformOutput', false);
-% build Clarabel structures
-AClarabel = vertcat(Ac{1},Ac{2},Ac_s{:});
-bClarabel = vertcat(bc{1},bc{2},bc_s{:});
+% build SCS structures
+Ascs = vertcat(Ac{1},Ac{2},Ac_s{:});
+bscs = vertcat(bc{1},bc{2},bc_s{:});
 
-% return Clarabel structures P,A,b,c
-obj.fhan = casadi.Function('f',struct2cell(obj.args_in),{P AClarabel bClarabel c},fieldnames(obj.args_in),{'P' 'A' 'b' 'c'});
+% return SCS structures P,A,b,c
+obj.fhan = casadi.Function('f',struct2cell(obj.args_in),{P Ascs bscs c},fieldnames(obj.args_in),{'P' 'A' 'b' 'c'});
 
-% parse Clarabel solution (X,Y,S) into (x,cost,lam_a,lam_x)
+% parse SCS solution (X,Y,S) into (x,cost,lam_a,lam_x)
 X = casadi.MX.sym('x',size(c));
-Y = casadi.MX.sym('y',size(bClarabel));
-S = casadi.MX.sym('s',size(bClarabel));
+Y = casadi.MX.sym('y',size(bscs));
+S = casadi.MX.sym('s',size(bscs));
 
 % dual variables corresponding to constraints and variables
 Yc = mat2cell(Y,[1 Na.l Nx.l sum(Na.q) sum(Nx.q) sum(Na.s.*(Na.s+1)/2) sum(Nx.s.*(Nx.s+1)/2)],1);

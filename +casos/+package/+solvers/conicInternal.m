@@ -15,7 +15,7 @@ switch lower(solver)
         sol = casos.package.solvers.SCSInterface(name,conic,varargin{:});
 
     case 'clarabel'
-        % solve conic problem using clarabel
+        % solve conic problem using Clarabel
         sol = casos.package.solvers.ClarabelInterface(name,conic,varargin{:});
         
     otherwise
