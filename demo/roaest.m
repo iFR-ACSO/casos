@@ -25,7 +25,7 @@ g = casos.PS.sym('g');
 b = casos.PS.sym('b');
 
 % options
-opts = struct('sossol','mosek');
+opts = struct('sossol','sedumi');
 
 %% Setup solver
 % solver 1: gamma-step
@@ -56,11 +56,10 @@ opts = struct;
 opts.Kx = struct('sos', 0, 'lin', 1); 
 opts.Kc = struct('sos', 3);
 
-S3 = casos.sossol('S','mosek',sos3,opts);
+S3 = casos.sossol('S','sedumi',sos3,opts);
 
 %% V-s-iteration
-tic 
-for iter = 1:20
+for iter = 1:10
 
     % gamma step
     sol1 = S1('p',Vval);
@@ -81,5 +80,3 @@ for iter = 1:20
 
     fprintf('Iteration %d: b = %g, g = %g.\n',iter,full(bval),full(gval));
 end
-toc
-% profile viewer

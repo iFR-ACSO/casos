@@ -36,9 +36,8 @@ opts.Kc = struct('sos',1);
 S = casos.sossol('S','mosek',sos,opts);
 
 % evaluate
-tic
 sol = S();
-toc
+
 % the result should be a value slightly above pi
 fprintf('volume(K) = %d\n', full(sol.f)); 
 
