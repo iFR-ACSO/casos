@@ -1,5 +1,5 @@
-function V = sdp_vec(M,scale)
-% MOSEK/SCS-style matrix vectorization for semidefinite cone embedding.
+function V = sdp_vec(obj,M,scale)
+% SCS-style matrix vectorization for semidefinite cone embedding.
 %
 % This function takes a matrix
 %
@@ -11,15 +11,15 @@ function V = sdp_vec(M,scale)
 %   V = [ v1 ... vl ]
 %
 % where each column is a k*(k+1)/2-by-1 vector that corresponds to stacking 
-% the lower-triangular elements of Mi column-wise, where the off-diagonal 
-% entries are scaled by sqrt(2).
+% the (lower or upper) triangular elements of Mi column-wise, where the 
+% off-diagonal entries are scaled by sqrt(2).
 
 k = sqrt(size(M,1));
 
 assert(k == floor(k), 'Input must be a quadratic matrix.')
 
 % user-defined scaling
-if nargin < 2
+if nargin < 3
     scale = sqrt(2);
 end
 
@@ -32,10 +32,10 @@ M = (M(idx,:) + M)/2;
 
 % select diagonal entries
 Id = find(casadi.Sparsity.diag(k));
-% lower-triangular entries
-Il = find(casadi.Sparsity.lower(k));
+% triangular entries
+Il = find(obj.sparsity_triangular(k));
 
-% scale lower-triangular off-diagonal entries, 
+% scale triangular off-diagonal entries, 
 Msc = scale*M;
 Msc(Id,:) = Msc(Id,:) + (1-scale)*M(Id,:);
 

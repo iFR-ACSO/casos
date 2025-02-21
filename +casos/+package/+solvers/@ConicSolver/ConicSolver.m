@@ -109,14 +109,12 @@ methods
     end
 end
 
-methods (Static, Access=protected)
-    %% Static helper functions
-    % MOSEK/SCS-style for the semidefinite cone
-    [V,varargout] = sdp_vec(M,varargin);
-    [M,varargout] = sdp_mat(V,varargin);
-end
-
 methods (Access=protected)
+    %% Quasi-Static helper functions
+    % MOSEK/SCS-style vectorization of the semidefinite cone
+    [V,varargout] = sdp_vec(obj,M,varargin);
+    [M,varargout] = sdp_mat(obj,V,varargin);
+
     %% Cone helper functions
     function d = getdimc(obj,K,type)
         % Return cone dimensions of specific type.        
