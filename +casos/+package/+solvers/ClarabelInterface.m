@@ -37,25 +37,41 @@ methods (Access=protected)
     function [x,z,s] = call_solver(obj,data,K)
         % Call Clarabel solver.
 
- 
+        cones = cell(1, 1);
+
         % options to SCS
         opts = obj.opts.clarabel;
 
-        
-        % Initialize an empty cell array for cones
-        cones = cell(1, 1); 
+        % rewrite box cone into linear variables
+        % (temporary workaround)
+        if ~isempty(K.bl)
+            % order of slacks: (sz, sl, t, sb, ...)
+            A = mat2cell(data.A,[K.z+K.l 1 length(K.bl) sum(K.q)+sum(K.s*(K.s+1)/2)]);
+            b = mat2cell(data.b,[K.z+K.l 1 length(K.bl) sum(K.q)+sum(K.s*(K.s+1)/2)]);
 
-        % Add zero cones for the Clarabel wrapper
+            % introduce nonnegative variables
+            data.A = [A{1}; A{3};      -A{3};      A{4}];
+            data.b = [b{1}; b{3}-K.bl; -b{3}-K.ub; b{4}];
+
+            K.l = K.l + length(K.bl);
+        end
+
+        % add zero cone for the Clarabel wrapper
         if K.z > 0
             cones{end+1} = zeroConeT(K.z);
         end
 
-        % Add second order cones
+        % add nonnegative cone
+        if K.l > 0
+            cones{end+1} = NonnegativeConeT(K.l);
+        end
+
+        % add second order cone
         if K.q > 0
             cones{end+1} = SecondOrderConeT(K.q);
         end
 
-        % Stack PSD cones
+        % stack PSD cones
         num_psd = length(K.s);
         if num_psd > 0
             psd_cones = arrayfun(@PSDTriangleConeT, K.s, 'UniformOutput', false);
@@ -63,14 +79,14 @@ methods (Access=protected)
             cones = [cones, psd_cones']; 
         end
 
-        % Convert cell array to a proper structure 
+        % convert cell array to a proper structure 
         cones = vertcat(cones{:});
         
         % call clarabel mex
         sol = clarabel_mex(data.P,data.c,data.A,data.b,cones,opts);
         
         % extract primal, dual and slack variables
-        x  = sol.x;
+        x = sol.x;
         z = sol.z;
         s = sol.s;
         
