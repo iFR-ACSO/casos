@@ -15,16 +15,16 @@ switch solver_id
     case 1  % options for linprog (Optimization toolbox from Matlab)
         options = optimoptions('linprog');
         options.Display = 'off';   
-        lp_solver = @(A,b,c,options) linprog_solver(A,b,c,options);
+        lp_solver = @(A,b,c,options) linprog_solver(A, b, c, options);
     case 2  % options for Sedumi
         options.fid = 0;
-        lp_solver = @(A,b,c,options) sedumi_lp_solver(A,b,c,options);
+        lp_solver = @(A,b,c,options) sedumi_lp_solver(A, b, c, options);
     case 3  % options for Mosek
         options = struct();
-        lp_solver = @(A,b,c,options) mosek_lp_solver(A,b,c,options);
+        lp_solver = @(A,b,c,options) mosek_lp_solver(A, b, c, options);
     case 4 % options for SCS
         options = struct();
-        lp_solver = @(A,b,c,options) scs_lp_solver(A,b,c,options);
+        lp_solver = @(A,b,c,options) scs_lp_solver(A, b, c, options);
 end
 
 % build LP (part 1)
@@ -189,13 +189,15 @@ function [x, flag] = scs_lp_solver(A, b, c, options)
     if issparse(c), c = full(c); end
 
     % Prepare SCS input data
-    data.A = A;
-    data.c = c;
+    data.A = A;     % Slack variables added
+    data.c = c;     % Extend objective function
     data.b = b;
-    K.z = size(A,1);
+
+    % Define the positive cone
+    K.l = size(A,1);
 
     % Default solver settings
-    defaultSettings = struct('eps_abs', 1e-4, 'eps_rel', 1e-4, 'verbose', 0);
+    defaultSettings = struct('eps', 1e-8, 'verbose', 0);
     
     % Merge user-provided settings
     if nargin >= 4 && isstruct(options)
@@ -275,7 +277,7 @@ function [x, flag] = sedumi_lp_solver(A, b, c, options)
 
     % Solve LP using SeDuMi
     [x, ~, info] = sedumi(A_sedumi, b_sedumi, c_sedumi, K, options); 
-    
+
     % Extract relevant part of x (ignoring slack variables)
     x = x(1:size(A,2));
 
