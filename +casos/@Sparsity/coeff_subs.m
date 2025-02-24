@@ -35,8 +35,9 @@ degA = S1.degmat(:,~tf);
 
 if is_zerodegree(S2)
     % substitution with scalar expression
+    coeffb = repmat(coeffb,S1.numel,1);
     % coefficients of c = sum_a c_a*b^a1*y^a2
-    coeffs = coeff1.*T(coeffb);
+    coeffs = times_coeffs(coeff1, T(coeffb));
     % degree matrix of c 
     degmat = degA;
 
