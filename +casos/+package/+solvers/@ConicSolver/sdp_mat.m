@@ -1,4 +1,4 @@
-function m = sdp_mat(V,Ks,scale,dim)
+function m = sdp_mat(~,V,Ks,scale,dim)
 % Index-based lower-triangular de-vectorization for semi-definite matrices.
 %
 % This function takes a matrix
@@ -34,7 +34,7 @@ function m = sdp_mat(V,Ks,scale,dim)
 %           vector satisfying Nij = K(j) for all (i,j) in {1...p}x{1...q}.
 %
 
-if nargin > 3
+if nargin > 4
     % dimension provided, nothing to do
 elseif isrow(V)
     % row vector blocks only
@@ -44,7 +44,7 @@ else
     dim = 1;
 end
 
-if nargin < 3 || isempty(scale)
+if nargin < 4 || isempty(scale)
     % default scaling for SCS
     scale = sqrt(2);
 end

@@ -1,4 +1,4 @@
-function [v,i,j,k,l] = sdp_vec(M,Ks,scale,dim)
+function [v,i,j,k,l] = sdp_vec(~,M,Ks,scale,dim)
 % Index-based lower-triangular vectorization for semi-definite matrices.
 %
 % This function takes a matrix
@@ -40,7 +40,7 @@ function [v,i,j,k,l] = sdp_vec(M,Ks,scale,dim)
 % (k,l) corresponding to the lower-triangular elements Mij(k,l). Parameters
 % apply as above.
 
-if nargin > 3
+if nargin > 4
     % dimension provided, nothing to do
 elseif isrow(M)
     % row vector blocks only
@@ -50,7 +50,7 @@ else
     dim = 1;
 end
 
-if nargin < 3 || isempty(scale)
+if nargin < 4 || isempty(scale)
     % default scaling for SCS
     scale = sqrt(2);
 end
