@@ -42,7 +42,7 @@ while true
     end
 
     % check filter acceptance
-    [x_k1,theta_x_k1,f_x_k1 ,filter_Acceptance] = check_filter_acceptance(obj,filter,alpha,x_k,dual_k,dk,dkl,p0,args);
+    [x_k1,theta_x_k1,f_x_k1 ,filter_Acceptance,sol_convio] = check_filter_acceptance(obj,filter,alpha,x_k,dual_k,dk,dkl,p0,args);
     
      dual_k1 = dual_k + alpha*(dual_star-dual_k);
     
@@ -54,13 +54,11 @@ while true
          L_k  = [];
      end
 
-    if filter_Acceptance  %&& Wolfe % acceptable to filter
+    if filter_Acceptance 
 
         % check sufficient decrease
         [suffDecrease_flag,f_type,amijo,filter] = chechSuffDecrease(obj,alpha,x_star,x_k,p0,theta_xk,theta_x_k1, f_x_k1,f_xk,L_k1,L_k,dual_k,filter);
     
-        
-        % either sufficient decrease in cost or constraint violation
         if suffDecrease_flag
             % accept and leave while loop
             break
@@ -133,10 +131,10 @@ sol_iter.theta_x_k1 = theta_x_k1;
 sol_iter.f_x_k1     = f_x_k1;
 sol_iter.alpha_k    = alpha;
 sol_iter.dual_qp    = dual_star;
-
+info{iter}.constraint_violation = sol_convio;
 % update quasi-Newton/exact Hessian
 % if strcmp(obj.opts.hessian_approx,'BFGS')
-    %     % damped BFGS
+        % damped BFGS
     Bk = damped_BFGS(obj,Bk,x_k,p0,sol_iter,iter);
 % elseif strcmp(obj.opts.hessian_approx,'Levenberg')
 %     % see Betts book
