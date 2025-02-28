@@ -31,6 +31,10 @@ alpha = alpha_max;
 f_type = 0;
 amijo  = 0;
 
+
+measBackStepTime = tic;
+SocTimeMeas      = [];
+SuffDecreaseTimeMeas = 0;
 % Backtracking linesearch
 while true
     
@@ -38,20 +42,17 @@ while true
     dk   = (x_star    - x_k);
     dkl  = (dual_star-dual_k);
      
-    % check, if search direction becomes too small
-    if max(abs(full(dk))./(1+abs(full(x_k)))) < 10*eps
-        stop = 1;
-    end
 
+    measFilterAcceptTime = tic;
     % check filter acceptance
-    [x_k1,theta_x_k1,f_x_k1 ,filter_Acceptance] = check_filter_acceptance(obj,filter,alpha,x_k,dual_k,dk,dkl,p0,args);
-     
+    [x_k1,theta_x_k1,f_x_k1 ,filter_Acceptance,sol_convio] = check_filter_acceptance(obj,filter,alpha,x_k,dual_k,dk,dkl,p0,args);
+    FilterAcceptTimeMeas = toc(measFilterAcceptTime);
 
      dual_k1 = dual_k + alpha*(dual_star-dual_k);
     
-    % heuristic: there might be blocking entries in the
-    % filter; check first-order optimality conditions to potentially aboard
-    % linesearch early as possible
+    % heuristic: there might be blocking entries in the filter: 
+    % check first-order optimality conditions to potentially aboard
+    % linesearch early as possible if we are "optimal"
     if full(obj.eval_gradLang(x_k1,p0,dual_k1))  <= obj.opts.tolerance_opt*max(1,full(obj.eval_gradLang(x_k1,p0,dual_k1))) && theta_x_k1 <= obj.opts.tolerance_con
         break
     end
@@ -65,10 +66,11 @@ while true
      end
 
     if filter_Acceptance 
-
+        
+        measSuffDecreaseTime = tic;
         % check sufficient decrease
         [suffDecrease_flag,f_type,amijo,filter] = chechSuffDecrease(obj,alpha,x_star,x_k,p0,theta_xk,theta_x_k1, f_x_k1,f_xk,L_k1,L_k,dual_k,filter);
-    
+        SuffDecreaseTimeMeas =  toc(measSuffDecreaseTime);
         
         % either sufficient decrease in cost or constraint violation
         if suffDecrease_flag
@@ -78,10 +80,11 @@ while true
         
         % invoke soc to avoid maratos effect, if necessary
         if ~suffDecrease_flag && alpha == 1  && theta_x_k1 >= theta_xk
-
+           
+           measSocTime = tic;
            % compute corrected search direction, compute new trial point and check for filter acceptance
            [x_k1,~,f_type,amijo] = second_order_correction(obj,x_k,x_star,p0,Bk,args,filter,alpha,theta_xk,f_xk,dkl,L_k1,L_k,dual_k);
-
+           SocTimeMeas = toc(measSocTime);
            % leave while loop if corrected step is acceptable to filter
            if ~isempty(x_k1)
                break % means we found a solution with SOC; leave loop
@@ -89,15 +92,15 @@ while true
 
         end
 
-
     else % not acceptable to filter
         
         % invoke soc to avoid maratos effect, if necessary
         if ~filter_Acceptance && alpha == 1 && theta_x_k1 >= theta_xk
-            
+           
+           measSocTime = tic;
            % compute corrected search direction, compute new trial point and check for filter acceptance
            [x_k1,~,f_type,amijo] = second_order_correction(obj,x_k,x_star,p0,Bk,args,filter,alpha,theta_xk,f_xk,dkl,L_k1,L_k,dual_k);
-
+           SocTimeMeas = toc(measSocTime);
            if ~isempty(x_k1)
                break % means we found a solution with SOC; leave loop
            end
@@ -120,6 +123,7 @@ while true
         
 
 end % end of backtracking linesearch
+totalBackstepTimeMeas = toc(measBackStepTime);
 
 
 % only augment if either f-type or amijo are not fulfilled
@@ -142,28 +146,49 @@ sol_iter.theta_x_k1 = theta_x_k1;
 sol_iter.f_x_k1     = f_x_k1;
 sol_iter.alpha_k    = alpha;
 sol_iter.dual_qp    = dual_star;
+info{iter}.constraint_violation = sol_convio;
 
+measHessApp = tic;
 % update quasi-Newton/exact Hessian
 if strcmp(obj.opts.hessian_approx,'BFGS')
-    %     % damped BFGS
+
+    % damped BFGS
     Bk = damped_BFGS(obj,Bk,x_k,p0,sol_iter,iter);
+
 elseif strcmp(obj.opts.hessian_approx,'Levenberg')
+
     % see Betts book
     H  = full(obj.hess_fun(x_k1,p0,dual_k1));
-    Bk = casos.package.solvers.SequentialCommon.hessian_regularization(H);
-elseif strcmp(obj.opts.hessian_approx,'EigValReg')
+    Bk = casos.package.solvers.SequentialCommon.hessian_Levenberg(H);
+
+elseif strcmp(obj.opts.hessian_approx,'Regularization')
+
     % own regularization method
     H = full(obj.hess_fun(x_k1,p0,dual_k1));
     Bk = casos.package.solvers.SequentialCommon.regularizeHessian(H);
+
 elseif strcmp(obj.opts.hessian_approx,'Mirroring')
+
     % Verschueren
     H = full(obj.hess_fun(x_k1,p0,dual_k1));
     [L,D] = ldl(H);
     
     D(D<0) = 1e-6;
     Bk = L*abs(D)*L';
-end
 
+end
+HessApproxTimeMeas = toc(measHessApp);
+
+% get timing stats
+info{iter}.timeStats.HessApproxTime         = HessApproxTimeMeas;
+info{iter}.timeStats.totalBackstepTime      = totalBackstepTimeMeas;
+info{iter}.timeStats.FilterAcceptTime       = FilterAcceptTimeMeas;
+info{iter}.timeStats.SuffDecreaseTime       = SuffDecreaseTimeMeas;
+if ~isempty(SocTimeMeas)
+    info{iter}.timeStats.SocTime                = SocTimeMeas;
+else
+    info{iter}.timeStats.SocTime                = 0;
+end
 
 
 end

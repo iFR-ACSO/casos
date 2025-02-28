@@ -49,27 +49,52 @@ methods
             nlsos.g = casos.PS(nlsos.g);
         end
 
-        %% set up feasibility restoration phase --> do we need all or only nonlinear
-        
-        base_g = sparsity(nlsos.g);
+        %% set up feasibility restoration phase 
+       
         base_x = sparsity(nlsos.x);
+
+        I = true(length(nlsos.g),1);
+        % for idx = 1:length(nlsos.g)
+        %     I(idx) = ~is_linear(nlsos.g(idx),nlsos.x);
+        % end
+
+        % get gram half-basis for nonlinear constraints
+        [~,~,z] = grambasis(nlsos.g,I);
         
-        r  = casos.PS.sym('r',length(nlsos.g));
-        s0 = casos.PD(base_g,ones(base_g.nnz,1));
+        % build unit vectors
+        base_s0 = gramunit(z);
         
+        r  = casos.PS.sym('r',sum(I));
+   
+        s0 = casos.PD(base_s0);
+
         nlsos_feas.x = [r;nlsos.x];
         
-        nlsos_feas.g = nlsos.g + r.*s0;
+        nlsos_feas.g = nlsos.g(I) + r.*s0;
         
         x_R   = casos.PS.sym('x_R',base_x);
-        nlsos_feas.f = sum(r) ; %+ 0.1/2*dot(nlsos.x-x_R,nlsos.x-x_R);
-        
-        nlsos_feas.p = [nlsos.p; x_R];
-        
-        obj.FeasRes_para.n_r = length(nlsos.g);
-        
-        
 
+        if strcmp(obj.opts.feasibility_restoration,'Simple')
+            % we simply mininimize on the constraint manifold
+            Phi = [];
+            lambda = [];
+        elseif strcmp(obj.opts.feasibility_restoration,'Regularize')
+            % check how far we are from the original problem/solution
+            e   = nlsos_feas.x(sum(I)+1:end) - nlsos.x;
+            Phi = 1/2*dot(e,e);
+            lambda   = casos.PS.sym('l');
+        elseif   strcmp(obj.opts.feasibility_restoration,'Cost')
+            Phi = 1/2*nlsos.f;
+            lambda   = casos.PS.sym('l');
+        end
+
+        nlsos_feas.f = sum(r) + lambda*Phi ;
+        
+        nlsos_feas.p = [nlsos.p; x_R;lambda];
+        
+        obj.FeasRes_para.n_r = sum(I);
+        obj.FeasRes_para.length_dualOut = length(nlsos_feas.x)-length(nlsos_feas.g);
+       
         sosopt.sossol        = obj.opts.sossol;
         sosopt.Kx.lin        = length(nlsos_feas.x);
         sosopt.Kc.sos        = length(nlsos_feas.g);
@@ -77,7 +102,7 @@ methods
         sosopt.verbose       = 1;
         sosopt.max_iter      = 100;
         obj.feas_res_solver  =  casos.package.solvers.FeasibilityRestoration('feasRes',nlsos_feas,sosopt);
-        
+         
        % total build time for both actual problem and feasibility
        % restoration
        obj.display_para.solver_build_time      = obj.display_para.solver_build_time +obj.feas_res_solver.display_para.solver_build_time;
