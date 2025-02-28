@@ -168,6 +168,7 @@ args_in = obj.args_in;
 
 % handle quadratic cost function
 % MOSEK cannot solve conic problems with quadratic cost
+
 if nnz(h) > 0
     
     % use casadi to compute cholesky

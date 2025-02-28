@@ -6,6 +6,8 @@ properties (Access=protected)
     ghan;
     barv;
     cone;
+    size_A;
+    n_decVar;
 end
 
 properties (Access=private)
@@ -39,6 +41,9 @@ methods
         if ~isfield(obj.opts,'mosek_param'), obj.opts.mosek_param = struct; end
         if ~isfield(obj.opts,'mosek_echo'), obj.opts.mosek_echo = 0; end
         if ~isfield(obj.opts,'cholesky_method'), obj.opts.cholesky_method = 'num'; end
+
+        obj.info.conic.size_A   = obj.size_A;
+        obj.info.conic.n_decVar = obj.n_decVar;
     end
 
     function s = stats(obj)

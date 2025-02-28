@@ -31,8 +31,11 @@ msk_prob.barf.val = full(data.f);
 %TODO: initial guess, quadratic cost
 
 % options to MOSEK
+
 msk_param = obj.opts.mosek_param;
+msk_param .MSK_IPAR_AUTO_UPDATE_SOL_INFO = 'MSK_ON';
 msk_echo  = obj.opts.mosek_echo;
+    
 
 % build MOSEK command string
 msk_cmd = sprintf('minimize echo(%d) info statuskeys(0)',msk_echo);
@@ -44,6 +47,14 @@ msk_cmd = sprintf('minimize echo(%d) info statuskeys(0)',msk_echo);
 if isfield(res,'info')
     obj.info.mosek_info = res.info;
 end
+
+% linear constraints and linear decision variables
+obj.info.SDP_data.size_A_nnz = nnz(prob.a);
+obj.info.SDP_data.size_A     = size(prob.a);
+
+% add size for the current conic solver
+obj.info.conic.size_A = obj.size_A;
+obj.info.conic.n_decVar = obj.n_decVar;
 
 % pre-initialize solution struct
 sol = struct('pobjval',0,'xx',0,'barx',0,'slc',0,'suc',0,'slx',0,'sux',0,'doty',0,'bars',0);
@@ -80,6 +91,56 @@ if ~isempty(msk_sol)
             % infeasible problem
             obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_INFEASIBLE;
             assert(~obj.opts.error_on_fail,'Problem is primal and/or dual infeasible or unbounded.')
+         case {'UNKNOWN'}
+            % in this case mosek can not decide about the solution so we
+            % need some additional check here!
+
+             % Compute relative primal-dual gap
+            relativeGap = abs(res.info.MSK_DINF_SOL_ITR_PRIMAL_OBJ - res.info.MSK_DINF_SOL_ITR_DUAL_OBJ) ...
+                          / max([abs(res.info.MSK_DINF_SOL_ITR_PRIMAL_OBJ), abs(res.info.MSK_DINF_SOL_ITR_DUAL_OBJ)]);
+            
+            % Compute max primal constraint violation across different categories
+            primMaxVio = max([abs(res.info.MSK_DINF_SOL_ITR_PVIOLCON), ...   % General constraints
+                              abs(res.info.MSK_DINF_SOL_ITR_PVIOLACC), ...   % Affine conic constraints
+                              abs(res.info.MSK_DINF_SOL_ITR_PVIOLCONES), ... % Conic constraints
+                              abs(res.info.MSK_DINF_SOL_ITR_PVIOLVAR)]);     % Variable bound violations
+            
+            % Compute max dual constraint violation across different categories
+            dualMaxVio = max([abs(res.info.MSK_DINF_SOL_ITR_DVIOLCON), ... % General constraints
+                              abs(res.info.MSK_DINF_SOL_ITR_DVIOLACC), ... % Affine conic constraints
+                              abs(res.info.MSK_DINF_SOL_ITR_DVIOLCONES), ... % Conic constraints
+                              abs(res.info.MSK_DINF_SOL_ITR_DVIOLVAR)]); % Variable bound violations
+            
+            % Compute optimality measure from Mosek's solver status
+            % It should converge to +1 to be optimal
+            optMeas = res.info.MSK_DINF_INTPNT_OPT_STATUS > 0.5;
+            
+            % Check for potential ill-conditioning by looking at large norm values
+            maxNorm = max([res.info.MSK_DINF_SOL_ITR_NRM_XX, ... % Norm of primal variables
+                           res.info.MSK_DINF_SOL_ITR_NRM_Y]);    % Norm of dual variables
+            
+            % Define an adaptive feasibility tolerance based on problem scale
+            % If the objective values are large, allow a slightly relaxed threshold
+            feasibilityTol = 1e-6 * max(1, max([abs(res.info.MSK_DINF_SOL_ITR_PRIMAL_OBJ), ...
+                                                abs(res.info.MSK_DINF_SOL_ITR_DUAL_OBJ)]));
+            
+
+            
+            % Decision logic for solution acceptability
+            if relativeGap < 0.05 && ... % Ensure relative gap is less than 5%
+               primMaxVio <= feasibilityTol && ... % Check primal feasibility within adaptive tolerance
+               dualMaxVio <= feasibilityTol && ... % Check dual feasibility within adaptive tolerance
+               optMeas && ... % Ensure optimality measure is reasonable
+               maxNorm < 1e10  % Avoid using solutions with extremely large norms (ill-conditioning)
+            
+                obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_SUCCESS; % Solution is acceptable
+            
+            else
+                obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_LIMITED; % Solution is questionable
+            end
+
+
+            
         otherwise
             % problem status unknown or ill-posed
             obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_LIMITED;
