@@ -42,6 +42,8 @@ end
 properties (Abstract, Access=protected)
     fhan;
     ghan;
+    size_A
+    n_decVar
 end
 
 methods (Abstract, Access=protected)
@@ -106,6 +108,11 @@ methods
 
         % construct CasADi callback
         construct(obj,name);
+
+        % get size of underlying SDP
+        obj.size_A   = as;
+        obj.n_decVar = n;
+
     end
 end
 
