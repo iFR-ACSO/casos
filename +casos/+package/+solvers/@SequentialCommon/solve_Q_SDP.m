@@ -29,13 +29,15 @@ import casos.package.UnifiedReturnStatus
 
 % pre-pare input for Q-SDP
 args{2}  = [p0; x_k; Bk(:)];
-    % adjust bounds
-    % args{3}  = args{3} - x_k;
-    % args{4}  = args{4} - x_k;
+% adjust bounds
+% args{3}  = args{3} - x_k;
+% args{4}  = args{4} - x_k;
+measSolver =tic;
 sol_qp   = eval_on_basis(obj.solver_convex, args);
-
+solveTimeSDP = toc(measSolver);
 % store iteration info
-info{iter} = obj.solver_convex.get_stats;
+info{iter} = obj.solver_convex.get_stats  ;
+info{iter}.timeStats.mainSDP = solveTimeSDP;
 
 %% check solution status
 switch (obj.solver_convex.get_stats.UNIFIED_RETURN_STATUS)

@@ -48,6 +48,6 @@ else
 end
 
 % scale alpha min.
- alpha_min = gamma_alpha*alpha_min;
+alpha_min = gamma_alpha*alpha_min;
 
 end

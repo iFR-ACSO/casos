@@ -12,6 +12,7 @@ properties (Constant,Access=protected)
          'Hessian_init','Method to initialize Hessian.'
          'hessian_approx','Hessian (Langrangian) approximation method'
          'max_iter', 'Maximum number of iterations.'
+         'feasibility_restoration','Control cost function of feasibility restoration.'
          'verbose', 'Turn on/off iteration display.'}
     ];
 
@@ -29,6 +30,8 @@ properties
         % functions to be evaluated (convergence check)
         eval_cost
         hess_fun
+        
+        eval_constraint_fun
         % linesearch
         eval_gradCost
         
@@ -129,7 +132,7 @@ methods
             nlsos.g = casos.PS(nlsos.g);
         end
         
-        % defaut paramet
+        % defaut parameter
         filter_struct = struct();
 
         filter_struct.alpha_max       = 1;
@@ -152,8 +155,10 @@ methods
         if ~isfield(obj.opts,'tolerance_con'), obj.opts.tolerance_con       = 1e-6; end
         if ~isfield(obj.opts,'tolerance_opt'), obj.opts.tolerance_opt       = 1e-4; end
         if ~isfield(obj.opts,'scale_BFGS0'), obj.opts.scale_BFGS0           = 1; end
-        if ~isfield(obj.opts,'Hessian_init'), obj.opts.Hessian_init         = 'Analytical'; end
-        if ~isfield(obj.opts,'hessian_approx'), obj.opts.hessian_approx     = 'EigValReg'; end
+        if ~isfield(obj.opts,'Hessian_init'),   obj.opts.Hessian_init         = 'Analytical'; end
+        if ~isfield(obj.opts,'hessian_approx'), obj.opts.hessian_approx     = 'Regularization'; end
+        if ~isfield(obj.opts,'feasibility_restoration'), obj.opts.feasibility_restoration     = 'Regularize'; end 
+        
         if ~isfield(obj.opts,'filter_struct'), obj.opts.filter_struct       = filter_struct; end
         if ~isfield(obj.opts,'max_iter'), obj.opts.max_iter                 = 100; end
 

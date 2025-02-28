@@ -47,14 +47,14 @@ dk = x_star    - x_k;
 % descent direction
 nabla_f_dir = full(obj.eval_gradCost(x_k,p0)*dk);
 
-% f-type switching: descent direction + progress in cost better than con.
-% violation
+% f-type switching: descent direction + progress in cost better than con. violation
 f_type = alpha*nabla_f_dir  < 0 && (-alpha*nabla_f_dir)^s_phi*alpha^(1-s_phi) > delta*theta_xk^s_theta;
 
 % initialize amijo boolean
 amijo  = 0;
 
 if  f_type && theta_xk <= theta_min
+
     % check amijo-condition
     if LangrangeFilter
         amijo = L_k1 <= L_k +eta*full(( obj.dLdx(x_k,p0,dual_k))'*dk);
@@ -77,6 +77,6 @@ else
         suffDecrease_flag = 0;
     end 
 
-end % end of check progress w.r.t. current iterate
+end % end of progress check 
 
 end % end of function

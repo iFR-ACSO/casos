@@ -21,6 +21,8 @@ assert(m == (Ml + Ms), 'Dimension of Kc must be equal to number of constraints (
 % Is = [false(Nl,1); true(Ns,1)];
 % Js = [false(Ml,1); true(Ms,1)];
 
+
+
 % sparsity patterns
 base_x = sparsity(nlsos.x);
 
@@ -88,6 +90,7 @@ obj.sparsity_pat_para.sparsity_gs = obj.solver_convex.sparsity_gs;
 
 % check only the nonlinear constraints
 I = true(length(nlsos.g),1);
+
 % for idx = 1:length(nlsos.g)
 %     I(idx) = ~is_linear(nlsos.g(idx),nlsos.x);
 % end
@@ -163,9 +166,6 @@ x_k1      = casos.PS.sym('x_k1',base_x);
 
 Langrangian = nlsos.f + dot(lam_gs,nlsos.g);
 
-% obj.conLa = casos.Function('f',{poly2basis(nlsos.x),basis_nlsos_p,basis_lam_gs}, {poly2basis(dot(lam_gs,nlsos.g)) });
-
-
 basis_nlsos_x = poly2basis(nlsos.x);
 basis_xk1     = poly2basis(x_k1);
 basis_nlsos_p = poly2basis(nlsos.p);
@@ -177,8 +177,7 @@ obj.L = casos.Function('f',{basis_nlsos_x,basis_nlsos_p,basis_lam_gs}, {Langrang
 dLdx = op2basis(jacobian(Langrangian,nlsos.x))';
 
 % Hessian of Langrangian
-% op2basis(jacobian(nlsos.f,nlsos.x))'*op2basis(jacobian(nlsos.f,nlsos.x))
-L_xx      = op2basis(hessian(Langrangian,nlsos.x));
+L_xx         = op2basis(hessian(Langrangian,nlsos.x));
 obj.hess_fun = casos.Function('f',{basis_nlsos_x,basis_nlsos_p,basis_lam_gs}, { L_xx });
 
 % search direction
@@ -207,7 +206,7 @@ obj.damped_BFGS =  casadi.Function('f',{B,r,s}, {B - (B*(s*s')*B)/(s'*B*s) + (r*
 
 % obj.SR1 =  casadi.Function('f',{B,y,s}, {B + ( (y-B*s)*(y-B*s)' )/( (y-B*s)'*s)  });
 
-%% evaluation function
+%% evaluation functions
 % nonlinear cost function 
 obj.eval_cost      = casos.Function('f',{basis_nlsos_x,basis_nlsos_p}, { full(nlsos.f) });
 % gradient cost
@@ -216,7 +215,9 @@ obj.eval_gradCost  = casos.Function('f',{basis_nlsos_x,basis_nlsos_p}, { op2basi
 % norm gradient langrangian
 obj.eval_gradLang =  casos.Function('f',{basis_nlsos_x,basis_nlsos_p,basis_lam_gs}, { Fnorm2( jacobian(Langrangian,nlsos.x) )' });
 
-obj.eval_gradLang2  =  casos.Function('f',{basis_nlsos_x,basis_nlsos_p,basis_lam_gs}, { norm(op2basis(jacobian(Langrangian,nlsos.x)),inf) }); 
+obj.eval_gradLang2  =  casos.Function('f',{basis_nlsos_x,basis_nlsos_p,basis_lam_gs}, { norm(dot(lam_gs,nlsos.g),inf) }); 
+
+obj.eval_constraint_fun = casos.Function('f',{basis_nlsos_x,basis_nlsos_p}, {poly2basis(nlsos.g)});
 
 %% get parameter that are needed for initilization
 obj.init_para.no_dual_var   = obj.sparsity_g.nnz;

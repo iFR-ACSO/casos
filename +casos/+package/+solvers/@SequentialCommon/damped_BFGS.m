@@ -33,12 +33,14 @@ y_val = full( obj.eval_y(x_k,sol_iter.x_k1,p0,sol_iter.dual_k1) );
  
  % check symmetry of Hessian and ajdust if necessary
  Bknonsym = norm(Bk-Bk',inf);
+ 
  if Bknonsym > eps
      Bk = (Bk+Bk')/2;
  end
  
  % check if Hessian is PD, if not apply perturbation
  [~,cholFlag] = chol(Bk);
+
  if cholFlag
      dE=abs(eig(Bk,'nobalance'));
      pert=(min(dE)+2*eps*max(dE))/(1-2*eps);
