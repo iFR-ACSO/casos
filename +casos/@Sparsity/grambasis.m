@@ -78,7 +78,7 @@ Lz(:,~I) = [];
 
 % removes monomials outside half Newton polytope
 if ~isempty(newton_solver)
-    Lz = arrayfun(@(i) S.newton_reduce(S.degmat(Ldegmat(i,:),Iv),degmat,newton_solver), idx, 'UniformOutput', false);
+    Lz = arrayfun(@(i) newton_reduce(S.degmat(Ldegmat(i,:),Iv),degmat,newton_solver), idx, 'UniformOutput', false);
     Lz = horzcat(Lz{:})';
 end
 z = (build_monomials(degmat,z.indets)); % do we need this?

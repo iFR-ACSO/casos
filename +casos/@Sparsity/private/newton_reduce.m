@@ -1,4 +1,4 @@
-function Lz = newton_reduce(obj, Pdegmat, Zdegmat, solver)
+function Lz = newton_reduce(Pdegmat,Zdegmat,solver)
 % Removes monomials outside half Newton polytope
 % Strategy inpired from: Simplification Methods for Sum-of-Squares 
 % Programs, Peter Seiler et al.
