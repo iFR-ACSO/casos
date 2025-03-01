@@ -15,7 +15,8 @@ switch lower(solver)
         sol = casos.package.solvers.SCSInterface(name,conic,varargin{:});
         
     otherwise
-        error('Solver "%s" undefined.', solver)
+        % fall back to CasADi conic interface
+        sol = casadi.conic(name,solver,conic, varargin{:});
 end
 
 end
