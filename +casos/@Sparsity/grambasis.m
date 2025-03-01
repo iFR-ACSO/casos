@@ -1,14 +1,10 @@
-function [Z,K,z,Mp,Md] = grambasis(S,I,opts)
+function [Z,K,z,Mp,Md] = grambasis(S,I,newton_solver)
 % Return Gram basis of polynomial vector.
 
 if nargin < 3
-    solver   = 'linprog'; % default solver from matlab optimization toolbox 
-    simplify = false;
-else
-    simplify = opts.newton_simplify;
-    solver   = opts.newton_solver;
+    % no Newton simplification
+    newton_solver = '';
 end
-
 
 if nargin < 2 || isempty(I)
     lp = numel(S);
@@ -79,9 +75,10 @@ Lz(reshape(any(Irem,2),lz,lp)') = false;
 I = any(Lz,1);
 degmat = z.degmat(I,:);
 Lz(:,~I) = [];
+
 % removes monomials outside half Newton polytope
-if simplify
-    Lz = arrayfun(@(i) S.newton_reduce(S.degmat(Ldegmat(i,:),Iv),degmat,solver), idx, 'UniformOutput', false);
+if ~isempty(newton_solver)
+    Lz = arrayfun(@(i) S.newton_reduce(S.degmat(Ldegmat(i,:),Iv),degmat,newton_solver), idx, 'UniformOutput', false);
     Lz = horzcat(Lz{:})';
 end
 z = (build_monomials(degmat,z.indets)); % do we need this?
