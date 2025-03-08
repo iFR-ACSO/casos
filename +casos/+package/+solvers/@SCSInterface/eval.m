@@ -78,8 +78,15 @@ idx = [1+[I0; Ipos; Ineg]; find(~J)];
 data.A = data.A(idx,:);
 data.b = data.b(idx);
 
+if isempty(obj.prev_sol)
 % call SCS
 [x,y_,s_,obj.info] = scs(data,K,opts);
+else
+    data.x = full(obj.prev_sol.x);
+    data.y = full(obj.prev_sol.y(idx));
+    data.s = full(obj.prev_sol.s(idx));
+    [x,y_,s_,obj.info] = scs(data,K,opts);
+end
 
 % assign solution
 y = sparse(idx,1,y_,m,1);
@@ -107,6 +114,9 @@ else
     obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_SUCCESS;
 end
 
+obj.prev_sol.x = x;
+obj.prev_sol.s = s;
+obj.prev_sol.y = y;
 % parse solution
 argout = call(obj.ghan,[argin {x y s}]);
 

@@ -5,6 +5,7 @@ properties (Access=protected)
     fhan;
     ghan;
     cone;
+    prev_sol;
 end
 
 properties (Access=private)
