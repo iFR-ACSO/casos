@@ -13,11 +13,13 @@
 %   Reference: Chakraborty, Abhijit and Seiler, Peter and Balas, Gary J.,
 %              Nonlinear region of attraction analysis for flight control 
 %              verification and validation, Control Engineering Practice,
-%              2011, doi: 10.1016/j.conengprac.2010.12.001
+%              2011, doi: 10.1016/j.conengprac.2010.12.001 
 %           
 %
 %--------------------------------------------------------------------------
-
+clc
+clear all
+close all
 
 import casos.toolboxes.sosopt.*
 
@@ -143,7 +145,7 @@ opts = struct('sossol','mosek');
 b = casos.PS.sym('b');
 
 % safe set; just an example
-g = Vinit-1; 
+g = Vinit-2; 
 
 cost = dot(g - (V-b), g - (V-b));
 
@@ -163,13 +165,15 @@ opts.verbose = 1;
 
 opts.max_iter = 500;
 
+% profile on
 solver_GTM4D_ROA = casos.nlsossol('S','filter-linesearch',sos,opts);
+% profile viewer
 
 % "normal intial guess"
-% sol = solver_GTM4D_ROA('x0' ,[Vinit; (x'*x)^2; 1]); 
+sol = solver_GTM4D_ROA('x0' ,[Vinit; (x'*x)^2; 1]); 
 
-% "bad" initial guess
-sol = solver_GTM4D_ROA('x0' ,[0; 0; 0]); 
+% evaluate timining statistics
+casos.postProcessSolver(solver_GTM4D_ROA);
 
 
 %% plot sublevel set

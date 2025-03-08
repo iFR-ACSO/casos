@@ -46,11 +46,12 @@ l = x'*P*x-1;              % l(x) \leq 0
 % state constraint
 g  = 3*x(2)^2 + x(1)^2 -1;  % g(x) \leq 0
 g0 = 3*x(2)^4 + x(1)^4 -1;
+
 % control constraint
 umin = -1;
-umax = 1;
+umax =  1;
 
-% Time horizon4
+% Time horizon
 T  = 1;
 
 % time polynomial
@@ -59,18 +60,18 @@ hT = (t)*(T-t);
 Vval = x'*P*x;
 
 b  = casos.PS.sym('b');
-V  = casos.PS.sym('v',monomials([x;t],0:5));
-K  = casos.PS.sym('k',monomials([x;t],0:3));
-s1 = casos.PS.sym('s1',monomials([x;t],2:4));
-s2 = casos.PS.sym('s2',monomials([x;t],0:3));
-s3 = casos.PS.sym('s3',monomials([x;t],0:3));
-s4 = casos.PS.sym('s4',monomials([x;t],0:3));
-s5 = casos.PS.sym('s5',monomials([x;t],0:3));
-s6 = casos.PS.sym('s6',monomials([x;t],0:3));
-s7 = casos.PS.sym('s7',monomials([x;t],0:3));
-s8 = casos.PS.sym('s8',monomials([x;t],0:3));
-s9 = casos.PS.sym('s9',monomials(x,0:3));
-s10 = casos.PS.sym('s10',monomials(x,0:3));
+V  = casos.PS.sym('v',monomials([x;t],0:4));
+K  = casos.PS.sym('k',monomials([x;t],0:4));
+s1 = casos.PS.sym('s1',monomials([x;t],0:4));
+s2 = casos.PS.sym('s2',monomials([x;t],0:4));
+s3 = casos.PS.sym('s3',monomials([x;t],0:4));
+s4 = casos.PS.sym('s4',monomials([x;t],0:4));
+s5 = casos.PS.sym('s5',monomials([x;t],0:4));
+s6 = casos.PS.sym('s6',monomials([x;t],0:4));
+s7 = casos.PS.sym('s7',monomials([x;t],0:4));
+s8 = casos.PS.sym('s8',monomials([x;t],0:4));
+s9 = casos.PS.sym('s9',monomials(x,0:4));
+s10 = casos.PS.sym('s10',monomials(x,0:4));
 
 % options
 opts.sossol = 'mosek';
@@ -81,7 +82,7 @@ opts.verbose  = 1;
 b = 0;
 
 sos = struct('x',[V; K; s1; s2; s3; s4; s5; s6;s7;s8;s9;s10],...
-              'f',dot( g0-(subs(V,t,0)-b), g0-(subs(V,t,0)-b) )  , ...
+              'f', dot( g0-(subs(V,t,0)-b), g0-(subs(V,t,0)-b) )  , ...
               'p',[]);
 
 
@@ -112,7 +113,7 @@ opts.Kc = struct('sos', length(sos.g));
 solver_oneStepReach  = casos.nlsossol('S','filter-linesearch',sos,opts);
 
 % initial guess
-x0 = casos.PD([ Vval;  ...
+x0 = casos.PD([ g0;  ...
                 x'*x; ...
                 x'*x; ...
                 x'*x; ...
@@ -128,8 +129,9 @@ x0 = casos.PD([ Vval;  ...
 % solve
 sol = solver_oneStepReach('x0',x0); 
 
+
 % augment solution with zero sublevel set (just for plotting)
-sol.x = [sol.x;0];
+sol.x = [sol.x;b];
 
 
 %% plotting

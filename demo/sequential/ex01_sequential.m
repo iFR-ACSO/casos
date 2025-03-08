@@ -158,26 +158,28 @@ g = Vinit-1;  % just an example
 
 % options
 opts = struct('sossol','mosek');
-opts.verbose  = 1;
+opts.verbose  = 0;
 
 opts.max_iter = 300;
 opts.tolerance_opt = 1e-4;
 
 sos = struct('x',[V; s2;b],...
-              'f',1/2*dot(g-(V-b),g-(V-b)), ...
+              'f',dot(g-(V-b),g-(V-b)), ...
               'p',[]);
 
 % constraints
-sos.('g') = [s2;
+sos.('g') = [
+             s2;
              V-l; 
-             s2*(V-b)-nabla(V,x)*f-l];
+             s2*(V-b)-nabla(V,x)*f-l
+             ];
 
 % states + constraint are linear/SOS cones
 opts.Kx = struct('lin', 3,'sos',0);
 opts.Kc = struct('sos', 3);
-
+opts.tolerance_opt = 1e-4;
 % build solver
-solver_GTM2D_ROA  = casos.nlsossol('S','filter-linesearch',sos,opts);
+S  = casos.nlsossol('S','filter-linesearch',sos,opts);
 
 
 
@@ -187,8 +189,11 @@ solver_GTM2D_ROA  = casos.nlsossol('S','filter-linesearch',sos,opts);
 V0  = casos.PD(V.sparsity,ones(V.nnz,1));
 s20 = casos.PD(s2.sparsity,ones(s2.nnz,1));
 
-sol = solver_GTM2D_ROA('x0',[ Vinit; x'*x;1]); 
+% profile on
+sol = S('x0',[ g; x'*x;1]); 
+% profile viewer
 
+casos.postProcessSolver(S,true);
 
 %% plot sublevel set
 figure

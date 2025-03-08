@@ -155,7 +155,7 @@ opts.verbose = 1;
 opts.max_iter = 300;
 opts.hessian_approx = 'BFGS';
 opts.Hessian_init   = 'Identity';
-opt.scale_BFGS0     = 1e-4;
+opt.scale_BFGS0     = 1e-3;
 
 sos = struct('x',[V; s2;s1;b],...
               'f',-b, ...
@@ -177,7 +177,7 @@ solver_GTM2D_ROA  = casos.nlsossol('S','filter-linesearch',sos,opts);
 
 
 %% solve
-sol = solver_GTM2D_ROA('x0',[ Vinit;  x'*x^2; x'*x^2; 1]); 
+sol = solver_GTM2D_ROA('x0',[ Vinit;  x'*x^2; x'*x; 1]); 
 % disp(['Solver buildtime: ' num2str(buildtime), ' s'])
 
 
