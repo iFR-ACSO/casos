@@ -53,20 +53,20 @@ if ~skip_soc
                 % soc solution becomes solution of the actual problem
                 x_k1 = x_k1_soc;
             else
-                x_k1 = [];
+                x_k1 = x_k;
                 suffDecrease_flag = 0;
                 f_type = 0;
                 amijo = 0;
                 
             end
         else
-                x_k1 = [];
+                x_k1 = x_k;
                 suffDecrease_flag = 0;
                 f_type = 0;
                 amijo = 0;
         end
 else
-                x_k1 = [];
+                x_k1 = x_k;
                 suffDecrease_flag = 0;
                 f_type = 0;
                 amijo = 0;

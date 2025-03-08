@@ -125,7 +125,7 @@ sosopt.error_on_fail = true;
 obj.solver_conVio = casos.package.solvers.sossolInternal('SOS',opts.sossol,sos_conVio,sosopt);
 
 %% Second-order correction (soc)
-
+if obj.opts.SocFlag
 % parameter of current qp solution
 x_star_par   = casos.PS.sym('x_star',base_x);
 % constraint function to be evaluated at xk+d
@@ -159,6 +159,7 @@ sosopt.error_on_fail = false;
 
 % initialize adapted convex SOS solver for soc
 obj.solver_soc = casos.package.solvers.sossolInternal('SOS',opts.sossol,sos_soc,sosopt);
+end
 
 %% Damped BFGS (see Nocedal p.536/537)
 lam_gs    = casos.PS.sym('lam_gs', obj.sparsity_g);
@@ -176,10 +177,12 @@ obj.L = casos.Function('f',{basis_nlsos_x,basis_nlsos_p,basis_lam_gs}, {Langrang
 
 dLdx = op2basis(jacobian(Langrangian,nlsos.x))';
 
-% Hessian of Langrangian
-L_xx         = op2basis(hessian(Langrangian,nlsos.x));
-obj.hess_fun = casos.Function('f',{basis_nlsos_x,basis_nlsos_p,basis_lam_gs}, { L_xx });
-
+% Hessian of Langrangian; in case we use BFGS, we do not have to explictly
+% compute the Hessian
+if ~strcmp(obj.opts.hessian_approx,'BFGS')
+    L_xx         = op2basis(hessian(Langrangian,nlsos.x));
+    obj.hess_fun = casos.Function('f',{basis_nlsos_x,basis_nlsos_p,basis_lam_gs}, { L_xx });
+end
 % search direction
 obj.eval_s = casos.Function('f',{basis_nlsos_x,basis_xk1,basis_nlsos_p}, { poly2basis( x_k1 - nlsos.x)});
 

@@ -32,7 +32,8 @@ function  [x_k1,theta_x_k1,f_x_k1 ,filter_Acceptance,all_violations] = check_fil
     
     
     sol_convio = eval_on_basis(obj.solver_conVio, args_conVio);
-
+    
+    
     % extract signed-distances
     all_violations = sol_convio{1};
     

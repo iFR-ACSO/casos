@@ -9,6 +9,7 @@ properties (Constant,Access=protected)
          'tolerance_opt', 'Absolute tolerance for stopping criterion of constraint violation.'
          'filter_struct', 'Structure containing parameter for filter linesearch.'
          'scale_BFGS0','Scaling parameter for initial BFGS matrix.'
+         'SocFlag', 'Flag to turn on off the second-order-correction [default: true]'
          'Hessian_init','Method to initialize Hessian.'
          'hessian_approx','Hessian (Langrangian) approximation method'
          'max_iter', 'Maximum number of iterations.'
@@ -158,7 +159,7 @@ methods
         if ~isfield(obj.opts,'Hessian_init'),   obj.opts.Hessian_init         = 'Analytical'; end
         if ~isfield(obj.opts,'hessian_approx'), obj.opts.hessian_approx     = 'Regularization'; end
         if ~isfield(obj.opts,'feasibility_restoration'), obj.opts.feasibility_restoration     = 'Regularize'; end 
-        
+        if ~isfield(obj.opts,'SocFlag'), obj.opts.SocFlag                         = true; end
         if ~isfield(obj.opts,'filter_struct'), obj.opts.filter_struct       = filter_struct; end
         if ~isfield(obj.opts,'max_iter'), obj.opts.max_iter                 = 100; end
 
