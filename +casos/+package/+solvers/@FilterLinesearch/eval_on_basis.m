@@ -146,10 +146,11 @@ while iter <= obj.opts.max_iter
                                                                              filter, ...
                                                                              info.single_iterations);
 
-                
+    info.single_iterations{iter}.timeStats.feasResTime = 0;          
     % Invoke feasibility restoration if necessary
     if feas_res_flag >= 1 && ...              % restoration requested
        theta_x_k >  obj.opts.tolerance_con    % is the constraint violation larger then tolerance; otherwise restoration does not make sense
+        
         
         % parameter (just for readabilty)
         gamma_theta = obj.opts.filter_struct.gamma_theta ;
@@ -159,8 +160,13 @@ while iter <= obj.opts.max_iter
         % shall be avoided in the future
         filter = [filter;[theta_x_k*(1-gamma_theta), f_x_k - gamma_phi*theta_x_k]];
         
+        tmptimeStats = info.single_iterations{iter}.timeStats;
+        measFeasResTime = tic;
         % feasibility restoration phase
         [sol_iter,sol_qp_feas,filter,feasibility_flag,info.single_iterations] = obj.feas_res_solver.eval_extended(filter,x_k,theta_x_k,p0,obj,info.single_iterations,iter);
+        
+        info.single_iterations{iter}.timeStats = tmptimeStats;
+        info.single_iterations{iter}.timeStats.feasResTime = toc(measFeasResTime);
         
         if feasibility_flag >=1
            
@@ -235,7 +241,6 @@ while iter <= obj.opts.max_iter
        f_x_k     = sol_iter.f_x_k1;
        alpha_k   = sol_iter.alpha_k;
     
-
     end
 
     % return last solution
@@ -350,6 +355,7 @@ end
 info.single_iterations = info.single_iterations(1:iter-1);
 
 info.totalSolveTime    = solveTime;
+info.solverBuildTime   = obj.display_para.solver_build_time;
 info.iterations        = iter-1; % we do not count the initial guess
 info.timePerIteration  = info.totalSolveTime/info.iterations;
 

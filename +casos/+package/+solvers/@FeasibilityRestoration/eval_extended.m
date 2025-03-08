@@ -181,7 +181,7 @@ while iter <= obj.opts.max_iter
 
    end
 
-    lambda0 = lambda_min+(lambda_max-lambda_min)*1/(1+ (max(theta_x_k_or, obj.opts.tolerance_con) - obj.opts.tolerance_con)/obj.opts.tolerance_con);
+    % lambda0 = lambda_min+(lambda_max-lambda_min)*1/(1+ (max(theta_x_k_or, obj.opts.tolerance_con) - obj.opts.tolerance_con)/obj.opts.tolerance_con);
 
     % parameter for feasibility restoration: actual parameter and iterate where
     % the restoration was/is invoked

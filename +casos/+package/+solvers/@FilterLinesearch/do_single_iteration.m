@@ -13,6 +13,14 @@ function [sol_iter,sol_qp,feas_res_flag,info,obj,filter,Bk] = do_single_iteratio
 %% evaluate convex SOS problem and check feasibility
 [x_star,dual_star,sol_iter,sol_qp,feas_res_flag,info] = solve_Q_SDP(obj,iter,x_k,p0,Bk,args,info);
 
+% initilizing timing of backstepping components in case we have to switch
+% to feasibility restoration
+info{iter}.timeStats.HessApproxTime         = 0;
+info{iter}.timeStats.totalBackstepTime      = 0;
+info{iter}.timeStats.FilterAcceptTime       = 0;
+info{iter}.timeStats.SuffDecreaseTime       = 0;
+info{iter}.timeStats.SocTime                = 0;
+
 
 if feas_res_flag
     return % leave single iteration and invoke feasibility restoration
@@ -79,14 +87,14 @@ while true
         end
         
         % invoke soc to avoid maratos effect, if necessary
-        if ~suffDecrease_flag && alpha == 1  && theta_x_k1 >= theta_xk
+        if ~suffDecrease_flag && alpha == 1  && theta_x_k1 >= theta_xk && obj.opts.SocFlag
            
            measSocTime = tic;
            % compute corrected search direction, compute new trial point and check for filter acceptance
-           [x_k1,~,f_type,amijo] = second_order_correction(obj,x_k,x_star,p0,Bk,args,filter,alpha,theta_xk,f_xk,dkl,L_k1,L_k,dual_k);
+           [x_k1,suffConSoC,f_type,amijo] = second_order_correction(obj,x_k,x_star,p0,Bk,args,filter,alpha,theta_xk,f_xk,dkl,L_k1,L_k,dual_k);
            SocTimeMeas = toc(measSocTime);
            % leave while loop if corrected step is acceptable to filter
-           if ~isempty(x_k1)
+           if suffConSoC
                break % means we found a solution with SOC; leave loop
            end
 
@@ -95,13 +103,13 @@ while true
     else % not acceptable to filter
         
         % invoke soc to avoid maratos effect, if necessary
-        if ~filter_Acceptance && alpha == 1 && theta_x_k1 >= theta_xk
+        if ~filter_Acceptance && alpha == 1 && theta_x_k1 >= theta_xk && obj.opts.SocFlag
            
            measSocTime = tic;
            % compute corrected search direction, compute new trial point and check for filter acceptance
-           [x_k1,~,f_type,amijo] = second_order_correction(obj,x_k,x_star,p0,Bk,args,filter,alpha,theta_xk,f_xk,dkl,L_k1,L_k,dual_k);
+           [x_k1,suffConSoC,f_type,amijo] = second_order_correction(obj,x_k,x_star,p0,Bk,args,filter,alpha,theta_xk,f_xk,dkl,L_k1,L_k,dual_k);
            SocTimeMeas = toc(measSocTime);
-           if ~isempty(x_k1)
+           if suffConSoC
                break % means we found a solution with SOC; leave loop
            end
               
@@ -112,14 +120,23 @@ while true
     % if not acceptable to filter and/or no sufficient progress update alpha
     alpha = 1/2*alpha;
     
+
+ 
     % compute alpha_min
     alpha_min = compute_alpha_min(obj,x_k,dk,p0,theta_xk,filter);
     
-    if alpha < alpha_min  || alpha <= eps % just avoid too small step lengths
+    if alpha < alpha_min  % just avoid very small step lengths
        % invoke feasibility restoration if step-length is below minimum
        feas_res_flag = 2;
        break
     end
+    
+    if alpha_min == 0 && ~filter_Acceptance 
+       % invoke feasibility restoration if step-length is below minimum
+       feas_res_flag = 2;
+       break
+    end
+
         
 
 end % end of backtracking linesearch
@@ -140,6 +157,7 @@ if (~f_type || ~amijo)
 end
 
 % output of current iterate
+
 sol_iter.x_k1       = x_k1;
 sol_iter.dual_k1    = dual_k1;
 sol_iter.theta_x_k1 = theta_x_k1;
@@ -184,6 +202,7 @@ info{iter}.timeStats.HessApproxTime         = HessApproxTimeMeas;
 info{iter}.timeStats.totalBackstepTime      = totalBackstepTimeMeas;
 info{iter}.timeStats.FilterAcceptTime       = FilterAcceptTimeMeas;
 info{iter}.timeStats.SuffDecreaseTime       = SuffDecreaseTimeMeas;
+
 if ~isempty(SocTimeMeas)
     info{iter}.timeStats.SocTime                = SocTimeMeas;
 else
