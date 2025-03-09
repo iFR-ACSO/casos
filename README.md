@@ -8,8 +8,9 @@ The following requirements need to be met in order to use all functionalities of
 1. Download [CasADi v3.6.x](https://web.casadi.org/get/#body-36) and add it to your Matlab path.
 2. Download and install at least one solver for semidefinite (conic) programs, and add the solver(s) to the Matlab Path.
 
-   - Currently supported are [Mosek](https://www.mosek.com/downloads/) (v10.1), [SCS](https://www.cvxgrp.org/scs/install/matlab.html#matlab-install) (v3.2.4), [Clarabel](https://clarabel.org/stable/) (v0.10) and [SeDuMi](https://sedumi.ie.lehigh.edu/?page_id=58) (v1.3).
+   - Currently supported are [Mosek](https://www.mosek.com/downloads/) (v10.1), [SCS](https://www.cvxgrp.org/scs/install/matlab.html#matlab-install) (v3.2.4), [Clarabel](https://clarabel.org/stable/) (v0.10.0)*** and [SeDuMi](https://sedumi.ie.lehigh.edu/?page_id=58) (v1.3).
    - **Note:** Mosek requires a separate license. [Academic Licenses](https://www.mosek.com/products/academic-licenses/) are available.
+   - ***Note*** A MATLAB .mex interface to the rust implementation of Clarabel be found [here](https://github.com/iFR-ACSO/Clarabel.m)
 
 3. Add the CaΣoS root folder (the one that contains the directory `+casos`) to your Matlab path.
 
