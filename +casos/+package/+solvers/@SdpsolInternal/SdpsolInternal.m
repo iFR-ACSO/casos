@@ -91,7 +91,7 @@ methods
 
         % SDP problem as function of p and x
         prob = casadi.Function('S',{x p},{sdp.f sdp_g});
-
+    
         % build SDP problem
         buildproblem(obj,prob,data,opts);
 

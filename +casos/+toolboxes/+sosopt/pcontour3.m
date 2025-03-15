@@ -102,7 +102,7 @@ zgrid = linspace(domain(5),domain(6),Nz);
 polyFun = to_function(poly);
 
 % evaluate casadi function
-gridval = full(polyFun([xgrid(:)';ygrid(:)';zgrid(:)']));
+gridval = full(polyFun(xgrid(:)',ygrid(:)',zgrid(:)'));
 
 % reshape to grid
 gridval = reshape(gridval,size(xgrid));

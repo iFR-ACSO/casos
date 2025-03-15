@@ -39,7 +39,11 @@ methods
         % default options
         if ~isfield(obj.opts,'sdpsol_options'), obj.opts.sdpsol_options = struct; end
         if ~isfield(obj.opts,'newton_simplify'), obj.opts.newton_simplify = true; end
-        
+
+        % cholesky decomposition is performed numerically (needed for
+        % epigraph reformulation in case of quadratic cost)
+        obj.opts.sdpsol_options.cholesky_method = 'num';
+
         % pass options to sdpsol
         if ~isfield(obj.opts.sdpsol_options,'error_on_fail')
             obj.opts.sdpsol_options.error_on_fail = obj.opts.error_on_fail;

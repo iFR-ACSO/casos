@@ -71,7 +71,7 @@ while true
            [x_k1,suffDecrease_flag,f_type,amijo] = second_order_correction(obj,x_k,x_star,p0,Bk,args,filter,alpha,theta_xk,f_xk,dkl,L_k1,L_k,dual_k);
 
            % leave while loop if corrected step is acceptable to filter
-           if ~isempty(x_k1)
+           if suffDecrease_flag
                break % means we found a solution with SOC; leave loop
            end
 
@@ -86,7 +86,7 @@ while true
            % compute corrected search direction, compute new trial point and check for filter acceptance
            [x_k1,suffDecrease_flag,f_type,amijo] = second_order_correction(obj,x_k,x_star,p0,Bk,args,filter,alpha,theta_xk,f_xk,dkl,L_k1,L_k,dual_k);
 
-           if ~isempty(x_k1)
+            if suffDecrease_flag
                break % means we found a solution with SOC; leave loop
            end
               
