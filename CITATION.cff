@@ -14,7 +14,7 @@ authors:
 title: "CaΣoS, the nonlinear sum-of-squares optimization suite"
 url: "https://github.com/ifr-acso/casos"
 preferred-citation:
-  type: inproceedings
+  type: conference-paper
   authors:
   - family-names: "Cunis"
     given-names: "Torbjørn"
