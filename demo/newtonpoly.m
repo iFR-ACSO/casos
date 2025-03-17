@@ -19,6 +19,7 @@ opts.error_on_fail = false;
 
 % newton polytope simplification 
 opts.newton_simplify = true;
+opts.newton_solver = 'mosek';
 
 % solve by relaxation to SDP
 tic
