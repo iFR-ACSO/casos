@@ -216,7 +216,10 @@ obj.eval_cost      = casos.Function('f',{basis_nlsos_x,basis_nlsos_p}, { full(nl
 obj.eval_gradCost  = casos.Function('f',{basis_nlsos_x,basis_nlsos_p}, { op2basis( jacobian(nlsos.f,nlsos.x) ) });
 
 % norm gradient langrangian
-obj.eval_gradLang =  casos.Function('f',{basis_nlsos_x,basis_nlsos_p,basis_lam_gs}, { Fnorm2( jacobian(Langrangian,nlsos.x) )' });
+%obj.eval_gradLang =  casos.Function('f',{basis_nlsos_x,basis_nlsos_p,basis_lam_gs}, { Fnorm2( jacobian(Langrangian,nlsos.x) )' });
+
+obj.eval_gradLang =  casos.Function('f',{basis_nlsos_x,basis_nlsos_p,basis_lam_gs}, { norm( op2basis(jacobian(Langrangian,nlsos.x)),inf ) });
+
 
 obj.eval_gradLang2  =  casos.Function('f',{basis_nlsos_x,basis_nlsos_p,basis_lam_gs}, { norm(dot(lam_gs,nlsos.g),inf) }); 
 

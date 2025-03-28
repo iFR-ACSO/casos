@@ -92,7 +92,7 @@ while iter <= obj.opts.max_iter
         
 
     %% check convergence (first-order optimality) % obj.opts.tolerance_opt*max(1,full(obj.eval_gradLang(x_k,p0,dual_k)))
-    if full(obj.eval_gradLang2(x_k,p0,dual_k))  <= full((obj.opts.tolerance_opt*max(1,abs(f_x_k)) + obj.eval_gradLang2(x_k,p0,dual_k))/delta_xi_double)  ... % scaled optimality
+    if full(obj.eval_gradLang(x_k,p0,dual_k))  <= full((obj.opts.tolerance_opt*max(1,abs(f_x_k)) + obj.eval_gradLang2(x_k,p0,dual_k))/delta_xi_double)  ... % scaled optimality
         && theta_x_k <= obj.opts.tolerance_con && feasibility_flag == 0                                                                                      % constraint violation
        
         printf(obj.log,'debug','------------------------------------------------------------------------------------------\n');
