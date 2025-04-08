@@ -13,6 +13,7 @@ properties (Constant,Access=protected)
          'Hessian_init','Method to initialize Hessian.'
          'hessian_approx','Hessian (Langrangian) approximation method'
          'max_iter', 'Maximum number of iterations.'
+         'almostOptCount','Number of iterations to check for almost optimal. '
          'feasibility_restoration','Control cost function of feasibility restoration.'
          'verbose', 'Turn on/off iteration display.'}
     ];
@@ -162,8 +163,8 @@ methods
         if ~isfield(obj.opts,'SocFlag'), obj.opts.SocFlag                         = true; end
         if ~isfield(obj.opts,'filter_struct'), obj.opts.filter_struct       = filter_struct; end
         if ~isfield(obj.opts,'max_iter'), obj.opts.max_iter                 = 100; end
+        if ~isfield(obj.opts,'almostOptCount'), obj.opts.almostOptCount     = 100; end
 
-        
         % set up logger
         if ~isfield(obj.opts,'verbose') || ~obj.opts.verbose
             % no display

@@ -155,14 +155,15 @@ s100 = x'*x;
 x0 = [V0;K0;s20;s30;s40;s50;s60;s70;s80;s90;s100];
 
 % call solver
-profile on
+
 sol = S('x0',x0);  
-profile viewer
+
 % get problem size i.e. size of conic problem
 n_con = S.stats.single_iterations{end}.conic.size_A.size(1)
 n_dec = S.stats.single_iterations{end}.conic.size_A.size(2)
 
 casos.postProcessSolver(S,true)
+
 %% plotting of sublevel sets
 import casos.toolboxes.sosopt.*
 

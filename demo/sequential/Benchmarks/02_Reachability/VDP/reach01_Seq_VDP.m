@@ -99,8 +99,8 @@ sos.('g') = [s1;
              s3*(V-b) - s4*hT + K - umin;
              s5*(V-b) - s6*hT + umax - K;
              s7*(V-b) - s8*hT - g; 
-             s9*l  - subs(V,t,0) + b;
-             s10*(subs(V,t,T)-b)    - l 
+             s9*(subs(V,t,T)-b)    - l;
+             s10*l  - subs(V,t,0) + b; 
              ];
 
 % states + constraint are linear/SOS cones
@@ -113,13 +113,13 @@ S  = casos.nlsossol('S','filter-linesearch',sos,opts);
 % initial guess
 x0 = casos.PD([ g0;  ...
                 x'*x;  ...
-                (x'*x); ...
+                (x'*x)^2; ...
                 x'*x; ...
-                (x'*x);
+                (x'*x)^2;
                 x'*x;
-                (x'*x);
+                (x'*x)^2;
                 x'*x;
-                (x'*x);
+                (x'*x)^2;
                 x'*x;
                 (x'*x);
                 (x'*x); ...
@@ -128,6 +128,7 @@ x0 = casos.PD([ g0;  ...
 % solve
 sol = S('x0',x0); 
 
+S.stats
 
 %% plotting
 import casos.toolboxes.sosopt.*

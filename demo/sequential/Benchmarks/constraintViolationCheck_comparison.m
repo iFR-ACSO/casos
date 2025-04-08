@@ -22,7 +22,7 @@ maxDeg = 6;
 
 
 % ------------------------------------------------------------------------
-% Commenta on maximum degree for random polynomials
+% Comment on maximum degree for random polynomials
 % 
 % Maximum degree of six is also not unrealistic. Assume a simple
 % set-inclusion constraint i.e. s*(V-g) + P is SOS. 
@@ -139,9 +139,14 @@ plot(2:nxMax , time_sampling_100000, 'c-s', 'LineWidth', 1);
 
 xlabel('n');
 ylabel('Computation Time (seconds)');
-legend('SOS Projection', 'Signed Distance', 'Sampling (1000)', 'Sampling (10000)', 'Sampling (100000)');
-title('Computation Time for Different Methods');
+legend('SOS Projection', 'Signed Distance', 'Sampling (1000)', 'Sampling (10000)', 'Sampling (100000)','Location','northwest');
+% title('Computation Time for Different Methods');
 grid on;
 
 % Set the y-axis to logarithmic scale
 set(gca, 'YScale', 'log');
+
+
+cleanfigure();
+matlab2tikz('compConsVio.tex','width','\figW','height','\figH');
+

@@ -152,10 +152,10 @@ s80 = ones(2,1)*(x'*x);
 s90 = ones(length(rt),1)*(x'*x);
 s100 = x'*x;
 
-% x0 = [V0;K0;s20;s30;s40;s50;s60;s70;s80;s90;s100];
+x0 = [V0;K0;s20;s30;s40;s50;s60;s70;s80;s90;s100];
 
-load solutionV2.mat
-x0 = casos.PD(monoV2,coeffV2);
+% load solutionV2.mat
+% x0 = casos.PD(monoV2,coeffV2);
 
 % use the safe set to initialize the storage function
 x0(1) = rt;

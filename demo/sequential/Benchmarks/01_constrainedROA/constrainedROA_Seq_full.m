@@ -198,6 +198,10 @@ sol = S('x0' ,x0);
 
 casos.postProcessSolver(S,true);
 
+S.stats
+
+S.stats.single_iterations{end}.conic
+
 %% plotting
 figure
 

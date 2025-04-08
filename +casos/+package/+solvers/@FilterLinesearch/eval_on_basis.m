@@ -61,9 +61,7 @@ theta_x_k = full(max(0,max(sol_convio{1})));
 % evalaute cost function of nonlinear problem
 f_x_k     = full(obj.eval_cost(x_k,p0));
 
-% L_k = full(obj.L(x_k,p0,dual_k));
-
-% add  some boundary to it
+% add some boundary to it
 filter = [max(1,theta_x_k)*10, inf];
 
 iter = 1;
@@ -73,7 +71,7 @@ delta_xi_double   = norm(full( casadi.DM(x_k)),inf);
 delta_dual_double = norm(full( (dual_k)),inf);
 alpha_k           = 1;
 
-counterAcceplvl = 0;
+counterAcceplvl  = 0;
 feasibility_flag = 1;
 
 info.initTime = toc(initTimeMeas);
@@ -91,9 +89,9 @@ while iter <= obj.opts.max_iter
             iter-1, f_x_k , delta_xi_double, delta_dual_double, theta_x_k , alpha_k , full(casadi.DM( full(obj.eval_gradLang(x_k,p0,dual_k)) ))   );
         
 
-    %% check convergence (first-order optimality) % obj.opts.tolerance_opt*max(1,full(obj.eval_gradLang(x_k,p0,dual_k)))
+    %% check convergence (first-order optimality) 
     if full(obj.eval_gradLang(x_k,p0,dual_k))  <= full((obj.opts.tolerance_opt*max(1,abs(f_x_k)) + obj.eval_gradLang2(x_k,p0,dual_k))/delta_xi_double)  ... % scaled optimality
-        && theta_x_k <= obj.opts.tolerance_con && feasibility_flag == 0                                                                                      % constraint violation
+        && theta_x_k <= obj.opts.tolerance_con && feasibility_flag == 0                                                                                     % constraint violation
        
         printf(obj.log,'debug','------------------------------------------------------------------------------------------\n');
         printf(obj.log,'debug','Solution status: Optimal solution found\n');
@@ -108,23 +106,25 @@ while iter <= obj.opts.max_iter
     end
 
     % check if current iterate is solved to an acceptable level
-    if full(obj.eval_gradLang2(x_k,p0,dual_k))  <= full((obj.opts.tolerance_opt*10*max(1,abs(f_x_k)) + obj.eval_gradLang2(x_k,p0,dual_k))/delta_xi_double) ...
-        && theta_x_k <= obj.opts.tolerance_con*5
+    if full(obj.eval_gradLang(x_k,p0,dual_k))  <= full((10*obj.opts.tolerance_opt*max(1,abs(f_x_k)) + obj.eval_gradLang2(x_k,p0,dual_k))/delta_xi_double)  ... % scaled optimality ...
+        && theta_x_k <= obj.opts.tolerance_con
         
         % increase counter
         counterAcceplvl = counterAcceplvl +1;
         
         % we have 5 in a row, seems we solved it to an acceptable level/almost optimal
-            if counterAcceplvl >= 5
-                        printf(obj.log,'debug','------------------------------------------------------------------------------------------\n');
-            printf(obj.log,'debug','Solution status: Almost optimal.\n');
-            solveTime = toc(measTime_seqSOS_in);
-            printf(obj.log,'debug',['Solution time: ' num2str(solveTime) ' s\n']);
-            printf(obj.log,'debug',['Build time: ' num2str(obj.display_para.solver_build_time) ' s\n']);
-            printf(obj.log,'debug',['Total time: ' num2str(obj.display_para.solver_build_time+solveTime) ' s\n']);
-            feasibility_flag = 1;
-            info.solutionStatus = 'Optimal solution';
-            break
+            if counterAcceplvl >= obj.opts.almostOptCount
+                printf(obj.log,'debug','------------------------------------------------------------------------------------------\n');
+                printf(obj.log,'debug','Solution status: Almost optimal.\n');
+                solveTime = toc(measTime_seqSOS_in);
+                printf(obj.log,'debug',['Solution time: ' num2str(solveTime) ' s\n']);
+                printf(obj.log,'debug',['Build time: ' num2str(obj.display_para.solver_build_time) ' s\n']);
+                printf(obj.log,'debug',['Total time: ' num2str(obj.display_para.solver_build_time+solveTime) ' s\n']);
+
+                feasibility_flag = 1;
+
+                info.solutionStatus = 'Alomst Optimal solution.';
+                break
             end
     else 
         % if current iterate is not solved to an acceptable level, reset counter
