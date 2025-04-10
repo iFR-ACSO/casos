@@ -19,6 +19,7 @@ properties (Dependent)
 %     monomials_out;
 %     size_out;
     stats;
+    info;
 end
 
 properties (Access=private)
@@ -150,6 +151,13 @@ methods
         assert(~is_null(obj), 'Notify the developers.')
 
         s = get_stats(obj.wrap);
+    end
+
+    function s = get.info(obj)
+        % Return info.
+        assert(~is_null(obj), 'Notify the developers.')
+
+        s = get_info(obj.wrap);
     end
 
     function print_options(obj)

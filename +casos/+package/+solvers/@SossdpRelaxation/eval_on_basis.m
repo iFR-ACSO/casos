@@ -19,6 +19,9 @@ sdpsol = call(obj.sdpsolver, args);
 % retrieve SOS coordinates
 sossol = call(obj.gram2sos,sdpsol);
 
+% store Gram representations
+obj.info.gram = call(obj.sdp2gram,struct('x_sol',sdpsol.x));
+
 % build polynomial solution
 argout = {sossol.x sossol.f sossol.g sossol.lam_x sossol.lam_g};
 

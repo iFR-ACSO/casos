@@ -139,4 +139,7 @@ obj.gram2sos = casadi.Function('L', ...
                 fopt ...
 );
 
+% function to retrieve Gram solution
+obj.sdp2gram = casadi.Function('G',{sdp.x},{Qvar_G Qcon_G},{'x_sol'},{'Qx' 'Qc'});
+
 end
