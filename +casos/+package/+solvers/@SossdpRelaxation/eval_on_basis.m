@@ -22,9 +22,6 @@ sossol = call(obj.gram2sos,sdpsol);
 % store Gram representations
 obj.info.gram = call(obj.sdp2gram,struct('x_sol',sdpsol.x));
 
-% Store SDP information
-obj.info.sdp.nx = size(sdpsol.x,1);
-obj.info.sdp.nc = size(sdpsol.g,1);
 
 % build polynomial solution
 argout = {sossol.x sossol.f sossol.g sossol.lam_x sossol.lam_g};
