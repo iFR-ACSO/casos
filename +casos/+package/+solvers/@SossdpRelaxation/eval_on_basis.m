@@ -19,8 +19,10 @@ sdpsol = call(obj.sdpsolver, args);
 % retrieve SOS coordinates
 sossol = call(obj.gram2sos,sdpsol);
 
-% store Gram representations
-obj.info.gram.Q = call(obj.sdp2gram,struct('x_sol',sdpsol.x));
+% store Gram representations with dimensions
+gram = call(obj.sdp2gram,struct('x_sol',sdpsol.x));
+obj.info.gram.Q = struct('x', gram.Qx, 'g', gram.Qc);
+obj.info.gram.dim = struct('x', gram.Qx_dim, 'g', gram.Qc_dim);
 
 
 % build polynomial solution
