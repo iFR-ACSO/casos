@@ -20,7 +20,7 @@ sdpsol = call(obj.sdpsolver, args);
 sossol = call(obj.gram2sos,sdpsol);
 
 % store Gram representations
-obj.info.gram = call(obj.sdp2gram,struct('x_sol',sdpsol.x));
+obj.info.gram.Q = call(obj.sdp2gram,struct('x_sol',sdpsol.x));
 
 
 % build polynomial solution
