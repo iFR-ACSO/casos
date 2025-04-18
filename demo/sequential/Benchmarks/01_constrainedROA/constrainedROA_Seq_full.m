@@ -93,7 +93,7 @@ f = @(x,u) [
                     f4(x(1,:),x(2,:),x(3,:),x(4,:),u(1,:),u(2,:))
 ];
 
-[x0, u0] = findtrim(f,x0, u0);
+% [x0, u0] = findtrim(f,x0, u0);
 
 % set up dynamic system (might take some time)
 f = f(x+x0,u+u0);

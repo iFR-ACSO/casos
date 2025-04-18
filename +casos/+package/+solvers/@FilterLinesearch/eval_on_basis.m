@@ -6,7 +6,7 @@ import casos.package.UnifiedReturnStatus
 %% print output with current problem and setting
 printf(obj.log,'debug','------------------------------------------------------------------------------------------\n');
 printf(obj.log,'debug',['\t\t Ca' char(931) 'oS-Nonlinear sum-of-squares optimization suite \n']);
-printf(obj.log,'debug','\t\t Sequential Quadratic Sum-of-Squares Solver v1.0, December''24 \n');
+printf(obj.log,'debug','\t\t Sequential Quadratic Sum-of-Squares Solver v1.0, April''25 \n');
 printf(obj.log,'debug','\t\t GNU GENERAL PUBLIC LICENSE \n');
 printf(obj.log,'debug','\t\t Institute of Flight Mechanics and Control, Univ. of Stuttgart \n');
 printf(obj.log,'debug','------------------------------------------------------------------------------------------\n');

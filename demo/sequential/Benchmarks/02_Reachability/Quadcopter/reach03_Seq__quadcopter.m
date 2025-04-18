@@ -86,8 +86,8 @@ V    = casos.PS.sym('v',monomials([x;t],0:2));
 K    = casos.PS.sym('k',monomials([x;t],0:2),[2,1]);
 
 % SOS multiplier
-s2 = casos.PS.sym('s2',monomials([x;t],0:4));
-s3 = casos.PS.sym('s3',monomials([x;t],0:4));
+s2 = casos.PS.sym('s2',monomials([x;t],0:2));
+s3 = casos.PS.sym('s3',monomials([x;t],0:2));
 s4 = casos.PS.sym('s4',monomials([x;t],0:2),[length(rt),1]);
 s5 = casos.PS.sym('s5',monomials([x;t],0:2),[2,1]);
 s6 = casos.PS.sym('s6',monomials([x;t],0:2),[2,1]);
