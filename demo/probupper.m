@@ -31,6 +31,7 @@ sos = struct('x', [s; v], 'f', cost, 'g', -s*k+v-1);
 opts = struct;
 opts.Kx = struct('sos',2);
 opts.Kc = struct('sos',1);
+opts.newton_solver = [];
 
 % solve by relaxation to SDP
 S = casos.sossol('S','mosek',sos,opts);
@@ -38,5 +39,5 @@ S = casos.sossol('S','mosek',sos,opts);
 % evaluate
 sol = S();
 
-% the result should be a value above 0.18162
+% the result should be a value above 0.25...
 fprintf('int_K f(x) dx = %d\n', full(sol.f)); 

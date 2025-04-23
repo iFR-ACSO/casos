@@ -39,9 +39,6 @@ D = casos.sdpsol('S','mosek',meas,opts);
 
 % evaluate
 warning('off', 'all');  % Turn off all warnings
-tic
-for i=1:10
-    sol = D('lbx', [1; -inf(length(dec)-1,1)] , 'ubx', [1; inf(length(dec)-1,1)] );
-end
-toc
+sol = D('lbx', [1; -inf(length(dec)-1,1)] , 'ubx', [1; inf(length(dec)-1,1)] );
+
 fprintf('Minimum is %g.\n', full(sol.f))

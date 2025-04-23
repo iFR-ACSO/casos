@@ -3,14 +3,6 @@ function Lz = newton_reduce(Pdegmat,Zdegmat,solver)
 % Strategy inpired from: Simplification Methods for Sum-of-Squares 
 % Programs, Peter Seiler et al.
 
-% list of available solvers for the newton polytope reduction
-list_solvers = {'sedumi', 'mosek', 'scs'};
-[solver_available, ~] = ismember(solver,list_solvers);
-
-if solver_available==0
-    error('Specified solver is not available.\n');
-end
-
 % build LP (part 1)
 bfixed = [zeros(size(Pdegmat,1),1); 1];
 
@@ -40,38 +32,36 @@ for i = 1:length(keep_trivial)
     % Build LP if dimensions mismatch or at first iteration 
     % (reuse previous LP)
     if i==1 || any(size(p_A) ~=size(A))
-        % Define symbolic variables for LP (parameters for LP)
-        p_A = casadi.SX.sym('p_A', size(A));    % Symbolic for A
-        p_c = casadi.SX.sym('p_c', size(c));    % Symbolic for cost vector c
-
-        % Define decision variable vector
-        newton_x = casadi.SX.sym('x', size(A,2), 1);
-
-        % Define linear program components
-        lin.f = p_c'*newton_x;          % Objective function
-        lin.x = newton_x;               % Decision variables
-        lin.g = p_A*newton_x;           % Constraints
-        lin.p = [p_A(:); p_c(:)];       % Parameters (flattened)
+        % for the conic solver:
+        lin = struct('g', casadi.Sparsity.dense(size(c,1),size(c,2)), 'a', casadi.Sparsity.dense(size(A)));
 
         % Set options for solver
         opts.Kx = struct('lin', size(A,2));
-        
+        opts.Kc = struct('lin', length(b));
+
         % Build the linear program
-        S = casos.sdpsol('S', solver, lin, opts);
+        Slin = casos.conic('S', solver, lin, opts);
     end
 
     % Solve and obtain the solution
-    sol = S('lbg', -inf(length(b),1), ...       % Lower bounds for constraints
-            'ubg', b, ...                       % Upper bounds for constraints
-            'lbx', -inf, ...                    % Lower bounds for decision variables
-            'ubx', +inf, ...                    % Upper bounds for decision variables
-            'p', [full(A(:)); full(c(:))]);     % Parameters (flattened)
+    sol = Slin('h',    sparse(size(A,2), size(A,2)), ...
+                'g',    c,   ...
+                'a',    A,   ...
+                'lba',  -inf,    ...        
+                'uba',  b, ...    
+                'cba',  [], ...
+                'lbx',  -inf, ...        
+                'ubx',  +inf, ...
+                'cbx',  [], ...
+                'x0',   sparse(size(A,2),1), ...
+                'lam_a0', sparse(length(b),1) ,...
+                'lam_x0', sparse(length(c),1));
 
     % Extract the solution
     x = full(sol.x);
 
     % Get the status code from solver
-    flag = mapSolverReturn(S.stats.UNIFIED_RETURN_STATUS);
+    flag = mapSolverReturn(Slin.stats.UNIFIED_RETURN_STATUS);
 
     % % in case the LP is not feasible, giving an empty output 'x' 
     if isempty(x)

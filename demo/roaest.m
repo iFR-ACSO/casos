@@ -25,8 +25,7 @@ g = casos.PS.sym('g');
 b = casos.PS.sym('b');
 
 % options
-opts = struct('sossol','sedumi');
-
+opts = struct('sossol','mosek');
 %% Setup solver
 % solver 1: gamma-step
 sos1 = struct('x',s1,'f',-g,'p',V);
@@ -35,7 +34,7 @@ sos1.('g') = s1*(V-g)-nabla(V,x)*f-l;
 % states + constraint are SOS cones
 opts.Kx = struct('sos', 1);
 opts.Kc = struct('sos', 1);
-
+opts.sossol_options.newton_solver = []; 
 S1 = casos.qcsossol('S1','bisection',sos1,opts);
 
 % solver 2: beta-step
@@ -45,7 +44,7 @@ sos2.('g') = s2*(p-b)+g-V;
 % states + constraint are SOS cones
 opts.Kx = struct('sos', 1);
 opts.Kc = struct('sos', 1);
-
+opts.sossol_options.newton_solver = [];
 S2 = casos.qcsossol('S2','bisection',sos2,opts);
 
 % solver 3: V-step
@@ -55,8 +54,8 @@ sos3.('g') = [V-l; s2*(p-b)+g-V; s1*(V-g)-nabla(V,x)*f-l];
 opts = struct;
 opts.Kx = struct('sos', 0, 'lin', 1); 
 opts.Kc = struct('sos', 3);
-
-S3 = casos.sossol('S','sedumi',sos3,opts);
+opts.newton_solver = []; 
+S3 = casos.sossol('S','mosek',sos3,opts);
 
 %% V-s-iteration
 for iter = 1:10

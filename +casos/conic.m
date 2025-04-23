@@ -3,6 +3,7 @@ function f = conic(varargin)
         
 sol = casos.package.solvers.conicInternal(varargin{:});
 
-f = casadi.Function(sol);
+f = sol;
+%f = casadi.Function(sol);
 
 end
