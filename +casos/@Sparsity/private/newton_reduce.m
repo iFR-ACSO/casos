@@ -38,6 +38,7 @@ for i = 1:length(keep_trivial)
         % Set options for solver
         opts.Kx = struct('lin', size(A,2));
         opts.Kc = struct('lin', length(b));
+        opts.error_on_fail = false;
 
         % Build the linear program
         Slin = casos.conic('S', solver, lin, opts);
@@ -60,14 +61,22 @@ for i = 1:length(keep_trivial)
     % Extract the solution
     x = full(sol.x);
 
-    % Get the status code from solver
-    flag = mapSolverReturn(Slin.stats.UNIFIED_RETURN_STATUS);
-
-    % % in case the LP is not feasible, giving an empty output 'x' 
-    if isempty(x)
-        x = zeros(length(c),1);
+    switch Slin.stats.UNIFIED_RETURN_STATUS
+        case 'SOLVER_RET_SUCCESS'
+            flag = 1;
+        case 'SOLVER_RET_LIMITED'
+            flag = 0;
+        case 'SOLVER_RET_INFEASIBLE'
+            flag = -3;
+            x = zeros(length(c),1);
+        case 'SOLVER_RET_NAN'
+            flag = -4;
+        case 'SOLVER_RET_UNKNOWN'
+            flag = -1;
+        otherwise
+            flag = -99;
     end
-
+    
     % If the LP gives an unbounded solution or the only solution is a zero vector
     if (flag > 0 && ([-q 1]*x(:) < 0)) || flag == -3
         a = x(1:end-1);
@@ -79,26 +88,4 @@ end
 
 Lz = keep;
 Lz = sparse(Lz);
-end
-
-
-% Maps solver return values to numerical codes and descriptions.
-function [code, description] = mapSolverReturn(solver_ret)
-    
-    mapping = struct( ...
-        'SOLVER_RET_SUCCESS',    {1,  'Function converged to a solution.'}, ...
-        'SOLVER_RET_LIMITED',    {0,  'Solution is feasible but does not fully satisfy tolerances.'}, ...
-        'SOLVER_RET_INFEASIBLE', {-3, 'No feasible point was found or is unbounded'}, ...
-        'SOLVER_RET_NAN',        {-4, 'NaN value encountered during execution.'}, ...
-        'SOLVER_RET_UNKNOWN',    {-1, 'Solver did not return a clear result.'} ...
-    );
-
-    if isfield(mapping, solver_ret)
-        values = {mapping.(solver_ret)};  % Extract the cell array
-        code = values{1};                 % First element: numerical code
-        description = values{2};          % Second element: description
-    else
-        code = -99;
-        description = 'Unknown solver return value.';
-    end
 end
