@@ -25,23 +25,15 @@ opts.error_on_fail = false;
 %   - If using qcsossol, set opts.sossol_options.newton_solver = []
 opts.newton_solver = 'mosek'; 
 
-% solve by relaxation to SDP
+% Build the solver
 tic
 S = casos.sossol('S','mosek',sos,opts); % build problem
 fprintf('build time: %ds \n', toc);
 
-% to easily verify the computation time, set number of repetitions
-N_times = 1e1;
-idx = 1:N_times;
-
-tic;
-arrayfun(@(i) S(), idx, 'UniformOutput', false); % solve problem
-fprintf('newton = %s || time: %ds \n', opts.newton_solver, toc);
-
+% Run solver
 sol = S();
 fprintf('sol.f = %d \n', full(sol.f)); % the value should be 1.7107
 
-
-
-
-
+% Run the solver to obtain an accurate computation time
+tsol = timeit(@()S());
+fprintf('newton = %s || time: %ds \n', opts.newton_solver, tsol);
