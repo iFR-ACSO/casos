@@ -31,7 +31,6 @@ sos = struct('x', [s; v], 'f', cost, 'g', -s*k+v-1);
 opts = struct;
 opts.Kx = struct('sos',2);
 opts.Kc = struct('sos',1);
-opts.newton_solver = [];
 
 % solve by relaxation to SDP
 S = casos.sossol('S','mosek',sos,opts);

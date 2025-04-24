@@ -13,7 +13,6 @@ sos = struct('x',g,'f',g,'g',f+g);
 
 % constraint is scalar SOS cone
 opts = struct('Kc',struct('sos',1));
-opts.newton_solver = []; 
 
 % solve by relaxation to SDP
 S = casos.sossol('S','mosek',sos,opts);

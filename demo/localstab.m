@@ -51,7 +51,6 @@ qcsos = struct('x',s,'f',-g,'g',s*(V-g)-Vdot-l);
 opts = struct('sossol','mosek');
 opts.Kx = struct('sos', 1);
 opts.Kc = struct('sos', 1);
-opts.sossol_options.newton_solver = [];
 
 % solve by bisection
 S = casos.qcsossol('S','bisection',qcsos,opts);

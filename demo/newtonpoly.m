@@ -18,8 +18,12 @@ opts.Kc.sos = 4;
 % ignore infeasibility
 opts.error_on_fail = false;
 
-% newton polytope simplification 
-opts.newton_solver = 'mosek'; % leave the argument empty if no simplification is desired
+% Enables Newton polytope simplification.
+% By default, CaSoS uses the same solver as for the main SDP.
+% To disable simplification:
+%   - Set opts.newton_solver to []
+%   - If using qcsossol, set opts.sossol_options.newton_solver = []
+opts.newton_solver = 'mosek'; 
 
 % solve by relaxation to SDP
 tic
