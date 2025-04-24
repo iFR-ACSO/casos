@@ -25,7 +25,7 @@ opts.Kc = struct('sos', 1);
 opts.error_on_fail = false;
 
 % solve by relaxation to SDP
-S = casos.sossol('S','mosek',sos,opts);
+S = casos.sossol('S','sedumi',sos,opts);
 
 % find largest stable level set
 lb = 0; ub = 10;
@@ -48,9 +48,6 @@ fprintf('Maximal stable level set is %g.\n', lb)
 %% Quasiconvex optimization
 % define quasiconvex SOS problem
 qcsos = struct('x',s,'f',-g,'g',s*(V-g)-Vdot-l);
-opts = struct('sossol','mosek');
-opts.Kx = struct('sos', 1);
-opts.Kc = struct('sos', 1);
 
 % solve by bisection
 S = casos.qcsossol('S','bisection',qcsos,opts);
