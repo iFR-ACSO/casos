@@ -13,6 +13,9 @@ keep = true(size(keep_trivial));
 % initialize some parameters for optimization
 p_A = [];
 
+% Set options for solver
+opts.error_on_fail = false;
+
 % try to go over each possible monomial basis and verify if it belongs to
 % the newton polytope by checking for the existance of a hyperplane 
 for i = 1:length(keep_trivial)
@@ -33,12 +36,8 @@ for i = 1:length(keep_trivial)
     % (reuse previous LP)
     if i==1 || any(size(p_A) ~=size(A))
         % for the conic solver:
-        lin = struct('g', casadi.Sparsity.dense(size(c,1),size(c,2)), 'a', casadi.Sparsity.dense(size(A)));
-
-        % Set options for solver
-        opts.Kx = struct('lin', size(A,2));
-        opts.Kc = struct('lin', length(b));
-        opts.error_on_fail = false;
+        lin = struct('g', casadi.Sparsity.dense(size(c)), ...
+                     'a', casadi.Sparsity.dense(size(A)));
 
         % Build the linear program
         Slin = casos.conic('S', solver, lin, opts);
@@ -61,24 +60,16 @@ for i = 1:length(keep_trivial)
     % Extract the solution
     x = full(sol.x);
 
-    switch Slin.stats.UNIFIED_RETURN_STATUS
-        case 'SOLVER_RET_SUCCESS'
-            flag = 1;
-        case 'SOLVER_RET_LIMITED'
-            flag = 0;
-        case 'SOLVER_RET_INFEASIBLE'
-            flag = -3;
-            x = zeros(length(c),1);
-        case 'SOLVER_RET_NAN'
-            flag = -4;
-        case 'SOLVER_RET_UNKNOWN'
-            flag = -1;
-        otherwise
-            flag = -99;
+    % Get status of conic solver
+    status = Slin.stats.UNIFIED_RETURN_STATUS;
+
+    % If the solution is not feasible x should be filled with zeros
+    if isequal(status,'SOLVER_RET_INFEASIBLE')
+        x = zeros(length(c),1);
     end
-    
+
     % If the LP gives an unbounded solution or the only solution is a zero vector
-    if (flag > 0 && ([-q 1]*x(:) < 0)) || flag == -3
+    if (isequal(status,'SOLVER_RET_SUCCESS') && ([-q 1]*x(:) < 0)) || isequal(status,'SOLVER_RET_INFEASIBLE')
         a = x(1:end-1);
         b1 = x(end);
         u = 2*Zdegmat*a - b1 > sqrt(eps);
