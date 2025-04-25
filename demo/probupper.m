@@ -38,5 +38,5 @@ S = casos.sossol('S','mosek',sos,opts);
 % evaluate
 sol = S();
 
-% the result should be a value above 0.18162
+% the result should be a value above 0.25...
 fprintf('int_K f(x) dx = %d\n', full(sol.f)); 
