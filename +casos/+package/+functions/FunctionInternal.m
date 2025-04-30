@@ -94,12 +94,4 @@ methods (Access=protected)
     end
 end
 
-methods (Access={?casos.package.functions.FunctionCommon, ?casos.package.functions.FunctionWrapper})
-    %% Friend interface
-    function substitute(obj,varargin)
-        % Substitute variables.
-        error('Method SUBSTITUTE not supported for %s.',obj.class_name)
-    end
-end
-
 end

@@ -267,15 +267,4 @@ methods (Access=protected)
     end
 end
 
-methods (Access={?casos.package.functions.FunctionInternal})
-    %% Friend interface
-    function f = substitute(obj,varargin)
-        % Substitute variables.
-        assert(~is_null(obj), 'Notify the developers.')
-
-        f = obj;
-        f.wrap = substitute(obj.wrap,varargin{:});
-    end
-end
-
 end
