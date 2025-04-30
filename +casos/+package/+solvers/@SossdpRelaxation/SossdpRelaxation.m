@@ -12,8 +12,6 @@ properties (Constant,Access=protected)
         {'sdpsol_options', 'Options to be passed to the SDP solver.';...
          'newton_solver', 'Solver used for the Newton simplification (defaults to the one used in sdpsol)'}
     ];
-
-    allow_eval_on_basis = true;
 end
 
 properties (SetAccess=private)

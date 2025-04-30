@@ -178,14 +178,14 @@ methods
         J = jacobian(obj.wrap);
     end
 
-    function out = call(obj,args)
+    function out = call(obj,args,varargin)
         % Evaluate function for given arguments.
         assert(~is_null(obj), 'Notify the developers.')
 
         if iscell(args)
             assert(length(args) == obj.n_in, 'Incorrect number of inputs: Expected %d, got %d.', obj.n_in, length(args));
 
-            out = call(obj.wrap,args);
+            out = call(obj.wrap,args,varargin{:});
             return
         end
 
@@ -210,7 +210,7 @@ methods
         argin(idx_in+1) = struct2cell(args);
         
         % call function with cell
-        argout = call(obj.wrap,argin);
+        argout = call(obj.wrap,argin,varargin{:});
 
         % name of outputs
         fn_out = arrayfun(@(i) obj.name_out(i), 0:obj.n_out-1, 'UniformOutput', false);
