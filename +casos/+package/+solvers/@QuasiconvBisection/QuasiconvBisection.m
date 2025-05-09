@@ -22,8 +22,6 @@ properties (Constant,Access=protected)
          'tolerance_rel', 'Relative tolerance for stopping criterion.'
          'verbose', 'Turn on/off iteration display.'}
     ];
-
-    allow_eval_on_basis = true;
 end
 
 properties (SetAccess=private)

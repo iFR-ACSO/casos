@@ -12,8 +12,6 @@ properties (Constant,Access=protected)
         {'sdpsol_options', 'Options to be passed to the SDP solver.';...
          'newton_solver', 'Solver used for the Newton simplification (defaults to the one used in sdpsol)'}
     ];
-
-    allow_eval_on_basis = true;
 end
 
 properties (SetAccess=private)
@@ -80,29 +78,6 @@ methods
     function s = get_stats(obj)
         % Return stats.
         s = obj.sdpsolver.stats;
-    end
-end
-
-methods (Access={?casos.package.functions.FunctionCommon, ?casos.package.functions.FunctionWrapper})
-    function S = substitute(obj,idx,expr_in,expr_out)
-        % Substitute a variable for expr_in -> expr_out.
-        if ischar(idx)
-            % map variable name to index
-            idx = get_index_in(obj,idx);
-        end
-
-        % only parameter subsitution supported
-        assert(idx == 1,'Subsitution of input %d not allowed.',idx)
-
-        % project to basis
-        [Qin,Zin] = poly2basis(expr_in);
-        Qout = poly2basis(expr_out,obj.sparsity_p);
-
-        % substitute
-        S = copy(obj);
-        S.sdpsolver = substitute(obj.sdpsolver,idx,Qin,Qout);
-        % store new basis
-        S.sparsity_p = Zin;
     end
 end
 
