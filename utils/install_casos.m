@@ -99,7 +99,7 @@ fprintf("\n--- Checking SCS Installation ---\n")
 scsStr = which('scs');
 
 if isempty(scsStr)
-    warning('SCS is not installed')
+    warning('SCS is not installed or not on the Matlab Path')
     scsInstalled = false;
 else
     scsInstalled = true;
