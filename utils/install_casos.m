@@ -119,10 +119,22 @@ else
     fprintf(' -- SeDuMi is installed --\n')
 end
 
+% Clarabel
+clarabelStr = which('clarabel_mex');
+
+if isempty(clarabelStr)
+    warning(['Clarabel is not installed. Visit...' ...
+        ' https://github.com/iFR-ACSO/Clarabel.m for details'])
+    clarabelInstalled = false;
+else
+    clarabelInstalled = true;
+end
+
 %% Final results
 % Print overview table
-software = ["Casos"; "Casadi"; "Mosek"; "SCS"; "SeDuMi"];
-installed = [true; casadiInstalled; mosekInstalled; scsInstalled; sedumiInstalled];
+software = ["Casos"; "Casadi"; "Mosek"; "SCS"; "SeDuMi"; "Clarabel"];
+installed = [true; casadiInstalled; mosekInstalled; scsInstalled; ...
+    sedumiInstalled; clarabelInstalled];
 fprintf('\n--- Summary ---\n\n')
 disp(table(software, installed))
 
