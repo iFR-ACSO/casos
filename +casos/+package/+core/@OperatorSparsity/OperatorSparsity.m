@@ -1,0 +1,264 @@
+classdef (InferiorClasses = {?casadi.Sparsity, ?casadi.DM, ?casadi.SX, ?casadi.MX, ?casos.Sparsity, ?casos.PD, ?casos.PS}) ...
+    OperatorSparsity < casos.package.core.AbstractSparsity
+% Operator sparsity class.
+
+properties (Access=private)
+    % sparsity of linear map from in-nnz to out-nnz
+    sparsity_M = casadi.Sparsity;
+end
+
+properties (SetAccess=private,GetAccess=public)
+    % polynomial sparsity patterns of input and output
+    sparsity_in = casos.Sparsity;
+    sparsity_out = casos.Sparsity;
+end
+
+properties (Dependent)
+    nvars;
+    nterm;
+    maxdeg;
+    mindeg;
+end
+
+properties (Dependent, Access=protected)
+    degsum;
+end
+
+methods
+    %% Public constructor
+    function obj = OperatorSparsity(S,Si,So)
+        % New operator sparsity pattern.
+        if nargin < 1
+            % nothing to do (null)
+            return
+
+        elseif isa(S,'casos.Sparsity')
+            % convert polynomial sparsity pattern
+            error('Cannot convert polynomial sparsity pattern.')
+
+        elseif isa(S,'casos.package.core.OperatorSparsity')
+            % copy operator pattern
+            assert(nargin < 2, 'Too many input arguments.')
+
+            Si = casos.Sparsity(S.sparsity_in);
+            So = casos.Sparsity(S.sparsity_out);
+            S = S.sparsity_M;
+
+        elseif nargin < 2
+            % matrix multiplication pattern
+            Si = casos.Sparsity.dense(size(S,2),1);
+            So = casos.Sparsity.dense(size(S,1),1);
+
+        elseif nargin < 3
+            % dual operator pattern
+            Si = casos.Sparsity(Si);
+            So = casos.Sparsity.dense(size(S,1),1);
+
+        elseif nargin < 4
+            % construct operator pattern
+            Si = casos.Sparsity(Si);
+            So = casos.Sparsity(So);
+
+        else
+            error('Undefined syntax.')
+        end
+
+        assert(size(S,2) == nnz(Si), 'Input dimensions mismatch.')
+        assert(size(S,1) == nnz(So), 'Output dimensions mismatch.')
+
+        obj.sparsity_M = casadi.Sparsity(S);
+        obj.sparsity_in = Si;
+        obj.sparsity_out = So;
+    end
+
+    %% Getter
+    function varargout = size(obj,varargin)
+        % Return size of operator.
+        [varargout{1:nargout}] = size(sparse(numel(obj.sparsity_out),numel(obj.sparsity_in)),varargin{:});
+    end
+
+    function n = numel(obj)
+        % Return number of elements.
+        n = numel(obj.sparsity_in)*numel(obj.sparsity_out);
+    end
+
+    function n = nnz(obj)
+        % Return number of nonzeros.
+        n = nnz(obj.sparsity_M);
+    end
+
+    function n = get.nterm(obj)
+        % Return number of terms.
+        n = numel(obj.sparsity_M);
+    end
+
+    function n = get.nvars(obj)
+        % Return number of indeterminate variables.
+        n = length(obj.indeterminates);
+    end
+
+    function d = get.maxdeg(obj)
+        % Return maximum degree.
+        d = max(obj.sparsity_in.maxdeg, obj.sparsity_out.maxdeg);
+    end
+
+    function d = get.mindeg(obj)
+        % Return minimum degree.
+        d = min(obj.sparsity_in.mindeg, obj.sparsity_out.mindeg);
+    end
+
+    function D = get.degsum(obj)
+        % Relative degree of each monomial.
+        D = reshape(obj.sparsity_out.degsum,[],1) - reshape(obj.sparsity_in.degsum,1,[]);
+    end
+
+    function x = indeterminates(obj)
+        % Return indeterminate variables.
+        x = combine(indeterminates(obj.sparsity_in), indeterminates(obj.sparsity_out));
+    end
+
+    function tf = is_zerodegree(obj)
+        % Check if operator is of input/output degree zero.
+        tf = (obj.sparsity_in.maxdeg == 0 && obj.sparsity_out.maxdeg == 0);
+    end
+
+    function tf = is_matrix(obj)
+        % Check if operator is mapping between vectors.
+        tf = (iscolumn(obj.sparsity_in) && iscolumn(obj.sparsity_out));
+    end
+
+    function tf = is_polynomial(obj)
+        % Check if operator corresponds to multiplication with polynomial.
+        tf = false; 
+        
+        assert(~is_zerodegree(obj.sparsity_in) || obj.numel_in ~= 1, 'Notify the developers.');
+    end
+
+    function tf = is_dual(obj)
+        % Check if operator is a linear form (dual).
+        tf = (is_zerodegree(obj.sparsity_out) && obj.numel_out == 1);
+    end
+
+    function tf = is_operator(~)
+        % Check for operator.
+        tf = true;
+    end
+
+    function tf = is_equal(obj,op)
+        % Check if operators are equal.
+        tf = is_equal(obj.sparsity_in,op.sparsity_in) ...
+            && is_equal(obj.sparsity_out,op.sparsity_out) ...
+            && is_equal(obj.sparsity_M,op.sparsity_M);
+    end
+
+    function tf = is_wellposed(obj)
+        % Check if operator is well formed.
+        tf = is_wellformed(obj.sparsity_in) ...
+            && is_wellformed(obj.sparsity_out) ...
+            && size(obj.sparsity_M,1) == obj.numel_out ...
+            && size(obj.sparsity_M,2) == obj.numel_in;
+    end
+
+    function tf = is_null(obj)
+        % Check for null pointer.
+        tf = is_null(obj.sparsity_M);
+    end
+
+    %% Conversion
+    function S = primalize(obj)
+        % Convert dual operator to primal.
+        assert(is_dual(obj), 'Operator must be linear form (dual).')
+
+        S = casos.Sparsity(obj.sparsity_out);
+
+        assert(is_dense(obj.sparsity_M), 'Notify the developers.')
+    end
+
+    function S = dualize(obj)
+        % Convert to dual.
+        assert(is_dual(obj), 'Operator must be linear form (dual).')
+
+        S = casos.package.core.OperatorSparsity(obj);
+    end
+
+    function S = to_vector(obj,varargin)
+        % Convert a scalar dual operator to a vector.
+        assert(is_dual(obj) && isscalar(obj), 'Operator must be scalar linear form.')
+
+        S = casos.package.core.OperatorSparsity( ...
+                            obj.sparsity_M, ...
+                            to_vector(obj.sparsity_in,varargin{:}), ...
+                            obj.sparsity_out ...
+        );
+    end
+
+    function [S,I] = restrict_terms(obj,deg)
+        % Restrict monomial terms.
+        [Si,I1] = restrict_terms(obj.sparsity_in,deg);
+        [So,I2] = restrict_terms(obj.sparsity_out,deg);
+
+        % coefficients to keep
+        I = (reshape(I2,[],1) & reshape(I1,1,[]));
+
+        % restrict coefficients
+        M = reshape(sub(obj.sparsity_M,find(I)-1),numel(So),numel(Si));
+
+        % new sparsity pattern
+        S = casos.package.core.OperatorSparsity(M,Si,So);
+    end
+
+    %% Matrix sparsity interface
+    function S = matrix_sparsity(obj)
+        % Return matrix sparsity pattern.
+        assert(is_zerodegree(obj), 'Not supported for polynomial operators.')
+
+        S = casadi.Sparsity(obj.sparsity_M);
+    end
+
+    function idx = matrix_find(obj)
+        % Return indices of nonzero elements.
+        assert(is_zerodegree(obj), 'Not supported for polynomial operators.')
+
+        idx = find(obj.sparsity_M);
+    end
+
+    %% Display output
+    function s = str(obj)
+        % Return string representation.
+        s = compose('[%s]->[%s],%dnz',to_char(obj.sparsity_in),to_char(obj.sparsity_out),nnz(obj.sparsity_M));
+    end
+
+    function s = signature(obj)
+        % Return signature.
+        in = signature(obj.sparsity_in); out = signature(obj.sparsity_out);
+        s = compose('(%s)->(%s),%dnz',in{:},out{:},nnz(obj.sparsity_M));
+    end
+
+    function print_matrix(obj)
+        % Print operator matrix pattern.
+        disp(obj.sparsity_M)
+    end
+end
+
+methods (Access={?casos.package.core.PolynomialInterface})
+    %% Friend class interface
+    function S = new_sparse(varargin)
+        % Create new sparsity pattern.
+        S = casos.package.core.OperatorSparsity(varargin{:});
+    end
+
+    function S = coeff_sparsity(obj)
+        % Return sparsity pattern of linear map.
+        S = casadi.Sparsity(obj.sparsity_M);
+    end
+
+    % protected interface for polynomial operations
+    [S,coeffs] = coeff_project(obj,coeffs,S,keep_zeros);
+    [S,coeffs] = coeff_subsref(obj,coeffs,ii,sz);
+    [S,coeffs] = coeff_subsasgn(obj,S2,coeffs,coeff2,ii);
+    [S,coeffs] = coeff_cat(S1,S2,coeff1,coeff2,dim);
+    [S,coeffs] = coeff_plus(S1,S2,coeff1,coeff2);
+    [S,coeffs] = coeff_times(S1,S2,coeff1,coeff2);
+end
+
+end
