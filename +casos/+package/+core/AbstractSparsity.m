@@ -31,7 +31,7 @@ methods (Abstract)
 
     S = to_vector(obj,I,row_vector);
 
-    S = restrict_terms(obj,deg);
+    [S,I] = restrict_terms(obj,deg);
 
     %% Matrix sparsity interface
     S = matrix_sparsity(obj);

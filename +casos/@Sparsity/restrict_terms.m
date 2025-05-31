@@ -1,4 +1,4 @@
-function S = restrict_terms(S,deg)
+function [S,I] = restrict_terms(S,deg)
 % Restrict monomials terms to specified degrees.
 
 % choose terms to keep
