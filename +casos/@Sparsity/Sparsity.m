@@ -2,7 +2,7 @@ classdef (InferiorClasses = {?casadi.Sparsity, ?casadi.DM, ?casadi.SX, ?casadi.M
     Sparsity < casos.package.core.PolynomialInterface
 % Polynomial sparsity class.
 
-properties (GetAccess=protected, SetAccess=private)
+properties (Access=private)
     % polynomial sparsity is stored in multi-index fashion, that is,
     %
     %   p = sum_a c_a*x^a
@@ -16,7 +16,7 @@ properties (GetAccess=protected, SetAccess=private)
     matdim = [1 1];              % dimensions (size) of coefficients c_a
 end
 
-properties (Dependent=true)
+properties (Dependent)
     nvars;      % number of indeterminate variables
     nterm;      % number of monomial terms
     maxdeg;
@@ -26,7 +26,7 @@ properties (Dependent=true)
 %     matrix_nnz; % number of nonzero components
 end
 
-properties (Dependent=true, Access=protected)
+properties (Dependent, Access=protected)
     degsum;     % total degree of each monomial
 end
 
