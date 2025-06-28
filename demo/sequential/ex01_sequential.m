@@ -158,7 +158,7 @@ g = Vinit-1;  % just an example
 
 % options
 opts = struct('sossol','mosek');
-opts.verbose  = 0;
+opts.verbose  = 1;
 
 opts.max_iter = 300;
 opts.tolerance_opt = 1e-4;

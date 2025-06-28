@@ -132,10 +132,10 @@ g = (x'*G0*x) - 1;
 V = casos.PS.sym('v',monomials(x,2:4));
 
 % SOS multiplier
-s2    = casos.PS.sym('s2',monomials(x,4));
+s1    = casos.PS.sym('s1',monomials(x,4));
+s2    = casos.PS.sym('s2',monomials(x,0),[2 1]);
 s3    = casos.PS.sym('s3',monomials(x,0),[2 1]);
-s4    = casos.PS.sym('s4',monomials(x,0),[2 1]);
-s5    = casos.PS.sym('s4',monomials(x,0:2));
+s4    = casos.PS.sym('s4',monomials(x,0:2));
 
 kappa1 = casos.PS.sym('k',monomials([x(1)],1));
 kappa2 = casos.PS.sym('k',monomials([x(3)],1));
@@ -157,20 +157,20 @@ opts.max_iter = 100;
 % cost
 cost = dot(g-(V-b),g-(V-b)) ;
 
-sos = struct('x',[V; s2;s3;s4;s5;kappa;b],... % decision variables
+sos = struct('x',[V; s1;s2;s3;s4;kappa;b],... % decision variables
               'f',cost, ...                   % cost
               'p',[]);                        % parameter
 
 % SOS constraints
-sos.('g') = [s2;
+sos.('g') = [s1;
+             s2;
              s3;
              s4;
-             s5;
              V-l; 
-             s2*(V-b)-nabla(V,x)*subs(f,u,kappa)-l;
-             s3*(V-b) + kappa - um;
-             s4*(V-b) + uM- kappa;
-             s5*(V-b) - g
+             s1*(V-b)-nabla(V,x)*subs(f,u,kappa)-l;
+             s2*(V-b) + kappa - um;
+             s3*(V-b) + uM- kappa;
+             s4*(V-b) - g
              ];
 
 % states + constraint cones

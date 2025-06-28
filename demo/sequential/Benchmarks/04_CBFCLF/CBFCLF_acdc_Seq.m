@@ -55,7 +55,7 @@ w2 = (1*x(1)/20)^2 + 1*x(2)^2 + 1*x(3)^2 - 1.2^2;
 r=(1*x(1)/0.8)^2+(1*x(2)/1.2)^2+(1*x(3)/1.2)^2-1.8;
 
 % Lyapunov function candidate
-V = casos.PS.sym('v',monomials([x(1)^2 x(2)^2 x(3)^2]));
+V = casos.PS.sym('v',monomials([x(1)^2 x(2)^2 x(3)^2 x(1)^4 x(2)^4 x(3)^4]));
 
 % SOS multiplier
 s1    = casos.PS.sym('s1',monomials(x,0));

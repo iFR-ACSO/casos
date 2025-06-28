@@ -33,18 +33,19 @@ maxDeg = 6;
 
 % number of states; problem dependent, but limitied here to five 
 % otherwise SOS projection runs in memory problems
-nxMax = 5;
+nxMax = 12;
 
 % Initialize arrays to store computation times for each method
 time_sos                = zeros(1, nxMax-1);   
-time_signed_distance    = zeros(1, nxMax-1);   
+time_signed_distance    = zeros(1, nxMax-1);  
+time_polyopt            =  zeros(1, nxMax-1);
 time_sampling_1000      = zeros(1, nxMax-1);   
 time_sampling_10000     = zeros(1, nxMax-1);  
 time_sampling_100000    = zeros(1, nxMax-1); 
 
 % Loop over nx from 2 to nxMax
 for nx = 2:nxMax 
-
+    nx
     % Indeterminate variables
     x = casos.Indeterminates('x', nx);
 
@@ -59,22 +60,22 @@ for nx = 2:nxMax
 
     %% Projection onto SOS cone
     % Gram decision variable
-    s = casos.PS.sym('q', grambasis(p));
+    % s = casos.PS.sym('q', grambasis(p));
 
     % Projection error
-    e = s - p;
+    % e = s - p;
 
     % Min ||s-p||^2 s.t. s is SOS
-    sos = struct('x', s, 'f', dot(e, e));
+    % sos = struct('x', s, 'f', dot(e, e));
 
-    opts = struct('Kx', struct('sos', N));
-    opts.error_on_fail = 0;
+    % opts = struct('Kx', struct('sos', N));
+    % opts.error_on_fail = 0;
 
     % Solve by relaxation to SDP
-    S = casos.sossol('S', 'mosek', sos, opts);
-    startSD = tic;
-    sol = S();
-    time_sos(nx-1) = toc(startSD);  % Store time for SOS projection
+    % S = casos.sossol('S', 'mosek', sos, opts);
+    % startSD = tic;
+    % sol = S();
+    % time_sos(nx-1) = toc(startSD);  % Store time for SOS projection
 
     %% Define signed distance
     opts = [];
@@ -85,15 +86,18 @@ for nx = 2:nxMax
     r = casos.PS.sym('r', length(p));
     s0 = casos.PD(base_s0);
 
-    % Min ||s-p||^2 s.t. s is SOS
+    % Min sum(r) s.t. s is SOS
     sos = struct('x', r, 'f', sum(r), 'g', p + r .* s0);
     opts = struct('Kx', struct('lin', length(sos.x)), 'Kc', struct('sos', length(sos.g)));
-
+        
+    tic
     % Solve by relaxation to SDP
     S = casos.sossol('S', 'mosek', sos, opts);
+    toc
     startSD = tic;
     sol = S();
     time_signed_distance(nx-1) = toc(startSD); 
+
 
     %% Define sampling approaches
     % assume a simple box; only needed for computation
@@ -122,10 +126,10 @@ for nx = 2:nxMax
     time_sampling_10000(nx-1) = toc(startSmp);  % Store time for 10000 samples
 
     % Sampling with 100000 samples
-    startSmp = tic;
-    values_100000 = full(pfun(x_sample_all{:}));
-    minVal_100000 = min(min(values_100000));
-    time_sampling_100000(nx-1) = toc(startSmp);  % Store time for 100000 samples
+    % startSmp = tic;
+    % values_100000 = full(pfun(x_sample_all{:}));
+    % minVal_100000 = min(min(values_100000));
+    % time_sampling_100000(nx-1) = toc(startSmp);  % Store time for 100000 samples
 
 end
 
@@ -146,7 +150,7 @@ grid on;
 % Set the y-axis to logarithmic scale
 set(gca, 'YScale', 'log');
 
-
-cleanfigure();
-matlab2tikz('compConsVio.tex','width','\figW','height','\figH');
+% 
+% cleanfigure();
+% matlab2tikz('compConsVio.tex','width','\figW','height','\figH');
 

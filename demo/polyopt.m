@@ -3,7 +3,7 @@
 % indeterminate variable
 x = casos.Indeterminates('x');
 % some polynomial
-f = x^4 + 10*x;
+f = x^4;
 % scalar decision variable
 g = casos.PS.sym('g');
 
@@ -14,7 +14,7 @@ sos = struct('x',g,'f',g,'g',f+g);
 opts = struct('Kc',struct('sos',1));
 
 % solve by relaxation to SDP
-S = casos.sossol('S','clarabel',sos,opts);
+S = casos.sossol('S','mosek',sos,opts);
 % evaluate
 sol = S();
 

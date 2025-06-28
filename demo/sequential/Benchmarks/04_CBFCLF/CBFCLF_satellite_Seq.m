@@ -24,7 +24,7 @@ x = casos.PS('x',6,1);
 u = casos.PS('u',3,1);
 
 %% Hubble telescope parameter
-J = diag([31046;77217;78754]);
+J = diag([3104;7721;7875]);
 
 % simple bounds on rates;
 omegaMax1 = 0.5*pi/180;
@@ -47,8 +47,6 @@ Dx   = diag([1/(x_up(1)-x_low(1)),1/(x_up(2)-x_low(2)),1/(x_up(3)-x_low(3)),0.5,
 
 Dxin = inv(Dx);
 
-% Du = diag([1./(umax(1)-umin(1)),1./(umax(2)-umin(2)),1./(umax(3)-umin(3))])
-
 %% dynamics
 % skew-symmetric matrix
 cpm = @(x) [   0  -x(3)  x(2); 
@@ -59,7 +57,7 @@ cpm = @(x) [   0  -x(3)  x(2);
 B = @(sigma) (1-sigma'*sigma)*eye(3)+ 2*cpm(sigma)+ 2*sigma*sigma';
 
 f =  [-J\cpm(x(1:3))*J*x(1:3) + J\u;
-      1/4*B(x(4:6))*x(1:3)]; % omega_dot
+      1/4*B(x(4:6))*x(1:3)]; 
 
 % generate an initial guess for CLF
 x0    = [0 0 0 0 0 0]';
@@ -89,7 +87,7 @@ g = subs(g0,x,Dx\x);
 
 %% setup SOS problem
 % terminal set (invariant set)
-W  = casos.PS.sym('w',monomials(x,1:4));
+W  = casos.PS.sym('w',monomials(x,0:4));
 
 % terminal penalty
 V  = casos.PS.sym('v',monomials(x,2));
@@ -108,12 +106,15 @@ end
 K = K1+K2;
 
 % SOS mulitplier
-s1 = casos.PS.sym('s1',monomials(x,4));
-s2 = casos.PS.sym('s2',monomials(x,1:4));
+s1 = casos.PS.sym('s1',monomials(x,0:2));
+s2 = casos.PS.sym('s2',monomials(x,2));
 s3 = casos.PS.sym('s3',monomials(x,0),[3 1]);
 s4 = casos.PS.sym('s4',monomials(x,0),[3 1]);
-s5 = casos.PS.sym('s5',monomials(x,1:2));
+% s5 = casos.PS.sym('s5',monomials(x,1:2));
 s6 = casos.PS.sym('s6',monomials(x,2));
+
+s5 = casos.PS.sym('s5',monomials([x(1)^2 x(2)^2 x(3)^2 x(4)^2 x(5)^2 x(6)^2 x(1)*x(4) x(2)*x(5) x(3)*x(6)]));
+
 
 % fixed level set of terminal set
 b = 0.9;
@@ -140,7 +141,7 @@ sos.('g') = [
              s2*(W-b)  -  nabla(W,x)*subs(f,u,K);   % set invariance
              s3*g   + K-umin;                   % control constraints
              s4*g   + umax-K;
-             s5*(W-b) -  nabla(V,x)*subs(f,u,K);  % CLF
+             s5*g -  nabla(V,x)*subs(f,u,K);  % CLF
              V - 1e-6*(x'*x) % ensure positivity of CLF
              ];
 

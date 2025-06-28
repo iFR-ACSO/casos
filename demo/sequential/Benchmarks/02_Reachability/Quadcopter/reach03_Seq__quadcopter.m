@@ -17,6 +17,8 @@
 %
 %--------------------------------------------------------------------------
 
+clc
+clear
 
 % system states 
 x = casos.Indeterminates('x',6);
@@ -49,13 +51,6 @@ f = [x3; x4; 0; -g; x6; -d0*x5-d1*x6];
 g1 = [0; 0; K*(-0.166*x5^3+x5); K*(-0.498*x5^2+1); 0; 0];
 g2 = [0; 0; 0; 0; 0; n0];
 
-% constraints
-% rt1 = (1.7 - 1*x1)*(1*x1 + 1.7);
-% rt2 = (0.85 - 1*x2)*(1*x2 + 0.85);
-% rt3 = (0.8 - 1*x3)*(1*x3 + 0.8);
-% rt4 = (1 - 1*x4)*(1*x4 + 1);
-% rt5 = (pi/12 - 1*x5)*(1*x5 + pi/12);
-% rt6 = (pi/2 - 1*x6)*(1*x6 + pi/2);
 
 % superquadric to cover all constraints
 n = 2;
@@ -82,8 +77,9 @@ um = [-1.5+g/K; -pi/12];
 
 
 % Lyapunov function candidate
-V    = casos.PS.sym('v',monomials([x;t],0:2));
-K    = casos.PS.sym('k',monomials([x;t],0:2),[2,1]);
+V    = casos.PS.sym('v',monomials([x;t],1:4));
+
+K    = casos.PS.sym('k',monomials([x;t],0:1),[2,1]);
 
 % SOS multiplier
 s2 = casos.PS.sym('s2',monomials([x;t],0:2));
@@ -101,14 +97,14 @@ h = casos.PS(1*t*(T-t*1));
 
 % options
 opts.verbose = 1;
-opts.max_iter = 100;
+opts.max_iter = 150;
 
 % fixed level set
 gamma = 0.1;
 
 %% setup solver
 sos1 = struct('x',[V;K;s2;s3;s4;s5;s6;s7;s8;s9;s10], ... % dec.var
-              'f',dot(rt-(V-gamma),rt-(V-gamma)), ...    % cost function for bisection
+              'f',dot(rt-V,rt-V), ...    % cost function for bisection
               'p',[]);                                   % parameter
 
 
@@ -123,11 +119,11 @@ sos1.('g') = [
                 s8;...
                 s9;...
                 s10;
-                s2*rt - s3*h - (nabla(V, t) + nabla(V, x)*( f + g1*K(1) + g2*K(2) ) ) ; ... % partially convexified see Yin paper
+                s2*(V-gamma) - s3*h - (nabla(V, t) + nabla(V, x)*( f + g1*K(1) + g2*K(2) ) ) ; ... 
                 s4.*(V-gamma) - rt      - s9.*h ;...
-                s5*(V-gamma)  + uM - K  - s6*h; ...    % convexified see Yin paper
-                s7*(V-gamma) + K - um  - s8*h;         % convexified see Yin paper
-                s10*(subs(V,t,0)-gamma) - g0
+                s5*(V-gamma)  + uM - K  - s6*h; ...    
+                s7*(V-gamma) + K - um  - s8*h;      
+                s10*(subs(V,t,T)-gamma) - g0
              ];
 
 
@@ -140,7 +136,7 @@ S = casos.nlsossol('S','filter-linesearch',sos1,opts);
 
 % initial guess
 V0 = g0;
-K0 = ones(2,1)*(x'*x);
+K0 = ones(2,1)*(x'*x) + t;
 s20 = x'*x;
 s30 = x'*x;
 s40 = ones(length(rt),1)*(x'*x);

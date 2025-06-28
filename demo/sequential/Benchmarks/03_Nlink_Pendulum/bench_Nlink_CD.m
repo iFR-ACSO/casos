@@ -130,7 +130,7 @@ for jj = 1:noRuns
         
 
      if ~isempty(fval_old)
-        if abs(full(sol2.f-fval_old)) <= 1e-3
+        if abs(full(sol2.f-fval_old)) <= 1e-4
             break
         else
             fval_old = sol2.f;

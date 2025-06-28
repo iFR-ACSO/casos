@@ -33,7 +33,9 @@ msk_prob.barf.val = full(data.f);
 % options to MOSEK
 
 msk_param = obj.opts.mosek_param;
-msk_param .MSK_IPAR_AUTO_UPDATE_SOL_INFO = 'MSK_ON';
+msk_param.MSK_IPAR_AUTO_UPDATE_SOL_INFO = 'MSK_ON';
+msk_param.MSK_IPAR_INTPNT_BASIS         ='MSK_BI_NEVER';
+% msk_param.MSK_IPAR_INTPNT_STARTING_POINT = 'MSK_STARTING_POINT_CONSTANT';
 msk_echo  = obj.opts.mosek_echo;
     
 

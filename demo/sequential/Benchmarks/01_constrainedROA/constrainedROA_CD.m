@@ -6,7 +6,8 @@
 %                       of the Nasa Generic Transport Model. To increase
 %                       the size of the sublevel set we try to minimize the
 %                       squared distance to a defined set. Additionally, we
-%                       synthesis a control law at the same time.
+%                       synthesis a linear control law at the same time.
+%                       State and control constraints are considered.
 %
 %   Reference: Modified problem from:
 %              Chakraborty, Abhijit and Seiler, Peter and Balas, Gary J.,
@@ -16,18 +17,16 @@
 %           
 %
 %--------------------------------------------------------------------------
-
-clc
 clear
+clc
+close all
 
-%import casos.toolboxes.sosopt.plinearize
-%import casos.toolboxes.sosopt.pcontour
 import casos.toolboxes.sosopt.cleanpoly
-%import casos.toolboxes.sosopt.pcontour3
 
-% system states
-x = casos.Indeterminates('x',6,1); % we have two additional states now
+%% system states
+x = casos.Indeterminates('x',4,1);
 u = casos.Indeterminates('u',2,1);
+% nu = casos.Indeterminates('nu',2,1);
 
 %% Polynomial Dynamics
 f1 = @(V,alpha,q,theta,eta,F) +1.233e-8*V.^4.*q.^2         + 4.853e-9.*alpha.^3.*F.^3    + 3.705e-5*V.^3.*alpha.*q      ...
@@ -76,8 +75,9 @@ f3 = @(V,alpha,q,theta,eta,F) -6.573e-9*V.^5.*    q.^3     + 1.747e-6*V.^4.*q.^3
 % change of pitch angle
 f4 = @(V,alpha,q,theta,eta,F)  q;
 
-%% Trim condition (original system)
-v0      = 45;       % m/s
+
+%% Trim condition
+v0      = 45;      % m/s
 alpha0  = 0.04924; % rad
 q0      = 0;       % rad/s
 theta0  = 0.04924; % radg
@@ -86,78 +86,56 @@ eta0    = 0.04892; % rad
 delta0  = 14.33;   % percent
             
 
-% trim is now augmented by two additional states i.e. trim values
-x0 = [v0; alpha0; q0; theta0;eta0; delta0];
-u0 = zeros(2,1);
+x0 = [v0; alpha0; q0; theta0];
+u0 = [eta0; delta0];
 
 % get trim point 
 f = @(x,u) [
-                    f1(x(1,:),x(2,:),x(3,:),x(4,:),x(5,:),x(6,:))
-                    f2(x(1,:),x(2,:),x(3,:),x(4,:),x(5,:),x(6,:))
-                    f3(x(1,:),x(2,:),x(3,:),x(4,:),x(5,:),x(6,:))
-                    f4(x(1,:),x(2,:),x(3,:),x(4,:),x(5,:),x(6,:))
-                    u
+                    f1(x(1,:),x(2,:),x(3,:),x(4,:),u(1,:),u(2,:))
+                    f2(x(1,:),x(2,:),x(3,:),x(4,:),u(1,:),u(2,:))
+                    f3(x(1,:),x(2,:),x(3,:),x(4,:),u(1,:),u(2,:))
+                    f4(x(1,:),x(2,:),x(3,:),x(4,:),u(1,:),u(2,:))
 ];
 
-[x0, u0] = findtrim(f,x0, u0);
+% [x0, u0] = findtrim(f,x0, u0);
 
-% set up dynamic system
+
+% set up dynamic system (might take some time)
 f = f(x+x0,u+u0);
 
+% scale dynamics 
 d = ([
-          convvel(20, 'm/s', 'm/s')  % range.tas.lebesgue.get('ft/s')
-          convang(20, 'deg', 'rad')  % range.gamma.lebesgue.get('rad')
-          convang(50, 'deg', 'rad')  % range.qhat.lebesgue.get('rad')
-          convang(20, 'deg', 'rad')  % range.alpha.lebesgue.get('rad')
-          1                          % no scale for control
-          1                          % no scale for control
+          convvel(20, 'm/s', 'm/s')  %range.tas.lebesgue.get('ft/s')
+          convang(20, 'deg', 'rad')  %range.gamma.lebesgue.get('rad')
+          convang(50, 'deg', 'rad')  %range.qhat.lebesgue.get('rad')
+          convang(20, 'deg', 'rad')  %range.alpha.lebesgue.get('rad')
 ]);
 
 
-% use scaled dynamics to compute initial guess for lyapunov function
+
 D = diag(d)^-1;
 
 f = D*subs(f, x, D^-1*x);
 
+% remove small terms
 f = cleanpoly(f,1e-6,1:5);
 
-% get an initial Lyapunov function for the augmented system
-A = full(subs(nabla(f,x),[x;u],[x0;u0]));
-B = full(subs(nabla(f,u),[x;u],[x0;u0]));
+% linearize already shifted and scaled dynamics
+A = full(subs(nabla(f,x),[x;u],[zeros(4,1);zeros(2,1)]));
+B = full(subs(nabla(f,u),[x;u],[zeros(4,1);zeros(2,1)]));
 
-[K0,P] = lqr(full(A),full(B),eye(6),eye(2));
+% just for initial-guess
+Q = eye(4);
+R = eye(2);
 
-% initial controller for augmented system
-K = -K0*x;
+[K,P] = lqr(A,B,Q,R);
 
-% initial Lyapunov function
-Vinit = x'*P*x;
-
-
-% Lyapunov function candidate
-V = casos.PS.sym('v',monomials(x,2:4));
-
-% SOS multiplier
-s1    = casos.PS.sym('s2',monomials(x,4));
-
-% setup linear control laws
-k1 = casos.PS.sym('k1',monomials(x(1)),1) ;
-k2 = casos.PS.sym('k2',monomials(x(3)),1) ;
-
-kappa = [k1;k2];
-
-s2    = casos.PS.sym('s3',monomials(x,0),[2 1]);
-s3    = casos.PS.sym('s4',monomials(x,0),[2 1]);
-s4    = casos.PS.sym('s4',monomials(x,0:2));
-
-b    = casos.PS.sym('b');
-
-% enforce positivity
-l = 1e-6*(x'*x);
+K0 = -K*x;
+Vval = x'*P*x;
 
 % control constraints (shifted by trim)
 d2r = pi/180;
-uM =   [  10*d2r - eta0;    30 - delta0];
+uM =   [10*d2r - eta0; 30 - delta0];
 um =   [-(10*d2r + eta0); -(10 + delta0) ];
 
 % desired set we want to reach (already scaled)
@@ -166,93 +144,97 @@ G0 = [3.95382671347060	-0.230032507976836	 0.0316965275615692	 0.292992065909380
      0.0316965275615692	-0.161191428789579	 0.0344002648214491	 0.242292666551058
      0.292992065909380	-1.32594376986430	 0.242292666551058	 2.02114797577027];
 
-% level set can be used to increase size (but other functions are also
-% possible); since have the augmented states, we only consider the original
-% states here
-g = (x(1:4)'*G0*x(1:4)) - 1;
+g = (x'*G0*x) - 1;
+
+% Lyapunov function candidate
+V = casos.PS.sym('v',monomials(x,2:4));
+
+% SOS multiplier
+s_u  = casos.PS.sym('snu',monomials([x;u],0:4),[2 1]);
+s1    = casos.PS.sym('s1',monomials(x,4));
+s2    = casos.PS.sym('s2',monomials(x,0),[2 1]);
+s3    = casos.PS.sym('s3',monomials(x,0),[2 1]);
+s4    = casos.PS.sym('s4',monomials(x,0:2));
+
+kappa1 = casos.PS.sym('k1',monomials([x(1)],1));
+kappa2 = casos.PS.sym('k3',monomials([x(3)],1));
+
+kappa = [kappa1;kappa2];
+
+b     = casos.PS.sym('b');
+
+% enforce positivity
+l = 1e-6*(x'*x);
+
 
 %% setup solver
-bval = 0.01;
 
-% solve for s2 and kappa
-opts = struct('sossol','mosek');
-opts.verbose = 1;
-opts.error_on_fail = 0;
-% opts.conf_interval = [0 1];
-kappa = K;
-sos = struct('x',[s1;s2;s3;s4],...
-             'f',-b,...
-              'p',V);
+% setup first solver
+sos = struct('x',[s_u;s1;s2;s3;s4],... % decision variables
+              'p',[V;kappa;b]);             % parameter
 
+% SOS constraints
 sos.('g') = [
-             s1; 
-             % s2;
-             % s3;
-             % s4;
-             s1*(V-b)-nabla(V,x)*subs(f,u,kappa)-l;
-             % s2*(V-b) + kappa - um;
-             % s3*(V-b) + uM - kappa;
-             % s4*(V-b) - g
-             ];
-
-opts.Kx      = struct('lin', 2 + 2*length(u));
-opts.Kc      = struct('sos', length(sos.g));
-
-% solver for multiplier and control law step
-solver_GTM_syn1 = casos.qcsossol('S1','bisection',sos,opts);
-
-opts = [];
-cost = dot(g-(subs(V,x(5:6),zeros(2,1))-b),g-(subs(V,x(5:6),zeros(2,1))-b));
-
-% cost = dot(g-(V-b),g-(V-b));
-
-sos = struct('x',[V;b],...
-              'f',cost , ...
-              'p',[s1;s2;s3;s4]);
-
-sos.('g') = [V-l; 
-             s1*(V-b)-nabla(V,x)*subs(f,u,kappa)-l;
+             s1;
+             s2;
+             s3;
+             s4;
+             s1*(V-b) - nabla(V,x)*subs(f,u,kappa);
              s2*(V-b) + kappa - um;
              s3*(V-b) + uM - kappa;
-             s4*(V-b) - g];
+             s4*(V-b) - g
+             ];
 
-% states + constraint are SOS cones
-opts.Kx      = struct('lin', 2);
+% states + constraint cones
+opts.Kx      = struct('lin', length(sos.x));
 opts.Kc      = struct('sos', length(sos.g));
 
-% solver for V and beta
-solver_GTM_syn2 = casos.sossol('S2','mosek',sos,opts);
+% setup solver: solve for multiplier with fixed Lyapunov function and
+% control law
 
-Vval = Vinit;
+S1 = casos.sossol('S1','mosek',sos,opts);
 
+
+% setup second solver
+cost = dot(g-(V-b),g-(V-b)) ;
+
+sos = struct('x',[V;kappa;b],...            % decision variables
+             'f',cost,...
+              'p',[s_u;s1;s2;s3;s4]);  % parameter
+
+% SOS constraints
+sos.('g') = [V-l;
+            s_u'*(u*1-kappa) + s1*(V-b) - nabla(V,x)*subs(f,u,u);
+             s2*(V-b) + kappa - um;
+             s3*(V-b) + uM - kappa;
+             s4*(V-b) - g
+             ];
+
+% states + constraint cones
+opts.Kx      = struct('lin', length(sos.x));
+opts.Kc      = struct('sos', length(sos.g));
+
+% setup solver: solve for multiplier with fixed Lyapunov function and
+% control law
+S2 = casos.sossol('S2','mosek',sos,opts);
+
+b = 0.001;
+%% solve problem
 fval_old = [];
+sol2_x = [Vval;K0;b];
 
 for iter = 1:100
 
-% solve for multiplier s2 and control law
-sol1 = solver_GTM_syn1('p',Vval);  
+sol1 = S1('p',sol2_x);
 
-if ~strcmp(solver_GTM_syn1.stats.UNIFIED_RETURN_STATUS,'SOLVER_RET_SUCCESS')
-    fprintf('Not feasible in multiplier step in iteration %d\n',iter)
-    break
-end
+    
+sol2 = S2('p',sol1.x);
 
-% solve for V and beta
-sol2 = solver_GTM_syn2('p',sol1.x);
-
-if strcmp(solver_GTM_syn2.stats.UNIFIED_RETURN_STATUS,'SOLVER_RET_SUCCESS')
-   % extract solution
-   Vval = sol2.x(1);
-    bval = sol2.x(2);
-
-else
-    fprintf('Not feasible in Lyapunov step in iteration %d\n',iter)
-    break
-end
+sol2_x = sol2.x;
 
 % check convergence of cost function
  if ~isempty(fval_old)
-    if abs(full(sol2.f-fval_old)) <= 1e-3
+    if abs(full(sol2.f-fval_old)) <= 1e-4
         break
     else
         fval_old = sol2.f;
@@ -261,26 +243,20 @@ else
     fval_old = sol2.f;
  end
 
-% show progress 
-fprintf('Iteration %d: f = %g, b = %g.\n',iter,full(sol2.f),full(bval));
-
+ % show progress 
+fprintf('Iteration %d: f = %g\n',iter,full(sol2.f));
 end
+%% plotting
+figure
 
+% re-scale solution
+xd = D*x;
 
-%% plot solver statistics
-% plotSolverStats(solver_GTM_syn.stats);
+Vfun = to_function(subs(sol2.x(1),x,xd));
+gfun = to_function(subs(g,x,xd));
 
-% %% plotting
-% import casos.toolboxes.sosopt.pcontour
-% 
-% xD = D*x;
-% V = subs(sol.x(1),[x(1);x(4)],zeros(2,1));
-% V = subs(V,[x(2);x(3)],xD(2:3));
-% 
-% 
-% g = subs(g,[x(1);x(4)],zeros(2,1));
-% g = subs(g,[x(2);x(3)],xD(2:3));
-% 
-% figure()
-% clf
-% pcontour(V, 1, [-4 4 -4 4], 'b-');
+fcontour(@(x2,x3) full(Vfun(0,x2,x3,0) ), [-1 1 -4 4 ], 'b-', 'LevelList', full(sol2.x(end)))
+hold on
+fcontour(@(x2,x3)  full(gfun(0,x2,x3,0) ), [-1 1 -4 4 ], 'r-', 'LevelList', 0)
+hold off
+legend('Lyapunov function','Safe set function')

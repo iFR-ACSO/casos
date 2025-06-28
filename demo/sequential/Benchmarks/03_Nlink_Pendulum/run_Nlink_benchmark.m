@@ -28,18 +28,19 @@ runs = 2:Nmax;
 
 % plot solve times
 figure(1)
+subplot(211)
 semilogy(runs*2,solverTimes_total_Seq,'-o')
 hold on
 semilogy(runs*2,solverTimes_total_Seq_badInit,'-or')
 semilogy(runs*2,solverTimes_total_CD,'-^')
 
-xlabel('Number of states')
+% xlabel('Number of states')
 ylabel('Solver time [s]')
 legend('sequential','sequential (bad initial guess)','coordinate-descent','Location','northwest')
 xticks((2:Nmax)*2) 
 
 % plot iterations (no subiterations of feasibiltity restoration)
-figure(2)
+subplot(212)
 plot(runs*2,iteration_array_Seq,'-o')
 hold on
 plot(runs*2,iteration_array_Seq_badInit,'-or')
@@ -49,6 +50,10 @@ xlabel('Number of states')
 ylabel('Iterations [-]')
 legend('sequential','sequential (bad initial guess)','coordinate-descent','Location','northwest')
 xticks((2:Nmax)*2) 
+
+
+cleanfigure();
+matlab2tikz('NlinkPendulum.tex','width','\figW','height','\figH')
 
 % time per iteration
 figure(3)
