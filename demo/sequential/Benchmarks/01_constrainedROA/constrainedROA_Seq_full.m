@@ -153,6 +153,33 @@ l = 1e-6*(x'*x);
 opts = struct('sossol','mosek');
 opts.verbose  = 1;
 opts.max_iter = 100;
+opts.conVioCheck = 'sampling';
+
+
+% sample in constrained set
+a = -1;
+b =  1;
+xsample(1,:) = a+(b-a)*rand(1,10000);
+
+a = -0.1;
+b =  0.1;
+xsample(2,:) = a+(b-a)*rand(1,10000);
+
+a = -0.1;
+b =  0.1;
+xsample(3,:) = a+(b-a)*rand(1,10000);
+
+a = -0.11;
+b =  0.1;
+xsample(4,:) = a+(b-a)*rand(1,10000);
+xsample_cell = num2cell(xsample, 2);
+gfun = to_function(g);
+
+gval = full(gfun(xsample_cell{:}));
+idx = find(gval <= 0);
+opts.userSample = xsample(:,idx(1:1000));
+
+b     = casos.PS.sym('b');
 
 % cost
 cost = dot(g-(V-b),g-(V-b)) ;

@@ -85,6 +85,7 @@ obj.sparsity_pat_para.sparsity_gl = obj.solver_convex.sparsity_gl;
 obj.sparsity_pat_para.sparsity_gs = obj.solver_convex.sparsity_gs;
 
 
+if strcmp(obj.opts.conVioCheck,'signed-distance')
 %% constrained violation check via signed distance
 % sparsity patterns of nonlinear constraints
 
@@ -123,7 +124,20 @@ sosopt.error_on_fail = true;
 
 % initialize convex SOS solver
 obj.solver_conVio = casos.package.solvers.sossolInternal('SOS',opts.sossol,sos_conVio,sosopt);
+else
 
+    if ~isempty(obj.opts.userSample)
+        x_sample = obj.opts.userSample; % num2cell(obj.opts.userSample, 2);
+    else
+        x_sample = [];
+    end
+freeDecVar = to_function(nlsos.g, struct('allow_free', true));
+% g_0 = freeDecVar(x_sample{:});
+xn = casadi.SX.sym('x',4,1);
+% xn =num2cell(xn, 2)
+obj.conFun = casos.Function('f',{poly2basis(nlsos.x),xn }, { freeDecVar(xn(1),xn(2),xn(3),xn(4)) });
+obj.x_sample = x_sample;
+end
 %% Second-order correction (soc)
 if obj.opts.SocFlag
 % parameter of current qp solution
@@ -228,8 +242,10 @@ obj.eval_constraint_fun = casos.Function('f',{basis_nlsos_x,basis_nlsos_p}, {pol
 %% get parameter that are needed for initilization
 obj.init_para.no_dual_var   = obj.sparsity_g.nnz;
 obj.init_para.size_B        = nnz(base_x);
-obj.init_para.conVio.no_con = length(sos_conVio.g);
 
+if strcmp(obj.opts.conVioCheck,'signed-distance')
+    obj.init_para.conVio.no_con = length(sos_conVio.g);
+end
 
 %% get params for display output (problem size etc)
 obj.display_para.no_decVar         = obj.solver_convex.sparsity_x.nnz;

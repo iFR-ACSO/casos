@@ -46,7 +46,7 @@ elseif strcmp(obj.opts.Hessian_init,'Analytical')
     
 end
 
-
+if strcmp(obj.opts.conVioCheck,'signed-distance')
 % initialize filter and first iterate 
 args_conVio     =  args;
 args_conVio{2}  =  [p0; x_k];
@@ -57,7 +57,16 @@ args_conVio{4}  =  inf(obj.init_para.conVio.no_con,1);
 sol_convio = eval_on_basis(obj.solver_conVio, args_conVio);
 
 theta_x_k = full(max(0,max(sol_convio{1})));
-
+else
+    g_val = full(obj.conFun(x_k,obj.x_sample));
+    
+    min_vio = min(min(g_val));
+    if min_vio < 0
+        theta_x_k = abs(min_vio);
+    else
+        theta_x_k = 0;
+    end
+end
 % evalaute cost function of nonlinear problem
 f_x_k     = full(obj.eval_cost(x_k,p0));
 

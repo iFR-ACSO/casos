@@ -23,7 +23,7 @@ function  [x_k1,theta_x_k1,f_x_k1 ,filter_Acceptance,all_violations] = check_fil
 
     % compute new solution candidate
     x_k1    = full(x_k     + alpha*dk);
-    
+ if strcmp(obj.opts.conVioCheck,'signed-distance')   
     % compute constraint violation of new solution candidate
     args_conVio     =  args;
     args_conVio{2}  =  [p0; x_k1];
@@ -39,8 +39,22 @@ function  [x_k1,theta_x_k1,f_x_k1 ,filter_Acceptance,all_violations] = check_fil
     
     % get the largest one
     theta_x_k1 = full(max(0,max(all_violations)));
-        
+else  
+    % evalaute at current solution and samples
+    g_val = full(obj.conFun(x_k1,obj.x_sample));
 
+    % from all constraints get the smallest function value
+    all_violations  = min(g_val);
+    
+    % get the overall smallest value
+    min_vio = min(min(g_val));
+    if min_vio < 0 
+        theta_x_k1 = abs(min_vio);
+    else
+        theta_x_k1 = 0; % all samples positive; no violation
+    end
+    
+end
     % cost at trial point
     if LangrangeFilter 
           dual_k1 = full(dual_k  + alpha*dkl);
