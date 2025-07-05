@@ -5,6 +5,10 @@
 
 CaΣoS provides tools for [symbolic polynomial expressions](https://github.com/ifr-acso/casos/wiki/polynomial-data-types), [conic optimization](https://github.com/ifr-acso/casos/wiki/conic-optimization), and parametrized (convex and nonconvex) [sum-of-squares optimization](https://github.com/ifr-acso/casos/wiki/sum-of-squares-optimization), making use of the [CasADi](https://web.casadi.org) software for symbolic expressions, automatic differentiation, and numerical optimization. CaΣoS is developed by researchers at the Institute of Flight Mechanics and Controls of the University of Stuttgart and distributed open-source under the GPL-3.0 license.
 
+### Downloads
+
+- All platforms: [v1.0.0 release candidate](https://github.com/ifr-acso/casos/releases/tag/v1.0.0-rc) ([zip](https://github.com/ifr-acso/casos/archive/refs/tags/v1.0.0-rc.zip) | [tar.gz](https://github.com/ifr-acso/casos/archive/refs/tags/v1.0.0-rc.tar.gz))
+
 ### Quick links
 
 - [Getting started](https://github.com/ifr-acso/casos/wiki#getting-started)
