@@ -17,6 +17,9 @@
 %           
 %
 %--------------------------------------------------------------------------
+close all
+clear
+clc
 
 import casos.toolboxes.sosopt.cleanpoly
 
@@ -142,7 +145,7 @@ kappa2 = casos.PS.sym('k',monomials([x(3)],1));
 
 kappa = [kappa1;kappa2];
 
-b     = casos.PS.sym('b');
+% b     = casos.PS.sym('b');
 
 % enforce positivity
 l = 1e-6*(x'*x);

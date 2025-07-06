@@ -131,12 +131,15 @@ else
     else
         x_sample = [];
     end
-freeDecVar = to_function(nlsos.g, struct('allow_free', true));
-% g_0 = freeDecVar(x_sample{:});
-xn = casadi.SX.sym('x',4,1);
-% xn =num2cell(xn, 2)
-obj.conFun = casos.Function('f',{poly2basis(nlsos.x),xn }, { freeDecVar(xn(1),xn(2),xn(3),xn(4)) });
-obj.x_sample = x_sample;
+    
+    X  = casadi.SX.sym('x',nlsos.g.nvars,1);
+ 
+    G = subs(nlsos.g, nlsos.g.indeterminates, X);
+
+    obj.conFun = casadi.Function('g', {poly2basis(nlsos.x) X}, {casadi.SX(G)});
+
+    obj.x_sample = x_sample;
+
 end
 %% Second-order correction (soc)
 if obj.opts.SocFlag
