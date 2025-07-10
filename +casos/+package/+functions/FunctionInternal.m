@@ -9,10 +9,6 @@ properties (SetAccess = private)
     name;
 end
 
-properties (Abstract,Constant,Access=protected)
-    allow_eval_on_basis;
-end
-
 methods (Abstract)
     % inputs
     n = get_n_in(obj);
@@ -78,12 +74,12 @@ methods
     end
 
     %% Call internal
-    function argout = call(obj,argin)
+    function argout = call(obj,argin,on_basis)
         % Call function.
-        if ~obj.allow_eval_on_basis
-            % evaluate function on polynomials
-            argout = eval(obj,argin); %#ok<EV2IN>
-        
+        if nargin > 2 && on_basis
+            % evaluate on coordinates
+            argout = eval_on_basis(obj,argin);
+
         else
             % get nonzero coordinates for basis
             in = cellfun(@(p,i) poly2basis(p,get_sparsity_in(obj,i)), argin(:), num2cell((1:get_n_in(obj))'-1), 'UniformOutput', false);
@@ -97,22 +93,9 @@ end
 
 methods (Access=protected)
     %% Internal evaluation
-    function argout = eval(obj,argin) %#ok<STOUT,INUSD>
-        % Evaluate function on polynomials.
-        error('Not implemented.')
-    end
-
     function argout = eval_on_basis(obj,argin) %#ok<STOUT,INUSD>
         % Evaluate function on nonzero polynomials.
         error('Not implemented.')
-    end
-end
-
-methods (Access={?casos.package.functions.FunctionCommon, ?casos.package.functions.FunctionWrapper})
-    %% Friend interface
-    function substitute(obj,varargin)
-        % Substitute variables.
-        error('Method SUBSTITUTE not supported for %s.',obj.class_name)
     end
 end
 
