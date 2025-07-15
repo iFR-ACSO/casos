@@ -172,7 +172,7 @@ opts.Kx      = struct('lin', length(sos.x));
 opts.Kc      = struct('sos', 9);
 
 % setup solver
-solver_GTM_syn = casos.nlsossol('S1','filter-linesearch',sos,opts);
+solver_GTM_syn = casos.nlsossol('S1','filter',sos,opts);
 
 %% solve problem
 % initial guess

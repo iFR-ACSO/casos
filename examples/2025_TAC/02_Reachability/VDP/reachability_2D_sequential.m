@@ -111,7 +111,7 @@ opts.Kc = struct('sos', length(sos.g));
 
 % build solver
 profile on
-S  = casos.nlsossol('S','filter-linesearch',sos,opts);
+S  = casos.nlsossol('S','sequential',sos,opts);
 profile viewer
 % initial guess
 x0 = casos.PD([ g0;  ...

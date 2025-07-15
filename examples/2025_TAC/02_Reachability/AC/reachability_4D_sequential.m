@@ -142,7 +142,7 @@ opts.Kx = struct('lin',length(sos1.x));
 opts.Kc = struct('sos', length(sos1.g));
 
 % build first solver
-S = casos.nlsossol('S1','filter-linesearch',sos1,opts);
+S = casos.nlsossol('S1','filter',sos1,opts);
 
 % initial guess
 x0 = [Vval;

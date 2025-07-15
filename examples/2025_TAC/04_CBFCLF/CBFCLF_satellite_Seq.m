@@ -152,7 +152,7 @@ opts.Kx = struct('lin', length(sos.x));
 opts.Kc = struct('sos', length(sos.g));
 
 % solver setup
-S  = casos.nlsossol('S','filter-linesearch',sos,opts);
+S  = casos.nlsossol('S','sequential',sos,opts);
 
 % initial guess for sequential
 x0 = casos.PD([ g;  ...

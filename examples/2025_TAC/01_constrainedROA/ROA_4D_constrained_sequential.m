@@ -208,9 +208,8 @@ opts.Kx      = struct('lin', length(sos.x));
 opts.Kc      = struct('sos', length(sos.g));
 
 % setup solver
-profile on
-S = casos.nlsossol('S1','filter-linesearch',sos,opts);
-profile viewer
+S = casos.nlsossol('S1','sequential',sos,opts);
+
 %% solve problem
 
 % initial guess

@@ -103,7 +103,7 @@ opts.Kx      = struct('lin', length(sos.x));
 opts.Kc      = struct('sos', length(sos.g));
 
 % setup solver
-S = casos.nlsossol('S1','filter-linesearch',sos,opts);
+S = casos.nlsossol('S1','sequential',sos,opts);
 
 %% solve problem
 

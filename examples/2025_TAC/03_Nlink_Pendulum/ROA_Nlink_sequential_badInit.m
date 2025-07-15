@@ -77,7 +77,7 @@ for jj = 1:noRuns
     opts.sossol                     = 'mosek';
 
     % build third solver
-    S = casos.nlsossol('S','filter-linesearch',sos,opts);
+    S = casos.nlsossol('S','sequential',sos,opts);
     
     tempBuildTime = toc(buildTimes_start);
 
