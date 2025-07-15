@@ -15,6 +15,7 @@ end
 properties (Constant, Access=protected)
     mosek_options = [casos.package.solvers.ConicSolver.conic_options
         {'mosek_param', 'Parameters to be passed to MOSEK.'
+         'cholesky_method','Parameter that defines how cholseky is computed (symbollically or numerically online) '
          'mosek_echo',  'Verbosity level passed to MOSEK (default: 0).'}
     ];
 end
@@ -43,6 +44,17 @@ methods
         % Return stats.
         s = obj.info;
         s = addfield(obj.status,s);
+    end
+
+    function sp = get_sparsity_in(obj,i)
+        % Return sparsity pattern.
+        if (i == 0)
+            % Hessian pattern
+            sp = sparsity(obj.args_in.h);
+
+        else
+            sp = get_sparsity_in@casos.package.solvers.ConicSolver(obj,i);
+        end
     end
 end
 
