@@ -5,6 +5,9 @@ switch (solver)
     case 'alfonso'
         node = casos.package.solvers.AlfonsoSosInterface(name,sos,varargin{:});
 
+    case 'interpol'
+        node = casos.package.solvers.SoslmiRelaxation(name,sos,varargin{:});
+
     otherwise
         node = casos.package.solvers.SossdpRelaxation(name,solver,sos,varargin{:});
 end
