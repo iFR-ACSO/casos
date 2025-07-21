@@ -22,9 +22,9 @@ Is = [false(Nl,1); true(Ns,1)];
 Js = [false(Ml,1); true(Ms,1)];
 
 % obtain Gram basis for decision variables
-[Zvar_s,Ksdp_x_s,~,Mp_x,Md_x] = grambasis(sparsity(sos.x),Is,newton);
+[Zvar_s,Ksdp_x_s,Zvar_s0,Mp_x,Md_x] = grambasis(sparsity(sos.x),Is,newton);
 % obtain Gram basis for sum-of-squares constraints
-[Zcon_s,Ksdp_g_s,~,Mp_g,Md_g] = grambasis(sparsity(sos.g),Js,newton);
+[Zcon_s,Ksdp_g_s,Zcon_s0,Mp_g,Md_g] = grambasis(sparsity(sos.g),Js,newton);
 
 % matrix decision variables for variables
 Qvar_G = casadi.SX.sym('P',sum(Ksdp_x_s.^2),1);
@@ -42,7 +42,8 @@ Zcon_l = basis(sos.g,~Js);
 
 % get combined variables / constraints
 [Qvar,Zvar] = poly2basis(sos.x);
-[Qcon,Zcon] = poly2basis(sos.g,[Zcon_l; Zcon_s]);
+% [Qcon,Zcon] = poly2basis(sos.g,[Zcon_l; Zcon_s]);
+Zcon = [Zcon_l; Zcon_s];
 
 % number of linear variables / constraints
 nnz_lin_x = nnz(Zvar_l);
@@ -56,6 +57,51 @@ nnz_gram_g = sum(Ksdp_g_s.^2);
 
 assert(length(Qvar) == (nnz_lin_x + nnz_sos_x), 'Sum-of-squares decision varibles must be in Gram form.')
 
+if strcmp(opts.basis_type, 'interpolation')
+    %% Relaxation to interpolation basis
+    % generate interpolation basis
+    % pts_lin_x = interpolation(Zvar_l);
+    pts_sos_x = interpolation(Zvar_s);
+    % pts_lin_g = interpolation(Zcon_l);
+    pts_sos_g = interpolation(Zcon_s);
+    
+    % compute Vandermonde matrix for decision variables
+    Vx_l = speye(nnz_lin_x);
+    % Vx_l = vandermonde2(Zvar_l,pts_lin_x);
+    Vx_s = vandermonde2(Zvar_s,pts_sos_x);
+    % and constraints
+    Vg_l = speye(nnz_lin_g);
+    % Vg_l = vandermonde2(Zcon_l,pts_lin_g);
+    Vg_s = vandermonde2(Zcon_s,pts_sos_g);
+    % combined Vandermonde matrices
+    % Vx = blkdiag(Vx_l,Vx_s);
+    % Vg = blkdiag(Vg_l,Vg_s);
+
+    % evaluate constraints on interpolation
+    assert(nnz_lin_g == 0, 'Not implemented.') % TODO
+    Qcon = poly2interpol(sos.g,pts_sos_g,Zcon_s);
+
+    % compute map from SDP to interpolation for each element
+    WW_x = arrayfun(@(i) interp_map(Zvar_s,Zvar_s0,pts_sos_x,i), 1:Ns, 'UniformOutput', false);
+    WW_g = arrayfun(@(i) interp_map(Zcon_s,Zcon_s0,pts_sos_g,i), 1:Ms, 'UniformOutput', false);
+    % combine
+    Mp_x = blkdiag(WW_x{:});
+    Mp_g = blkdiag(WW_g{:});
+
+    % compute dual maps as left-inverse
+    Md_x = (Mp_x*Mp_x')\Mp_x;
+    Md_g = (Mp_g*Mp_g')\Mp_g;
+
+else
+    %% Relaxation to monomial basis
+    % get constraints on monomial basis
+    Qcon = poly2basis(sos.g,Zcon);
+
+    % weighting matrices in lieu of Vandermonde
+    Vx_s = speye(nnz_sos_x);
+    Vg_s = speye(nnz_sos_g);
+end
+
 % matrix decision variables
 Qvar_sdp = [Qvar_l; Qvar_G];
 
@@ -67,7 +113,7 @@ sosprob_f = casadi.Function('sos_f',{Qvar},{hessian(Qobj,Qvar) jacobian(Qobj,Qva
 sosprob_g = casadi.Function('sos_g',{Qvar},{jacobian(Qcon,Qvar) Qcon},struct('allow_free',true)); %jacobian_old(sosprob,0,1);
 
 % map sum-of-squares decision variables to matrix variables
-map = blkdiag(speye(nnz_lin_x), Mp_x);
+map = blkdiag(speye(nnz_lin_x), Vx_s\Mp_x);
 Qvar_mapped = map*Qvar_sdp;
 % [sdp_f,sdp_g] = sosprob(Qvar_mapped);
 [sdp_Hf,sdp_Jf,sdp_f] = sosprob_f(Qvar_mapped);
@@ -113,16 +159,16 @@ sdpsol.lam_g = casadi.SX.sym('sol_lam_g',size(sdp.g));
 sdpsol.lam_p = casadi.SX.sym('sol_lam_p',size(sdp.p));
 
 % coordinates of SOS solution
-sossol.x = blkdiag(speye(nnz_lin_x), Mp_x, sparse(0,nnz_gram_g))*sdpsol.x;
+sossol.x = blkdiag(speye(nnz_lin_x), Vx_s\Mp_x, sparse(0,nnz_gram_g))*sdpsol.x;
 sossol.f = sdpsol.f;
 sossol.g = [
     blkdiag(speye(nnz_lin_g), sparse(0,nnz_sos_g))*sdpsol.g
-    blkdiag(sparse(0,nnz_lin_x+nnz_gram_x),  Mp_g)*sdpsol.x
+    blkdiag(sparse(0,nnz_lin_x+nnz_gram_x), Vg_s\Mp_g)*sdpsol.x
 ];
-sossol.lam_x = blkdiag(speye(nnz_lin_x), Md_x, sparse(0,nnz_gram_g))*sdpsol.lam_x;
+sossol.lam_x = blkdiag(speye(nnz_lin_x), Vx_s'*Md_x, sparse(0,nnz_gram_g))*sdpsol.lam_x;
 sossol.lam_g = [
     blkdiag(speye(nnz_lin_g), sparse(0,nnz_sos_g))*sdpsol.lam_g
-    blkdiag(sparse(0,nnz_lin_x+nnz_gram_x),  Md_g)*sdpsol.lam_x
+    blkdiag(sparse(0,nnz_lin_x+nnz_gram_x),  Vg_s'*Md_g)*sdpsol.lam_x
 ];
 
 % options for Casadi functions
@@ -139,4 +185,30 @@ obj.gram2sos = casadi.Function('L', ...
                 fopt ...
 );
 
+end
+
+function W = interp_map(Z_gram,Z_half,pts,i)
+% Return map from SDP to interpolation basis.
+%
+% This computes the adjoint of the operator
+%
+%   y -> P'*diag(y)*P
+%
+% where P is the ortonormalization of the Vandermonde matrix for the Gram
+% half-basis.
+
+    % number of terms (nonzeros) in gram basis
+    nT = Z_gram.get_nterm(i);
+    % get Vandermonde matrix
+    V = vandermonde2(Z_half,pts(:,1:nT),i);
+    % orthonormalize
+    [P,~] = qr(V);
+
+    % Kronecker product
+    VV = kron(P,P);
+    % indices into terms of Gram basis
+    k = 1:nT;
+    % index into Kronecker product
+    idx = (nT+1)*(k-1)+1;
+    W = VV(idx,:);
 end
