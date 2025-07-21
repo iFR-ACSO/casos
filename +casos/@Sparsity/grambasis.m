@@ -1,9 +1,11 @@
-function [Z,K,z,Mp,Md] = grambasis(S,I,simplify)
+function [Z,K,z,Mp,Md] = grambasis(S,I,newton_solver)
 % Return Gram basis of polynomial vector.
 
 if nargin < 3
-    simplify = false;
+    % no Newton simplification
+    newton_solver = '';
 end
+
 if nargin < 2 || isempty(I)
     lp = numel(S);
     I = true(lp,1);
@@ -73,9 +75,10 @@ Lz(reshape(any(Irem,2),lz,lp)') = false;
 I = any(Lz,1);
 degmat = z.degmat(I,:);
 Lz(:,~I) = [];
+
 % removes monomials outside half Newton polytope
-if simplify
-    Lz = arrayfun(@(i) S.newton_reduce(S.degmat(Ldegmat(i,:),Iv),degmat), idx, 'UniformOutput', false);
+if ~isempty(newton_solver)
+    Lz = arrayfun(@(i) newton_reduce(S.degmat(Ldegmat(i,:),Iv),degmat,newton_solver), idx, 'UniformOutput', false);
     Lz = horzcat(Lz{:})';
 end
 

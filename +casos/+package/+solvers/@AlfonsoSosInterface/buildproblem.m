@@ -21,7 +21,6 @@ function buildproblem(obj,sos)
 % are given in the interpolation basis.
 
 opts   = obj.opts;
-newton = opts.newton_simplify;
 
 % problem size
 n = length(sos.x);
@@ -50,9 +49,9 @@ Zcon_l = basis(sos.g,~Js);
 [Qobj,Zobj] = poly2basis(sos.f);
 
 % obtain Gram basis for decision variables
-[Zvar_s,~,Zvar_s0] = grambasis(sparsity(sos.x),Is,newton);
+[Zvar_s,~,Zvar_s0] = grambasis(sparsity(sos.x),Is,opts.newton_solver);
 % obtain Gram basis for sum-of-squares constraints
-[Zcon_s,~,Zcon_s0] = grambasis(sparsity(sos.g),Js,newton);
+[Zcon_s,~,Zcon_s0] = grambasis(sparsity(sos.g),Js,opts.newton_solver);
 
 % get combined variables / constraints
 [Qvar,Zvar] = poly2basis(sos.x);

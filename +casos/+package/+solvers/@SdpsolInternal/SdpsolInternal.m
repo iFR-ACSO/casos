@@ -127,29 +127,4 @@ methods (Access=protected)
     end
 end
 
-methods (Access={?casos.package.functions.FunctionCommon, ?casos.package.functions.FunctionWrapper})
-    function S = substitute(obj,idx,expr_in,expr_out)
-        % Substitute a variable for expr_in -> expr_out.
-        if ischar(idx)
-            % map variable name to index
-            idx = index_in(obj.fhan,idx);
-        end
-
-        % get current input symbols
-        var_in  = sx_in(obj.fhan);
-        var_out = var_in;
-        % replace variable
-        var_in{idx+1}  = expr_in; % CasADi uses 0-based index
-        var_out{idx+1} = expr_out;
-
-        % NOTE: As per Casadi v3.6.5, functions' input and output names 
-        % must be mutually exclusive unless explicity permitted.
-        fopt = struct('allow_duplicate_io_names',true);
-
-        % substitute
-        fhan_new = casadi.Function('f',var_in,call(obj.fhan,var_out),name_in(obj.fhan),name_out(obj.fhan),fopt);
-        S = casos.package.solvers.SdpsolInternal(obj,fhan_new);
-    end
-end
-
 end

@@ -12,10 +12,8 @@ properties (Constant, Access=protected)
     soslmi_options = [casos.package.solvers.SosoptCommon.sosopt_options
         {'sdpsol', 'Conic solver to be used.'
          'sdpsol_options', 'Options to be passed to the SDP solver.'
-         'newton_simplify', 'Perform monomial basis simplification.'}
+         'newton_solver', 'Solver used for the Newton simplification (defaults to the one used in sdpsol).'}
     ];
-
-    allow_eval_on_basis = true;
 end
 
 properties (SetAccess=private)
@@ -44,7 +42,7 @@ methods
         % default options
         if ~isfield(obj.opts,'sdpsol'), obj.opts.sdpsol = 'sedumi'; end
         if ~isfield(obj.opts,'sdpsol_options'), obj.opts.sdpsol_options = struct; end
-        if ~isfield(obj.opts,'newton_simplify'), obj.opts.newton_simplify = true; end
+        if ~isfield(obj.opts,'newton_solver'), obj.opts.newton_solver = obj.opts.sdpsol; end
 
         % states
         if ~isfield(sos,'x')

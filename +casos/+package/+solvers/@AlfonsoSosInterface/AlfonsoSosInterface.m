@@ -13,10 +13,8 @@ end
 properties (Constant, Access=protected)
     alfonso_options = [casos.package.solvers.SosoptCommon.sosopt_options
         {'alfonso', 'Options to be passed to Alfonso.'
-         'newton_simplify', 'Perform monomial basis simplification.'}
+         'newton_solver', 'Solver used for the Newton simplification (defaults to sedumi).'}
     ];
-
-    allow_eval_on_basis = true;
 end
 
 properties (SetAccess=private)
@@ -44,7 +42,7 @@ methods
 
         % default options
         if ~isfield(obj.opts,'alfonso'), obj.opts.alfonso = struct; end
-        if ~isfield(obj.opts,'newton_simplify'), obj.opts.newton_simplify = true; end
+        if ~isfield(obj.opts,'newton_solver'), obj.opts.newton_solver = 'sedumi'; end
 
                 % states
         if ~isfield(sos,'x')

@@ -50,7 +50,7 @@ ubx = obj.args_in.ubx;
 cbx = obj.args_in.cbx;
 
 % problem size
-[m,n] = size(a);
+[~,n] = size(a);
 
 % obtain cones
 Kx = opts.Kx;
@@ -85,9 +85,6 @@ Na.s = (obj.getdimc(Kc,'psd'));
 %     0 + t = 1
 %
 % such that (t,sba,sbx) in Kb = {(t,s) | t*[lba;lbx] <= s <= t*[uba;ubx]}.
-Nx_c = n - Nx.l;
-Na_c = m - Na.l;
-
 A = [sparse(1,n); -a; -speye(n)];
 b = [1; sparse(Na.l,1); -cba; sparse(Nx.l,1); -cbx];
 c = g;
