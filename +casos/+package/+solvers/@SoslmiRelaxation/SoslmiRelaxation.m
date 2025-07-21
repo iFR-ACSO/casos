@@ -44,6 +44,11 @@ methods
         if ~isfield(obj.opts,'sdpsol_options'), obj.opts.sdpsol_options = struct; end
         if ~isfield(obj.opts,'newton_solver'), obj.opts.newton_solver = obj.opts.sdpsol; end
 
+        % pass options to sdpsol
+        if ~isfield(obj.opts.sdpsol_options,'error_on_fail')
+            obj.opts.sdpsol_options.error_on_fail = obj.opts.error_on_fail;
+        end
+
         % states
         if ~isfield(sos,'x')
             error('No decision variables given.')
