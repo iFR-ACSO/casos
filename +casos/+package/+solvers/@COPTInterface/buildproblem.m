@@ -102,6 +102,9 @@ K.q = [Na.q Nx.q];
 K.r = [Na.r Nx.r];
 K.s = [Na.s Nx.s];
 
+% Check if any entry in K.s is equal to 1, and throw an error if so
+assert(~any(K.s == 1), 'COPT does not support PSD cones of size 1. Use a linear cone instead.');
+
 obj.cone = K;
 
 % reorder decision variables (z,s) to (l,q,r,s)
