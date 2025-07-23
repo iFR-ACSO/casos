@@ -2,7 +2,6 @@ function buildproblem(obj,solver,sos)
 % Build SDP problem from SOS relaxation.
 
 opts   = obj.opts;
-newton = opts.newton_simplify;
 
 % problem size
 n = length(sos.x);
@@ -22,9 +21,9 @@ Is = [false(Nl,1); true(Ns,1)];
 Js = [false(Ml,1); true(Ms,1)];
 
 % obtain Gram basis for decision variables
-[Zvar_s,Ksdp_x_s,~,Mp_x,Md_x] = grambasis(sparsity(sos.x),Is,newton);
+[Zvar_s,Ksdp_x_s,~,Mp_x,Md_x] = grambasis(sparsity(sos.x),Is,opts.newton_solver);
 % obtain Gram basis for sum-of-squares constraints
-[Zcon_s,Ksdp_g_s,~,Mp_g,Md_g] = grambasis(sparsity(sos.g),Js,newton);
+[Zcon_s,Ksdp_g_s,~,Mp_g,Md_g] = grambasis(sparsity(sos.g),Js,opts.newton_solver);
 
 % matrix decision variables for variables
 Qvar_G = casadi.SX.sym('P',sum(Ksdp_x_s.^2),1);
@@ -67,24 +66,27 @@ sosprob_f = casadi.Function('sos_f',{Qvar},{hessian(Qobj,Qvar) jacobian(Qobj,Qva
 sosprob_g = casadi.Function('sos_g',{Qvar},{jacobian(Qcon,Qvar) Qcon},struct('allow_free',true)); %jacobian_old(sosprob,0,1);
 
 % map sum-of-squares decision variables to matrix variables
-map = blkdiag(speye(nnz_lin_x), Mp_x);
-Qvar_mapped = map*Qvar_sdp;
+map_x = blkdiag(speye(nnz_lin_x), Mp_x);
+Qvar_mapped = map_x*Qvar_sdp;
 % [sdp_f,sdp_g] = sosprob(Qvar_mapped);
 [sdp_Hf,sdp_Jf,sdp_f] = sosprob_f(Qvar_mapped);
 [sdp_Jg,sdp_g] = sosprob_g(Qvar_mapped);
 
+% map sum-of-squares constraints to matrix variables
+map_g = blkdiag(sparse(nnz_lin_g,0), Mp_g);
+
 % build SDP problem
 sdp.x = [Qvar_sdp; Qcon_G];
 sdp.f = sdp_f;
-sdp.g = sdp_g - blkdiag(sparse(nnz_lin_g,0), Mp_g)*Qcon_G;
+sdp.g = sdp_g - map_g*Qcon_G;
 sdp.p = Qpar;
 % store derivatives
-sdp.derivatives.Hf = blockcat(map'*sdp_Hf*map, ...
+sdp.derivatives.Hf = blockcat(map_x'*sdp_Hf*map_x, ...
                               sparse(nnz_lin_x+nnz_gram_x,nnz_gram_g), ...
                               sparse(nnz_gram_g,nnz_lin_x+nnz_gram_x), ...
                               sparse(nnz_gram_g,nnz_gram_g));
-sdp.derivatives.Jf = horzcat(sdp_Jf*map, sparse(1,nnz_gram_g));
-sdp.derivatives.Jg = horzcat(sdp_Jg*map, -Mp_g);
+sdp.derivatives.Jf = horzcat(sdp_Jf*map_x, sparse(1,nnz_gram_g));
+sdp.derivatives.Jg = horzcat(sdp_Jg*map_x, -map_g);
 % SDP options
 sdpopt = opts.sdpsol_options;
 sdpopt.Kx = struct('lin', nnz_lin_x, 'psd', [Ksdp_x_s; Ksdp_g_s]);
