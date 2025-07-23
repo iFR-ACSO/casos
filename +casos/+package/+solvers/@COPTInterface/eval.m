@@ -130,14 +130,33 @@ if strcmp(obj.info.status, 'infeasible')
     assert(~obj.opts.error_on_fail,'Conic problem is primal infeasible.')
     x_copt = zeros(length(idx),1);
     y_copt = zeros(size(A,1),1);
+elseif strcmp(obj.info.status, 'unbounded') 
+    obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_INFEASIBLE;
+    assert(~obj.opts.error_on_fail,'Conic problem is primal unbounded.')
+    x_copt = zeros(length(idx),1);
+    y_copt = zeros(size(A,1),1);
+elseif strcmp(obj.info.status, 'numerical') 
+    obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_LIMITED;
+    assert(~obj.opts.error_on_fail,'Conic problem has encountered numerical problems.')
+    x_copt = zeros(length(idx),1);
+    y_copt = zeros(size(A,1),1);
 else
     % Success case
     obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_SUCCESS;
-
+    
     % Get from solution the primal and dual variables
-    x_temp = [solution.x; solution.psdx];
-    y_temp = solution.psdpi;
+    x_temp = [solution.x];
+    y_temp = [solution.pi];
 
+    % Check if fields exist and are non-empty
+    if isfield(solution, 'psdx') && ~isempty(solution.psdx)
+        x_temp = [x_temp; solution.psdx];
+    end
+    
+    if isfield(solution, 'psdpi') && ~isempty(solution.psdpi)
+        y_temp = solution.psdpi;
+    end
+	
     % Extract primal variables
     num_x = sum([K.f, K.l]); 
     x_copt = zeros(num_x + sum(K.s.^2), 1);  % Preallocate to final size
