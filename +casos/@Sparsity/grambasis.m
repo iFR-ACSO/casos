@@ -78,11 +78,14 @@ Lz(:,~I) = [];
 
 % removes monomials outside half Newton polytope
 if ~isempty(newton_solver)
-    Lz = arrayfun(@(i) newton_reduce(S.degmat(Ldegmat(i,:),Iv),degmat,newton_solver), idx, 'UniformOutput', false);
-    Lz = horzcat(Lz{:})';
+    Lz_red = arrayfun(@(i) newton_reduce(S.degmat(Ldegmat(i,:),Iv),degmat,newton_solver), idx, 'UniformOutput', false);
+    Lz_red = horzcat(Lz_red{:})';
+    
+    [Z,K,Mp,Md] = gram_internal_with_reduction(Lz,degmat,z.indets, Lz_red);
+else
+    [Z,K,Mp,Md] = gram_internal(Lz,degmat,z.indets);	
 end
-z = (build_monomials(degmat,z.indets)); % do we need this?
 
-[Z,K,Mp,Md] = gram_internal(Lz,degmat,z.indets);
+z = (build_monomials(degmat,z.indets)); 
 
 end
