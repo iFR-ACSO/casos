@@ -53,7 +53,7 @@ Zr.matdim = [lp 1];
 % enumerate nonzero elements in L' relative to nonzeros of Luni'
 idx = ismembc2(sub2ind(size(Z.coeffs),ic(i),j), find(Z.coeffs));
 
-% create mapping from nonzero elements of L to nonzero elements Luni
+% create mapping from nonzero elements of Lr to nonzero elements Lruni
 Mp = sparse(idx,1:nnz(Lr),1,nnz(Z.coeffs),nnz(Lr));
 
 % return adjoint inverse
