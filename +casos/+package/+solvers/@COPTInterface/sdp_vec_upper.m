@@ -26,9 +26,8 @@ function [v,i,j,k,l] = sdp_vec_upper(obj, M, Ks, scale, dim)
 
     % get nonzero subindices w.r.t. block matrix M
     subI = cell(1,2);
-    [subI{:}] = ind2sub(size(M),1:numel(M));
-    %[subI{:}]=M.sparsity().get_triplet(); % only get the indexes of the nonzero entries
-    %subI = {subI{1} + 1, subI{2} + 1};
+    [subI{:}]=M.sparsity().get_triplet(); % only get the indexes of the nonzero entries
+    subI = {subI{1} + 1, subI{2} + 1};
 
     % select dimension and ensure linear indices are a row vector
     I = reshape(subI{dim},1,[]);
@@ -92,13 +91,18 @@ function [v,i,j,k,l] = sdp_vec_upper(obj, M, Ks, scale, dim)
         % Size of block matrix V
         sz = size(M); 
         sz(dim) = sum(Nv);
+        n_rows = sz(1);
+        n_cols = sz(2);
 
-        % Initialize the block matrix V as a full (dense) matrix
-        V = casadi.MX.zeros(sz);
-
-        % Assign values to V using linear indexing
-        ind = sub2ind(sz, subIv{:});  
-        V(ind) = val;  % Fill with given values
+        % Convert to 0-based indices for CasADi MX triplet constructor
+        row = subIv{1} - 1;
+        col = subIv{2} - 1;
+        
+        % Create sparsity pattern from triplets
+        sp = casadi.Sparsity.triplet(n_rows, n_cols, row, col);
+    
+        % Create sparse MX with that sparsity pattern
+        V = casadi.MX(sp, val(:));
 
         % Return block matrix V
         v = V;
