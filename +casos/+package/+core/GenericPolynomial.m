@@ -50,11 +50,6 @@ methods
         [varargout{1:nargout}] = size(obj.poly_sparsity,varargin{:});
     end
 
-    function varargout = degrees(obj)
-        % Return degrees of polynomial.
-        [varargout{1:nargout}] = degrees(obj.poly_sparsity);
-    end
-
     function x = indeterminates(obj)
         % Return indeterminate variables of polynomial.
         x = indeterminates(obj.poly_sparsity);
@@ -214,11 +209,6 @@ methods (Access=protected)
                 res = get_nvars(obj.poly_sparsity,I);
             case 'nterm'
                 res = get_nterm(obj.poly_sparsity,I);
-            case 'degrees'
-                if length(indexOp) > 2, res = degrees(obj.poly_sparsity,I);
-                else, [varargout{1:nargout}] = degrees(obj.poly_sparsity,I);
-                    return
-                end
             case 'indeterminates'
                 res = get_indets(obj.poly_sparsity,I);
             case 'monomials'
