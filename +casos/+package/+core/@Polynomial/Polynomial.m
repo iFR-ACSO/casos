@@ -60,7 +60,8 @@ methods
         else
             % zero-degree polynomial (casadi syntax)
             C = obj.new_coeff(varargin{:});
-            [psparsity,coeffs] = casos.Sparsity.coeff_zerodegree(C);
+            psparsity = casos.Sparsity(sparsity(C));
+            coeffs = sparsity_cast(C, coeff_sparsity(psparsity));
         end
 
         obj = set_sparsity(obj,psparsity);
@@ -93,16 +94,14 @@ methods
         tf = (is_zerodegree(obj) && ~is_symexpr(obj));
     end
 
-    function [tf,I] = is_monom(obj)
+    function tf = is_monom(obj)
         % Check if polynomial is vector of monomials (legacy).
-        [tf0,I] = is_monom(obj.get_sparsity);
-        tf = (tf0 && is_coeff_one(obj));
+        tf = (is_monom(obj.get_sparsity) && is_coeff_one(obj));
     end
 
-    function [tf,I] = is_indet(obj)
+    function tf = is_indet(obj)
         % Check if polynomial is a vector of indeterminates.
-        [tf0,I] = is_monom(obj);
-        tf = (tf0 && is_homogeneous(obj,1));
+        tf = (is_monom(obj) && is_homogeneous(obj,1));
     end
 
     function tf = is_equal(obj,p)
@@ -161,14 +160,9 @@ methods
 
     function v = casos.Indeterminates(obj)
         % Convert to indeterminates.
-        [tf,I] = is_indet(obj);
+        assert(is_indet(obj),'Polynomial must be a vector of indeterminates.')
 
-        assert(tf,'Polynomial must be a vector of indeterminates.')
-
-        % get indeterminate variables
-        vars = indeterminates(obj);
-        % return variables in order
-        v = vars(I);
+        v = vector_to_indeterminates(obj.poly_sparsity);
     end
 
     function M = full(obj)

@@ -55,6 +55,11 @@ methods
         x = indeterminates(obj.poly_sparsity);
     end
 
+    function tf = isempty(obj)
+        % Check if polynomial is empty.
+        tf = isempty@casos.package.core.PolynomialInterface(obj);
+    end
+
     function tf = is_zerodegree(obj)
         % Check if polynomial is of degree zero.
         tf = is_zerodegree(obj.poly_sparsity);
