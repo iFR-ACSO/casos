@@ -124,6 +124,9 @@ methods
     end
 
     % Cell-like interface
+    [indets,ic] = combine(varargin);
+    [indets,ia,ic] = sort(obj);
+
     function [tf,loc] = ismember(obj,x)
         % Check if the indeterminate variables include x.
         [tf,loc] = ismember(obj.variables,x.variables);
@@ -135,12 +138,6 @@ methods (Access=protected)
     obj = parenAssign(obj,idx,varargin);
     obj = parenDelete(obj,idx);
     varargout = parenReference(obj,index);
-end
-
-methods (Access={?casos.package.core.PolynomialInterface})
-    % friend class access
-    [indets,ic] = combine(varargin);
-    [indets,ia,ic] = sort(obj);
 end
 
 end
