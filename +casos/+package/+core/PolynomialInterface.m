@@ -2,10 +2,37 @@ classdef (Abstract) PolynomialInterface < casos.package.core.Printable
 % Base class for polynomial-like objects.
 
 methods (Abstract)
+    varargout = size(obj,varargin);
     tf = is_wellposed(obj);
 end
 
 methods
+    %% Size & number of elements
+    function tf = isempty(obj)
+        % Check if pattern is empty.
+        tf = (numel(obj) == 0);
+    end
+
+    function tf = isrow(obj)
+        % Check if operator is a row vector.
+        tf = (size(obj,1) == 1);
+    end
+
+    function tf = iscolumn(obj)
+        % Check if operator is a column vector.
+        tf = (size(obj,2) == 1);
+    end
+
+    function tf = isvector(obj)
+        % Check if operator is a vector.
+        tf = any(size(obj) == 1);
+    end
+
+    function tf = isscalar(obj)
+        % Check if operator is a scalar.
+        tf = all(size(obj) == 1);
+    end
+
     %% Concatenation interface
     function p = horzcat(varargin)
         % Horizontal concatenation.

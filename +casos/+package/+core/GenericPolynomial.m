@@ -55,26 +55,6 @@ methods
         x = indeterminates(obj.poly_sparsity);
     end
 
-    function tf = isrow(obj)
-        % Check if polynomial is a row vector.
-        tf = isrow(obj.poly_sparsity);
-    end
-
-    function tf = iscolumn(obj)
-        % Check if polynomial is a column vector.
-        tf = iscolumn(obj.poly_sparsity);
-    end
-
-    function tf = isvector(obj)
-        % Check if polynomial is a vector.
-        tf = isvector(obj.poly_sparsity);
-    end
-
-    function tf = isscalar(obj)
-        % Check if polyonomial is a scalar.
-        tf = isscalar(obj.poly_sparsity);
-    end
-
     function tf = is_zerodegree(obj)
         % Check if polynomial is of degree zero.
         tf = is_zerodegree(obj.poly_sparsity);
@@ -82,7 +62,7 @@ methods
 
     function tf = is_homogeneous(obj,varargin)
         % Check if polynomial is homogeneous.
-        tf = is_homogeneous(obj.poly_sparsity,varargin{:});
+        tf = all(obj.mindeg == [obj.maxdeg varargin{:}]);
     end
 
     function tf = is_dense(obj)
