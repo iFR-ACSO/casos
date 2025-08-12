@@ -11,6 +11,9 @@ properties (Dependent)
     nterm;
     maxdeg;
     mindeg;
+
+    sparsity_in;
+    sparsity_out;
 end
 
 methods
@@ -33,6 +36,16 @@ methods
     function d = get.maxdeg(obj)
         % Maximum degree of polynomial.
         d = obj.poly_sparsity.maxdeg;
+    end
+
+    function S = get.sparsity_in(obj)
+        % Input sparsity pattern.
+        S = obj.poly_sparsity.sparsity_in;
+    end
+
+    function S = get.sparsity_out(obj)
+        % Output sparsity pattern.
+        S = obj.poly_sparsity.sparsity_out;
     end
 
     function n = nnz(obj)
@@ -60,9 +73,19 @@ methods
         tf = isempty@casos.package.core.PolynomialInterface(obj);
     end
 
-    function tf = is_zerodegree(obj)
-        % Check if polynomial is of degree zero.
-        tf = is_zerodegree(obj.poly_sparsity);
+    function tf = is_dense(obj)
+        % Check if polynomial has no sparse coefficients.
+        tf = is_dense(obj.poly_sparsity);
+    end
+
+    function tf = is_dual(obj)
+        % Check for dual vector.
+        tf = is_dual(obj.poly_sparsity);
+    end
+
+    function tf = is_equal(obj,p)
+        % Check if polynomials are equal.
+        tf = is_equal(obj.poly_sparsity,p.poly_sparsity);
     end
 
     function tf = is_homogeneous(obj,varargin)
@@ -70,14 +93,19 @@ methods
         tf = all(obj.mindeg == [obj.maxdeg varargin{:}]);
     end
 
-    function tf = is_dense(obj)
-        % Check if polynomial has no sparse coefficients.
-        tf = is_dense(obj.poly_sparsity);
+    function tf = is_matrix(obj)
+        % Check if operator is mapping between vectors.
+        tf = is_matrix(obj.poly_sparsity);
     end
 
-    function tf = is_equal(obj,p)
-        % Check if polynomials are equal.
-        tf = is_equal(obj.poly_sparsity,p.poly_sparsity);
+    function tf = is_operator(obj)
+        % Check for operator between polynomials.
+        tf = is_operator(obj.poly_sparsity);
+    end
+
+    function tf = is_zerodegree(obj)
+        % Check if polynomial is of degree zero.
+        tf = is_zerodegree(obj.poly_sparsity);
     end
 
     function S = sparsity(obj)
