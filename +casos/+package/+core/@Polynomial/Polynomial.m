@@ -59,8 +59,9 @@ methods
 
         else
             % zero-degree polynomial (casadi syntax)
-            C = obj.new_coeff(varargin{:});
-            psparsity = casos.Sparsity(sparsity(C));
+            % or operator syntax
+            C = obj.new_coeff(varargin{1});
+            psparsity = casos.Sparsity(sparsity(C),varargin{2:end});
             coeffs = sparsity_cast(C, coeff_sparsity(psparsity));
         end
 
@@ -190,8 +191,14 @@ methods
 
     %% Display
     function disp(obj)
-        % Display polynomial as matrix.
-        disp_matrix(obj);
+        % Display polynomial.
+        if ~is_operator(obj)
+            % display as matrix
+            disp_matrix(obj);
+        else
+            % display operator
+            disp@casos.package.core.GenericPolynomial(obj);
+        end
     end
 end
 

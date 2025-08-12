@@ -2,7 +2,16 @@ function out = str(obj)
 % Return string representation for polynomial.
 
 if isempty(obj)
+    % return empty string representation
     out = {};
+    return
+
+elseif is_operator(obj)
+    % return string representation for operator
+    sp_in = to_char(obj.sparsity_in);
+    sp_out = to_char(obj.sparsity_out);
+    
+    out = compose('Operator: [%s] -> [%s]',sp_in,sp_out);
     return
 end
 
