@@ -165,7 +165,7 @@ methods
 
     function tf = is_dual(obj)
         % Check if operator is a linear form (dual).
-        tf = (is_zerodegree(obj.sparsity_out) && obj.numel_out == 1);
+        tf = (is_zerodegree(obj.sparsity_out) && isscalar(obj.sparsity_out));
     end
 
     function tf = is_equal(obj,op)
@@ -204,7 +204,7 @@ methods
         % Convert dual operator to primal.
         assert(is_dual(obj), 'Operator must be linear form (dual).')
 
-        S = casos.Sparsity(obj.sparsity_out);
+        S = casos.Sparsity(obj.sparsity_in);
 
         assert(is_dense(obj.sparsity_M), 'Notify the developers.')
     end

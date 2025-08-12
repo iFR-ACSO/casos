@@ -245,7 +245,7 @@ methods
 
     function S = dualize(obj)
         % Convert to dual operator.
-        S = casos.Sparsity(casadi.Sparsity.dense(nnz(obj)),casos.Sparsity(obj),casos.Sparsity.scalar);
+        S = casos.Sparsity(casadi.Sparsity.dense(1,nnz(obj)),casos.Sparsity(obj),casos.Sparsity.scalar);
     end
 
     %% Misc
