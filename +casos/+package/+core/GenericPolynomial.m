@@ -136,6 +136,17 @@ methods
         tf = is_zerodegree(obj.poly_sparsity);
     end
 
+    %% Sparsity operations
+    function obj = primalize(obj)
+        % Convert to primal vector (polynomial).
+        obj = sparsity_cast(obj,primalize(obj.poly_sparsity));
+    end
+
+    function obj = dualize(obj)
+        % Convert to dual vector (operator).
+        obj = sparsity_cast(obj,dualize(obj.poly_sparsity));
+    end
+
     %% Conversion
     function v = casos.Indeterminates(obj) %#ok<STOUT,MANU>
         % Convert to indeterminates.
