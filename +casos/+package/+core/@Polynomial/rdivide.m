@@ -3,20 +3,30 @@ function c = rdivide(p,b)
 
 assert(is_zerodegree(b),'Only division by constant or symbolic matrix possible.')
 
-% input dimensions
-szp = size(p);
-szb = size(b);
+if is_operator(p)
+    % divide operator by scalar
+    assert(isscalar(b),'Only division by scalar allowed for operators.')
 
-% find zero dimension
-I0 = (szp == 0) | (szb == 0);
+    % divide coefficients by scalar
+    coeffs = p.coeffs ./ b.coeffs;
+    Sp = p.get_sparsity;
+    
+else
 
 % dimensions are compatible if equal or one summand is row/column
 if ~check_sz_comptbl(p,b)
     throw(casos.package.core.IncompatibleSizesError.basic(p,b));
 end
 
+% input dimensions
+szp = size(p);
+szb = size(b);
+
 % dimensions of element-wise product
 sz = max(szp,szb);
+
+% find zero dimension
+I0 = (szp == 0) | (szb == 0);
 
 % handle simple case(s) for speed up
 if isempty(p) || isempty(b)
@@ -37,8 +47,10 @@ c = p.new_poly;
 % element-wise division of coefficients
 coeffs = cfp ./ coeff_repterms(Sb,cfb,p.nterm);
 
+end
+
 % update sparsity pattern
-[S,c.coeffs] = coeff_update(Sp,coeffs,sz);
+[S,c.coeffs] = coeff_update(Sp,coeffs);
 
 % set sparsity
 c = set_sparsity(c,S);

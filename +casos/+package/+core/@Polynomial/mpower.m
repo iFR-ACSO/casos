@@ -1,6 +1,7 @@
 function b = mpower(a,n)
 % Power of polynomial matrix.
 
+assert(~is_operator(a), 'Not allowed for operators.')
 assert(size(a,1) == size(a,2), 'Matrix must be square.')
 assert(isscalar(n), 'Exponent must be scalar.')
 

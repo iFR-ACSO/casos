@@ -1,20 +1,22 @@
 function c = times(a,b)
 % Element-wise multiplication of two polynomial matrices.
 
-% input dimensions
-sza = size(a);
-szb = size(b);
-
-% find zero dimension
-I0 = (sza == 0) | (szb == 0);
+assert(~is_operator(a) && ~is_operator(b), 'Not allowed for operators.')
 
 % dimensions are compatible if equal or one summand is row/column
 if ~check_sz_comptbl(a,b)
     throw(casos.package.core.IncompatibleSizesError.basic(a,b));
 end
 
+% input dimensions
+sza = size(a);
+szb = size(b);
+
 % dimensions of element-wise product
 sz = max(sza,szb);
+
+% find zero dimension
+I0 = (sza == 0) | (szb == 0);
 
 % handle simple case(s) for speed up
 if isempty(a) || isempty(b)

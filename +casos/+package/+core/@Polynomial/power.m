@@ -1,6 +1,8 @@
 function b = power(a,n)
 % Element-wise powers.
 
+assert(~is_operator(a), 'Not allowed for operators.')
+
 % input dimensions
 sza = size(a);
 szn = size(n);

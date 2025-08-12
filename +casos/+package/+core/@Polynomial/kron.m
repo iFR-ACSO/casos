@@ -1,6 +1,8 @@
 function c = kron(a,b)
 % Compute Kronecker product of two polynomial matrices.
 
+assert(~is_operator(a) && ~is_operator(b), 'Not allowed for operators.')
+
 % handle simple case(s) for speed up
 if isempty(a) || isempty(b)
     % product with empty polynomial is empty

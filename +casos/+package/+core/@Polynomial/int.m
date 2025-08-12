@@ -1,6 +1,7 @@
-function g = int(f,x,varargin)
+function b = int(a,x,varargin)
 % Evaluate polynomial integral operator (definite/indefinite integral).
 
+assert(~is_operator(a), 'Not allowed for operators.')
 assert(is_indet(x), 'Second argument must be vector of indeterminates.')
 
 % number of indeterminates
@@ -43,12 +44,12 @@ switch (nargin)
         error('Invalid number of inputs (got %d).', nargin)
 end
 
-g = f.new_poly;
+b = a.new_poly;
 
 % compute coefficient matrix of integral
-[S,g.coeffs] = coeff_int(f.get_sparsity,f.coeffs,x,range);
+[S,b.coeffs] = coeff_int(a.get_sparsity,a.coeffs,x,range);
 
 % set sparsity pattern
-g = set_sparsity(g,S);
+b = set_sparsity(b,S);
 
 end

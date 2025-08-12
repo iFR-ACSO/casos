@@ -21,12 +21,12 @@ classdef (InferiorClasses = {?casadi.DM, ?casos.Indeterminates}) ...
 % create from list of monomials 
 % (all non-sparse coefficients equate to 1).
 %
-%   PX(Sparsity,scalar double | DM)
+%   PD(Sparsity,scalar double | DM)
 %
 % create polynomial with constant coefficients 
 % (all non-sparse coefficients equate to the given value).
 %
-%   PX(Sparsity,vector double | DM)
+%   PD(Sparsity,vector double | DM)
 %
 % create polynomial with constant coefficients from vector of nonzeros.
 %
@@ -56,9 +56,9 @@ methods (Static)
         p = casos.PD(double.empty(varargin{:}));
     end
 
-    function p = zeros(varargin)
-        % Zero polynomial.
-        p = casos.PD(casadi.DM.zeros(varargin{:}));
+    function p = eye(varargin)
+        % Identity matrix.
+        p = casos.PD(casadi.DM.eye(varargin{:}));
     end
 
     function p = ones(varargin)
@@ -66,9 +66,24 @@ methods (Static)
         p = casos.PD(casadi.DM.ones(varargin{:}));
     end
 
-    function p = eye(varargin)
-        % Identity matrix.
-        p = casos.PD(casadi.DM.eye(varargin{:}));
+    function p = zeros(varargin)
+        % Zero polynomial.
+        p = casos.PD(casadi.DM.zeros(varargin{:}));
+    end
+
+    function p = id_operator(varargin)
+        % Identity operator.
+        p = casos.PD(casos.Sparsity.diag_operator(varargin{:}),1);
+    end
+
+    function p = one_operator(varargin)
+        % One operator.
+        p = casos.PD(casos.Sparsity.dense_operator(varargin{:}),1);
+    end
+
+    function p = zero_operator(varargin)
+        % Zero operator.
+        p = casos.PD(casos.Sparsity.dense_operator(varargin{:}),0);
     end
 end
 

@@ -1,12 +1,14 @@
-function B = prod(A,dim)
+function b = prod(a,dim)
 % Return product of array elements.
+
+assert(~is_operator(a), 'Not allowed for operators.')
 
 if nargin > 1
     % nothing to do
-elseif isempty(A) && ~isvector(A)
+elseif isempty(a) && ~isvector(a)
     % product of empty matrix (return scalar)
     dim = 'all';
-elseif isrow(A)
+elseif isrow(a)
     % product along second dimension (return column)
     dim = 2;
 else
@@ -14,25 +16,25 @@ else
     dim = 1;
 end
 
-if isempty(A)
+if isempty(a)
     % product of empty matrix is one
-    B = A.ones(sizeofMatrixOp(A.get_sparsity,dim));
+    b = a.ones(sizeofMatrixOp(a.get_sparsity,dim));
     return
 
-elseif isequal(dim,'all') && isscalar(A) ...
-        || ~isequal(dim,'all') && size(A,dim) == 1
+elseif isequal(dim,'all') && isscalar(a) ...
+        || ~isequal(dim,'all') && size(a,dim) == 1
     % nothing to do
-    B = A;
+    b = a;
     return
 end
 
 % else:
-B = A.new_poly;
+b = a.new_poly;
 
 % compute product of coefficients
-[S,B.coeffs] = coeff_prod(A.get_sparsity,A.coeffs,dim);
+[S,b.coeffs] = coeff_prod(a.get_sparsity,a.coeffs,dim);
 
 % set sparsity
-B = set_sparsity(B,S);
+b = set_sparsity(b,S);
 
 end

@@ -1,8 +1,10 @@
 function c = subs(a,x,b)
 % Polynomial substitution of indeterminates x in a by expression b.
 
+assert(~is_operator(a),'First argument must not be an operator.')
 assert(is_indet(x),'Second argument must be vector of indeterminate variables.')
-
+assert(~is_operator(b),'Third argument must not be an operator.')
+        
 % check dimensions
 if isscalar(b)
     % replace all indeterminates by same expression
@@ -19,7 +21,7 @@ end
 c = a.new_poly;
 
 % substitute indeterminates in coefficient matrix
-[S,c.coeffs] = coeff_subs(a.get_sparsity,a.coeffs,x,b.get_sparsity,b.coeffs);
+[S,c.coeffs] = coeff_substitute(a.get_sparsity,a.coeffs,x,b.get_sparsity,b.coeffs);
 
 % set sparsity
 c = set_sparsity(c,S);

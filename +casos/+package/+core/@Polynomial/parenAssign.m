@@ -15,6 +15,8 @@ assert(nargin < 4, 'Too many arguments on right-hand side.')
 % assignment
 q = obj.new_poly(varargin{:});
 
+assert(is_operator(obj) == is_operator(q), 'Must not mix polynomials and operators.')
+
 % select referenced elements
 I = sparse(size(obj,1),size(obj,2));
 I.(idx) = 1;

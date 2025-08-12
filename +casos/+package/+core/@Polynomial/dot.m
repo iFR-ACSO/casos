@@ -1,12 +1,21 @@
-function r = dot(p,q)
-% Scalar dot product of two polynomials.
+function c = dot(a,b)
+% Dot product.
 
-assert(numel(p) == numel(q),'Inputs must be of compatible size.')
+if is_operator(b)
+    % dot product of operators
+    a = dualize(a);
 
-% expand coefficient matrices to match
-[cf1,cf2] = coeff_expand(p.get_sparsity,q.get_sparsity,p.coeffs,q.coeffs);
+elseif ~is_operator(a)
+    % dot product of polynomials
+    assert(numel(obj) == numel(S2), 'Inputs must be of compatible size.')
+end
 
-% return dot product of coefficients
-r = dot(cf1,cf2);
+c = a.new_poly;
+
+% compute dot product
+[S,c.coeffs] = coeff_dot(a.get_sparsity,b.get_sparsity,a.coeffs,b.coeffs);
+
+% set sparsity
+c = set_sparsity(c,S);
 
 end

@@ -2,6 +2,8 @@ function [c,S] = poly2basis(obj,S)
 % Return a vector of nonzero coordinates for a given basis (sparsity).
 % If no basis is given, the polynomial's sparsity pattern is used.
 
+assert(~is_operator(a), 'Not allowed for operators.')
+
 if nargin < 2
     % return nonzero coefficients (below)
     S = sparsity(obj);

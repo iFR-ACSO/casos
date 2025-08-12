@@ -1,6 +1,8 @@
 function c = plus(a,b)
 % Add two polynomials.
 
+assert(is_operator(a) == is_operator(b), 'Must not mix polynomials and operators.')
+
 % input dimensions
 sza = size(a);
 szb = size(b);

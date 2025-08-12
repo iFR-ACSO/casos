@@ -1,6 +1,8 @@
 function c = mtimes(a,b)
 % Matrix multiplication of two polynomials.
 
+assert(~is_operator(a) && ~is_operator(b), 'Not allowed for operators.')
+
 if isempty(a) || isempty(b)
     % empty multiplication
     c = a.zeros(size(a,1),size(b,2));

@@ -19,9 +19,12 @@ methods (Static, Abstract)
     % Static constructors
     p = sym(dstr,varargin);
     p = empty();
-    p = zeros(varargin);
-    p = ones(varargin);
     p = eye(varargin);
+    p = ones(varargin);
+    p = zeros(varargin);
+    p = id_operator(varargin);
+    p = one_operator(varargin);
+    p = zero_operator(varargin);
 end
 
 methods (Abstract, Access=protected)
@@ -85,6 +88,9 @@ methods
         % Check if polynomial is a vector of indeterminates.
         tf = (is_monom(obj) && is_homogeneous(obj,1));
     end
+
+    % check if (symbolic) polynomial is linear
+    tf = is_linear(obj,x);
 
     function tf = is_monom(obj)
         % Check if polynomial is vector of monomials (legacy).

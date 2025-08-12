@@ -11,6 +11,8 @@ if isscalar(b)
     return
 end
 
+assert(~is_operator(b), 'Not allowed for operators.')
+
 % input dimensions
 szp = size(p);
 szb = size(b);

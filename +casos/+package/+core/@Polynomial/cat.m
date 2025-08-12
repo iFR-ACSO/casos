@@ -9,18 +9,27 @@ if nargin ~= 3
     return
 end
 
-% else: two polynomials given
+% else: two vectors given
 p1 = varargin{1};
 p2 = varargin{2};
+
+assert(is_operator(p1) == is_operator(p2), 'Must not mix polynomials and operators.')
 
 switch (dim)
     case 0
         % block diagonal
-        ul = p1.zeros(size(p1,1),size(p2,2));
-        rl = p1.zeros(size(p2,1),size(p1,2));
+        if is_operator(p1)
+            % fill with zero operators
+            ur = p1.zero_operator(size(p1,1),size(p2,2));
+            ll = p1.zero_operator(size(p1,1),size(p2,2));
+        else
+            % fill with zero matrices
+            ur = p1.zeros(size(p1,1),size(p2,2));
+            ll = p1.zeros(size(p2,1),size(p1,2));
+        end
 
         % concatenate all blocks
-        p = blockcat(p1,ul,rl,p2);
+        p = blockcat(p1,ur,ll,p2);
 
     otherwise
         % generic concatenation

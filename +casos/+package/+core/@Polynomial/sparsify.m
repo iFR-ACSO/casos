@@ -4,7 +4,7 @@ function b = sparsify(a)
 b = a.new_poly;
 
 % sparsify coefficients
-coeffs = simplify(a.coeffs);
+coeffs = sparsify(a.coeffs);
 
 % remove zero terms
 [S,b.coeffs] = coeff_update(a.get_sparsity,coeffs);

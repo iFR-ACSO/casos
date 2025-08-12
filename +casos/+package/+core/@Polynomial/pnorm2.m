@@ -3,6 +3,8 @@ function r = pnorm2(a)
 %
 % Note: This 2-norm does NOT correspond to the norm induced by dot.
 
+assert(~is_operator(a), 'Not allowed for operators.')
+
 % reshape to vector
 a = reshape(a,numel(a),1);
 Sa = a.get_sparsity;

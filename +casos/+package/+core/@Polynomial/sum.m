@@ -1,12 +1,14 @@
-function B = sum(A,dim)
+function b = sum(a,dim)
 % Return sum of array elements.
+
+assert(~is_operator(a), 'Not allowed for operators.')
 
 if nargin > 1
     % nothing to do
-elseif isempty(A) && ~isvector(A)
+elseif isempty(a) && ~isvector(a)
     % sum of empty matrix (return scalar)
     dim = 'all';
-elseif isrow(A)
+elseif isrow(a)
     % sum along second dimension (return column)
     dim = 2;
 else
@@ -14,19 +16,19 @@ else
     dim = 1;
 end
 
-if isempty(A)
+if isempty(a)
     % sum of empty matrix is zero
-    B = A.zeros(sizeofMatrixOp(A.get_sparsity,dim));
+    b = a.zeros(sizeofMatrixOp(a.get_sparsity,dim));
     return
 end
 
 % else
-B = A.new_poly;
+b = a.new_poly;
 
 % compute sum of coefficients
-[S,B.coeffs] = coeff_sum(A.get_sparsity,A.coeffs,dim);
+[S,b.coeffs] = coeff_sum(a.get_sparsity,a.coeffs,dim);
 
 % set sparsity
-B = set_sparsity(B,S);
+b = set_sparsity(b,S);
 
 end

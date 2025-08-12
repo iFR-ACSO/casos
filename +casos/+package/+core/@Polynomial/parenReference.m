@@ -32,8 +32,13 @@ if ~isempty(ii)
 
     % set sparsity
     p = set_sparsity(p,S);
+
+elseif is_operator(obj)
+    % empty reference (operator)
+    p = obj.zero_operator(size(ii));
+
 else
-    % empty reference
+    % empty reference (polynomial)
     p = obj.zeros(size(ii));
 end
 
