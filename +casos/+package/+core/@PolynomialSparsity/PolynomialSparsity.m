@@ -333,6 +333,7 @@ methods (Access={?casos.Sparsity, ?casos.package.core.AbstractSparsity})
     % protected interface for polynomial operations
     [S,coeffs] = coeff_blkcat(obj,S2,S3,S4,cf1,cf2,cf3,cf4);
     [S,coeffs] = coeff_cat(S1,S2,coeff1,coeff2,dim);
+    [S,coeffs] = coeff_dot(S1,S2,coeff1,coeff2);
     [cf1,cf2]  = coeff_expand(S1,S2,coeff1,coeff2);
     [S,coeffs] = coeff_int(S,coeffs,x,range);
     [S,coeffs] = coeff_kron(S1,S2,coeff1,coeff2);

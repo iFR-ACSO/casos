@@ -151,12 +151,15 @@ methods (Abstract, Access={?casos.Sparsity, ?casos.package.core.AbstractSparsity
     S = coeff_sparsity(obj);
     
     % protected interface for polynomial operations
+    [S,coeffs] = coeff_cat(S1,S2,coeff1,coeff2,dim);
+    [S,coeffs] = coeff_dot(S1,S2,coeff1,coeff2);
+    [S,coeffs] = coeff_plus(S1,S2,coeff1,coeff2);
     [S,coeffs] = coeff_project(obj,coeffs,S,keep_zeros);
+    [S,coeffs] = coeff_repmat(obj,coeffs,varargin);
     [S,coeffs] = coeff_subsref(obj,coeffs,ii,sz);
     [S,coeffs] = coeff_subsasgn(obj,S2,coeffs,coeff2,ii);
-    [S,coeffs] = coeff_cat(S1,S2,coeff1,coeff2,dim);
-    [S,coeffs] = coeff_plus(S1,S2,coeff1,coeff2);
     [S,coeffs] = coeff_times(S1,S2,coeff1,coeff2);
+    [S,coeffs] = coeff_update(obj,coeffs,varargin);
 end
 
 methods (Access={?casos.Sparsity, ?casos.package.core.AbstractSparsity})
@@ -232,11 +235,6 @@ methods (Access={?casos.Sparsity, ?casos.package.core.AbstractSparsity})
         error('Function "coeff_prod" not supported by class "%s".', class(obj))
     end
 
-    function [S,coeffs] = coeff_repmat(obj,coeffs,varargin) %#ok<STOUT,INUSD>
-        % Coefficient matrix of matrix repetition.
-        error('Function "coeff_repmat" not supported by class "%s".', class(obj))
-    end
-
     function [S,coeffs] = coeff_sum(obj,coeffs,dim) %#ok<STOUT,INUSD>
         % Coefficient matrix of matrix sum.
         error('Function "coeff_sum" not supported by class "%s".', class(obj))
@@ -250,11 +248,6 @@ methods (Access={?casos.Sparsity, ?casos.package.core.AbstractSparsity})
     function [S,coeffs] = coeff_substitute(obj,coeff1,x,S2,coeff2) %#ok<STOUT,INUSD>
         % Coefficient matrix of substitute.
         error('Function "coeff_substitute" not supported by class "%s".', class(obj))
-    end
-
-    function [S,coeffs] = coeff_update(obj,coeffs,sz,dim) %#ok<STOUT,INUSD>
-        % Update coefficient matrix.
-        error('Function "coeff_update" not supported by class "%s".', class(obj))
     end
 
     function r = coeff_properint(obj,coeffs) %#ok<STOUT,INUSD>

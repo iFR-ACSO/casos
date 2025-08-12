@@ -106,6 +106,15 @@ methods (Static)
 
         S = casos.package.core.OperatorSparsity(S,Si,So);
     end
+
+    function S = sparse(n,m)
+        % Create all-sparse operator pattern.
+        Si = casos.Sparsity(m,1);
+        So = casos.Sparsity(n,1);
+
+        % create operator with sparse coefficients
+        S = casos.package.core.OperatorSparsity(casadi.Sparsity(0,0),Si,So);
+    end
 end
 
 methods
@@ -277,12 +286,15 @@ methods (Access={?casos.Sparsity, ?casos.package.core.AbstractSparsity})
     end
 
     % protected interface for polynomial operations
+    [S,coeffs] = coeff_cat(S1,S2,coeff1,coeff2,dim);
+    [S,coeffs] = coeff_dot(S1,S2,coeff1,coeff2);
+    [S,coeffs] = coeff_plus(S1,S2,coeff1,coeff2);
     [S,coeffs] = coeff_project(obj,coeffs,S,keep_zeros);
+    [S,coeffs] = coeff_repmat(obj,coeffs,varargin);
     [S,coeffs] = coeff_subsref(obj,coeffs,ii,sz);
     [S,coeffs] = coeff_subsasgn(obj,S2,coeffs,coeff2,ii);
-    [S,coeffs] = coeff_cat(S1,S2,coeff1,coeff2,dim);
-    [S,coeffs] = coeff_plus(S1,S2,coeff1,coeff2);
     [S,coeffs] = coeff_times(S1,S2,coeff1,coeff2);
+    [S,coeffs] = coeff_update(obj,coeffs,varargin);
 end
 
 end

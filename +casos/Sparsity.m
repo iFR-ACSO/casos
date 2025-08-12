@@ -437,7 +437,21 @@ methods (Static)
         S = casos.Sparsity(casadi.Sparsity.triplet(n,m,i,j),varargin{:});
     end
     
-    % to be completed
+    %% Operator constructors
+    function S = dense_operator(varargin)
+        % Create dense operator pattern.
+        S = casos.Sparsity.create(casos.package.core.OperatorSparsity.pattern(casadi.Sparsity.dense(varargin{:})));
+    end
+
+    function S = diag_operator(varargin)
+        % Create diagonal operator pattern.
+        S = casos.Sparsity.create(casos.package.core.OperatorSparsity.pattern(casadi.Sparsity.diag(varargin{:})));
+    end
+
+    function S = sparse_operator(varargin)
+        % Create all-sparse operator pattern.
+        S = casos.Sparsity.create(casos.package.core.OperatorSparsity.sparse(varargin{:}));
+    end
 end
 
 methods (Static, Access={?casos.package.core.AbstractSparsity})
@@ -504,6 +518,12 @@ methods (Access={?casos.package.core.PolynomialInterface})
         % Coefficients matrix of pairwise concatenation.
         assert(~is_null(obj), 'Null pointer.')
         [S,coeffs] = coeff_cat(obj.pattern,S2,coeff1,coeff2,dim);
+    end
+
+    function [S,coeffs] = coeff_dot(obj,S2,coeff1,coeff2)
+        % Coefficient matrix of dot product.
+        assert(~is_null(obj), 'Null pointer.')
+        [S,coeffs] = coeff_dot(obj.pattern,S2,coeff1,coeff2);
     end
     
     function [cf1,cf2] = coeff_expand(obj,S2,coeff1,coeff2) 
@@ -602,10 +622,10 @@ methods (Access={?casos.package.core.PolynomialInterface})
         [S,coeffs] = coeff_transpose(obj.pattern,coeffs);
     end
 
-    function [S,coeffs] = coeff_update(obj,coeffs,sz,dim) 
+    function [S,coeffs] = coeff_update(obj,coeffs,varargin) 
         % Update coefficient matrix.
         assert(~is_null(obj), 'Null pointer.')
-        [S,coeffs] = coeff_update(obj.pattern,coeffs,sz,dim);
+        [S,coeffs] = coeff_update(obj.pattern,coeffs,varargin{:});
     end
 
     function r = coeff_properint(obj,coeffs) 
@@ -715,6 +735,7 @@ methods
 
         assert(all(~tf) || all(tf), 'Must not mix polynomials and operators.')
 
+        % block concatenate coefficient matrices
         S = coeff_blkcat(S1,S2,S3,S4,S1.coeff_sparsity,S2.coeff_sparsity,S3.coeff_sparsity,S4.coeff_sparsity);
     end
 
@@ -731,13 +752,36 @@ methods
         S1 = casos.Sparsity(varargin{1});
         S2 = casos.Sparsity(varargin{2});
 
-        % dualize polynomials if one operator is given
-        if is_operator(S1) && ~is_operator(S2), S2 = dualize(S2);
-        elseif ~is_operator(S1) && is_operator(S2), S1 = dualize(S1);
-        end
+        assert(is_operator(S1) == is_operator(S2), 'Must not mix polynomials and operators.')
 
         % concatenate coefficient matrices
         S = coeff_cat(S1,S2,S1.coeff_sparsity,S2.coeff_sparsity,dim);
+    end
+
+    function c = dot(a,b)
+        % Dot product.
+        a = casos.Sparsity(a);
+        b = casos.Sparsity(b);
+
+        if is_operator(b)
+            % dot product of operators
+            a = dualize(a);     
+        elseif ~is_operator(a)
+            % dot product of polynomials
+            assert(numel(obj) == numel(S2), 'Inputs must be of compatible size.')
+        end
+
+        % compute dot product
+        c = coeff_dot(a.pattern,b,a.coeff_sparsity,b.coeff_sparsity);
+    end
+
+    function b = integral(a,x,range)
+        % Return sparsity pattern of (polynomial) integral.
+        assert(~is_operator(a), 'Not allowed for operators.')
+        assert(is_indet(x), 'Second argument must be vector of indeterminates.')
+        
+        % compute coefficient matrix of integral
+        b = coeff_int(a.pattern,a.coeffs,x,range);
     end
 
     function c = intersect(a,b)
@@ -789,6 +833,15 @@ methods
 
         % delegate to polynomial pattern
         c = mtimes(a.pattern,b);
+    end
+
+    function b = nabla(a,x)
+        % Return sparsity pattern of (polynomial) Jacobian matrix.
+        assert(~is_operator(a), 'Not allowed for operators.')
+        assert(is_indet(x), 'Second argument must be vector of indeterminates.')
+        
+        % compute coefficient matrix of Jacobian
+        b = coeff_nabla(a.pattern,a.coeffs,x);
     end
 
     function c = plus(a,b)
@@ -861,16 +914,20 @@ methods
         assert(~is_operator(b),'Third argument must not be an operator.')
         assert(numel(x) == numel(b),'Second and third argument have incompatible sizes.')
 
-        c = coeff_subs(a.pattern,a.coeff_sparsity,x,b,b.coeff_sparsity);
+        c = coeff_substitute(a.pattern,a.coeff_sparsity,x,b,b.coeff_sparsity);
     end
  
     function b = sum1(a)
         % Sum along first dimension.
+        assert(~is_operator(a), 'Not allowed for operators.')
+
         b = coeff_sum(a.pattern,a.coeff_sparsity,1);
     end
 
     function b = sum2(a)
         % Sum along second dimension.
+        assert(~is_operator(a), 'Not allowed for operators.')
+
         b = coeff_sum(a.pattern,a.coeff_sparsity,2);
     end
 
