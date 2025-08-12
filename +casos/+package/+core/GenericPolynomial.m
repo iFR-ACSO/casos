@@ -17,15 +17,10 @@ properties (Dependent)
 end
 
 methods
-    %% Getter
-    function n = get.nvars(obj)
-        % Number of indeterminate variables.
-        n = obj.poly_sparsity.nvars;
-    end
-
-    function n = get.nterm(obj)
-        % Number of monomials.
-        n = obj.poly_sparsity.nterm;
+    %% Getters (Dependent variables)
+    function d = get.maxdeg(obj)
+        % Maximum degree of polynomial.
+        d = obj.poly_sparsity.maxdeg;
     end
 
     function d = get.mindeg(obj)
@@ -33,9 +28,14 @@ methods
         d = obj.poly_sparsity.mindeg;
     end
 
-    function d = get.maxdeg(obj)
-        % Maximum degree of polynomial.
-        d = obj.poly_sparsity.maxdeg;
+    function n = get.nterm(obj)
+        % Number of monomials.
+        n = obj.poly_sparsity.nterm;
+    end
+
+    function n = get.nvars(obj)
+        % Number of indeterminate variables.
+        n = obj.poly_sparsity.nvars;
     end
 
     function S = get.sparsity_in(obj)
@@ -46,6 +46,28 @@ methods
     function S = get.sparsity_out(obj)
         % Output sparsity pattern.
         S = obj.poly_sparsity.sparsity_out;
+    end
+
+    %% Getters
+    function Z = grambasis(obj)
+        % Return a Gram basis for this polynomial.
+        Z = grambasis(obj.poly_sparsity);
+    end
+
+    function x = indeterminates(obj)
+        % Return indeterminate variables of polynomial.
+        x = indeterminates(obj.poly_sparsity);
+    end
+
+    function Z = monomials(obj,deg)
+        % Return monomial sparsity pattern.
+        if nargin > 1
+            % create pattern
+            Z = monomials@casos.package.core.AlgebraicObject(obj,deg);
+        else
+            % return pattern
+            Z = monomials(obj.poly_sparsity);
+        end
     end
 
     function n = nnz(obj)
@@ -63,11 +85,12 @@ methods
         [varargout{1:nargout}] = size(obj.poly_sparsity,varargin{:});
     end
 
-    function x = indeterminates(obj)
-        % Return indeterminate variables of polynomial.
-        x = indeterminates(obj.poly_sparsity);
+    function S = sparsity(obj)
+        % Return (copy of) sparsity pattern.
+        S = casos.Sparsity(obj.poly_sparsity);
     end
 
+    %% Getters (Boolean)
     function tf = isempty(obj)
         % Check if polynomial is empty.
         tf = isempty@casos.package.core.PolynomialInterface(obj);
@@ -103,45 +126,14 @@ methods
         tf = is_operator(obj.poly_sparsity);
     end
 
-    function tf = is_zerodegree(obj)
-        % Check if polynomial is of degree zero.
-        tf = is_zerodegree(obj.poly_sparsity);
-    end
-
-    function S = sparsity(obj)
-        % Return (copy of) sparsity pattern.
-        S = casos.Sparsity(obj.poly_sparsity);
-    end
-
-    function Z = grambasis(obj)
-        % Return a Gram basis for this polynomial.
-        Z = grambasis(obj.poly_sparsity);
-    end
-
-    function l = list_of_degree(obj)
-        % Return a list of degrees.
-        l = list_of_degree(obj.poly_sparsity);
-    end
-
-    function l = list_of_indets(obj)
-        % Return a list of indeterminate variables.
-        l = list_of_indets(obj.poly_sparsity);
-    end
-
-    function Z = monomials(obj,deg)
-        % Return monomial sparsity pattern.
-        if nargin > 1
-            % create pattern
-            Z = monomials@casos.package.core.AlgebraicObject(obj,deg);
-        else
-            % return pattern
-            Z = monomials(obj.poly_sparsity);
-        end
-    end
-
     function tf = is_wellposed(obj)
         % Check if polynomial is well posed.
         tf = is_wellposed(obj.poly_sparsity);
+    end
+
+    function tf = is_zerodegree(obj)
+        % Check if polynomial is of degree zero.
+        tf = is_zerodegree(obj.poly_sparsity);
     end
 
     %% Conversion
@@ -150,18 +142,18 @@ methods
         error('Notify the developers.')
     end
 
-    function f = to_sxfunction(obj,varargin)
-        % Return casadi.Function object using SX.
-        X = casadi.SX.sym('x',obj.nvars,1);
-        p = subs(obj,indeterminates(obj),casos.package.polynomial(X));
-        f = casadi.Function('f',num2cell(X),{casadi.SX(p)},str(obj.indeterminates),{'poly'},varargin{:});
-    end
-
     function f = to_mxfunction(obj,varargin)
         % Return casadi.Function object using MX.
         X = casadi.MX.sym('x',obj.nvars,1);
         p = subs(obj,indeterminates(obj),casos.package.polynomial(X));
         f = casadi.Function('f',num2cell(X),{casadi.MX(p)},str(obj.indeterminates),{'poly'},varargin{:});
+    end
+
+    function f = to_sxfunction(obj,varargin)
+        % Return casadi.Function object using SX.
+        X = casadi.SX.sym('x',obj.nvars,1);
+        p = subs(obj,indeterminates(obj),casos.package.polynomial(X));
+        f = casadi.Function('f',num2cell(X),{casadi.SX(p)},str(obj.indeterminates),{'poly'},varargin{:});
     end
 
     function f = to_function(obj,varargin)
@@ -176,14 +168,25 @@ methods
         p = cat@casos.package.core.PolynomialInterface(dim,varargin{:});
     end
 
+    function p = horzcat(varargin)
+        % Horizontal concatenation.
+        p = horzcat@casos.package.core.PolynomialInterface(varargin{:});
+    end
+
     function p = vertcat(varargin)
         % Vertical concatenation.
         p = vertcat@casos.package.core.PolynomialInterface(varargin{:});
     end
 
-    function p = horzcat(varargin)
-        % Horizontal concatenation.
-        p = horzcat@casos.package.core.PolynomialInterface(varargin{:});
+    %% Misc
+    function l = list_of_degree(obj)
+        % Return a list of degrees.
+        l = list_of_degree(obj.poly_sparsity);
+    end
+
+    function l = list_of_indets(obj)
+        % Return a list of indeterminate variables.
+        l = list_of_indets(obj.poly_sparsity);
     end
 end
 

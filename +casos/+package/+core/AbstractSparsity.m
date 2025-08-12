@@ -9,7 +9,7 @@ properties (Abstract)
 end
 
 methods (Abstract)
-    %% Getter
+    %% Getters
     tf = is_dense(obj,S);
     tf = is_equal(obj,S);
     tf = is_operator(obj);

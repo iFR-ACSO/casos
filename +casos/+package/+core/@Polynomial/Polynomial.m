@@ -69,7 +69,33 @@ methods
         obj.coeffs = coeffs;
     end
 
-    %% Getter
+    %% Getters (Boolean)
+    function tf = is_constant(obj)
+        % Check if polynomial is constant.
+        tf = (is_zerodegree(obj) && ~is_symexpr(obj));
+    end
+
+    function tf = is_equal(obj,p)
+        % Check if polynomials are equal.
+        tf = is_equal@casos.package.core.GenericPolynomial(obj,p) ...
+            && is_equal(obj.coeffs,p.coeffs);
+    end
+
+    function tf = is_indet(obj)
+        % Check if polynomial is a vector of indeterminates.
+        tf = (is_monom(obj) && is_homogeneous(obj,1));
+    end
+
+    function tf = is_monom(obj)
+        % Check if polynomial is vector of monomials (legacy).
+        tf = (is_monom(obj.get_sparsity) && is_coeff_one(obj));
+    end
+
+    function tf = is_one(obj)
+        % Check if polynomial is equal to identity.
+        tf = (is_zerodegree(obj) && is_coeff_one(obj));
+    end
+
     function tf = is_symbolic(obj)
         % Check if polynomial has symbolic coefficients.
         tf = is_symbolic(obj.coeffs(coeff_find(obj.get_sparsity)));
@@ -80,56 +106,25 @@ methods
         tf = ~is_constant(obj.coeffs);
     end
 
+    % check well-posedness
+    tf = is_wellposed(obj);
+
     function tf = is_zero(obj)
         % Check if polynomial is equal to zero.
         tf = (is_zerodegree(obj) && is_zero(obj.coeffs));
     end
 
-    function tf = is_one(obj)
-        % Check if polynomial is equal to identity.
-        tf = (is_zerodegree(obj) && is_coeff_one(obj));
-    end
-
-    function tf = is_constant(obj)
-        % Check if polynomial is constant.
-        tf = (is_zerodegree(obj) && ~is_symexpr(obj));
-    end
-
-    function tf = is_monom(obj)
-        % Check if polynomial is vector of monomials (legacy).
-        tf = (is_monom(obj.get_sparsity) && is_coeff_one(obj));
-    end
-
-    function tf = is_indet(obj)
-        % Check if polynomial is a vector of indeterminates.
-        tf = (is_monom(obj) && is_homogeneous(obj,1));
-    end
-
-    function tf = is_equal(obj,p)
-        % Check if polynomials are equal.
-        tf = is_equal@casos.package.core.GenericPolynomial(obj,p) ...
-            && is_equal(obj.coeffs,p.coeffs);
-    end
-
-    function l = list_of_coeffs(obj)
-        % Return a list of coefficients.
-        l = coeff_list(obj.get_sparsity,obj.coeffs);
-    end
-end
-
-methods
-    % check well-posedness
-    tf = is_wellposed(obj);
-
+    %% Matrix & Sparsity operations
     % public RedefinesParen interface
     p = cat(dim,varargin);
 
-    function obj = reshape(obj,varargin)
-        % Reshape polynomial matrix.
-        assert(length(varargin{1}) <= 2, 'Size vector must not exceed two elements.')
-        assert(length(varargin) <= 2, 'Size arguments must not exceed two scalars.')
+    function obj = project(obj,S)
+        % Project onto sparsity pattern.
+        if ~check_sz_equal(obj,S)
+            throw(casos.package.core.IncompatibleSizesError.other(obj,S));
+        end
 
-        S = reshape(obj.get_sparsity,varargin{:});
+        [S,obj.coeffs] = coeff_project(obj.get_sparsity,obj.coeffs,casos.Sparsity(S));
         obj = obj.set_sparsity(S);
     end
 
@@ -139,13 +134,12 @@ methods
         obj = obj.set_sparsity(S);
     end
 
-    function obj = project(obj,S)
-        % Project onto sparsity pattern.
-        if ~check_sz_equal(obj,S)
-            throw(casos.package.core.IncompatibleSizesError.other(obj,S));
-        end
+    function obj = reshape(obj,varargin)
+        % Reshape polynomial matrix.
+        assert(length(varargin{1}) <= 2, 'Size vector must not exceed two elements.')
+        assert(length(varargin) <= 2, 'Size arguments must not exceed two scalars.')
 
-        [S,obj.coeffs] = coeff_project(obj.get_sparsity,obj.coeffs,casos.Sparsity(S));
+        S = reshape(obj.get_sparsity,varargin{:});
         obj = obj.set_sparsity(S);
     end
 
@@ -159,6 +153,7 @@ methods
         obj = obj.set_sparsity(S);
     end
 
+    %% Conversion
     function v = casos.Indeterminates(obj)
         % Convert to indeterminates.
         assert(is_indet(obj),'Polynomial must be a vector of indeterminates.')
@@ -189,6 +184,12 @@ methods
         c = plus(a, uminus(b));
     end
 
+    %% Misc
+    function l = list_of_coeffs(obj)
+        % Return a list of coefficients.
+        l = coeff_list(obj.get_sparsity,obj.coeffs);
+    end
+
     %% Display
     function disp(obj)
         % Display polynomial.
@@ -208,8 +209,6 @@ methods (Access=protected)
 
     % protected RedefinesParen interface
     obj = parenAssign(obj,idx,varargin);
-    % obj = parenDelete(obj,idx);
-    % n = parenListLength(obj,idx,context);
     varargout = parenReference(obj,index);
 end
 

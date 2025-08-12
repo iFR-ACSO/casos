@@ -20,6 +20,11 @@ methods
         b = transpose(a);
     end
 
+    function c = mtimes(a,b)
+        % Multiply algebraic objects (matrix product).
+        c = mtimes(casos.package.polynomial(a),casos.package.polynomial(b));
+    end
+
     function c = plus(a,b)
         % Add algebraic objects.
         c = plus(casos.package.polynomial(a),casos.package.polynomial(b));
@@ -28,11 +33,6 @@ methods
     function c = times(a,b)
         % Multiply algebraic objects (element-wise).
         c = times(casos.package.polynomial(a),casos.package.polynomial(b));
-    end
-
-    function c = mtimes(a,b)
-        % Multiply algebraic objects (matrix product).
-        c = mtimes(casos.package.polynomial(a),casos.package.polynomial(b));
     end
 
     function b = uminus(a)
