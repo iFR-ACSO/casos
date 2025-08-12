@@ -1,42 +1,35 @@
-function [c,S] = poly2basis(obj,S)
+function [c,S] = poly2basis(obj,varargin)
 % Return a vector of nonzero coordinates for a given basis (sparsity).
 % If no basis is given, the polynomial's sparsity pattern is used.
+%
+% Deprecated: Unless used with indexing argument.
 
-assert(~is_operator(a), 'Not allowed for operators.')
+assert(~is_operator(obj), 'Not allowed for operators.')
 
-if nargin < 2
-    % return nonzero coefficients (below)
-    S = sparsity(obj);
-    coeffs = obj.coeffs;
+if nargin < 2 || ~islogical(varargin{2})
+    % use coordinates
+    warning('Deprecated: Use coordinates() instead.')
+    [c,S] = coordinates(obj,varargin{:});
+    return
+end
 
-elseif isempty(obj) || (isscalar(obj) && isempty(S)) || (islogical(S) && all(~S))
+% indexing argument
+I = varargin{2};
+
+if isempty(obj) || all(~I)
     % empty polynomial, selection, or projection
-    assert(~isempty(obj) || isempty(S),'Cannot project empty polynomial.')
+    assert(~isempty(obj) || all(~I),'Cannot project empty polynomial.')
 
     c = sparse(0,1);
     S = casos.Sparsity(0,0);
-    return
-
-elseif islogical(S)
-    % nonzeros and basis of subreference
-    [i,j] = coeff_triplet(obj.get_sparsity);
-    tf = S(j+1);
-    idx = sub2ind(size(obj.coeffs),i(tf)+1,j(tf)+1);
-    c = reshape(obj.coeffs(idx),nnz(tf),1);
-    S = basis(obj,S);
-    return
-
-elseif isscalar(obj) && ~isscalar(S)
-    % repeat scalar inputs before projection
-    [sp_rep,coeffs] = coeff_repmat(obj.get_sparsity,obj.coeffs,size(S));
-    [S,coeffs] = coeff_project(sp_rep,coeffs,S,true);
 
 else
-    % project onto given sparsity pattern.
-    [S,coeffs] = coeff_project(obj.sparsity,obj.coeffs,S,true);
+    % nonzeros and basis of subreference
+    [i,j] = coeff_triplet(obj.get_sparsity);
+    tf = I(j+1);
+    idx = sub2ind(size(obj.coeffs),i(tf)+1,j(tf)+1);
+    c = reshape(obj.coeffs(idx),nnz(tf),1);
+    S = basis(obj,I);
 end
-
-% select nonzero coefficients
-c = reshape(coeffs(coeff_find(S)),nnz(S),1);
 
 end

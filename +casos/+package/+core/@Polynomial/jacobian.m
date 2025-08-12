@@ -13,10 +13,10 @@ end
 assert(is_symbolic(x),'Second argument must be symbolic polynomial.')
 
 % project x to basis
-[X,Si] = poly2basis(x);
+[X,Si] = coordinates(x);
 
 % project f to basis
-[A,So] = poly2basis(a);
+[A,So] = coordinates(a);
 
 % G is jacobian of coefficients
 B = jacobian(A,X);

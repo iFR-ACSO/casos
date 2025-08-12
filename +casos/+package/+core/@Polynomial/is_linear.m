@@ -4,7 +4,7 @@ function tf = is_linear(p,q)
 assert(is_symbolic(q),'Second argument must be purely symbolic.')
 
 % get nonzero coordinates
-Q = poly2basis(q);
+Q = coordinates(q);
 
 % check if coefficients are linear
 tf = is_linear(p.coeffs,Q);

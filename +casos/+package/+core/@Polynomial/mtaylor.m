@@ -18,8 +18,8 @@ end
 c = a.new_poly;
 
 % project to basis
-[X,S] = poly2basis(x);
-[B] = poly2basis(b,S);
+[X,S] = coordinates(x);
+[B] = cooordinates(b,S);
 
 % linearize coefficients
 coeffs = mtaylor(a.coeffs,X,B,deg);
