@@ -151,14 +151,16 @@ methods (Abstract, Access={?casos.Sparsity, ?casos.package.core.AbstractSparsity
     S = coeff_sparsity(obj);
     
     % protected interface for polynomial operations
-    [S,coeffs] = coeff_cat(S1,S2,coeff1,coeff2,dim);
-    [S,coeffs] = coeff_dot(S1,S2,coeff1,coeff2);
-    [S,coeffs] = coeff_plus(S1,S2,coeff1,coeff2);
+    [S,coeffs] = coeff_adjoint(obj,coeffs);
+    [S,coeffs] = coeff_blkcat(obj,S2,S3,S4,cf1,cf2,cf3,cf4);
+    [S,coeffs] = coeff_cat(obj,S2,coeff1,coeff2,dim);
+    [S,coeffs] = coeff_dot(obj,S2,coeff1,coeff2);
+    [S,coeffs] = coeff_plus(obj,S2,coeff1,coeff2);
     [S,coeffs] = coeff_project(obj,coeffs,S,keep_zeros);
     [S,coeffs] = coeff_repmat(obj,coeffs,varargin);
     [S,coeffs] = coeff_subsref(obj,coeffs,ii,sz);
     [S,coeffs] = coeff_subsasgn(obj,S2,coeffs,coeff2,ii);
-    [S,coeffs] = coeff_times(S1,S2,coeff1,coeff2);
+    [S,coeffs] = coeff_times(obj,S2,coeff1,coeff2);
     [S,coeffs] = coeff_update(obj,coeffs,varargin);
 end
 
@@ -190,16 +192,6 @@ methods (Access={?casos.Sparsity, ?casos.package.core.AbstractSparsity})
     end
 
     %% Protected interface for polynomial operations
-    function [S,coeffs] = coeff_adjoint(obj,coeffs) %#ok<STOUT,INUSD>
-        % Coefficient matrix of adjoint.
-        error('Function "coeff_adjoint" not supported by class "%s".', class(obj))
-    end
-
-    function [S,coeffs] = coeff_blkcat(obj,S2,S3,S4,cf1,cf2,cf3,cf4) %#ok<STOUT,INUSD>
-        % Coefficients matrix of block concatenation.
-        error('Function "coeff_blkcat" not supported by class "%s".', class(obj))
-    end
-
     function [cf1,cf2] = coeff_expand(obj,S2,coeff1,coeff2) %#ok<STOUT,INUSD>
         % Expanded coefficient matrices.
         error('Function "coeff_expand" not supported by class "%s".', class(obj))

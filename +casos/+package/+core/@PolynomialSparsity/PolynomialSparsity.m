@@ -320,49 +320,50 @@ methods (Access={?casos.Sparsity, ?casos.package.core.AbstractSparsity})
         idx = find(obj.coeffs);
     end
 
-    function cfs = coeff_repterms(S,coeffs,nt)
+    function cfs = coeff_repterms(obj,coeffs,nt)
         % Repeat terms.
-        cfs = repmat(coeffs,nt/S.nterm,1);
+        cfs = repmat(coeffs,nt/obj.nterm,1);
     end
 
-    function l = coeff_list(S,coeffs)
+    function l = coeff_list(obj,coeffs)
         % Return list of coefficients.
-        l = arrayfun(@(i) reshape(coeffs(i,:),size(S)),1:S.nterm,'UniformOutput',false);
+        l = arrayfun(@(i) reshape(coeffs(i,:),size(obj)),1:obj.nterm,'UniformOutput',false);
     end
 
     % protected interface for polynomial operations
+    [S,coeffs] = coeff_adjoint(obj,coeffs);
     [S,coeffs] = coeff_blkcat(obj,S2,S3,S4,cf1,cf2,cf3,cf4);
-    [S,coeffs] = coeff_cat(S1,S2,coeff1,coeff2,dim);
-    [S,coeffs] = coeff_dot(S1,S2,coeff1,coeff2);
-    [cf1,cf2]  = coeff_expand(S1,S2,coeff1,coeff2);
-    [S,coeffs] = coeff_int(S,coeffs,x,range);
-    [S,coeffs] = coeff_kron(S1,S2,coeff1,coeff2);
-    [S,coeffs] = coeff_mtimes(S1,S2,coeffs);
-    [S,coeffs] = coeff_nabla(S,coeffs,x);
-    [S,coeffs] = coeff_plus(S1,S2,coeff1,coeff2);
-    [S,coeffs] = coeff_power(S,coeffs,deg);
-    [S,coeffs] = coeff_prod(S,coeffs,dim);
+    [S,coeffs] = coeff_cat(obj,S2,coeff1,coeff2,dim);
+    [S,coeffs] = coeff_dot(obj,S2,coeff1,coeff2);
+    [cf1,cf2]  = coeff_expand(obj,S2,coeff1,coeff2);
+    [S,coeffs] = coeff_int(obj,coeffs,x,range);
+    [S,coeffs] = coeff_kron(obj,S2,coeff1,coeff2);
+    [S,coeffs] = coeff_mtimes(obj,S2,coeffs);
+    [S,coeffs] = coeff_nabla(obj,coeffs,x);
+    [S,coeffs] = coeff_plus(obj,S2,coeff1,coeff2);
+    [S,coeffs] = coeff_power(obj,coeffs,deg);
+    [S,coeffs] = coeff_prod(obj,coeffs,dim);
     [S,coeffs] = coeff_project(obj,coeffs,S,keep_zeros);
-            r  = coeff_properint(S,coeffs);
+            r  = coeff_properint(obj,coeffs);
     [S,coeffs] = coeff_repmat(obj,coeffs,varargin);
     [S,coeffs] = coeff_subsref(obj,coeffs,ii,sz);
     [S,coeffs] = coeff_subsasgn(obj,S2,coeffs,coeff2,ii);
-    [S,coeffs] = coeff_substitute(S1,coeff1,x,S2,coeff2)
-    [S,coeffs] = coeff_sum(S,coeffs,dim);
-    [S,coeffs] = coeff_times(S1,S2,coeff1,coeff2);
+    [S,coeffs] = coeff_substitute(obj,coeff1,x,S2,coeff2)
+    [S,coeffs] = coeff_sum(obj,coeffs,dim);
+    [S,coeffs] = coeff_times(obj,S2,coeff1,coeff2);
     [S,coeffs] = coeff_transpose(obj,coeffs);
-    [S,coeffs] = coeff_update(S,coeffs,sz,dim);
+    [S,coeffs] = coeff_update(obj,coeffs,sz,dim);
 
     % protected interface for conversion
     x = vector_to_indeterminates(obj);
 
     % protected interface for matrix operations
-    coeffs = prepareMatrixOp(S,coeffs,dim);
-    sz = sizeofMatrixOp(S,dim);
+    coeffs = prepareMatrixOp(obj,coeffs,dim);
+    sz = sizeofMatrixOp(obj,dim);
 
     % protected interface for linear operators
-    [S,I1,I2] = op_intersect(S1,S2);
-    [S,I1,I2] = op_join(S1,S2);
+    [S,I1,I2] = op_intersect(obj,S2);
+    [S,I1,I2] = op_join(obj,S2);
 
     % protected interface for display output
     out = str_monoms(obj,flag);
