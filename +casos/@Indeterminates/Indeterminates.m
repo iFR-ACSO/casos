@@ -1,5 +1,16 @@
 classdef Indeterminates < casos.package.core.AlgebraicObject & casos.package.core.Printable
 % Indeterminate variables.
+%
+% Constructor summary:
+%
+%   Indeterminates()
+%
+% create empty list of indeterminate variables.
+%
+%   Indeterminates(char, ...)
+%   Indeterminates(char, int, [int])
+%
+% create list of indeterminate variables.
 
 properties (GetAccess=protected, SetAccess=private)
     % cell array of strings {x1,...,xN}

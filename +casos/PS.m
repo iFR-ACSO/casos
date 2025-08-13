@@ -20,6 +20,11 @@ classdef (InferiorClasses = {?casadi.DM, ?casadi.SX, ?casos.PD, ?casos.Indetermi
 %
 % convert polynomial with constant coefficients.
 %
+%   PS(char, ...)
+%   PS(char,int,[int])
+%
+% create vector (matrix) of indeterminate variables.
+%
 %   PS(Sparsity)
 %
 % create from list of monomials 
@@ -43,6 +48,46 @@ classdef (InferiorClasses = {?casadi.DM, ?casadi.SX, ?casos.PD, ?casos.Indetermi
 %
 % create polynomial with symbolic coefficients from vector of nonzeros.
 %
+%   PS(matrix double | DM,Sparsity,Sparsity)
+%
+% create operator with constant coefficients.
+%
+%   PS(matrix SX,Sparsity,Sparsity)
+%
+% create operator with symbolic coefficients.
+%
+% Static constructor summary:
+%
+%   sym(char,[vector int])
+%
+% create zero-degree symbolic polynomial.
+%
+%   sym(char,[vector int],scalar Sparsity)
+%
+% create symbolic polynomial (matrix) with given monomials.
+%
+%   sym(char,Sparsity)
+%
+% create symbolic polynomial or operator with given sparsity pattern.
+%
+%   sym(char,[...],"gram")
+%
+% create symbolic polynomial in Gram form.
+%
+%   empty([int],[int])
+%   eye([int],[int])
+%   ones([int],[int])
+%   zeros([int],[int])
+%
+% create zero-degree matrix polynomial.
+%
+%   id_operator(int,[int])
+%   one_operator(int,[int])
+%   zero_operator(int,[int])
+%
+% create zero-degree operator.
+%
+
 
 methods (Static,Access=protected)
     %% Polynomial interface

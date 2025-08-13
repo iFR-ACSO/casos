@@ -16,6 +16,11 @@ classdef (InferiorClasses = {?casadi.DM, ?casos.Indeterminates}) ...
 %
 % convert double matrix.
 %
+%   PD(char, ...)
+%   PD(char,int,[int])
+%
+% create vector (matrix) of indeterminate variables.
+%
 %   PD(Sparsity)
 %
 % create from list of monomials 
@@ -29,6 +34,25 @@ classdef (InferiorClasses = {?casadi.DM, ?casos.Indeterminates}) ...
 %   PD(Sparsity,vector double | DM)
 %
 % create polynomial with constant coefficients from vector of nonzeros.
+%
+%   PD(matrix double | DM,Sparsity,Sparsity)
+%
+% create operator with constant coefficients.
+%
+% Static constructor summary:
+%
+%   empty([int],[int])
+%   eye([int],[int])
+%   ones([int],[int])
+%   zeros([int],[int])
+%
+% create zero-degree matrix polynomial.
+%
+%   id_operator(int,[int])
+%   one_operator(int,[int])
+%   zero_operator(int,[int])
+%
+% create zero-degree operator.
 %
 
 methods (Static,Access=protected)

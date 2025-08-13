@@ -1,6 +1,73 @@
 classdef (InferiorClasses = {?casadi.Sparsity, ?casadi.DM, ?casadi.SX, ?casadi.MX}) ...
     Sparsity < casos.package.core.PolynomialInterface
 % Sparsity of polynomials and polynomial operators.
+%
+% Constructor summary:
+%
+%   Sparsity(int,int)
+%
+% create all-sparse polynomial pattern.
+%
+%   Sparsity(char, ...)
+%   Sparsity(char,int,[int])
+%
+% create scalar monomial pattern of indeterminate variables.
+%
+%   Sparsity(matrix sparsity)
+%
+% create zero-degree polynomial pattern
+% (equal to given matrix sparsity pattern).
+%
+%   Sparsity(matrix sparsity, Sparsity, Sparsity)
+%
+% create operator sparsity pattern.
+%
+% Static constructor summary:
+%
+%   scalar
+%
+% create scalar zero-degree polynomial sparsity pattern.
+%
+%   scalar(Indeterminates,vector int=1)
+%
+% create scalar monomial sparsity pattern.
+%
+%   diag(int,[int])
+%   dense(int,[int])
+%   band(int,int)
+%   banded(int,int)
+%   nonzeros(int,int,int)
+%   triplet(int,int,int,int)
+%
+% create zero-degree polynomial sparsity pattern
+% (equal to matrix sparsity pattern which is diagonal, dense, band, banded,
+% or with nonzeros described by linear indices or triplet).
+% 
+%   diag(int,[int],scalar Sparsity)
+%   dense(int,[int],scalar Sparsity)
+%   band(int,int,scalar Sparsity)
+%   banded(int,int,scalar Sparsity)
+%   nonzeros(int,int,int,scalar Sparsity)
+%   triplet(int,int,int,int,scalar Sparsity)
+%
+% create polynomial sparsity pattern
+% (all non-sparse entries have given monomials).
+%
+%   diag(int,[int],vector Sparsity)
+%   dense(int,[int],vector Sparsity)
+%   band(int,int,vector Sparsity)
+%   banded(int,int,vector Sparsity)
+%   nonzeros(int,int,int,vector Sparsity)
+%   triplet(int,int,int,int,vector Sparsity)
+%
+% create polynomial sparsity pattern from vector of monomial patterns.
+%
+%   diag_operator(int,[int])
+%   dense_operator(int,[int])
+%   sparse_operator(int,int)
+%
+% create zero-degree operator pattern.
+%
 
 properties (Access=private)
     % sparsity pattern
