@@ -6,6 +6,6 @@ if ~isa(coeffs,'casadi.Sparsity')
 end
 
 % new sparsity pattern
-S = casos.Sparsity(casos.package.core.PolynomialSparsity(coeffs,degmat,indets,matdim));
+S = casos.Sparsity.create(casos.package.core.PolynomialSparsity(coeffs,degmat,indets,matdim));
 
 end

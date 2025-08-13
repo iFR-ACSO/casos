@@ -117,6 +117,8 @@ methods (Static)
             S = casadi.Sparsity(varargin{1});
             w = varargin{2};
 
+            assert(~is_operator(w), 'Not allowed for operators.')
+
             if isscalar(w)
                 % repeat monomials
                 coeffs = repmat(reshape(S,1,S.numel),w.nterm,1);

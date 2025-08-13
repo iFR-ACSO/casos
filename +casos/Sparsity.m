@@ -463,7 +463,7 @@ methods (Static, Access={?casos.package.core.AbstractSparsity})
     end
 end
 
-methods (Access={?casos.package.core.PolynomialInterface})
+methods (Access={?casos.package.core.PolynomialInterface, ?casos.package.core.AbstractSparsity})
     %% Friend class interface
     function S = coeff_sparsity(obj)
         % Return sparsity pattern of coefficients.
@@ -718,8 +718,6 @@ methods
     %% Public interface
     function S = adjoint(obj)
         % Sparsity of adjoint operator.
-        assert(is_operator(obj), 'Only allowed for operators.')
-
         S = coeff_adjoint(obj.pattern,obj.coeff_sparsity);
     end
 
