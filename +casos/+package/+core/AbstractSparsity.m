@@ -160,7 +160,6 @@ methods (Abstract, Access={?casos.Sparsity, ?casos.package.core.AbstractSparsity
     [S,coeffs] = coeff_repmat(obj,coeffs,varargin);
     [S,coeffs] = coeff_subsref(obj,coeffs,ii,sz);
     [S,coeffs] = coeff_subsasgn(obj,S2,coeffs,coeff2,ii);
-    [S,coeffs] = coeff_times(obj,S2,coeff1,coeff2);
     [S,coeffs] = coeff_update(obj,coeffs,varargin);
 end
 
@@ -230,6 +229,11 @@ methods (Access={?casos.Sparsity, ?casos.package.core.AbstractSparsity})
     function [S,coeffs] = coeff_sum(obj,coeffs,dim) %#ok<STOUT,INUSD>
         % Coefficient matrix of matrix sum.
         error('Function "coeff_sum" not supported by class "%s".', class(obj))
+    end
+
+    function [S,coeffs] = coeff_times(obj,S2,coeff1,coeff2) %#ok<STOUT,INUSD>
+        % Coefficient matrix of element-wise multiplication.
+        error('Function "coeff_times" not supported by class "%s".', class(obj))
     end
 
     function [S,coeffs] = coeff_transpose(obj,coeffs) %#ok<STOUT,INUSD>

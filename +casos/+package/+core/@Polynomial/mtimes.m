@@ -1,9 +1,14 @@
 function c = mtimes(a,b)
 % Matrix multiplication of two polynomials.
 
-assert(~is_operator(a) && ~is_operator(b), 'Not allowed for operators.')
+assert(~is_operator(a) || ~is_operator(b),'Multiplication of operators not allowed.')
 
-if isempty(a) || isempty(b)
+if is_operator(a) || is_operator(b)
+    % multiplication with operator
+    c = times(a,b);
+    return
+
+elseif isempty(a) || isempty(b)
     % empty multiplication
     c = a.zeros(size(a,1),size(b,2));
     return
