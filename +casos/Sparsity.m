@@ -952,6 +952,16 @@ methods
         b = coeff_prod(a.pattern,a.coeff_sparsity,2);
     end
 
+    function S = repmat(obj,varargin)
+        % Repeat sparsity pattern.
+        assert(nargin > 1, 'Not enough input arguments.')
+
+        % repition scheme
+        rep = horzcat(varargin{:});
+
+        S = coeff_repmat(obj.pattern,obj.coeff_sparsity,rep);
+    end
+
     function S = sub(obj,ii,S0)
         % Subreference into sparsity pattern.
         if isnumeric(S0)

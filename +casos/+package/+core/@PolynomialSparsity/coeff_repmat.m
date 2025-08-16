@@ -1,9 +1,5 @@
-function [S,coeffs] = coeff_repmat(obj,coeffs,varargin)
+function [S,coeffs] = coeff_repmat(obj,coeffs,rep)
 % Repeat copies of polynomial.
-assert(nargin > 2, 'Not enough input arguments.')
-
-% repition scheme
-rep = horzcat(varargin{:});
 
 assert(isrow(rep) && length(rep) == 2, 'Replication factors must be a pair (row) of integers or two integer scalars.')
 

@@ -136,7 +136,12 @@ methods
 
     function obj = repmat(obj,varargin)
         % Repeat polynomial matrix.
-        [S,obj.coeffs] = coeff_repmat(obj.get_sparsity,obj.coeffs,varargin{:});
+        assert(nargin > 1, 'Not enough input arguments.')
+
+        % repition scheme
+        rep = horzcat(varargin{:});
+
+        [S,obj.coeffs] = coeff_repmat(obj.get_sparsity,obj.coeffs,rep);
         obj = obj.set_sparsity(S);
     end
 
