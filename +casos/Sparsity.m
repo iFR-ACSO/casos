@@ -829,11 +829,15 @@ methods
         b = casos.Sparsity(b);
 
         if is_operator(b)
-            % dot product of operators
-            a = dualize(a);     
+            % composition of operators
+            if ~is_operator(a), a = dualize(a); end
+            assert(all(size(a.sparsity_in) == size(b.sparsity_out)), 'Dimension mismatch for operator composition.')
         elseif ~is_operator(a)
-            % dot product of polynomials
-            assert(numel(obj) == numel(S2), 'Inputs must be of compatible size.')
+            % inner product of polynomials
+            assert(all(size(a) == size(b)), 'Dimension mismatch for polynomial inner product.')
+        else
+            % evaluation of operator on polynomial
+            assert(all(size(a.sparsity_in) == size(b)), 'Dimension mismatch for operator evaluation.')
         end
 
         % compute dot product

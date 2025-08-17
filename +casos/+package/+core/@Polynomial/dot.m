@@ -3,7 +3,7 @@ function c = dot(a,b)
 
 if is_operator(b)
     % composition of operators
-    a = dualize(a);
+    if ~is_operator(a), a = dualize(a); end
 
     assert(all(size(a.sparsity_in) == size(b.sparsity_out)), 'Dimension mismatch for operator composition.')
 
