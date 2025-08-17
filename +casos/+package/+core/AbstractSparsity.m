@@ -161,6 +161,10 @@ methods (Abstract, Access={?casos.Sparsity, ?casos.package.core.AbstractSparsity
     [S,coeffs] = coeff_subsref(obj,coeffs,ii,sz);
     [S,coeffs] = coeff_subsasgn(obj,S2,coeffs,coeff2,ii);
     [S,coeffs] = coeff_update(obj,coeffs,varargin);
+
+    % protected interface for linear operators
+    [S,I1,I2] = op_intersect(obj,S2);
+    [S,I1,I2] = op_join(obj,S2);
 end
 
 methods (Access={?casos.Sparsity, ?casos.package.core.AbstractSparsity})
@@ -266,17 +270,6 @@ methods (Access={?casos.Sparsity, ?casos.package.core.AbstractSparsity})
     function sz = sizeofMatrixOp(obj,dim) %#ok<STOUT,INUSD>
         % Return size of matrix operation.
         error('Function "sizeofMatrixOp" not supported by class "%s".', class(obj))
-    end
-
-    %% Protected interface for linear operators
-    function [S,I1,I2] = op_intersect(obj,S2) %#ok<STOUT,INUSD>
-        % Intersect polynomial sparsity patterns.
-        error('Function "op_intersect" not supported by class "%s".', class(obj))
-    end
-
-    function [S,I1,I2] = op_join(obj,S2) %#ok<STOUT,INUSD>
-        % Join polynomial sparsity patterns.
-        error('Function "op_join" not supported by class "%s".', class(obj))
     end
 
     %% Protected interface for display output
