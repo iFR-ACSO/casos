@@ -641,10 +641,10 @@ methods (Access={?casos.package.core.PolynomialInterface, ?casos.package.core.Ab
         [S,coeffs] = coeff_prod(obj.pattern,coeffs,dim);
     end
 
-    function [S,coeffs] = coeff_project(obj,coeffs,S,keep_zeros)
+    function [S,coeffs] = coeff_project(obj,coeffs,S,varargin)
         % Coefficient matrix of projection.
         assert(~is_null(obj), 'Null pointer.')
-        [S,coeffs] = coeff_project(obj.pattern,coeffs,S,keep_zeros);
+        [S,coeffs] = coeff_project(obj.pattern,coeffs,S,varargin{:});
     end
 
     function [S,coeffs] = coeff_repmat(obj,coeffs,varargin) 
