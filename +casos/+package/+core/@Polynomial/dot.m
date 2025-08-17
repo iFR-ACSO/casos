@@ -2,12 +2,18 @@ function c = dot(a,b)
 % Dot product.
 
 if is_operator(b)
-    % dot product of operators
+    % composition of operators
     a = dualize(a);
 
+    assert(all(size(a.sparsity_in) == size(b.sparsity_out)), 'Dimension mismatch for operator composition.')
+
 elseif ~is_operator(a)
-    % dot product of polynomials
-    assert(numel(obj) == numel(S2), 'Inputs must be of compatible size.')
+    % inner product of polynomials
+    assert(all(size(a) == size(b)), 'Dimension mismatch for polynomial inner product.')
+
+else
+    % evaluation of operator on polynomial
+    assert(all(size(a.sparsity_in) == size(b)), 'Dimension mismatch for operator evaluation.')
 end
 
 c = a.new_poly;
