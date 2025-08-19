@@ -5,11 +5,13 @@ assert(any(dim==[1 2]),'Operating dimension must be either 1 or 2.')
 
 % detect empty polynomials
 if isempty(obj)
+    % return second coefficient matrix
     S = S2;
     coeffs = coeff2;
     return
 
 elseif isempty(S2)
+    % return first coefficient matrix
     S = casos.Sparsity.create(obj);
     coeffs = coeff1;
     return

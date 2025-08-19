@@ -21,7 +21,7 @@ switch (dim)
         if is_operator(p1)
             % fill with zero operators
             ur = p1.zero_operator(size(p1,1),size(p2,2));
-            ll = p1.zero_operator(size(p1,1),size(p2,2));
+            ll = p1.zero_operator(size(p2,1),size(p1,2));
         else
             % fill with zero matrices
             ur = p1.zeros(size(p1,1),size(p2,2));
