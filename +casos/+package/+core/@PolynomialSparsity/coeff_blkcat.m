@@ -1,7 +1,7 @@
-function [S,coeffs] = coeff_blkcat(S1,S2,S3,S4,cf1,cf2,cf3,cf4)
+function [S,coeffs] = coeff_blkcat(obj,S2,S3,S4,cf1,cf2,cf3,cf4)
 % Block concatenate polynomial coefficient matrices.
 
-[M,N] = size(S1);
+[M,N] = size(obj);
 [~,O] = size(S2);
 [L,~] = size(S3);
 [~,~] = size(S4);
@@ -15,11 +15,11 @@ sz = [M+L, N+O];
 
 % combine variables
 dg = cell(1,4);
-[indets,dg{:}] = combineVars(S1,S2,S3,S4);
+[indets,dg{:}] = combineVars(obj,S2,S3,S4);
 
 % extend coefficient matrices
 % let a1,...,aL and b1,...,bM be the columns of A and B
-[r1,c1] = get_triplet(S1.coeffs);
+[r1,c1] = get_triplet(obj.coeffs);
 [r2,c2] = get_triplet(S2.coeffs);
 [r3,c3] = get_triplet(S3.coeffs);
 [r4,c4] = get_triplet(S4.coeffs);
@@ -34,7 +34,7 @@ off2 =     L*floor(c2/M)  + (M+L).*N;
 off4 = M + M*floor(c4/L)  + (M+L).*N;
 
 % sparsity patterns of extended coefficient matrices
-S1_coeffs = casadi.Sparsity.triplet(S1.nterm,prod(sz),r1,off1+c1);
+S1_coeffs = casadi.Sparsity.triplet(obj.nterm,prod(sz),r1,off1+c1);
 S2_coeffs = casadi.Sparsity.triplet(S2.nterm,prod(sz),r2,off2+c2);
 S3_coeffs = casadi.Sparsity.triplet(S3.nterm,prod(sz),r3,off3+c3);
 S4_coeffs = casadi.Sparsity.triplet(S4.nterm,prod(sz),r4,off4+c4);
