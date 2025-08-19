@@ -10,20 +10,7 @@ function [cf1,cf2,Si,So] = expand_internal(obj,S2,cfa,cfb)
 sz = [nnz(So) nnz(Si)];
 
 % expand matrices to joint nonzeros
-cf1 = expand(obj,cfa,sz,I1i,I1o);
-cf2 = expand(S2,cfb,sz,I2i,I2o);
-
-end
-
-function M = expand(S,coeffs,sz,Iin,Iout)
-% Expand operator matrix to joint nonzeros.
-
-[ii,jj] = get_triplet(S.coeff_sparsity);
-
-% new sparsity pattern of operator matrix
-SpA = casadi.Sparsity.triplet(sz(1),sz(2),Iout(ii+1)-1,Iin(jj+1)-1);
-
-% return expanded operator matrix
-M = sparsity_cast(coeffs,SpA);
+cf1 = expand_matrix(obj.sparsity_M,cfa,sz,I1i,I1o);
+cf2 = expand_matrix(S2.sparsity_M,cfb,sz,I2i,I2o);
 
 end
