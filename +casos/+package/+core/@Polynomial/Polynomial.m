@@ -40,10 +40,8 @@ methods
             psparsity = casos.Sparsity(0,0);
             coeffs = obj.new_coeff;
 
-        elseif isa(varargin{1},'casos.package.core.Polynomial')
+        elseif isa(varargin{1},'casos.package.core.Polynomial') && nargin < 2
             % copy or convert polynomial
-            assert(nargin == 1,'Too many arguments.')
-
             psparsity = sparsity(varargin{1});
             coeffs = obj.new_coeff(varargin{1}.coeffs);
 
@@ -60,11 +58,16 @@ methods
             psparsity = to_vector(casos.Sparsity(vars),I,isrow(vars));
             coeffs = obj.new_coeff(coeff_sparsity(psparsity),1);
 
-        else
-            % zero-degree polynomial (casadi syntax)
-            % or operator syntax
+        elseif nargin == 3 && isa(varargin{3},'casos.Sparsity')
+            % operator syntax
             C = obj.new_coeff(varargin{1});
             psparsity = casos.Sparsity(sparsity(C),varargin{2:end});
+            coeffs = sparsity_cast(C, coeff_sparsity(psparsity));
+
+        else
+            % zero-degree polynomial (casadi syntax)
+            C = obj.new_coeff(varargin{:});
+            psparsity = casos.Sparsity(sparsity(C));
             coeffs = sparsity_cast(C, coeff_sparsity(psparsity));
         end
 
