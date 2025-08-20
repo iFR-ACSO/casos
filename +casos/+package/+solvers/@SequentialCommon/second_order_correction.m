@@ -47,7 +47,7 @@ if ~skip_soc
 
         if filter_Acceptance 
             % check sufficient decrease for corrected search direction
-            [suffDecrease_flag,f_type,amijo] = chechSuffDecrease(obj,alpha,x_star_soc,x_k,p0,theta_xk,theta_x_k1_soc, f_x_k1_soc,f_xk,L_k1,L_k,dual_k,filter);
+            [suffDecrease_flag,f_type,amijo] = checkSuffDecrease(obj,alpha,x_star_soc,x_k,p0,theta_xk,theta_x_k1_soc, f_x_k1_soc,f_xk,L_k1,L_k,dual_k,filter);
 
             if suffDecrease_flag
                 % soc solution becomes solution of the actual problem

@@ -77,7 +77,7 @@ while true
         
         measSuffDecreaseTime = tic;
         % check sufficient decrease
-        [suffDecrease_flag,f_type,amijo,filter] = chechSuffDecrease(obj,alpha,x_star,x_k,p0,theta_xk,theta_x_k1, f_x_k1,f_xk,L_k1,L_k,dual_k,filter);
+        [suffDecrease_flag,f_type,amijo,filter] = checkSuffDecrease(obj,alpha,x_star,x_k,p0,theta_xk,theta_x_k1, f_x_k1,f_xk,L_k1,L_k,dual_k,filter);
         SuffDecreaseTimeMeas =  toc(measSuffDecreaseTime);
         
         % either sufficient decrease in cost or constraint violation

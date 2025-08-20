@@ -57,7 +57,7 @@ while true
     if filter_Acceptance 
 
         % check sufficient decrease
-        [suffDecrease_flag,f_type,amijo,filter] = chechSuffDecrease(obj,alpha,x_star,x_k,p0,theta_xk,theta_x_k1, f_x_k1,f_xk,L_k1,L_k,dual_k,filter);
+        [suffDecrease_flag,f_type,amijo,filter] = checkSuffDecrease(obj,alpha,x_star,x_k,p0,theta_xk,theta_x_k1, f_x_k1,f_xk,L_k1,L_k,dual_k,filter);
     
         if suffDecrease_flag
             % accept and leave while loop

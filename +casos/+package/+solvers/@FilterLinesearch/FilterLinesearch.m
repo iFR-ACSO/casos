@@ -95,14 +95,14 @@ methods
         obj.FeasRes_para.n_r = sum(I);
         obj.FeasRes_para.length_dualOut = length(nlsos_feas.x)-length(nlsos_feas.g);
        
-        sosopt.sossol        = obj.opts.sossol;
+        sosopt.sossol         = obj.opts.sossol;
         sosopt.sossol_options = obj.opts.sossol_options;
-        sosopt.Kx.lin        = length(nlsos_feas.x);
-        sosopt.Kc.sos        = length(nlsos_feas.g);
-        sosopt.error_on_fail = false;
-        sosopt.verbose       = 1;
-        sosopt.max_iter      = 100;
-        obj.feas_res_solver  =  casos.package.solvers.FeasibilityRestoration('feasRes',nlsos_feas,sosopt);
+        sosopt.Kx.lin         = length(nlsos_feas.x);
+        sosopt.Kc.sos         = length(nlsos_feas.g);
+        sosopt.error_on_fail  = false;
+        sosopt.verbose        = 1;
+        sosopt.max_iter       = 100;
+        obj.feas_res_solver   =  casos.package.solvers.FeasibilityRestoration('feasRes',nlsos_feas,sosopt);
          
        % total build time for both actual problem and feasibility
        % restoration
