@@ -1,15 +1,15 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Short Description: 
-% 
+% Short Description:
+%
 % Compute minimum step-length based on sufficient descrease condition, i.e.
 % check if these can be fulfilled (based on current iterate) if alpha is
 % small enough. For a derivation see equation (23) in
 %
-% Wächter, A. and Biegler, L. - On the implementation of an interior-point 
-% filter line-search algorithm for large-scale nonlinear programming,  
+% Wächter, A. and Biegler, L. - On the implementation of an interior-point
+% filter line-search algorithm for large-scale nonlinear programming,
 % Mathematical Programming, 2006,doi: 10.1007/s10107-004-0559-y
-% 
+%
 % Note: alpha_min can be zero!
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -35,15 +35,15 @@ nabla_f_dir = full(obj.eval_gradCost(x_k,p0)*dk);
 % theta_xk can be zero. in that case
 if nabla_f_dir  < 0 && theta_xk <= theta_min
 
-   alpha_min = min([gamma_theta, (gamma_phi*theta_xk)/(-nabla_f_dir), (delta*theta_xk^s_theta)/((-nabla_f_dir)^s_phi) ]);
+    alpha_min = min([gamma_theta, (gamma_phi*theta_xk)/(-nabla_f_dir), (delta*theta_xk^s_theta)/((-nabla_f_dir)^s_phi) ]);
 
 elseif nabla_f_dir  < 0 && theta_xk > theta_min
-    
+
     alpha_min =  min([gamma_theta,(gamma_phi*theta_xk)/(-nabla_f_dir)]);
 
 else
-    
-   alpha_min = gamma_theta;
+
+    alpha_min = gamma_theta;
 
 end
 

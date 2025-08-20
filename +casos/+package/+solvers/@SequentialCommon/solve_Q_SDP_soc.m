@@ -1,16 +1,16 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Short Description: 
-% 
+% Short Description:
+%
 % Call the actual quadratic subproblem (SDP with quadratic cost) of the
-% form 
+% form
 %   min 1/2*d'*B*d + ∇f'*d
-%   st.  ∇g(x)⋅d + g(x+d0) - ∇g(x)⋅d0 in Σ[x] 
-%       x in R[x] 
+%   st.  ∇g(x)⋅d + g(x+d0) - ∇g(x)⋅d0 in Σ[x]
+%       x in R[x]
 %
 % where d = (x^* - x_k) is the search direction, d0 is the search direction
 % (coming from the actual Q-SDP) i.e., searach direction we want to correct,
-% B is the approximation of the Hessian, ∇(⋅) the first-derivative 
+% B is the approximation of the Hessian, ∇(⋅) the first-derivative
 % and (⋅)^* is the optimal solution.
 %
 % Remark: All decision variables are setup as regular polynomials. SOS
@@ -39,16 +39,16 @@ switch (obj.solver_soc.get_stats.UNIFIED_RETURN_STATUS)
     case UnifiedReturnStatus.SOLVER_RET_UNKNOWN    % feasible solution but not optimal
 
         x_star_soc    = sol_soc{1};
-          dual_star_soc    = sol_soc{3};
+        dual_star_soc    = sol_soc{3};
         skip_soc      = 0;
 
 
     otherwise
 
         x_star_soc  = sol_soc{1};
-          dual_star_soc    = sol_soc{3};
+        dual_star_soc    = sol_soc{3};
         skip_soc    = 1;
-        
+
 end
 
 end

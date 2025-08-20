@@ -17,12 +17,12 @@ Bk = eye(obj.sizeHessian(1));
 info = cell(1,obj.opts.max_iter);
 
 
-        args{2}  = [p0; xi_k; Bk(:);zeros(length(xi_k),1)];
-    % evaluate convex SOS problem
-    sol = eval_on_basis(obj.sossolver, args);
+args{2}  = [p0; xi_k; Bk(:);zeros(length(xi_k),1)];
+% evaluate convex SOS problem
+sol = eval_on_basis(obj.sossolver, args);
 
-    % store iteration info
-    info{i} = obj.sossolver.get_stats;
+% store iteration info
+info{i} = obj.sossolver.get_stats;
 
 
 % return last solution

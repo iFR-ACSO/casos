@@ -3,11 +3,11 @@
 % The implemented method regularizes the Hessian by computung the frobenius
 % norm and to ensure positive definitness. A "new" Hessian is than
 % constructed.
-% 
+%
 % Inputs:
 %   H   - (n x n) Hessian matrix (must be symmetric)
 %   tau - Regularization parameter (small positive scalar, e.g., 1e-6)
-% 
+%
 % Output:
 %   H_reg - Regularized positive definite Hessian matrix
 %
@@ -17,7 +17,7 @@ function H_reg = regularize_Hessian(H)
 
 % Check if the input matrix is symmetric
 if ~issymmetric(H)
-   H = (H + H') / 2;
+    H = (H + H') / 2;
 end
 
 % Perform Eigenvalue Decomposition (EVD)
