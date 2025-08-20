@@ -270,7 +270,8 @@ methods
         % Return signature.
         in = signature(obj.sparsity_in,true); 
         out = signature(obj.sparsity_out,true);
-        s = compose('(%s)->(%s),%dnz',in{:},out{:},nnz(obj.sparsity_M));
+        s = compose('(%s)->(%s)',in{:},out{:});
+        if ~is_dense(obj), s = compose('%s,%dnz',s{:},nnz(obj)); end
     end
 
     function print_matrix(obj)

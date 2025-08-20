@@ -19,24 +19,28 @@ elseif n > 0 || m > 0
 
 else
     % show empty dimensions
+    % nothing else to do
     dim = {''};
-end
-
-if all(d2 == 0)
-    % nothing to do
     return
-
-elseif ~isempty(dim)
-    % add degrees
-    dim{end+1} = ',';
 end
 
-if d1 == d2
+if d2 == 0
+    % don't show degrees
+
+elseif d1 == d2
     % show single degree
-    dim{end+1} = sprintf('d=%d',d1);
+    dim(end+1) = compose('d=%d',d1);
 else
     % show degree range
-    dim{end+1} = sprintf('d=%d:%d',d1,d2);
+    dim(end+1) = compose('d=%d:%d',d1,d2);
 end
+
+if ~is_dense(obj)
+    % show number of nonzeros
+    dim(end+1) = compose('%dnz',nnz(obj));
+end
+
+% join elements
+dim = join(dim,',');
 
 end
