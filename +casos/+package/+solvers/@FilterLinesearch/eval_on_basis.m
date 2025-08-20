@@ -42,7 +42,7 @@ elseif strcmp(obj.opts.Hessian_init,'Analytical')
     % initialize Hessian approximation with regularization
     H = full(obj.hess_fun(x_k,p0,dual_k));
 
-    Bk = casos.package.solvers.SequentialCommon.regularizeHessian(H);
+    Bk = casos.package.solvers.SequentialCommon.regularize_Hessian(H);
     
 end
 

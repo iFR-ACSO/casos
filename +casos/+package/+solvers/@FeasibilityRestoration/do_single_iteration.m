@@ -143,7 +143,7 @@ info{iter}.constraint_violation = sol_convio;
 % elseif strcmp(obj.opts.hessian_approx,'EigValReg')
 %     % own regularization method
 %     H = full(obj.hess_fun(x_k1,p0,dual_k1));
-%     Bk = casos.package.solvers.SequentialCommon.regularizeHessian(H);
+%     Bk = casos.package.solvers.SequentialCommon.regularize_Hessian(H);
 % elseif strcmp(obj.opts.hessian_approx,'Mirroring')
 %     % Verschueren
 %     H = full(obj.hess_fun(x_k1,p0,dual_k1));

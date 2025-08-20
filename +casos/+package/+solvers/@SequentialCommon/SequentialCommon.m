@@ -36,6 +36,7 @@ properties
         hess_fun
         
         eval_constraint_fun
+
         % linesearch
         eval_gradCost
         conFun
@@ -95,13 +96,15 @@ methods (Access=protected)
     varargout = run_iteration(varargin);
     varargout = do_single_iteration(varargin);
 
+    varargout = checkSuffDecrease(varargin);
+
     % internal evaluation
     argout = eval_on_basis(obj,argin);
 end
 
 methods (Static)
     % iteration for overloading
-    varargout = regularizeHessian(varargin);
+    varargout = regularize_Hessian(varargin);
     varargout = hessian_regularization(varargin);
 end
 
@@ -156,20 +159,21 @@ methods
         % sossol_options0.sdpsol_options.cholesky_method = 'num';
 
         % default options
-        if ~isfield(obj.opts,'sossol'), obj.opts.sossol                     = 'mosek'; end
-        if ~isfield(obj.opts,'sossol_options'), obj.opts.sossol_options     = struct; end
-        if ~isfield(obj.opts,'tolerance_con'), obj.opts.tolerance_con       = 1e-6; end
-        if ~isfield(obj.opts,'tolerance_opt'), obj.opts.tolerance_opt       = 1e-4; end
-        if ~isfield(obj.opts,'scale_BFGS0'), obj.opts.scale_BFGS0           = 1; end
-        if ~isfield(obj.opts,'Hessian_init'),   obj.opts.Hessian_init         = 'Analytical'; end
-        if ~isfield(obj.opts,'hessian_approx'), obj.opts.hessian_approx     = 'Regularization'; end
-        if ~isfield(obj.opts,'feasibility_restoration'), obj.opts.feasibility_restoration     = 'Regularize'; end 
-        if ~isfield(obj.opts,'SocFlag'), obj.opts.SocFlag                         = true; end
-        if ~isfield(obj.opts,'filter_struct'), obj.opts.filter_struct       = filter_struct; end
-        if ~isfield(obj.opts,'max_iter'), obj.opts.max_iter                 = 100; end
-        if ~isfield(obj.opts,'almostOptCount'), obj.opts.almostOptCount     = 100; end
-        if ~isfield(obj.opts,'conVioCheck'), obj.opts.conVioCheck     = 'signed-distance'; end
-        if ~isfield(obj.opts,'userSample'), obj.opts.userSample     = []; end
+        if ~isfield(obj.opts,'sossol'), obj.opts.sossol                                     = 'mosek'; end
+        if ~isfield(obj.opts,'sossol_options'), obj.opts.sossol_options                     = struct; end
+        if ~isfield(obj.opts,'tolerance_con'), obj.opts.tolerance_con                       = 1e-6; end
+        if ~isfield(obj.opts,'tolerance_opt'), obj.opts.tolerance_opt                       = 1e-4; end
+        if ~isfield(obj.opts,'scale_BFGS0'), obj.opts.scale_BFGS0                           = 1; end
+        if ~isfield(obj.opts,'Hessian_init'),   obj.opts.Hessian_init                       = 'Analytical'; end
+        if ~isfield(obj.opts,'hessian_approx'), obj.opts.hessian_approx                     = 'Regularization'; end
+        if ~isfield(obj.opts,'feasibility_restoration'), obj.opts.feasibility_restoration   = 'Regularize'; end 
+        if ~isfield(obj.opts,'SocFlag'), obj.opts.SocFlag                                   = true; end
+        if ~isfield(obj.opts,'filter_struct'), obj.opts.filter_struct                       = filter_struct; end
+        if ~isfield(obj.opts,'max_iter'), obj.opts.max_iter                                 = 100; end
+        if ~isfield(obj.opts,'almostOptCount'), obj.opts.almostOptCount                     = 100; end
+        if ~isfield(obj.opts,'conVioCheck'), obj.opts.conVioCheck                           = 'signed-distance'; end
+        if ~isfield(obj.opts,'userSample'), obj.opts.userSample                             = []; end
+
         % set up logger
         if ~isfield(obj.opts,'verbose') || ~obj.opts.verbose
             % no display

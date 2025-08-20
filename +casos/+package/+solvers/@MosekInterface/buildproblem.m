@@ -33,7 +33,7 @@ function buildproblem(obj)
 % Lorentz cone, rotated Lorentz cone, and PSD cone can be shifted by a
 % lower bound (cb).
 
-if ~isfield(obj.opts,'cholesky_method'), obj.opts.cholesky_method = 'num'; end
+if ~isfield(obj.opts,'cholesky_method'), obj.opts.cholesky_method = 'numerical'; end
 
 opts = obj.opts;
 
@@ -174,7 +174,7 @@ args_in = obj.args_in;
 if nnz(h) > 0
     
     % use casadi to compute cholesky
-    if strcmp(obj.opts.cholesky_method,'ana') 
+    if strcmp(obj.opts.cholesky_method,'analytical') 
 
         % only SX supports Cholesky decomposition
         H = casadi.SX.sym('H',sparsity(h));
@@ -194,12 +194,6 @@ if nnz(h) > 0
         % with additional variable y and Cholesky decomposition U'*U = Q
         U = chol_f(h);
     
-        % build affine cone constraint 
-        % L(y,x) + k = (1+y, sqrt(2)*U*x, 1-y) in SOC
-        % note: additional variable y is first decision variable
-        L = [1 casadi.DM(1,n); casadi.DM(n,1) sqrt(2)*U; -1 casadi.DM(1,n)];
-        k = [1; casadi.DM(n,1); 1];
-
     else % parameterize solver with cholesky sparsity pattern and compute numerically online
 
         % get sparisty pattern from h
@@ -214,17 +208,18 @@ if nnz(h) > 0
         
         U = casadi.MX.sym('U', spU); %+casadi.Sparsity.diag(length(H)));
 
-
-        % build affine cone constraint 
-        % L(y,x) + k = (1+y, sqrt(2)*U*x, 1-y) in SOC
-        % % note: additional variable y is first decision variable
-        L = [1 casadi.DM(1,n); casadi.DM(n,1) sqrt(2)*casadi.MX(U); -1 casadi.DM(1,n)];
-        k = [1; casadi.DM(n,1); 1];
-
        % evaluate Cholesky decomposition in situ
        args_in.h = U;
-    % 
+   
     end
+
+    % build affine cone constraint 
+    % L(y,x) + k = (1+y, sqrt(2)*U*x, 1-y) in SOC
+    % note: additional variable y is first decision variable
+    L = [1 casadi.DM(1,n); casadi.DM(n,1) sqrt(2)*U; -1 casadi.DM(1,n)];
+    k = [1; casadi.DM(n,1); 1];
+
+
     % number of additional variables and constraints
     Nx_cost = 1;
     Na_cost = n + 2;

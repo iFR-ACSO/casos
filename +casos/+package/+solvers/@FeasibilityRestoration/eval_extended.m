@@ -41,7 +41,7 @@ dual_k = zeros(obj.init_para.no_dual_var,1);
 % 
 %     H = full(obj.hess_fun(x_k,p0,dual_k));
 % 
-%     Bk = casos.package.solvers.SequentialCommon.regularizeHessian(H);
+%     Bk = casos.package.solvers.SequentialCommon.regularize_Hessian(H);
 % 
 % end
 
