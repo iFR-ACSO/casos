@@ -59,11 +59,15 @@ methods
 
         % problem size
         if isfield(sos,'x')
+            assert(~is_operator(sos.x), 'Decision variables cannot be operators.')
+
             n = length(sos.x);
         else
             n = 0;
         end
         if isfield(sos,'g')
+            assert(~is_operator(sos.g), 'Constraints cannot be operators.')
+
             m = length(sos.g);
         else
             m = 0;
@@ -169,11 +173,11 @@ methods
         
         % project arguments to obtain SDP inputs
         % only linear coefficients are handled (p, lbx, ubx, lbg, ubg)
-        in{2} = poly2basis(argin{2}, obj.sparsity_p);
-        in{3} = poly2basis(argin{3}, obj.sparsity_xl);
-        in{4} = poly2basis(argin{4}, obj.sparsity_xl);
-        in{6} = poly2basis(argin{6}, obj.sparsity_gl);
-        in{7} = poly2basis(argin{7}, obj.sparsity_gl);
+        in{2} = coordinates(argin{2}, obj.sparsity_p);
+        in{3} = coordinates(argin{3}, obj.sparsity_xl);
+        in{4} = coordinates(argin{4}, obj.sparsity_xl);
+        in{6} = coordinates(argin{6}, obj.sparsity_gl);
+        in{7} = coordinates(argin{7}, obj.sparsity_gl);
         
         % evaluate on nonzero coordinates
         out = eval_on_basis(obj,in);

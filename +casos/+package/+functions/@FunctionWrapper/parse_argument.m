@@ -16,12 +16,6 @@ elseif isa(expr,'casos.PD')
 elseif isa(expr,'casos.PS')
     type = casos.package.functions.FunctionArgumentType.PS;
 
-elseif isa(expr,'casos.PDOperator')
-    type = casos.package.functions.FunctionArgumentType.PDOperator;
-
-elseif isa(expr,'casos.PSOperator')
-    type = casos.package.functions.FunctionArgumentType.PSOperator;
-
 else
     error('Function undefined for class %s of input (%s).',class(expr),name);
 end

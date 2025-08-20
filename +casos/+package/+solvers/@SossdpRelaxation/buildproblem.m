@@ -35,13 +35,13 @@ Qcon_G = casadi.SX.sym('Q',sum(Ksdp_g_s.^2),1);
 % linear constraints
 Zcon_l = basis(sos.g,~Js);
 % handle parameters
-[Qpar,Zpar] = poly2basis(sos.p);
+[Qpar,Zpar] = coordinates(sos.p);
 % get cost function
-[Qobj,Zobj] = poly2basis(sos.f);
+[Qobj,Zobj] = coordinates(sos.f);
 
 % get combined variables / constraints
-[Qvar,Zvar] = poly2basis(sos.x);
-[Qcon,Zcon] = poly2basis(sos.g,[Zcon_l; Zcon_s]);
+[Qvar,Zvar] = coordinates(sos.x);
+[Qcon,Zcon] = coordinates(sos.g,[Zcon_l; Zcon_s]);
 
 % number of linear variables / constraints
 nnz_lin_x = nnz(Zvar_l);

@@ -13,11 +13,6 @@ elseif isa(a,'casos.Indeterminates')
     p = casos.PD(a);
     return
 
-elseif isa(a,'casos.package.core.OperatorSparsity')
-    % first input is operator sparsity pattern
-    p = casos.package.operator(a,varargin{:});
-    return
-
 elseif isa(a,'casos.Sparsity')
     % first input is sparsity pattern
     assert(nargin > 1,'Not enough input arguments.')

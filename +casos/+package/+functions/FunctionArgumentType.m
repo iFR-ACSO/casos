@@ -14,10 +14,6 @@ classdef FunctionArgumentType
         % polynomials
         PD ('casos.PD')
         PS ('casos.PS')
-
-        % operators
-        PDOperator ('casos.PDOperator')
-        PSOperator ('casos.PSOperator')
     end
 
     methods

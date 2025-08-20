@@ -22,15 +22,15 @@ methods
             % set function
             func = arg1;
             % set sparsity patterns
-            sparsity_i = ex_i;
-            sparsity_o = ex_o;
+            sparsity_i = ex_i(:);
+            sparsity_o = ex_o(:);
 
         else
             name = arg1;
         
             % parse polynomial expressions
-            [sym_i,sparsity_i] = cellfun(@parse_expr, ex_i, 'UniformOutput', false);
-            [sym_o,sparsity_o] = cellfun(@parse_expr, ex_o, 'UniformOutput', false);
+            [sym_i,sparsity_i] = cellfun(@parse_expr, ex_i(:), 'UniformOutput', false);
+            [sym_o,sparsity_o] = cellfun(@parse_expr, ex_o(:), 'UniformOutput', false);
 
             % define function between coefficients
             func = casadi.Function(name, sym_i, sym_o, name_i, name_o, varargin{:});
@@ -90,20 +90,26 @@ methods
 
         % collect input sparsity patterns for Jacobian function
         % inputs are equal to function's inputs and outputs
-        sp_in = [obj.sparsity_i obj.sparsity_o];
+        sp_in = [obj.sparsity_i; obj.sparsity_o];
 
         % collect output sparsity pattens for Jacobian function
-        sp_out = cell(1,n_out(J_func));
+        % outputs are equal to function's outputs differentiated w.r.t.
+        % function's inputs, in the order 
+        %   jac_o0_i0,...,jac_o0_iN, ..., jac_oM_i0,...,jac_oM_iN
+        sp_out = cell(length(obj.sparsity_i),length(obj.sparsity_o));
 
-        for i=1:length(sp_out)
-            assert(isa(obj.sparsity_o{i},'casos.Sparsity'),'Derivatives cannot be calculated for %s.',obj.name)
+        for i=1:size(sp_out,1)
+            for j=1:size(sp_out,2)
+                % linear index into Jacobian's outputs
+                k = sub2ind(size(sp_out),i,j);
 
-            % build operator sparsity pattern
-            sp_out{i} = casos.package.core.OperatorSparsity(...
-                sparsity_out(J_func,i-1), ...
-                obj.sparsity_i{i}, ...
-                obj.sparsity_o{i} ...
-            );
+                % build operator sparsity pattern
+                sp_out{i,j} = casos.Sparsity(...
+                    sparsity_out(J_func,k-1), ...
+                    obj.sparsity_i{i}, ...
+                    obj.sparsity_o{j} ...
+                );
+            end
         end
 
         % return Function object
@@ -124,12 +130,6 @@ end
 function [coeffs,z] = parse_expr(p)
 % Return coefficients, monomials, and size of polynomial expression.
 
-    if isa(p,'casos.package.core.AbstractOperator')
-        op = casos.PSOperator(p);
-        [coeffs,z] = op2basis(op);
-
-    else
-        p = casos.PS(p);
-        [coeffs,z] = poly2basis(p);
-    end
+    p = casos.PS(p);
+    [coeffs,z] = coordinates(p);
 end
