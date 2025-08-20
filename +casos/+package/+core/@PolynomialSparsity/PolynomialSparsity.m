@@ -224,7 +224,7 @@ methods
     end
 
     % check if vector monomials
-    [tf,I] = ismonom(obj);
+    [tf,I] = is_monom(obj);
 
     function tf = is_operator(~)
         % Check for operator.

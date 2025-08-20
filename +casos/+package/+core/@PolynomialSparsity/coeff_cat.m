@@ -4,7 +4,7 @@ function [S,coeffs] = coeff_cat(obj,S2,coeff1,coeff2,dim)
 assert(any(dim==[1 2]),'Operating dimension must be either 1 or 2.')
 
 % detect empty polynomials
-if isempty(obj)
+if numel(obj) < 1
     % return second coefficient matrix
     S = S2;
     coeffs = coeff2;

@@ -6,7 +6,7 @@ function [c,S] = poly2basis(obj,varargin)
 
 assert(~is_operator(obj), 'Not allowed for operators.')
 
-if nargin < 2 || ~islogical(varargin{2})
+if nargin < 2 || ~islogical(varargin{1})
     % use coordinates
     warning('Deprecated: Use coordinates() instead.')
     [c,S] = coordinates(obj,varargin{:});
@@ -14,7 +14,7 @@ if nargin < 2 || ~islogical(varargin{2})
 end
 
 % indexing argument
-I = varargin{2};
+I = varargin{1};
 
 if isempty(obj) || all(~I)
     % empty polynomial, selection, or projection

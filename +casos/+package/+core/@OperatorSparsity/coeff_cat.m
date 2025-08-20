@@ -5,7 +5,7 @@ assert(any(dim==[1 2]), 'Operating dimension must be either 1 or 2.')
 assert(is_matrix(obj) && is_matrix(S2), 'Not implemented.')
 
 % detect empty operators
-if isempty(obj)
+if numel(obj) < 1
     % return second coefficient matrix
     S = S2;
     coeffs = coeff2;

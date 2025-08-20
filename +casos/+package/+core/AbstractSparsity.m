@@ -20,6 +20,8 @@ methods (Abstract)
 
     n = nnz(obj);
     n = numel(obj);
+
+    varargout = size(obj,varargin);
     
     %% Conversion
     S = primalize(obj);

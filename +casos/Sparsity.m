@@ -321,7 +321,7 @@ methods
     function [S,varargout] = gram(obj)
         % Return Gram basis of a monomial sparsity pattern.
         assert(~is_null(obj), 'Null pointer.')
-        assert(is_monom(obj), 'Only allowed for monomial patterns.')
+        assert(~is_operator(obj), 'Not allowed for operators.')
         [S,varargout{1:nargout-1}] = gram(obj.pattern);
     end
 
