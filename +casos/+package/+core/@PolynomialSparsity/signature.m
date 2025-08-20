@@ -1,11 +1,11 @@
-function dim = signature(obj)
+function dim = signature(obj,never_empty)
 % Return a signature representation of sparsity pattern.
 
 [n,m] = size(obj);
 d1 = obj.mindeg;
 d2 = obj.maxdeg;
 
-if n == 1 && m == 1
+if n == 1 && m == 1 && (nargin < 2 || ~never_empty || d2 > 0)
     % don't show dimensions
     dim = {};
 

@@ -266,9 +266,10 @@ methods
         s = compose('[%s]->[%s],%dnz',to_char(obj.sparsity_in),to_char(obj.sparsity_out),nnz(obj.sparsity_M));
     end
 
-    function s = signature(obj)
+    function s = signature(obj,~)
         % Return signature.
-        in = signature(obj.sparsity_in); out = signature(obj.sparsity_out);
+        in = signature(obj.sparsity_in,true); 
+        out = signature(obj.sparsity_out,true);
         s = compose('(%s)->(%s),%dnz',in{:},out{:},nnz(obj.sparsity_M));
     end
 

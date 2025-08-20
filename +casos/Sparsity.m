@@ -427,10 +427,10 @@ methods
         disp(' ')
     end
 
-    function dim = signature(obj)
+    function dim = signature(obj,varargin)
         % Return signature.
         assert(~is_null(obj), 'Null pointer.')
-        dim = signature(obj.pattern);
+        dim = signature(obj.pattern,varargin{:});
     end
 
     function spy(obj)
