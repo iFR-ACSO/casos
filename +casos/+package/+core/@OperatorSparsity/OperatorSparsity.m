@@ -295,7 +295,7 @@ methods (Access={?casos.Sparsity, ?casos.package.core.AbstractSparsity})
     [S,coeffs] = coeff_plus(obj,S2,coeff1,coeff2);
     [S,coeffs] = coeff_project(obj,coeffs,S,keep_zeros);
     [S,coeffs] = coeff_repmat(obj,coeffs,varargin);
-    [S,coeffs] = coeff_subsref(obj,coeffs,ii,sz);
+    [S,coeffs,I1,I2] = coeff_subsref(obj,coeffs,ii,sz);
     [S,coeffs] = coeff_subsasgn(obj,S2,coeffs,coeff2,ii);
     [S,coeffs] = coeff_update(obj,coeffs,varargin);
 
