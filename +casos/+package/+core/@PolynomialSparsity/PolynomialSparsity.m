@@ -366,6 +366,7 @@ methods (Access={?casos.Sparsity, ?casos.package.core.AbstractSparsity})
     % protected interface for linear operators
     [S,I1,I2] = op_intersect(obj,S2);
     [S,I1,I2] = op_join(obj,S2);
+    [S,I] = op_subsref(obj,ii);
 
     % protected interface for display output
     out = str_monoms(obj,flag);

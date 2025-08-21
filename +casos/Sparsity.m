@@ -653,16 +653,16 @@ methods (Access={?casos.package.core.PolynomialInterface, ?casos.package.core.Ab
         [S,coeffs] = coeff_repmat(obj.pattern,coeffs,varargin{:});
     end
 
-    function [S,coeffs] = coeff_subsasgn(obj,S2,coeffs,coeff2,ii)
+    function [S,coeffs,varargout] = coeff_subsasgn(obj,S2,coeffs,coeff2,ii)
         % Coefficient matrix of subscripted assignment.
         assert(~is_null(obj), 'Null pointer.')
-        [S,coeffs] = coeff_subsasgn(obj.pattern,S2,coeffs,coeff2,ii);
+        [S,coeffs,varargout{1:nargout-2}] = coeff_subsasgn(obj.pattern,S2,coeffs,coeff2,ii);
     end
 
-    function [S,coeffs] = coeff_subsref(obj,coeffs,ii,sz)
+    function [S,coeffs,varargout] = coeff_subsref(obj,coeffs,ii,sz)
         % Coefficient matrix of subscripted reference.
         assert(~is_null(obj), 'Null pointer.')
-        [S,coeffs] = coeff_subsref(obj.pattern,coeffs,ii,sz);
+        [S,coeffs,varargout{1:nargout-2}] = coeff_subsref(obj.pattern,coeffs,ii,sz);
     end
     
     function [S,coeffs] = coeff_substitute(obj,coeff1,x,S2,coeff2) 
@@ -732,6 +732,12 @@ methods (Access={?casos.package.core.PolynomialInterface, ?casos.package.core.Ab
         % Join polynomial sparsity patterns.
         assert(~is_null(obj), 'Null pointer.')
         [S,varargout{1:(nargout-1)}] = op_join(obj.pattern,S2);
+    end
+
+    function [S,I] = op_subsref(obj,ii)
+        % Subreference nonzero coefficients.
+        assert(~is_null(obj), 'Null pointer.')
+        [S,I] = op_subsref(obj.pattern,ii);
     end
 
     %% Protected interface for display output
