@@ -250,24 +250,42 @@ methods
         S = casos.Sparsity(casadi.Sparsity.dense(1,nnz(obj)),casos.Sparsity(obj),casos.Sparsity.scalar);
     end
 
-    %% Misc
-    function l = list_of_degree(obj)
-        % Return a list of degrees.
-        l = arrayfun(@(i) full(obj.degmat(i,:)),1:obj.nterm,'UniformOutput',false);
-    end
-
-    function l = list_of_indets(obj)
-        % Return a list of indeterminate variables.
-        l = str(obj.indets);
-    end
+    S = to_vector(obj,varargin);
 
     %% Polynomial Sparsity interface
+    % gram basis from monomials
+    varargout = gram(obj);
+
+    % gram basis for polynomial
+    varargout = grambasis(obj,varargin);
+
     function z = monomials(obj)
         % Return scalar monomial sparsity pattern.
         z = build_monomials(obj.degmat,obj.indets);
     end
 
+    % pattern of matrix multiplication
+    S = mtimes(a,b);
+
+    % restrict terms to degrees
+    [S,I] = restrict_terms(obj,deg);
+
     %% Conversion & matrix Sparsity interface
+    function idx = matrix_find(obj)
+        % Return indices of nonzero elements.
+        idx = find(sum1(obj.coeffs));
+    end 
+
+    function S = matrix_sparsity(obj)
+        % Return matrix sparsity pattern.
+        S = reshape(sum1(obj.coeffs),obj.matdim);
+    end
+
+    function [i,j] = matrix_triplet(obj)
+        % Return triplets for matrix sparsity pattern.
+        [i,j] = ind2sub(size(obj),matrix_find(obj)-1);
+    end
+
     function S = reshape(obj,varargin)
         % Reshape polynomial matrix.
         assert(length(varargin{1}) <= 2, 'Size vector must not exceed two elements.')
@@ -284,20 +302,26 @@ methods
         S = reshape(obj.coeffs,obj.matdim);
     end
 
-    function S = matrix_sparsity(obj)
-        % Return matrix sparsity pattern.
-        S = reshape(sum1(obj.coeffs),obj.matdim);
+    % visualize sparsity pattern
+    spy(obj);
+
+    %% Misc
+    function l = list_of_degree(obj)
+        % Return a list of degrees.
+        l = arrayfun(@(i) full(obj.degmat(i,:)),1:obj.nterm,'UniformOutput',false);
     end
 
-    function [i,j] = matrix_triplet(obj)
-        % Return triplets for matrix sparsity pattern.
-        [i,j] = ind2sub(size(obj),matrix_find(obj)-1);
+    function l = list_of_indets(obj)
+        % Return a list of indeterminate variables.
+        l = str(obj.indets);
     end
 
-    function idx = matrix_find(obj)
-        % Return indices of nonzero elements.
-        idx = find(sum1(obj.coeffs));
-    end 
+    %% Display
+    % signature representation
+    dim = signature(obj,flag);
+
+    % string representation
+    out = str(obj);
 end
 
 methods (Access={?casos.Sparsity, ?casos.package.core.AbstractSparsity})

@@ -1,13 +1,13 @@
-function b = simplify(a)
+function b = simplify(obj)
 % Simplify polynomial expressions.
 
-b = a.new_poly;
+b = obj.new_poly;
 
 % simplify coefficients
-coeffs = simplify(a.coeffs);
+coeffs = simplify(obj.coeffs);
 
 % remove zero terms
-[S,b.coeffs] = coeff_update(a.get_sparsity,coeffs);
+[S,b.coeffs] = coeff_update(obj.get_sparsity,coeffs);
 
 % set sparsity
 b = set_sparsity(b,S);

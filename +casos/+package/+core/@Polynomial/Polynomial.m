@@ -124,8 +124,23 @@ methods
     end
 
     %% Matrix & Sparsity operations
+    % polynomial basis (deprecated)
+    S = basis(obj,I);
+
+    % block concatenation
+    p = blockcat(a,b,c,d);
+
     % public RedefinesParen interface
     p = cat(dim,varargin);
+
+    % nonzero coordinates
+    [c,S] = coordinates(obj,S);
+
+    % operator matrix (deprecated)
+    [M,S] = op2basis(obj,varargin);
+
+    % nonzero polynomial coordinates (deprecated)
+    [c,S] = poly2basis(obj,varargin);
 
     function obj = project(obj,S)
         % Project onto sparsity pattern.
@@ -167,6 +182,41 @@ methods
         obj = obj.set_sparsity(S);
     end
 
+    %% Polynomial operations
+    % adjoint operator
+    b = adjoint(a);
+
+    % Frobenius norm (operators only)
+    r = Fnorm2(obj)
+
+    % polynomial integral
+    b = int(a,x,varargin);
+    
+    % polynomial differentiation
+    b = nabla(a,x);
+
+    % squared polynomial integral norm
+    r = pnorm2(obj);
+
+    % polynomial Taylor expansion
+    c = ptaylor(a,x,b,deg);
+
+    % remove coefficients below tolerance
+    b = remove_coeffs(obj,tol);
+
+    % substitute indeterminates
+    c = subs(a,x,b);
+
+    %% Symbolic operations
+    % symbolic differentiation
+    b = jacobian(a,x);
+
+    % symbolic linearization
+    c = linearize(a,x,b);
+
+    % symbolic Taylor expansion
+    c = mtaylor(a,x,b,deg);
+
     %% Conversion
     function v = casos.Indeterminates(obj)
         % Convert to indeterminates.
@@ -182,21 +232,47 @@ methods
         M = full(reshape(obj.coeffs,size(obj)));
     end
 
-    %% Unary operators
-    function p = uplus(p)
-        % Unary plus.
-        p.coeffs = uplus(p.coeffs);
-    end
+    % simplify coefficients
+    b = simplify(obj);
 
+    % sparsify coefficients
+    b = sparsify(obj);
+
+    %% Unary operators
+    b = power(a,n);
+    b = transpose(a);
+    
     function p = uminus(p)
         % Unary minus.
         p.coeffs = uminus(p.coeffs);
     end
 
+    function p = uplus(p)
+        % Unary plus.
+        p.coeffs = uplus(p.coeffs);
+    end
+
+    %% Binary operators
+    c = dot(a,b);
+
     function c = minus(a,b)
         % Substract two polynomials.
         c = plus(a, uminus(b));
     end
+
+    c = ldivide(a,p);
+    c = plus(a,b);
+    c = rdivide(p,b);
+    c = times(a,b);
+
+    %% Matrix operators
+    c = kron(a,b);
+    c = mldivide(a,p);
+    b = mpower(a,n);
+    c = mrdivide(p,b);
+    c = mtimes(a,b);
+    b = prod(a,dim);
+    b = sum(a,dim);
 
     %% Misc
     function l = list_of_coeffs(obj)
@@ -215,6 +291,9 @@ methods
             disp@casos.package.core.GenericPolynomial(obj);
         end
     end
+
+    % string representation
+    out = str(obj);
 end
 
 methods (Access=protected)
