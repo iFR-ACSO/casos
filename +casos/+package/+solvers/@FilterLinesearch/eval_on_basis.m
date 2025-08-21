@@ -265,13 +265,9 @@ while iter <= obj.opts.max_iter
     sol{1} = sol_iter.x_k1;
     sol{2} = sol_iter.f_x_k1;
 
-    % evalute nonlinear constraints
-    % sol{3} = obj.eval_constraint_fun(sol{1},p0);
-
     % dual variables estimated by underlying quadratic SDP
     sol{4} = sol_qp{4};
     sol{5} = sol_iter.dual_k1;
-
 
     iter = iter + 1;
 

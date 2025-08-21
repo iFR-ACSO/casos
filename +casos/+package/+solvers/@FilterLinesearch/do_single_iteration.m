@@ -43,8 +43,14 @@ amijo  = 0;
 measBackStepTime = tic;
 SocTimeMeas      = [];
 SuffDecreaseTimeMeas = 0;
+
+% just for first iteration
+alpha_min = 0;
+
+% invoke feasibility restoration if step-length is below minimum
+feas_res_flag = 2;
 % Backtracking linesearch
-while true
+while alpha > alpha_min 
 
     % compute search direction (primal and dual)
     dk   = (x_star    - x_k);
@@ -62,6 +68,7 @@ while true
     % check first-order optimality conditions to potentially aboard
     % linesearch early as possible if we are "optimal"
     if full(obj.eval_gradLang(x_k1,p0,dual_k1))  <= obj.opts.tolerance_opt*max(1,full(obj.eval_gradLang(x_k1,p0,dual_k1))) && theta_x_k1 <= obj.opts.tolerance_con
+        feas_res_flag = 0;
         break
     end
 
@@ -83,11 +90,12 @@ while true
         % either sufficient decrease in cost or constraint violation
         if suffDecrease_flag
             % accept and leave while loop
+            feas_res_flag = 0;
             break
         end
 
         % invoke soc to avoid maratos effect, if necessary
-        if ~suffDecrease_flag && alpha == 1  && theta_x_k1 >= theta_xk && obj.opts.SocFlag
+        if ~suffDecrease_flag && alpha == 1  && theta_x_k1 >= theta_xk && obj.opts.Soc_is_enabled
 
             measSocTime = tic;
             % compute corrected search direction, compute new trial point and check for filter acceptance
@@ -95,6 +103,7 @@ while true
             SocTimeMeas = toc(measSocTime);
             % leave while loop if corrected step is acceptable to filter
             if suffConSoC
+                feas_res_flag = 0;
                 break % means we found a solution with SOC; leave loop
             end
 
@@ -103,13 +112,14 @@ while true
     else % not acceptable to filter
 
         % invoke soc to avoid maratos effect, if necessary
-        if ~filter_Acceptance && alpha == 1 && theta_x_k1 >= theta_xk && obj.opts.SocFlag
+        if ~filter_Acceptance && alpha == 1 && theta_x_k1 >= theta_xk && obj.opts.Soc_is_enabled
 
             measSocTime = tic;
             % compute corrected search direction, compute new trial point and check for filter acceptance
             [x_k1,suffConSoC,f_type,amijo] = second_order_correction(obj,x_k,x_star,p0,Bk,args,filter,alpha,theta_xk,f_xk,dkl,L_k1,L_k,dual_k);
             SocTimeMeas = toc(measSocTime);
             if suffConSoC
+                feas_res_flag = 0;
                 break % means we found a solution with SOC; leave loop
             end
 
@@ -120,24 +130,20 @@ while true
     % if not acceptable to filter and/or no sufficient progress update alpha
     alpha = 1/2*alpha;
 
-
-
     % compute alpha_min
     alpha_min = compute_alpha_min(obj,x_k,dk,p0,theta_xk,filter);
 
-    if alpha < alpha_min  % just avoid very small step lengths
-        % invoke feasibility restoration if step-length is below minimum
-        feas_res_flag = 2;
-        break
-    end
+    % if alpha < alpha_min  % just avoid very small step lengths
+    %     % invoke feasibility restoration if step-length is below minimum
+    %     feas_res_flag = 2;
+    %     break
+    % end
 
     if alpha_min == 0 && ~filter_Acceptance
         % invoke feasibility restoration if step-length is below minimum
         feas_res_flag = 2;
         break
     end
-
-
 
 end % end of backtracking linesearch
 totalBackstepTimeMeas = toc(measBackStepTime);
