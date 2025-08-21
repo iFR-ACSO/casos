@@ -27,23 +27,12 @@ x_k = [r0; x_R];
 % initialize iteration info struct
 info = cell(1,obj.opts.max_iter);
 
-
 dual_k = zeros(obj.init_para.no_dual_var,1);
 
-% initialize BFGS-matrix for feasibility restoration
-% if strcmp(obj.opts.Hessian_init,'Identity')
-
+% initialize BFGS-matrix for feasibility restoration;
+% we only support BFGS because we have acutally a linear cost + a quadratic
+% term; other methods faild in the past
 Bk =  eye(obj.init_para.size_B)*obj.opts.scale_BFGS0;
-
-% elseif strcmp(obj.opts.Hessian_init,'Analytical')
-%
-%
-%
-%     H = full(obj.hess_fun(x_k,p0,dual_k));
-%
-%     Bk = casos.package.solvers.SequentialCommon.regularize_Hessian(H);
-%
-% end
 
 
 % initialize filter for feasibility restoration
@@ -68,8 +57,6 @@ lambda0 = lambda_min + (lambda_max-lambda_min)*1/(1+(max(theta_x_k,obj.opts.tole
 % the restoration was/is invoked
 p0 = [p00; x_R;lambda0 ];
 
-
-
 iter      = 1;
 kappa_res = 0.9;
 
@@ -78,7 +65,6 @@ delta_xi_double   = norm(full( casadi.DM(x_k)),inf);
 delta_dual_double = norm(full( (dual_k)),inf);
 alpha_k            = 1;
 
-filter_Acceptance = 0;
 feasibility_flag = 0;
 
 measTime_seqSOS_in = tic;
@@ -135,7 +121,7 @@ while iter <= obj.opts.max_iter
         break
     else
 
-        %% check acceptance to filter of acutal problem
+        %% check acceptance to filter of actual problem
 
         % extract solution from feasibility restoration
         x_k       = sol_iter.x_k1;
@@ -181,12 +167,9 @@ while iter <= obj.opts.max_iter
 
     end
 
-    % lambda0 = lambda_min+(lambda_max-lambda_min)*1/(1+ (max(theta_x_k_or, obj.opts.tolerance_con) - obj.opts.tolerance_con)/obj.opts.tolerance_con);
-
     % parameter for feasibility restoration: actual parameter and iterate where
     % the restoration was/is invoked
     p0 = [p00; x_R;lambda0];
-
 
     % for display output
     delta_xi_double   = norm(full( sol_iter.x_k1 - x_k) ,inf);

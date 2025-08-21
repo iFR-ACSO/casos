@@ -127,26 +127,11 @@ sol_iter.f_x_k1     = f_x_k1;
 sol_iter.alpha_k    = alpha;
 sol_iter.dual_qp    = dual_star;
 info{iter}.constraint_violation = sol_convio;
-% update quasi-Newton/exact Hessian
-% if strcmp(obj.opts.hessian_approx,'BFGS')
-% damped BFGS
+
+% we only support BFGS because we have acutally a linear cost + a quadratic
+% term; other methods faild in the past
 Bk = damped_BFGS(obj,Bk,x_k,p0,sol_iter,iter);
-% elseif strcmp(obj.opts.hessian_approx,'Levenberg')
-%     % see Betts book
-%     H  = full(obj.hess_fun(x_k1,p0,dual_k1));
-%     Bk = casos.package.solvers.SequentialCommon.hessian_regularization(H);
-% elseif strcmp(obj.opts.hessian_approx,'EigValReg')
-%     % own regularization method
-%     H = full(obj.hess_fun(x_k1,p0,dual_k1));
-%     Bk = casos.package.solvers.SequentialCommon.regularize_Hessian(H);
-% elseif strcmp(obj.opts.hessian_approx,'Mirroring')
-%     % Verschueren
-%     H = full(obj.hess_fun(x_k1,p0,dual_k1));
-%     [L,D] = ldl(H);
-%
-%     D(D<0) = 1e-6;
-%     Bk = L*abs(D)*L';
-% end
+
 
 
 end
