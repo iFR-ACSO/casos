@@ -1,7 +1,4 @@
 function argout = eval_on_basis(obj,argin)
-% Base implementation of simple sequential
-
-%import casos.package.UnifiedReturnStatus
 
 args = argin;
 

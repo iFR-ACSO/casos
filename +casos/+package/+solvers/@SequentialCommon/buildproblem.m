@@ -17,11 +17,6 @@ Ms = get_dimension(obj.get_cones,opts.Kc,'sos');
 assert(n == (Nl + Ns), 'Dimension of Kx must be equal to number of variables (%d).', n);
 assert(m == (Ml + Ms), 'Dimension of Kc must be equal to number of constraints (%d).', m)
 
-% select sum-of-squares variables and constraints
-% Is = [false(Nl,1); true(Ns,1)];
-% Js = [false(Ml,1); true(Ms,1)];
-
-
 
 % sparsity patterns
 base_x = sparsity(nlsos.x);
@@ -127,7 +122,7 @@ if strcmp(obj.opts.conVioCheck,'signed-distance')
 else
 
     if ~isempty(obj.opts.userSample)
-        x_sample = obj.opts.userSample; % num2cell(obj.opts.userSample, 2);
+        x_sample = obj.opts.userSample;
     else
         x_sample = [];
     end
@@ -142,7 +137,7 @@ else
 
 end
 %% Second-order correction (soc)
-if obj.opts.SocFlag
+if obj.opts.Soc_is_enabled
     % parameter of current qp solution
     x_star_par   = casos.PS.sym('x_star',base_x);
     % constraint function to be evaluated at xk+d
@@ -223,8 +218,6 @@ obj.eval_r = casos.Function('f',{B,theta,y,s}, {theta*y+(1-theta)*B*s});
 
 % B = B + (r*r')/(s'*r) - (B*s*s'*B)/(s'*B*s)
 obj.damped_BFGS =  casadi.Function('f',{B,r,s}, {B - (B*(s*s')*B)/(s'*B*s) + (r*r')/(s'*r)});
-
-% obj.SR1 =  casadi.Function('f',{B,y,s}, {B + ( (y-B*s)*(y-B*s)' )/( (y-B*s)'*s)  });
 
 %% evaluation functions
 % nonlinear cost function
