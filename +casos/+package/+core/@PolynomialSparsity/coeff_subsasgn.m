@@ -1,6 +1,8 @@
 function [S,coeffs] = coeff_subsasgn(obj,S2,coeff1,coeff2,ii)
 % Subassignment of polynomial coefficient matrices.
 
+assert(~is_operator(S2), 'Cannot assign operator to polynomial.')
+
 % combine variables
 [indets,dga,dgb] = combineVar(obj.indets,S2.indets,obj.degmat,S2.degmat);
 
