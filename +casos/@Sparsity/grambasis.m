@@ -81,7 +81,7 @@ if ~isempty(newton_solver)
     Lz_red = arrayfun(@(i) newton_reduce(S.degmat(Ldegmat(i,:),Iv),degmat,newton_solver), idx, 'UniformOutput', false);
     Lz_red = horzcat(Lz_red{:})';
     
-    [Z,K,Mp,Md] = gram_internal(Lz,degmat,z.indets, Lz_red);
+    [Z,K,Mp,Md] = gram_internal(Lz,degmat,z.indets,Lz_red);
 else
     [Z,K,Mp,Md] = gram_internal(Lz,degmat,z.indets);	
 end
