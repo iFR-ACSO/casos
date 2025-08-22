@@ -11,13 +11,7 @@
 %
 %--------------------------------------------------------------------------
 
-close all
-clear
-clc
-
-import casos.toolboxes.sosopt.*
-
-%% system states
+% system states
 x = casos.Indeterminates('x',2,1);
 
 % system dynamics
@@ -38,11 +32,10 @@ l = 1e-6*(x'*x);
 % level of stability
 b = casos.PS.sym('b');
 
-% minimize the quadratic distance to a given sublevel set
+% quadratic shape function
 p = x'*x;
 
-%% setup solver
-
+%% Setup solver
 % options
 opts = struct('sossol','mosek');
 opts.verbose = 1;
@@ -50,36 +43,39 @@ opts.hessian_approx = 'BFGS';
 opts.Hessian_init   = 'Identity';
 opt.scale_BFGS0     = 1e-3;
 
-sos = struct('x',[V; s2;s1;b],...
-              'f',-b, ...
-              'p',[]);
+sos = struct('x',[V;s2;s1;b],'f',-b,'p',[]);
 
 % constraints
-sos.('g') = [s2; 
+sos.('g') = [
+             s2;
              s1;
              V-l; 
              s2*(V-1)-nabla(V,x)*f-l;
-             s1*(p-b) + 1 - V];
-
-
+             s1*(p-b) + 1 - V
+];
 
 % states + constraint are linear/SOS cones
 opts.Kx = struct('lin', 4);
 opts.Kc = struct('sos', 5);
 
 % build sequential solver
-solver  = casos.nlsossol('S','sequential',sos,opts);
+S = casos.nlsossol('S','sequential',sos,opts);
 
 
-%% solve
-sol = solver('x0',[ Vinit;  (x'*x);  1; 1]); 
+%% Solve nonlinear problem
+sol = S('x0',[Vinit; (x'*x); 1; 1]); 
 
-%% plot sublevel set
-figure()
-Vval = sol.x(1);
-beta_val = full(casadi.DM(full(sol.x(end))));
-pcontour(sol.x(1),1,[-4 4 -4 4])
+%% Plot results
+% Lyapunov function
+Vfun = to_function(sol.x(1));
+% shape function
+pfun = to_function(p);
+% stable level set
+bsol = full(sol.x(end));
+
+figure
+fcontour(@(x,y) full(Vfun(x,y)), [-2 2], 'b', "LevelList", [1 1])
 hold on
-pcontour(p,beta_val,[-4 4 -4 4],'r')
-
-
+fcontour(@(x,y) full(pfun(x,y)), [-2 2], 'r--', "LevelList", [bsol bsol])
+hold off
+grid on
