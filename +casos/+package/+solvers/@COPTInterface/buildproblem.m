@@ -124,15 +124,22 @@ A = A(:,idx);
 c = c(idx);
 
 % set specific formulation for COPT
-% Separate A and c based on K
+% separate A and c based on K
 [Alin,Abar] = separate(A, size(A,1), [(K.l), sum(K.s.^2)]);
-Abar_vec = obj.sdp_vec_upper(Abar, K.s, 1, 2);
 
+% vectorize the upper-triangular elements of the SDP blocks
+Abar_vec = obj.sdp_vec(Abar, K.s, 1, 2, 'upper');
+
+% separate c into linear part (clin) and semidefinite part (cbar)
 [clin,cbar] = separate(c, [(K.l), sum(K.s.^2)], 1);
-cbar_vec = obj.sdp_vec_upper(cbar, K.s, 1, 1);
-c_copt      = full([clin; cbar_vec]);
-A_copt      = [Alin, Abar_vec];
-b_copt      = full(b);
+
+% vectorize the lower-triangular elements of the SDP blocks
+cbar_vec = obj.sdp_vec(cbar, K.s, 1, 1, 'upper');
+
+% Concatenate full COPT vectors
+c_copt      = full([clin; cbar_vec]);   % vector for objective
+A_copt      = [Alin, Abar_vec];         % constraint matrix
+b_copt      = full(b);                  % constraint right-hand side
 
 % return COPT structures A,b,c
 obj.fhan = casadi.Function('f',struct2cell(obj.args_in),{A_copt b_copt c_copt},fieldnames(obj.args_in),{'A' 'b' 'c'});
@@ -141,8 +148,11 @@ obj.fhan = casadi.Function('f',struct2cell(obj.args_in),{A_copt b_copt c_copt},f
 X_copt = casadi.MX.sym('x',size(c));
 Y_copt = casadi.MX.sym('y',size(b));
 
+% assign solution symbols
 X = X_copt;
 Y = Y_copt;
+
+% compute slack matrix/vector for dual feasibility
 S = c - A'*Y;
 
 % primal decision variables in the NEW order
