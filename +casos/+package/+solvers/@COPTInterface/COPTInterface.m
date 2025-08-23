@@ -45,9 +45,6 @@ end
 
 methods (Access=protected)
     buildproblem(obj);
-    
-    % vectorization of the semidefinite cone
-    [v,i,j,k,l] = sdp_vec_upper(obj, M,Ks,scale,dim)
 end
 
 end
