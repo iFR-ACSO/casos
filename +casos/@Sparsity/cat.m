@@ -5,7 +5,7 @@ function S = cat(dim,varargin)
 
 if nargin ~= 3
     % handle non-binary concatenation
-    p = cat@casos.package.core.PolynomialInterface(dim,varargin{:});
+    S = cat@casos.package.core.PolynomialInterface(dim,varargin{:});
     return
 end
 
