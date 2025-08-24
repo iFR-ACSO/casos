@@ -43,8 +43,8 @@ function [v,i,j,k,l] = sdp_vec(~,M,Ks,scale,dim,part)
 %   [val,i,j,k,l] = sdp_vec(M,...)
 %
 % Returns the nonzero elements of V along with vectors of indices (i,j) and
-% (k,l) corresponding to the lower-triangular elements Mij(k,l). Parameters
-% apply as above.
+% (k,l) corresponding to the lower-triangular (or upper-triangular) elements 
+% Mij(k,l). Parameters apply as above.
 
 if nargin > 4
     % dimension provided, nothing to do
