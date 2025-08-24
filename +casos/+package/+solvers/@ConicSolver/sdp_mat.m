@@ -51,7 +51,7 @@ if nargin < 4 || isempty(scale)
     scale = sqrt(2);
 end
 
-lower = nargin < 5 || ~upper; % use tril by default
+lower = nargin < 6 || ~upper; % use tril by default
 
 % ensure matrix dimensions are a row vector
 s = reshape(Ks,1,[]);
