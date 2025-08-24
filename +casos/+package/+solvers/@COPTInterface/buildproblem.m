@@ -96,7 +96,7 @@ A = [ [A0; speye(Nx.l,n)] blkdiag(+speye(Na.l), -speye(m), +speye(Nx.l)) ];
 b = [ [uba; lba; cba] - A0*zb; ubx - lbx ];
 c = [g; sparse(m+Na.l+Nx.l,1)];
 
-% set cone for SeDuMi
+% set cone for COPT
 K.l = 2*(Na.l + Nx.l);
 K.q = [Na.q Nx.q];
 K.r = [Na.r Nx.r];
@@ -111,8 +111,6 @@ obj.cone = K;
 % current order: (z,s) = [zl zc sua sla sca sux]
 Iz = [ones(1,Nx.l) 2*ones(1,sum(Nx.q)) 3*ones(1,sum(Nx.r)) 4*ones(1,sum(Nx.s.^2))];
 Ia = [ones(1,2*Na.l) 2*ones(1,sum(Na.q)) 3*ones(1,sum(Na.r)) 4*ones(1,sum(Na.s.^2))];
-%Iz = [ones(1,Nx.l) 2*ones(1,sum(Nx.q)) 3*ones(1,sum(Nx.r)) 4*ones(1,sum(Nx.s.*(Nx.s+1)./2))];
-%Ia = [ones(1,2*Na.l) 2*ones(1,sum(Na.q)) 3*ones(1,sum(Na.r)) 4*ones(1,sum(Na.s.*(Na.s+1)./2))];
 Ix =  ones(1,Nx.l);
 
 % new order: [zl sua sla sux | zc_q sca_q zc_r sca_r zc_s sca_s] 
@@ -128,13 +126,13 @@ c = c(idx);
 [Alin,Abar] = separate(A, size(A,1), [(K.l), sum(K.s.^2)]);
 
 % vectorize the upper-triangular elements of the SDP blocks
-Abar_vec = obj.sdp_vec(Abar, K.s, 1, 2, 'upper');
+Abar_vec = obj.sdp_vec(Abar, K.s, 1, 2, 1);
 
 % separate c into linear part (clin) and semidefinite part (cbar)
 [clin,cbar] = separate(c, [(K.l), sum(K.s.^2)], 1);
 
 % vectorize the lower-triangular elements of the SDP blocks
-cbar_vec = obj.sdp_vec(cbar, K.s, 1, 1, 'upper');
+cbar_vec = obj.sdp_vec(cbar, K.s, 1, 1, 1);
 
 % Concatenate full COPT vectors
 c_copt      = full([clin; cbar_vec]);   % vector for objective
