@@ -1,4 +1,4 @@
-function m = sdp_mat(~,V,Ks,scale,dim,part)
+function m = sdp_mat(~,V,Ks,scale,dim,upper)
 % Index-based triangular de-vectorization for semi-definite matrices.
 %
 % This function takes a matrix
@@ -20,7 +20,7 @@ function m = sdp_mat(~,V,Ks,scale,dim,part)
 %
 % Syntax:
 %
-%   M = sdp_mat(V,Ks,scale,dim)
+%   M = sdp_mat(V,Ks,scale,dim,[upper])
 %
 % Returns the block matrix M as described above with the following
 % parameters:
@@ -32,12 +32,11 @@ function m = sdp_mat(~,V,Ks,scale,dim,part)
 % - Ks:     Dimensions Nij of the matrices Mij; if dim = 1, then Ks is a
 %           p-by-1 vector satisfying Nij = K(i); otherwise, Ks is a q-by-1
 %           vector satisfying Nij = K(j) for all (i,j) in {1...p}x{1...q}.
-% - part:   Optional string, either 'lower' (default) or 'upper', which
-%           determines whether the lower- or upper-triangular
-%           de-vectorization is performed
+% - upper:  Optional Boolean flag (default false), which determines whether 
+%           the lower- or upper-triangular de-vectorization is performed
 %
 
-if nargin > 4
+if nargin > 4 && ~isempty(dim)
     % dimension provided, nothing to do
 elseif isrow(V)
     % row vector blocks only
@@ -52,10 +51,7 @@ if nargin < 4 || isempty(scale)
     scale = sqrt(2);
 end
 
-if nargin < 6 || isempty(part)
-    part = 'lower'; % default triangular part
-end
-isLower = strcmpi(part,'lower'); % logical flag
+lower = nargin < 5 || ~upper; % use tril by default
 
 % ensure matrix dimensions are a row vector
 s = reshape(Ks,1,[]);
@@ -96,7 +92,7 @@ I0 = I - Sv(J);
 %
 % Note: the number of elements in the lower (resp. upper) triangle of an 
 % N-by-N matrix is N*(N+1)/2.
-if isLower
+if lower
     l = ceil(1/2*(2*s(J) + 3 - sqrt(4*s(J).^2 + 4*s(J) + (1 - 8*I0)))) - 1;
     
     % number of rows below/including diagonal
