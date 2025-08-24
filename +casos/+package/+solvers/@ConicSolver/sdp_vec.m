@@ -1,4 +1,4 @@
-function [v,i,j,k,l] = sdp_vec(~,M,Ks,scale,dim,part)
+function [v,i,j,k,l] = sdp_vec(~,M,Ks,scale,dim,upper)
 % Index-based triangular vectorization for semi-definite matrices.
 %
 % This function takes a matrix
@@ -17,12 +17,12 @@ function [v,i,j,k,l] = sdp_vec(~,M,Ks,scale,dim,part)
 % where each block entry vij is a N*(N+1)/2-by-1 (column/row) vector that
 % corresponds stacking the triangular elements of Mij column-wise. By
 % default, the lower-triangular elements are stacked, but this can be
-% optionally switched to the upper-triangular elements using the 'part' 
-% parameter. 
+% optionally switched to the upper-triangular elements using the 'upper' 
+% flag. 
 %
 % Syntax #1:
 %
-%   V = sdp_vec(M,Ks,scale,dim)
+%   V = sdp_vec(M,Ks,scale,dim,[upper])
 %
 % Returns the block matrix V as described above with the following
 % parameters:
@@ -34,7 +34,7 @@ function [v,i,j,k,l] = sdp_vec(~,M,Ks,scale,dim,part)
 % - Ks:     Dimensions Nij of the matrices Mij; if dim = 1, then Ks is a
 %           p-by-1 vector satisfying Nij = K(i); otherwise, Ks is a q-by-1
 %           vector satisfying Nij = K(j) for all (i,j) in {1...p}x{1...q}.
-% - part:   Optional string, either 'lower' (default) or 'upper', which
+% - upper:  Optional Boolean flag (default false), which
 %           determines whether the lower- or upper-triangular elements of
 %           each block Mij are stacked.
 %
@@ -46,7 +46,7 @@ function [v,i,j,k,l] = sdp_vec(~,M,Ks,scale,dim,part)
 % (k,l) corresponding to the lower-triangular (or upper-triangular) elements 
 % Mij(k,l). Parameters apply as above.
 
-if nargin > 4
+if nargin > 4 && ~isempty(dim)
     % dimension provided, nothing to do
 elseif isrow(M)
     % row vector blocks only
@@ -61,10 +61,7 @@ if nargin < 4 || isempty(scale)
     scale = sqrt(2);
 end
 
-if nargin < 6 || isempty(part)
-    part = 'lower'; % default triangular part
-end
-isLower = strcmpi(part,'lower'); % logical flag
+lower = nargin < 5 || ~upper; % use tril by default
 
 % ensure matrix dimensions are a row vector
 s = reshape(Ks,1,[]);
@@ -99,7 +96,7 @@ tril_mask = (k > l); % elements below the main diagonal (row > column)
 triu_mask = (k < l); % elements above the main diagonal (row < column)
 
 % check the flag
-if isLower
+if lower
     tri2rem = triu_mask;    % indices of strictly upper elements to remove
     tri2vec = tril_mask;    % indices of strictly lower elements to scale (off-diagonal)
 else
@@ -135,7 +132,7 @@ if nargout > 1
 else
     % compute linear indices into each block Vij
     % where Iv0 = (l-1)*(2N-l+2)/2 + k' and k' = k - l + 1
-    if isLower
+    if lower
         kprime = k - l + 1;                 % number of rows from diagonal
         Iv0 = (l-1).*(s(J)-l/2+1) + kprime; % number of lower-triangular elements
     else
