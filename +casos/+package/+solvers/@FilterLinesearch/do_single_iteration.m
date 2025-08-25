@@ -95,7 +95,7 @@ while alpha > alpha_min
         end
 
         % invoke soc to avoid maratos effect, if necessary
-        if ~suffDecrease_flag && alpha == 1  && theta_x_k1 >= theta_xk && obj.opts.Soc_is_enabled
+        if ~suffDecrease_flag && alpha == 1  && theta_x_k1 >= theta_xk && obj.opts.enable_SOC
 
             measSocTime = tic;
             % compute corrected search direction, compute new trial point and check for filter acceptance
@@ -112,7 +112,7 @@ while alpha > alpha_min
     else % not acceptable to filter
 
         % invoke soc to avoid maratos effect, if necessary
-        if ~filter_Acceptance && alpha == 1 && theta_x_k1 >= theta_xk && obj.opts.Soc_is_enabled
+        if ~filter_Acceptance && alpha == 1 && theta_x_k1 >= theta_xk && obj.opts.enable_SOC
 
             measSocTime = tic;
             % compute corrected search direction, compute new trial point and check for filter acceptance
@@ -174,25 +174,21 @@ info{iter}.constraint_violation = sol_convio;
 
 measHessApp = tic;
 % update quasi-Newton/exact Hessian
-if strcmp(obj.opts.hessian_approx,'BFGS')
-
+if strcmpi(obj.opts.hessian_approx,'BFGS')
     % damped BFGS
     Bk = damped_BFGS(obj,Bk,x_k,p0,sol_iter,iter);
 
-elseif strcmp(obj.opts.hessian_approx,'Levenberg')
-
+elseif strcmpi(obj.opts.hessian_approx,'levenberg')
     % see Betts book
     H  = full(obj.eval_Hessian(x_k1,p0,dual_k1));
     Bk = casos.package.solvers.SequentialCommon.hessian_Levenberg(H);
 
-elseif strcmp(obj.opts.hessian_approx,'Regularization')
-
+elseif strcmpi(obj.opts.hessian_approx,'regularization')
     % own regularization method
     H = full(obj.eval_Hessian(x_k1,p0,dual_k1));
     Bk = casos.package.solvers.SequentialCommon.regularize_Hessian(H);
 
-elseif strcmp(obj.opts.hessian_approx,'Mirroring')
-
+elseif strcmpi(obj.opts.hessian_approx,'mirroring')
     % Verschueren
     H = full(obj.eval_Hessian(x_k1,p0,dual_k1));
     [L,D] = ldl(H);
@@ -200,7 +196,10 @@ elseif strcmp(obj.opts.hessian_approx,'Mirroring')
     D(D<0) = 1e-6;
     Bk = L*abs(D)*L';
 
+else
+    error('Unknown option "%s" for Hessian approximation.',obj.opts.hessian_approx)
 end
+
 HessApproxTimeMeas = toc(measHessApp);
 
 % get timing stats

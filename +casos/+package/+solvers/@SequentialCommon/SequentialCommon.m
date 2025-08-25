@@ -9,8 +9,8 @@ classdef (Abstract) SequentialCommon < casos.package.solvers.SosoptCommon
             'tolerance_opt', 'Absolute tolerance for stopping criterion of constraint violation.'
             'filter_struct', 'Structure containing parameter for filter linesearch.'
             'scale_BFGS0','Scaling parameter for initial BFGS matrix.'
-            'Soc_is_enabled', 'Flag to turn on off the second-order-correction [default: true]'
-            'Hessian_init','Method to initialize Hessian.'
+            'enable_SOC', 'Flag to turn on off the second-order-correction [default: true]'
+            'hessian_init','Method to initialize Hessian.'
             'hessian_approx','Hessian (Lagrangian) approximation method'
             'max_iter', 'Maximum number of iterations.'
             'almostOptCount','Number of iterations to check for almost optimal. '
@@ -141,10 +141,10 @@ classdef (Abstract) SequentialCommon < casos.package.solvers.SosoptCommon
             if ~isfield(obj.opts,'tolerance_con'), obj.opts.tolerance_con                       = 1e-6; end
             if ~isfield(obj.opts,'tolerance_opt'), obj.opts.tolerance_opt                       = 1e-4; end
             if ~isfield(obj.opts,'scale_BFGS0'), obj.opts.scale_BFGS0                           = 1; end
-            if ~isfield(obj.opts,'Hessian_init'),   obj.opts.Hessian_init                       = 'Analytical'; end
-            if ~isfield(obj.opts,'hessian_approx'), obj.opts.hessian_approx                     = 'Regularization'; end
-            if ~isfield(obj.opts,'feasibility_restoration'), obj.opts.feasibility_restoration   = 'Regularize'; end
-            if ~isfield(obj.opts,'Soc_is_enabled'), obj.opts.Soc_is_enabled                     = true; end
+            if ~isfield(obj.opts,'hessian_init'),   obj.opts.hessian_init                       = 'analytical'; end
+            if ~isfield(obj.opts,'hessian_approx'), obj.opts.hessian_approx                     = 'regularization'; end
+            if ~isfield(obj.opts,'feasibility_restoration'), obj.opts.feasibility_restoration   = 'regularize'; end
+            if ~isfield(obj.opts,'enable_SOC'), obj.opts.enable_SOC                             = true; end
             if ~isfield(obj.opts,'filter_struct'), obj.opts.filter_struct                       = filter_struct; end
             if ~isfield(obj.opts,'max_iter'), obj.opts.max_iter                                 = 100; end
             if ~isfield(obj.opts,'almostOptCount'), obj.opts.almostOptCount                     = 100; end

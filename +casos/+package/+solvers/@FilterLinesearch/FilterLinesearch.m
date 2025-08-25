@@ -71,18 +71,20 @@ classdef FilterLinesearch < casos.package.solvers.SequentialCommon
 
             x_R   = casos.PS.sym('x_R',base_x);
 
-            if strcmp(obj.opts.feasibility_restoration,'Simple')
+            if strcmpi(obj.opts.feasibility_restoration,'simple')
                 % we simply mininimize on the constraint manifold
                 Phi = [];
                 lambda = [];
-            elseif strcmp(obj.opts.feasibility_restoration,'Regularize')
+            elseif strcmpi(obj.opts.feasibility_restoration,'regularize')
                 % check how far we are from the original problem/solution
                 e   = nlsos_feas.x(sum(I)+1:end) - nlsos.x;
                 Phi = 1/2*dot(e,e);
                 lambda   = casos.PS.sym('l');
-            elseif   strcmp(obj.opts.feasibility_restoration,'Cost')
+            elseif   strcmpi(obj.opts.feasibility_restoration,'cost')
                 Phi = 1/2*nlsos.f;
                 lambda   = casos.PS.sym('l');
+            else
+                error('Unknown option "%s" for feasibility restoration.',obj.opts.feasibility_restoration)
             end
 
             nlsos_feas.f = sum(r) + lambda*Phi ;

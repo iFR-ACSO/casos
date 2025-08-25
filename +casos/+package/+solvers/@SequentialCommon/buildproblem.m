@@ -69,7 +69,7 @@ obj.sparsity_g  = obj.solver_convex.sparsity_g;
 obj.sparsity_gl = obj.solver_convex.sparsity_gl;
 obj.sparsity_gs = obj.solver_convex.sparsity_gs;
 
-if strcmp(obj.opts.conVioCheck,'signed-distance')
+if strcmpi(obj.opts.conVioCheck,'signed-distance')
     %% constrained violation check via signed distance
     % sparsity patterns of nonlinear constraints
 
@@ -117,7 +117,7 @@ else
 end
 
 %% Second-order correction (soc)
-if obj.opts.Soc_is_enabled
+if obj.opts.enable_SOC
     % parameter of current qp solution
     x_star_par   = casos.PS.sym('x_star',base_x);
     % constraint function to be evaluated at xk+d
@@ -171,7 +171,7 @@ dLdx = op2basis(jacobian(Lagrangian,nlsos.x))';
 
 % Hessian of Langrangian; in case we use BFGS, we do not have to explictly
 % compute the Hessian
-if ~strcmp(obj.opts.hessian_approx,'BFGS')
+if ~strcmpi(obj.opts.hessian_approx,'BFGS')
     L_xx         = op2basis(hessian(Lagrangian,nlsos.x));
     obj.eval_Hessian = casos.Function('H',{basis_nlsos_x,basis_nlsos_p,basis_lam_gs}, { L_xx });
 end
@@ -213,7 +213,7 @@ obj.eval_constraint = casos.Function('f',{basis_nlsos_x,basis_nlsos_p}, {poly2ba
 obj.init_para.no_dual_var   = obj.sparsity_g.nnz;
 obj.init_para.size_B        = nnz(base_x);
 
-if strcmp(obj.opts.conVioCheck,'signed-distance')
+if strcmpi(obj.opts.conVioCheck,'signed-distance')
     obj.init_para.conVio.no_con = length(sos_conVio.g);
 end
 

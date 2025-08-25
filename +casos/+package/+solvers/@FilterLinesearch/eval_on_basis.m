@@ -32,21 +32,21 @@ info.single_iterations = cell(1,obj.opts.max_iter);
 % initialze dual variables
 dual_k = zeros(obj.init_para.no_dual_var,1);
 
-if strcmp(obj.opts.Hessian_init,'Identity')
-
+if strcmpi(obj.opts.hessian_init,'identity')
     % initialize BFGS-matrix = identity x scaling
     Bk =  eye(obj.init_para.size_B)*obj.opts.scale_BFGS0;
 
-elseif strcmp(obj.opts.Hessian_init,'Analytical')
-
+elseif strcmpi(obj.opts.hessian_init,'analytical')
     % initialize Hessian approximation with regularization
     H = full(obj.eval_Hessian(x_k,p0,dual_k));
 
     Bk = casos.package.solvers.SequentialCommon.regularize_Hessian(H);
 
+else
+    error('Unknown option "%s" for Hessian initialization.',obj.opts.hessian_init)
 end
 
-if strcmp(obj.opts.conVioCheck,'signed-distance')
+if strcmpi(obj.opts.conVioCheck,'signed-distance')
     % initialize filter and first iterate
     args_conVio     =  args;
     args_conVio{2}  =  [p0; x_k];

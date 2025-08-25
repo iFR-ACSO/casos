@@ -23,7 +23,7 @@ LangrangeFilter = obj.opts.filter_struct.LangrangeFilter;
 
 % compute new solution candidate
 x_k1    = full(x_k     + alpha*dk);
-if strcmp(obj.opts.conVioCheck,'signed-distance')
+if strcmpi(obj.opts.conVioCheck,'signed-distance')
     % compute constraint violation of new solution candidate
     args_conVio     =  args;
     args_conVio{2}  =  [p0; x_k1];
