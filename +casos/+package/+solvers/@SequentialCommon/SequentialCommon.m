@@ -20,62 +20,42 @@ classdef (Abstract) SequentialCommon < casos.package.solvers.SosoptCommon
             'verbose', 'Turn on/off iteration display.'}
             ];
 
-        allow_eval_on_basis = true;
-
-
         status = casos.package.UnifiedReturnStatus.SOLVER_RET_UNKNOWN;
     end
 
-    % public properties to allow e.g. feasibility restoration accesses to it
-    properties
+    properties (Access=protected)
+        % low-level solvers
+        solver_convex;
+        solver_conVio;
+        solver_soc;
 
-        solver_conVio
-
-        % functions to be evaluated (convergence check)
-        eval_cost
-        hess_fun
-
-        eval_constraint_fun
+        % Lagrangian and derivative
+        eval_L;
+        eval_dLdx;
 
         % linesearch
-        eval_gradCost
-        conFun
-        x_sample
-
-        % Langrangian and derivative
-        L
-        dLdx
-
-        conLa
-
-        init_para
-
-        FeasRes_para
-
-        sparsity_pat_para
-        display_para
-
-    end
-
-    properties (Access=protected)
-        % low-level solver
-        solver_convex;
-        solver_soc
+        eval_gradCost;
+        eval_constraintSamples;
 
         % damped BFGS
-        damped_BFGS
-        SR1
-        eval_s
-        eval_y
-        eval_r
+        damped_BFGS;
+        eval_s;
+        eval_y;
+        eval_r;
 
-        % functions to be evaluated (convergence check)
-        eval_gradLang
-        eval_gradLang2
+        % convergence check
+        eval_cost;
+        eval_constraint;
+        eval_gradLag;
+        eval_gradLag2;
+        eval_Hessian;
 
-    end
+        % parameters
+        init_para;
+        feasRes_para;
+        display_para;
 
-    properties (Access=protected)
+        % logging & info
         log;
         info = struct('iter',[]);
     end
@@ -88,6 +68,9 @@ classdef (Abstract) SequentialCommon < casos.package.solvers.SosoptCommon
     end
 
     methods (Access=protected)
+        % prepare problem structures
+        buildproblem(obj,nlsos);
+        
         % iteration for overloading
         varargout = run_iteration(varargin);
         varargout = do_single_iteration(varargin);
@@ -103,8 +86,6 @@ classdef (Abstract) SequentialCommon < casos.package.solvers.SosoptCommon
         varargout = regularize_Hessian(varargin);
         varargout = hessian_regularization(varargin);
     end
-
-
 
     methods
         % Constructor

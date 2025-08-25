@@ -67,7 +67,7 @@ while alpha > alpha_min
     % heuristic: there might be blocking entries in the filter:
     % check first-order optimality conditions to potentially aboard
     % linesearch early as possible if we are "optimal"
-    if full(obj.eval_gradLang(x_k1,p0,dual_k1))  <= obj.opts.tolerance_opt*max(1,full(obj.eval_gradLang(x_k1,p0,dual_k1))) && theta_x_k1 <= obj.opts.tolerance_con
+    if full(obj.eval_gradLag(x_k1,p0,dual_k1))  <= obj.opts.tolerance_opt*max(1,full(obj.eval_gradLag(x_k1,p0,dual_k1))) && theta_x_k1 <= obj.opts.tolerance_con
         feas_res_flag = 0;
         break
     end
@@ -182,19 +182,19 @@ if strcmp(obj.opts.hessian_approx,'BFGS')
 elseif strcmp(obj.opts.hessian_approx,'Levenberg')
 
     % see Betts book
-    H  = full(obj.hess_fun(x_k1,p0,dual_k1));
+    H  = full(obj.eval_Hessian(x_k1,p0,dual_k1));
     Bk = casos.package.solvers.SequentialCommon.hessian_Levenberg(H);
 
 elseif strcmp(obj.opts.hessian_approx,'Regularization')
 
     % own regularization method
-    H = full(obj.hess_fun(x_k1,p0,dual_k1));
+    H = full(obj.eval_Hessian(x_k1,p0,dual_k1));
     Bk = casos.package.solvers.SequentialCommon.regularize_Hessian(H);
 
 elseif strcmp(obj.opts.hessian_approx,'Mirroring')
 
     % Verschueren
-    H = full(obj.hess_fun(x_k1,p0,dual_k1));
+    H = full(obj.eval_Hessian(x_k1,p0,dual_k1));
     [L,D] = ldl(H);
 
     D(D<0) = 1e-6;

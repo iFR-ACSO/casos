@@ -50,7 +50,6 @@ classdef FilterLinesearch < casos.package.solvers.SequentialCommon
             end
 
             %% set up feasibility restoration phase
-
             base_x = sparsity(nlsos.x);
 
             I = true(length(nlsos.g),1);
@@ -65,11 +64,9 @@ classdef FilterLinesearch < casos.package.solvers.SequentialCommon
             base_s0 = gramunit(z);
 
             r  = casos.PS.sym('r',sum(I));
-
             s0 = casos.PD(base_s0);
 
             nlsos_feas.x = [r;nlsos.x];
-
             nlsos_feas.g = nlsos.g(I) + r.*s0;
 
             x_R   = casos.PS.sym('x_R',base_x);
@@ -92,8 +89,8 @@ classdef FilterLinesearch < casos.package.solvers.SequentialCommon
 
             nlsos_feas.p = [nlsos.p; x_R;lambda];
 
-            obj.FeasRes_para.n_r = sum(I);
-            obj.FeasRes_para.length_dualOut = length(nlsos_feas.x)-length(nlsos_feas.g);
+            obj.feasRes_para.n_r = sum(I);
+            obj.feasRes_para.length_dualOut = length(nlsos_feas.x)-length(nlsos_feas.g);
 
             sosopt.sossol         = obj.opts.sossol;
             sosopt.sossol_options = obj.opts.sossol_options;

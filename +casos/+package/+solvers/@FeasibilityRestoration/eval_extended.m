@@ -13,10 +13,10 @@ args = cell(10,1);
 
 args{1} = x_R;
 args{2} = x_R;
-args{3} = -inf(obj.sparsity_pat_para.sparsity_xl.nnz,1);
-args{4} =  inf(obj.sparsity_pat_para.sparsity_xl.nnz,1);
-args{6} = -inf(obj.sparsity_pat_para.sparsity_gl.nnz,1);
-args{7} =  inf(obj.sparsity_pat_para.sparsity_gl.nnz,1);
+args{3} = -inf(obj.sparsity_xl.nnz,1);
+args{4} =  inf(obj.sparsity_xl.nnz,1);
+args{6} = -inf(obj.sparsity_gl.nnz,1);
+args{7} =  inf(obj.sparsity_gl.nnz,1);
 
 % initial guess for
 r0 = ones(solver.FeasRes_para.n_r,1);
@@ -71,11 +71,11 @@ measTime_seqSOS_in = tic;
 while iter <= obj.opts.max_iter
 
     printf(obj.log,'debug','r%-8dr%-15er%-15er%-15er%-15er%-10fr%-10e\n',...
-        iter-1, f_x_k , delta_xi_double, delta_dual_double, theta_x_k , alpha_k , full(casadi.DM( full(obj.eval_gradLang(x_k,p0,dual_k)) ) )   );
+        iter-1, f_x_k , delta_xi_double, delta_dual_double, theta_x_k , alpha_k , full(casadi.DM( full(obj.eval_gradLag(x_k,p0,dual_k)) ) )   );
 
 
     %% check convergence (first-order optimality) of filter
-    if full(obj.eval_gradLang(x_k,p0,dual_k))  <= obj.opts.tolerance_opt*max(1,full(obj.eval_gradLang(x_k,p0,dual_k))) ...
+    if full(obj.eval_gradLag(x_k,p0,dual_k))  <= obj.opts.tolerance_opt*max(1,full(obj.eval_gradLag(x_k,p0,dual_k))) ...
             && theta_x_k <= obj.opts.tolerance_con && feasibility_flag == 0
 
         printf(obj.log,'debug','------------------------------------------------------------------------------------------\n');

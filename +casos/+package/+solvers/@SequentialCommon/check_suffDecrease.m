@@ -57,7 +57,7 @@ if  f_type && theta_xk <= theta_min
 
     % check amijo-condition
     if LangrangeFilter
-        amijo = L_k1 <= L_k +eta*full(( obj.dLdx(x_k,p0,dual_k))'*dk);
+        amijo = L_k1 <= L_k +eta*full(( obj.eval_dLdx(x_k,p0,dual_k))'*dk);
     else
         amijo = f_x_k1 <= f_xk + eta*alpha*nabla_f_dir;
     end

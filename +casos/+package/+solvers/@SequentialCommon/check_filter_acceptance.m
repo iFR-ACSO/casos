@@ -41,7 +41,7 @@ if strcmp(obj.opts.conVioCheck,'signed-distance')
     theta_x_k1 = full(max(0,max(all_violations)));
 else
     % evalaute at current solution and samples
-    g_val = full(obj.conFun(x_k1,obj.x_sample));
+    g_val = full(obj.eval_constraintSamples(x_k1,obj.opts.userSample));
 
     % from all constraints get the smallest function value
     all_violations  = min(g_val);
@@ -58,7 +58,7 @@ end
 % cost at trial point
 if LangrangeFilter
     dual_k1 = full(dual_k  + alpha*dkl);
-    L_k1     = full(obj.L(x_k1,p0,dual_k1));
+    L_k1     = full(obj.eval_L(x_k1,p0,dual_k1));
 else
     f_x_k1   = full(obj.eval_cost(x_k1,p0));
 end

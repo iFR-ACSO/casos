@@ -40,7 +40,7 @@ if strcmp(obj.opts.Hessian_init,'Identity')
 elseif strcmp(obj.opts.Hessian_init,'Analytical')
 
     % initialize Hessian approximation with regularization
-    H = full(obj.hess_fun(x_k,p0,dual_k));
+    H = full(obj.eval_Hessian(x_k,p0,dual_k));
 
     Bk = casos.package.solvers.SequentialCommon.regularize_Hessian(H);
 
@@ -58,7 +58,7 @@ if strcmp(obj.opts.conVioCheck,'signed-distance')
 
     theta_x_k = full(max(0,max(sol_convio{1})));
 else
-    g_val = full(obj.conFun(x_k,obj.x_sample));
+    g_val = full(obj.eval_constraintSamples(x_k,obj.opts.userSample));
 
     min_vio = min(min(g_val));
     if min_vio < 0
@@ -95,11 +95,11 @@ while iter <= obj.opts.max_iter
 
     % display output current iterate
     printf(obj.log,'debug','%-8d%-15e%-15e%-15e%-15e%-10f%-10e\n',...
-        iter-1, f_x_k , delta_xi_double, delta_dual_double, theta_x_k , alpha_k , full(casadi.DM( full(obj.eval_gradLang(x_k,p0,dual_k)) ))   );
+        iter-1, f_x_k , delta_xi_double, delta_dual_double, theta_x_k , alpha_k , full(casadi.DM( full(obj.eval_gradLag(x_k,p0,dual_k)) ))   );
 
 
     %% check convergence (first-order optimality)
-    if full(obj.eval_gradLang(x_k,p0,dual_k))  <= full((obj.opts.tolerance_opt*max(1,abs(f_x_k)) + obj.eval_gradLang2(x_k,p0,dual_k))/delta_xi_double)  ... % scaled optimality
+    if full(obj.eval_gradLag(x_k,p0,dual_k))  <= full((obj.opts.tolerance_opt*max(1,abs(f_x_k)) + obj.eval_gradLag2(x_k,p0,dual_k))/delta_xi_double)  ... % scaled optimality
             && theta_x_k <= obj.opts.tolerance_con && feasibility_flag == 0                                                                                     % constraint violation
 
         printf(obj.log,'debug','------------------------------------------------------------------------------------------\n');
@@ -115,7 +115,7 @@ while iter <= obj.opts.max_iter
     end
 
     % check if current iterate is solved to an acceptable level
-    if full(obj.eval_gradLang(x_k,p0,dual_k))  <= full((10*obj.opts.tolerance_opt*max(1,abs(f_x_k)) + obj.eval_gradLang2(x_k,p0,dual_k))/delta_xi_double)  ... % scaled optimality ...
+    if full(obj.eval_gradLag(x_k,p0,dual_k))  <= full((10*obj.opts.tolerance_opt*max(1,abs(f_x_k)) + obj.eval_gradLag2(x_k,p0,dual_k))/delta_xi_double)  ... % scaled optimality ...
             && theta_x_k <= obj.opts.tolerance_con
 
         % increase counter
@@ -216,7 +216,7 @@ while iter <= obj.opts.max_iter
         end
 
         % just a final check
-        if full(obj.eval_gradLang(x_k,p0,dual_k))  <= obj.opts.tolerance_opt*max(1,full(obj.eval_gradLang(x_k,p0,dual_k))) ...
+        if full(obj.eval_gradLag(x_k,p0,dual_k))  <= obj.opts.tolerance_opt*max(1,full(obj.eval_gradLag(x_k,p0,dual_k))) ...
                 && theta_x_k <= obj.opts.tolerance_con
 
             printf(obj.log,'debug','------------------------------------------------------------------------------------------\n');
@@ -284,10 +284,10 @@ if iter >= obj.opts.max_iter
 
     % display output current iterate
     printf(obj.log,'debug','%-8d%-15e%-15e%-15e%-15e%-10f%-10e\n',...
-        iter-1, f_x_k , delta_xi_double, delta_dual_double, theta_x_k , alpha_k , full(casadi.DM( full(obj.eval_gradLang(x_k,p0,dual_k)) ))   );
+        iter-1, f_x_k , delta_xi_double, delta_dual_double, theta_x_k , alpha_k , full(casadi.DM( full(obj.eval_gradLag(x_k,p0,dual_k)) ))   );
 
 
-    if full(obj.eval_gradLang(x_k,p0,dual_k))  <= obj.opts.tolerance_opt*max(1,full(obj.eval_gradLang(x_k,p0,dual_k))) ...
+    if full(obj.eval_gradLag(x_k,p0,dual_k))  <= obj.opts.tolerance_opt*max(1,full(obj.eval_gradLag(x_k,p0,dual_k))) ...
             && theta_x_k <= obj.opts.tolerance_con && feasibility_flag == 0
 
         printf(obj.log,'debug','------------------------------------------------------------------------------------------\n');
@@ -316,7 +316,7 @@ if feasibility_flag == 0 && iter < obj.opts.max_iter
 
     % print last iterate
     printf(obj.log,'debug','%-8d%-15e%-15e%-15e%-15e%-10f%-10e\n',...
-        iter, f_x_k , delta_xi_double, delta_dual_double, theta_x_k , alpha_k , full(casadi.DM( full(obj.eval_gradLang(x_k,p0,dual_k)) ) )   );
+        iter, f_x_k , delta_xi_double, delta_dual_double, theta_x_k , alpha_k , full(casadi.DM( full(obj.eval_gradLag(x_k,p0,dual_k)) ) )   );
 
     printf(obj.log,'debug','------------------------------------------------------------------------------------------\n');
     printf(obj.log,'debug','Solution status: Problem infeasible.\n');
@@ -332,7 +332,7 @@ elseif feasibility_flag == -1 && iter < obj.opts.max_iter
 
     % print last iterate
     printf(obj.log,'debug','%-8d%-15e%-15e%-15e%-15e%-10f%-10e\n',...
-        iter, f_x_k , delta_xi_double, delta_dual_double, theta_x_k , alpha_k , full(casadi.DM( full(obj.eval_gradLang(x_k,p0,dual_k)) ) )   );
+        iter, f_x_k , delta_xi_double, delta_dual_double, theta_x_k , alpha_k , full(casadi.DM( full(obj.eval_gradLag(x_k,p0,dual_k)) ) )   );
 
 
     printf(obj.log,'debug','------------------------------------------------------------------------------------------\n');
