@@ -19,7 +19,7 @@ args{6} = -inf(obj.sparsity_gl.nnz,1);
 args{7} =  inf(obj.sparsity_gl.nnz,1);
 
 % initial guess for
-r0 = ones(solver.FeasRes_para.n_r,1);
+r0 = ones(solver.feasRes_para.n_r,1);
 
 % decision variabbles of feasibility restoration
 x_k = [r0; x_R];
@@ -129,13 +129,13 @@ while iter <= obj.opts.max_iter
         alpha_k   = sol_iter.alpha_k;
 
         % first n_r decision variables are the individual constraint violations
-        theta_x_k_or = full(max(0,max(x_k(1:solver.FeasRes_para.n_r))));
+        theta_x_k_or = full(max(0,max(x_k(1:solver.feasRes_para.n_r))));
 
         % store them
-        info{iter}.constraint_violation = x_k(1:solver.FeasRes_para.n_r);
+        info{iter}.constraint_violation = x_k(1:solver.feasRes_para.n_r);
 
         % cost (original problem) at trial point
-        f_x_k1_or   = full(solver.eval_cost(x_k(solver.FeasRes_para.n_r+1:end),p00));
+        f_x_k1_or   = full(solver.eval_cost(x_k(solver.feasRes_para.n_r+1:end),p00));
 
         % check acceptance to filter of the original problem
         theta_l = filter_glob(:,1);
@@ -197,20 +197,20 @@ if feasibility_flag <= 0
     % return last solution of q-SDP
     sol    = sol_qp;
 
-    sol{1} = x_k(solver.FeasRes_para.n_r+1:end);
-    sol{5} = dual_k(solver.FeasRes_para.n_r+1:end);
+    sol{1} = x_k(solver.feasRes_para.n_r+1:end);
+    sol{5} = dual_k(solver.feasRes_para.n_r+1:end);
 
 else
 
     % return solution of successful restoration
     sol    = sol_qp;
 
-    sol{1} = casadi.DM(x_k(solver.FeasRes_para.n_r+1:end));
-    sol{5} = dual_k(solver.FeasRes_para.length_dualOut+1:end);
+    sol{1} = casadi.DM(x_k(solver.feasRes_para.n_r+1:end));
+    sol{5} = dual_k(solver.feasRes_para.length_dualOut+1:end);
 
     % output to original problem
-    sol_iter.x_k1       = sol_iter.x_k1(solver.FeasRes_para.n_r+1:end);
-    sol_iter.dual_k1    = sol_iter.dual_k1(solver.FeasRes_para.length_dualOut+1:end);
+    sol_iter.x_k1       = sol_iter.x_k1(solver.feasRes_para.n_r+1:end);
+    sol_iter.dual_k1    = sol_iter.dual_k1(solver.feasRes_para.length_dualOut+1:end);
     sol_iter.f_x_k1     = f_x_k1_or ;
     sol_iter.theta_x_k1 = theta_x_k_or;
 

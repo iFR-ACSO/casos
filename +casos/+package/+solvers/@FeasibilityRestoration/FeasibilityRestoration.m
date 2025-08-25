@@ -6,24 +6,19 @@ classdef FeasibilityRestoration < casos.package.solvers.SequentialCommon
     end
 
     properties(Access=protected)
-        filter_feas
+        filter_feas;
     end
 
     methods (Access=protected)
         % iteration for overloading
-        varargout = run_iteration(varargin);
         varargout = do_single_iteration(varargin);
 
         % internal evaluation
         argout = eval_on_basis(obj,argin);
-
     end
 
-    methods
+    methods (Access={?casos.package.solvers.SequentialCommon})
+        % evaluation called by friend class
         varargout = eval_extended(varargin);
-
     end
-
-
-
 end
