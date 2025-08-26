@@ -126,13 +126,13 @@ c = c(idx);
 [Alin,Abar] = separate(A, size(A,1), [(K.l), sum(K.s.^2)]);
 
 % vectorize the upper-triangular elements of the SDP blocks
-Abar_vec = obj.sdp_vec(Abar, K.s, 1, 2, 1);
+Abar_vec = obj.sdp_vec(Abar, K.s, 1, 2, true);
 
 % separate c into linear part (clin) and semidefinite part (cbar)
 [clin,cbar] = separate(c, [(K.l), sum(K.s.^2)], 1);
 
-% vectorize the lower-triangular elements of the SDP blocks
-cbar_vec = obj.sdp_vec(cbar, K.s, 1, 1, 1);
+% vectorize the upper-triangular elements of the SDP blocks
+cbar_vec = obj.sdp_vec(cbar, K.s, 1, 1, true);
 
 % Concatenate full COPT vectors
 c_copt      = full([clin; cbar_vec]);   % vector for objective
@@ -142,34 +142,44 @@ b_copt      = full(b);                  % constraint right-hand side
 % return COPT structures A,b,c
 obj.fhan = casadi.Function('f',struct2cell(obj.args_in),{A_copt b_copt c_copt},fieldnames(obj.args_in),{'A' 'b' 'c'});
 
-% parse COPT solution (X,Y) into (x,cost,lam_a,lam_x)
-X_copt = casadi.MX.sym('x',size(c));
-Y_copt = casadi.MX.sym('y',size(b));
+% define CasADi symbolic variables for the primal problem
+% decision variables
+X = casadi.MX.sym('x',size(c_copt));
+% slack/dual variables
+S = casadi.MX.sym('s',size(c_copt));
+% Y is not used since slack variables are provided by COPT
+% Y = casadi.MX.sym('y',size(b_copt)); 
 
-% assign solution symbols
-X = X_copt;
-Y = Y_copt;
+% separate X into linear and PSD components
+[Xlin, Xpsd] = separate(X, [size(Alin,2) size(Abar_vec,2)], 1);
+% reshape the PSD component into proper SDP matrix form
+Xpsd = obj.sdp_mat(Xpsd,  [Nx.s Na.s], 1, 1, false);    
+Xfull = [Xlin; Xpsd];   % combine linear and PSD parts
 
-% compute slack matrix/vector for dual feasibility
-S = c - A'*Y;
+% separate S into linear and PSD components
+[Slin, Spsd] = separate(S, [size(Alin,2) size(Abar_vec,2)], 1);
+% reshape the PSD component into proper SDP matrix form
+Spsd = obj.sdp_mat(Spsd,  [Nx.s Na.s], 1, 1, false);  
+Sfull = [Slin; Spsd];   % combine linear and PSD parts
 
 % primal decision variables in the NEW order
-Xc = mat2cell(X,[Nx.l Na.l Na.l Nx.l sum(Nx.q) sum(Na.q) sum(Nx.r) sum(Na.r) sum(Nx.s.^2) sum(Na.s.^2)],1);
-
+Xc = mat2cell(Xfull,[Nx.l Na.l Na.l Nx.l sum(Nx.q) sum(Na.q) sum(Nx.r) sum(Na.r) sum(Nx.s.^2) sum(Na.s.^2)],1);
 x = [Xc{1}; Xc{5}; Xc{7}; Xc{9}] + zb;
 
 % dual variables corresponding to constraints and variables
 % S in the ORIGINAL order of (z,s), 
 % that is, S = [y_lbx y_cbx y_uba y_lba y_cba y_ubx]
-Sc = mat2cell(S,[Nx.l Nx_c Na.l Na.l Na_c Nx.l],1);
+Sc = mat2cell(Sfull,[Nx.l Nx_c Na.l Na.l Na_c Nx.l],1);
+
 % multipliers for interval constraints
 lam_a_l = Sc{3} - Sc{4};    % y_uba - y_lba
 lam_x_l = Sc{6} - Sc{1};    % y_ubx - y_lbx
+
 % multipliers for cone constraints
 lam_a_c = -Sc{5};  %  -y_cba
 lam_x_c = -Sc{2};  %  -y_cbx
 
-obj.ghan = casadi.Function('g',[struct2cell(obj.args_in)' {X_copt Y_copt}],{x (g'*x) [lam_a_l; lam_a_c] [lam_x_l; lam_x_c]},[fieldnames(obj.args_in)' {'X' 'Y'}],obj.names_out);
+obj.ghan = casadi.Function('g',[struct2cell(obj.args_in)' {X S}],{x (g'*x) [lam_a_l; lam_a_c] [lam_x_l; lam_x_c]},[fieldnames(obj.args_in)' {'X' 'S'}],obj.names_out);
 
 end
 
