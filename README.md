@@ -17,7 +17,7 @@ CaΣoS provides tools for [symbolic polynomial expressions](https://github.com/i
 - Supported [vector, matrix, and polynomial cones](https://github.com/ifr-acso/casos/wiki/cones)
 - Some [practical tipps](https://github.com/ifr-acso/casos/wiki/practical-sos-guide) to sum-of-squares
 - [Transitioning](https://github.com/ifr-acso/casos/wiki/transitioning-from-other-toolboxes) from other toolboxes
-- Example [code snippets](https://github.com/ifr-acso/casos/numerical-examples)
+- Example [code snippets](https://github.com/ifr-acso/casos/wiki/numerical-examples)
 
 ### Cite us
 
