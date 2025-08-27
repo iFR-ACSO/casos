@@ -323,7 +323,7 @@ sol.bars = casadi.MX.sym('bars',[sum(Nx_S) 1]);
 Xc_s = obj.sdp_mat(sol.barx,Nx.psd,1) + cbx_s;
 Sc_s = obj.sdp_mat(sol.bars,Nx.psd,1);
 % de-vectorize duals corresponding to semidefinite constraints
-Yc_s = obj.sdp_mat(Yas,Na.s,[]);
+Yc_s = obj.sdp_mat(Yas,Na.psd,[]);
 % multipliers for box constraints
 lam_a_l = sol.suc - sol.slc;
 lam_x_l = Slu - Slx;
