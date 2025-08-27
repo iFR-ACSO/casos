@@ -1,0 +1,117 @@
+function [sdp, args, M_out, num_eq, num_ineq, opts] = replaceDDcones(obj, sdp, sizes, Mlin, args, opts, field)
+% Replace DD cones (constraint or decision variable form)
+%
+% Inputs:
+%   obj    - problem object with cone utilities
+%   sdp    - struct containing decision variables (x) or constraints (g)
+%   sizes  - vector of DD cone sizes 
+%            (Ndd if field = 'x', Mdd if field = 'g')
+%   Mlin   - number of existing linear constraints 
+%            (relevant only if field = 'g'; ignored otherwise)
+%   args   - struct containing bounds:
+%              .dd_lbg, .dd_ubg  (for constraints)
+%              .dd_lbx, .dd_ubx  (for variables)
+%   opts   - struct with cone specifications (opts.Kc.dd or opts.Kx.dd)
+%   field  - string flag:
+%              'g' → replace DD cones in constraints
+%              'x' → replace DD cones in decision variables
+%
+% Outputs:
+%   sdp     - updated struct with DD cones replaced by linear constraints
+%   args    - updated struct with augmented bounds
+%   M_out   - cell array of slack variable blocks (one per DD cone)
+%   num_eq  - number of equality constraints introduced
+%   num_ineq- number of inequality constraints introduced
+%   opts    - updated cone specification struct
+
+    % add linear constraint to guarantee DD
+    Mconstr_selector = sparse([1, 2, 3, 4, 1, 2, 3, 4],   ...
+                              [1, 1, 2, 2, 3, 3, 3, 3],   ...
+                              [1, 1, 1, 1, -1, 1, -1, 1], ...
+                               4, 3);
+
+    M_out = cell(length(sizes),1);
+    eq_constraints = {};
+    ineq_constraints = {};
+
+    % loop to iterate over each DD cone (reverse order)
+    for i = 1:length(sizes)
+        idx = length(sizes) - i + 1;
+        n   = sizes(idx);
+        numPairs = (n-1)*n/2;
+
+        % locate block in sdp.(field)
+        ind = [ length(sdp.(field)) + 1 - sum(sizes(end-i+1:end).^2); ...
+                length(sdp.(field))     - sum(sizes(end-i+2:end).^2) ];
+        dd_block = sdp.(field)(ind(1):ind(2));
+
+        % mapping
+        vecY = map_M_to_Y(n, numPairs);
+
+        % slack variable
+        M_out{i} = casadi.SX.sym([field '_M' num2str(i)], 3*numPairs, 1);
+
+        % equality & inequality constraints
+        eq_constraints{end+1,1}   = dd_block - vecY*M_out{i};
+        ineq_constraints{end+1,1} = kron(speye(numPairs), Mconstr_selector)*M_out{i};
+    end
+
+    % concat constraints
+    eq_constraints   = vertcat(eq_constraints{:});
+    ineq_constraints = vertcat(ineq_constraints{:});
+
+    % Special handling depending on field
+    if strcmp(field,'g')
+        % remove previous constraints related to dd
+        sdp.g = sdp.g(1:end-sum(sizes.^2));
+
+        % insert new constraints
+        if Mlin ~= 0
+            sdp.g = [sdp.g(1:Mlin); eq_constraints; ineq_constraints; sdp.g(Mlin+1:end)];
+        else
+            sdp.g = [eq_constraints; ineq_constraints; sdp.g];
+        end
+    else
+        % for decision variables, just add constraints to sdp.g
+        if Mlin ~= 0
+            sdp.g = [sdp.g(1:Mlin); eq_constraints; ineq_constraints; sdp.g(Mlin+1:end)];
+        else
+            sdp.g = [eq_constraints; ineq_constraints; sdp.g];
+        end
+    end
+
+    % return counts
+    num_eq   = length(eq_constraints);
+    num_ineq = length(ineq_constraints);
+
+    % update bounds
+    args.dd_lbg = [args.dd_lbg; zeros(num_eq,1); zeros(num_ineq,1)];
+    args.dd_ubg = [args.dd_ubg; zeros(num_eq,1);  inf(num_ineq,1)];
+
+    % clean up opts
+    if strcmp(field,'g') && isfield(opts.Kc,'dd')
+        opts.Kc = rmfield(opts.Kc,'dd');
+    elseif strcmp(field,'x') && isfield(opts.Kx,'dd')
+        opts.Kx = rmfield(opts.Kx,'dd');
+    end
+end
+
+
+function vecY = map_M_to_Y(n, numPairs)
+    % build vectorized Y
+    M_selector = sparse([1, 4, 2, 3], [1, 2, 3, 3], [1, 1, 1, 1], 4, 3);
+
+    % build indexes for T and S
+    i_pair = ceil((2*n - 1 - sqrt((2*n - 1)^2 - 8*(1:numPairs))) / 2);
+    j_pair = (1:numPairs) - (i_pair-1).*n + i_pair.*(i_pair-1)./ 2 + i_pair;
+
+    % avoid using this for loop
+    T = arrayfun(@(k) sparse([1, 2], [i_pair(k), j_pair(k)], [1, 1], 2, n), 1:numPairs, 'UniformOutput', false);
+    S = arrayfun(@(k) sparse([i_pair(k), j_pair(k)], [1, 2], [1, 1], n, 2), 1:numPairs, 'UniformOutput', false);
+
+    % selects from [M1 M3; M3 M2] where to put in matrix vec(Y)
+    kronY = cell2mat(arrayfun(@(k) kron(T{k}', S{k}), 1:numPairs, 'UniformOutput', false));
+
+    % obtain vec(Y)
+    vecY = kronY*kron(speye(numPairs),M_selector); %*M;
+end
