@@ -30,13 +30,19 @@ function [sdp, args, M_out, num_eq, num_ineq, opts] = replaceDDcones(obj, sdp, s
                               [1, 1, 1, 1, -1, 1, -1, 1], ...
                                4, 3);
 
+    nCones = length(sizes);                  % precompute number of DD cones
+    total_eq   = nCones;                     % one equality per cone
+    total_ineq = sum((sizes.^2 - sizes)/2);  % total inequalities
+
+    % preallocate
     M_out = cell(length(sizes),1);
-    eq_constraints = {};
-    ineq_constraints = {};
+    eq_constraints   = cell(total_eq,1);
+    ineq_constraints = cell(total_ineq,1);
 
     % loop to iterate over each DD cone (reverse order)
-    for i = 1:length(sizes)
-        idx = length(sizes) - i + 1;
+    ineq_counter = 1;
+    for i = 1:nCones
+        idx = nCones - i + 1;
         n   = sizes(idx);
         numPairs = (n-1)*n/2;
 
@@ -51,9 +57,14 @@ function [sdp, args, M_out, num_eq, num_ineq, opts] = replaceDDcones(obj, sdp, s
         % slack variable
         M_out{i} = casadi.SX.sym([field '_M' num2str(i)], 3*numPairs, 1);
 
-        % equality & inequality constraints
-        eq_constraints{end+1,1}   = dd_block - vecY*M_out{i};
-        ineq_constraints{end+1,1} = kron(speye(numPairs), Mconstr_selector)*M_out{i};
+        % equality and inequality constraints
+        eq_constraints{i} = dd_block - vecY*M_out{i};
+        
+        % inequality constraints
+        for j = 1:numPairs
+            ineq_constraints{ineq_counter} = Mconstr_selector * M_out{i}((j-1)*3+1:j*3);
+            ineq_counter = ineq_counter + 1;
+        end
     end
 
     % concat constraints
