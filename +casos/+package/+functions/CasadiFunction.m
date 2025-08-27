@@ -9,10 +9,6 @@ properties (Dependent,SetAccess=private)
     class_name;
 end
 
-properties (Constant,Access=protected)
-    allow_eval_on_basis = false;
-end
-
 methods
     function obj = CasadiFunction(name, ex_i, ex_o, name_i, name_o, varargin)
         % Create new casadi function object.
@@ -124,9 +120,14 @@ methods
         i = index_out(obj.func,str);
     end
 
-    function argout = call(obj, argin)
+    function argout = call(obj, argin, on_basis)
         % Evaluate casadi function object.
         argout = call(obj.func, argin);
+
+        if nargin > 2 && on_basis
+            % return nonzero entries only
+            argout = cellfun(@(c,i) sparsity_cast(c,casadi.Sparsity.dense(nnz_out(obj.func,i),1)), argout(:), num2cell((1:get_n_out(obj))'-1), 'UniformOutput', false);
+        end
     end
 
     function s = get_stats(obj)

@@ -13,9 +13,14 @@ switch lower(solver)
     case 'scs'
         % solve conic problem using SCS
         sol = casos.package.solvers.SCSInterface(name,conic,varargin{:});
+
+    case 'clarabel'
+        % solve conic problem using Clarabel
+        sol = casos.package.solvers.ClarabelInterface(name,conic,varargin{:});
         
     otherwise
-        error('Solver "%s" undefined.', solver)
+        % fall back to CasADi conic interface
+        sol = casadi.conic(name,solver,conic, varargin{:});
 end
 
 end

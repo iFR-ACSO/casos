@@ -105,9 +105,9 @@ methods
         S = casos.Sparsity(obj.poly_sparsity);
     end
 
-    function Z = grambasis(obj)
+    function varargout = grambasis(obj,varargin)
         % Return a Gram basis for this polynomial.
-        Z = grambasis(obj.poly_sparsity);
+        [varargout{1:nargout}] = grambasis(obj.poly_sparsity,varargin{:});
     end
 
     function l = list_of_degree(obj)

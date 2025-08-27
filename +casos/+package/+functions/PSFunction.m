@@ -12,10 +12,6 @@ properties (SetAccess=private)
     class_name = 'PSFunction';
 end
 
-properties (Constant,Access=protected)
-    allow_eval_on_basis = true;
-end
-
 methods
     function obj = PSFunction(arg1, ex_i, ex_o, name_i, name_o, varargin)
         % Create new casadi function object.

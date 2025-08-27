@@ -1,5 +1,5 @@
 function argout = eval(obj,argin)
-% Call SCS interface.
+% Call SCS-like solver interface.
 
 % evaluate problem structure
 prob = call(obj.fhan,cell2struct(argin',fieldnames(obj.args_in)));
@@ -13,11 +13,6 @@ data.c =  full(prob.c);
 % cone
 K = structfun(@full,cone,'UniformOutput',false);
 
-% options to SCS
-opts = obj.opts.scs;
-% disable verbosity by default
-if ~isfield(opts,'verbose'), opts.verbose = 0; end
-
 % joint lower bounds
 % -A(x) + s = 0, s in [lb ub]
 lb = sparse(K.bl);
@@ -25,9 +20,6 @@ ub = sparse(K.bu);
 
 ml = length(lb)+1;
 m  = length(data.b);
-
-% reoder slack variables
-idx = 1:length(data.b);
 
 % remove trivial constraints
 J = false(size(data.b));
@@ -78,34 +70,12 @@ idx = [1+[I0; Ipos; Ineg]; find(~J)];
 data.A = data.A(idx,:);
 data.b = data.b(idx);
 
-% call SCS
-[x,y_,s_,obj.info] = scs(data,K,opts);
+% call solver
+[x,y_,s_] = obj.call_solver(data,K);
 
 % assign solution
 y = sparse(idx,1,y_,m,1);
 s = sparse(idx,1,s_,m,1);
-
-status_val = obj.info.status_val;
-if status_val == -1
-    % primal unbounded / dual infeasible
-    obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_INFEASIBLE;
-    assert(~obj.opts.error_on_fail,'Conic problem is dual infeasible.')
-elseif status_val == -2
-    % primal infeasible / dual unbounded
-    obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_INFEASIBLE;
-    assert(~obj.opts.error_on_fail,'Conic problem is primal infeasible.')
-elseif ismember(status_val, [2 -6 -7])
-    % inaccurate solution
-    obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_NAN;
-    assert(~obj.opts.error_on_fail,'Optimizer did not reach desired accuracy (Status: %s).', obj.info.status)
-elseif status_val < -2
-    % failure
-    obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_LIMITED;
-    assert(~obj.opts.error_on_fail,'Optimizer failed (Status: %s).', obj.info.status)
-else
-    % success
-    obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_SUCCESS;
-end
 
 % parse solution
 argout = call(obj.ghan,[argin {x y s}]);

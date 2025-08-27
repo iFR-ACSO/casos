@@ -8,7 +8,7 @@ end
 
 if ~isempty(tol)
     % remove coefficients below tolerance
-    assert(isdouble(tol) && isscalar(tol) && tol >= 0, 'Tolerance must be a positive scalar or is empty.')
+    assert(isa(deg,'double') && isscalar(tol) && tol >= 0, 'Tolerance must be a positive scalar or is empty.')
 
     p = remove_coeffs(p,tol);
 end
