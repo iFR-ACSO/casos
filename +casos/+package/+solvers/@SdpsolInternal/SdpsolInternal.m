@@ -86,11 +86,6 @@ methods
             [sdp, args, map, opts] = sdd_reduce(obj, sdp, opts, args);
             map_sdd_to_primal = map;
             map_sdd_to_dual    = map.lam_x;
-        else
-            % if no SDD was present create an identity map
-            %map_sdd_to_primal.x = speye(length(sdp.x));
-            %map_sdd_to_primal.g = speye(size(sdp.g,1));
-            %map_sdd_to_dual     = [speye(length(sdp.x)), zeros(length(sdp.x), length(sdp.g))];
         end
 
         % rebuild problem from DD to LP
