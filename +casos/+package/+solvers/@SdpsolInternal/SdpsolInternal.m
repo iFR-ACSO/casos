@@ -85,30 +85,37 @@ methods
         if isfield(opts.Kx,'sdd') || isfield(opts.Kc,'sdd')
             [sdp, args, map, opts] = sdd_reduce(obj, sdp, opts, args);
             map_sdd_to_primal = map;
-            map_to_dual    = map.lam_x;
+            map_sdd_to_dual    = map.lam_x;
         else
             % if no SDD was present create an identity map
             map_sdd_to_primal.x = speye(length(sdp.x));
             map_sdd_to_primal.g = speye(length(sdp.g));
-            map_to_dual     = [speye(length(sdp.x)), zeros(length(sdp.x), length(sdp.g))];
+            %map_sdd_to_dual     = [speye(length(sdp.x)), zeros(length(sdp.x), length(sdp.g))];
         end
 
         % rebuild problem from DD to LP
         if isfield(opts.Kx,'dd') || isfield(opts.Kc,'dd')
             [sdp, args, map, opts] = dd_reduce(obj, sdp, opts, args);
             map_dd_to_primal = map;
-            map_to_dual   = map.lam_x;
+            map_dd_to_dual   = map.lam_x;
         else
             % if no DD was present create an identity map
             map_dd_to_primal.x = speye(length(sdp.x));
             map_dd_to_primal.g = speye(length(sdp.g));
-            map_to_dual    = [speye(length(sdp.x)), zeros(length(sdp.x), length(sdp.g))];
+            map_dd_to_dual    = [speye(length(sdp.x)), zeros(length(sdp.x), length(sdp.g))];
         end
 
         % Create the full map
         obj.map.x = map_sdd_to_primal.x*map_dd_to_primal.x;
         obj.map.g = map_sdd_to_primal.g*map_dd_to_primal.g;
-        obj.map.lam_x = map_to_dual;
+
+        if exist('map_sdd_to_dual', 'var')
+            obj.map.lam_x = map_sdd_to_dual;
+        else
+            obj.map.lam_x = map_dd_to_dual;
+        end
+
+
         obj.map.lam_a = [zeros(size(obj.map.g,1), size(obj.map.x,2)), speye(size(obj.map.g))];
 
         % decision variables
