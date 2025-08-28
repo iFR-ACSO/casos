@@ -52,27 +52,24 @@ n_inserted = length(added_vars);
 sdp.x = [sdp.x(1:Nlin); added_vars; sdp.x(Nlin+1:end)];
 
 % add the variables M to sdp.x
-Nlin = Nlin + sum(Nsdd.^2)+n_inserted;
+Nlin = Nlin + nsdd2+n_inserted;
 Mlin = Mlin + sdd_index_x.num_eq+sdd_index_g.num_eq; 
 Mpsd = [Mpsd, repmat(2, 1, n_inserted/3)];
 
-
 % update lbx and ubx 
-args.dd_lbx = [args.dd_lbx; -inf(sum(Nsdd.^2) + n_inserted,1)];
-args.dd_ubx = [args.dd_ubx;  inf(sum(Nsdd.^2) + n_inserted,1)];
+args.dd_lbx = [args.dd_lbx; -inf(nsdd2 + n_inserted,1)];
+args.dd_ubx = [args.dd_ubx;  inf(nsdd2 + n_inserted,1)];
 
 % update linear variables and constraints
-opts.Kx = setfield(opts.Kx,'lin',Nlin);
-opts.Kc = setfield(opts.Kc,'lin',Mlin);
-
-% update linear variables and constraints
-opts.Kx = setfield(opts.Kx,'lin', Nlin);
-opts.Kc = setfield(opts.Kc,'lin', Mlin);
-opts.Kc = setfield(opts.Kc,'psd', Mpsd);
+opts.Kx.lin = Nlin;
+opts.Kc.lin = Mlin;
+opts.Kc.psd = Mpsd;
 
 % map from new sdp.x to old (only the non-SDD variables)
 len_x_orig = length(x_original);
 len_x_new  = length(sdp.x);
+len_g_orig = length(g_original); 
+len_g_new  = length(sdp.g);
 
 % original variables occupy:
 %  - first nlin0 entries unchanged
@@ -91,7 +88,7 @@ idx_original = [idx_xlin, idx_xrest];
 map.x = sparse(1:len_x_orig, idx_original, 1, len_x_orig, len_x_new);
 
 % map from new sdp.g to old
-map.g = [speye(length(g_original)), sparse(length(g_original), length(sdp.g)-length(g_original))];
+map.g = [speye(len_g_orig), sparse(len_g_orig, len_g_new-len_g_orig)];
 
 % map.lam_x for non-SDD variables
 len_non_sdd = nlin0 + nlor + nrot + npsd;
@@ -112,7 +109,7 @@ assert(length(cols_non_sdd) == len_non_sdd, ...
 
 % selection matrix for non-SDD variables
 % equivalent to xtemp = jacobian([xlin; xlor; xrot; xpsd; xdd], sdp.x);
-xtemp = sparse(1:len_non_sdd, cols_non_sdd, 1, len_non_sdd, len_x_new);
+map_non_sdd = sparse(1:len_non_sdd, cols_non_sdd, 1, len_non_sdd, len_x_new);
 
 % map.lam_x for SDD variables using equality indices
 G = sparse(nsdd2, size(map.g,2));
@@ -123,17 +120,11 @@ cols = sdd_index_x.eq_idx;              % columns from eq_idx
 % place ones along diagonal
 G(sub2ind(size(G), rows, cols)) = 1;
 
-map.lam_x = [xtemp, sparse(size(xtemp, 1), size(map.g,2));
-             zeros(nsdd2, size(xtemp,2)), G];
+map.lam_x = [map_non_sdd, sparse(size(map_non_sdd, 1), size(map.g,2));
+             zeros(nsdd2, size(map_non_sdd,2)), G];
 
-map.lam_a = [sparse(size(map.g,1), size(xtemp,2)), map.g];
+map.lam_a = [sparse(size(map.g,1), size(map_non_sdd,2)), map.g];
 
-end
-
-
-function varargout = separate(A,varargin)
-% Separate array into subarrays.
-    varargout = mat2cell(A,varargin{:});
 end
 
 
