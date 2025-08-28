@@ -10,25 +10,24 @@ check_cone(obj.get_cones,opts.Kc,'sdd');
 % get dimensions of cones in the program decision variables
 Nlin = get_dimension(obj.get_cones,opts.Kx,'lin'); nlin0  = sum(Nlin);
 Nsdd = get_dimension(obj.get_cones,opts.Kx,'sdd'); nsdd2  = sum(Nsdd.^2);
-% (unused, but collected for completeness)
 Nlor = get_dimension(obj.get_cones,opts.Kx,'lor'); nlor   = sum(Nlor);
 Nrot = get_dimension(obj.get_cones,opts.Kx,'rot'); nrot   = sum(Nrot);
 Npsd = get_dimension(obj.get_cones,opts.Kx,'psd'); npsd   = sum(Npsd);
+% (unused, but collected for completeness)
 Ndd  = get_dimension(obj.get_cones,opts.Kx,'dd');  ndd2   = sum(Ndd.^2);
-
 
 % get dimensions of cones in the program constraints
 Mlin = get_dimension(obj.get_cones,opts.Kc,'lin');
 Msdd = get_dimension(obj.get_cones,opts.Kc,'sdd');
+Mpsd = get_dimension(obj.get_cones,opts.Kc,'psd');
+Mdd  = get_dimension(obj.get_cones,opts.Kc,'dd');
 % (unused, but collected for completeness)
 Mlor = get_dimension(obj.get_cones,opts.Kc,'lor');
 Mrot = get_dimension(obj.get_cones,opts.Kc,'rot');
-Mpsd = get_dimension(obj.get_cones,opts.Kc,'psd');
-Mdd  = get_dimension(obj.get_cones,opts.Kc,'dd');
 
-% temporarily save sdp.x (original)
-x_original = sdp.x;
-g_original = sdp.g;
+% save sizes of sdp.x and sdp.g (original)
+len_x_orig = length(sdp.x);
+len_g_orig = length(sdp.g); 
 
 % initialize SDD index structs in case the fields don't exist
 sdd_index_g.num_eq = 0;
@@ -60,15 +59,13 @@ Mpsd = [Mpsd, repmat(2, 1, n_inserted/3)];
 args.dd_lbx = [args.dd_lbx; -inf(nsdd2 + n_inserted,1)];
 args.dd_ubx = [args.dd_ubx;  inf(nsdd2 + n_inserted,1)];
 
-% update linear variables and constraints
+% update cones
 opts.Kx.lin = Nlin;
 opts.Kc.lin = Mlin;
 opts.Kc.psd = Mpsd;
 
-% map from new sdp.x to old (only the non-SDD variables)
-len_x_orig = length(x_original);
+% get sizes of NEW sdp.x and sdp.g
 len_x_new  = length(sdp.x);
-len_g_orig = length(g_original); 
 len_g_new  = length(sdp.g);
 
 % original variables occupy:
