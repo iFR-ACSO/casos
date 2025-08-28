@@ -105,6 +105,7 @@ methods
         obj.map.x = map_SDD_2_ORIG.x*map_DD_2_ORIG.x;
         obj.map.g = map_SDD_2_ORIG.g*map_DD_2_ORIG.g;
         obj.map.lam_x = [speye(size(obj.map.x)), zeros(size(obj.map.x,1), size(obj.map.g,2))];
+        %obj.map.lam_x = map.lam_x;
         obj.map.lam_a = [zeros(size(obj.map.g,1), size(obj.map.x,2)), speye(size(obj.map.g))];
 
         % decision variables
@@ -226,7 +227,7 @@ methods (Access=protected)
     [sdp,args,map,opts] = sdd_reduce(obj,sdp,opts,args);
 
     % replace DD cones (constraint or decision variable form)
-    [sdp,args,M_out,num_eq,num_ineq,opts] = replaceDDcones(obj,sdp,sizes,Mlin,args,opts,field)
+    [sdp,args,M_out,num_nlin,dd_index,opts] = replaceDDcones(obj,sdp,sizes,Mlin,args,opts,field)
 
     function S = copyElement(obj)
         % Use copy constructor.
