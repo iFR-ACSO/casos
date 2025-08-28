@@ -88,8 +88,8 @@ methods
             map_sdd_to_dual    = map.lam_x;
         else
             % if no SDD was present create an identity map
-            map_sdd_to_primal.x = speye(length(sdp.x));
-            map_sdd_to_primal.g = speye(length(sdp.g));
+            %map_sdd_to_primal.x = speye(length(sdp.x));
+            %map_sdd_to_primal.g = speye(size(sdp.g,1));
             %map_sdd_to_dual     = [speye(length(sdp.x)), zeros(length(sdp.x), length(sdp.g))];
         end
 
@@ -101,20 +101,20 @@ methods
         else
             % if no DD was present create an identity map
             map_dd_to_primal.x = speye(length(sdp.x));
-            map_dd_to_primal.g = speye(length(sdp.g));
-            map_dd_to_dual    = [speye(length(sdp.x)), zeros(length(sdp.x), length(sdp.g))];
+            map_dd_to_primal.g = speye(size(sdp.g,1));
+            map_dd_to_dual     = [speye(length(sdp.x)), zeros(length(sdp.x), size(sdp.g,1))];
         end
 
-        % Create the full map
-        obj.map.x = map_sdd_to_primal.x*map_dd_to_primal.x;
-        obj.map.g = map_sdd_to_primal.g*map_dd_to_primal.g;
-
+        % Select which map to use (SDD reduction takes precedence) 
         if exist('map_sdd_to_dual', 'var')
             obj.map.lam_x = map_sdd_to_dual;
+            obj.map.x = map_sdd_to_primal.x;
+            obj.map.g = map_sdd_to_primal.g;
         else
             obj.map.lam_x = map_dd_to_dual;
+            obj.map.x = map_dd_to_primal.x;
+            obj.map.g = map_dd_to_primal.g;
         end
-
 
         obj.map.lam_a = [zeros(size(obj.map.g,1), size(obj.map.x,2)), speye(size(obj.map.g))];
 
