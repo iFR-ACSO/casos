@@ -1,4 +1,4 @@
-function [sdp, args, M_out, num_eq, num_ineq, opts] = replaceDDcones(obj, sdp, sizes, Mlin, args, opts, field)
+function [sdp, args, M_out, num_nlin, dd_index, opts] = replaceDDcones(~, sdp, sizes, Mlin, args, opts, field)
 % Replace DD cones (constraint or decision variable form)
 %
 % Inputs:
@@ -71,6 +71,21 @@ function [sdp, args, M_out, num_eq, num_ineq, opts] = replaceDDcones(obj, sdp, s
     eq_constraints   = vertcat(eq_constraints{:});
     ineq_constraints = vertcat(ineq_constraints{:});
 
+    % return counts
+    num_eq   = length(eq_constraints);
+    num_ineq = length(ineq_constraints);
+
+    % build mapping indices
+    if Mlin ~= 0
+        start_idx = Mlin + 1;                    % position where eq_constraints start
+        eq_idx    = start_idx : start_idx+num_eq-1;
+        ineq_idx  = start_idx+num_eq : start_idx+num_eq+num_ineq-1;
+    else
+        start_idx = 1;
+        eq_idx    = start_idx : start_idx+num_eq-1;
+        ineq_idx  = start_idx+num_eq : start_idx+num_eq+num_ineq-1;
+    end
+
     % Special handling depending on field
     if strcmp(field,'g')
         % remove previous constraints related to dd
@@ -91,13 +106,18 @@ function [sdp, args, M_out, num_eq, num_ineq, opts] = replaceDDcones(obj, sdp, s
         end
     end
 
-    % return counts
-    num_eq   = length(eq_constraints);
-    num_ineq = length(ineq_constraints);
+    % save mapping for later retrieval (duals)
+    dd_index.eq_idx   = eq_idx;    % indices in sdp.g for eq_constraints
+    dd_index.ineq_idx = ineq_idx;  % indices in sdp.g for ineq_constraints
+    dd_index.num_eq   = num_eq;
+    dd_index.num_ineq = num_ineq;
 
     % update bounds
     args.dd_lbg = [args.dd_lbg; zeros(num_eq,1); zeros(num_ineq,1)];
     args.dd_ubg = [args.dd_ubg; zeros(num_eq,1);  inf(num_ineq,1)];
+
+    % retrieve the number of new constraints
+    num_nlin = num_eq + num_ineq;
 
     % clean up opts
     if strcmp(field,'g') && isfield(opts.Kc,'dd')
