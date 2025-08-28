@@ -26,12 +26,12 @@ Mlor = get_dimension(obj.get_cones,opts.Kc,'lor');
 Mrot = get_dimension(obj.get_cones,opts.Kc,'rot');
 
 % save sizes of sdp.x and sdp.g (original)
-len_x_orig = length(sdp.x);
-len_g_orig = length(sdp.g); 
+len_x_orig = length(sdp.x);     % original decision variable length
+len_g_orig = length(sdp.g);     % original constraint length
 
 % initialize SDD index structs in case the fields don't exist
-sdd_index_g.num_eq = 0;
-sdd_index_x.num_eq = 0;
+sdd_index_g.num_eq = 0;         % in constraints
+sdd_index_x.num_eq = 0;         % in decision variables
 
 % verify SDD cones in the constraints and create slack SDD variables
 M_g = cell(length(Mdd),1);
@@ -117,9 +117,11 @@ cols = sdd_index_x.eq_idx;              % columns from eq_idx
 % place ones along diagonal
 map_sdd_eqs(sub2ind([nsdd2, len_g_new], rows, cols)) = 1;
 
+% combine non-SDD and SDD selection matrices
 map.lam_x = [map_non_sdd, sparse(len_non_sdd, len_g_new);
              sparse(nsdd2, len_x_new), map_sdd_eqs];
 
+% map lam_a (dual variables for g)
 map.lam_a = [sparse(len_g_orig, len_x_new), map.g];
 
 end

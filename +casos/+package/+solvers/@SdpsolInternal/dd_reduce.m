@@ -26,12 +26,12 @@ Mpsd = get_dimension(obj.get_cones,opts.Kc,'psd');
 Msdd = get_dimension(obj.get_cones,opts.Kc,'sdd');
 
 % save sizes of sdp.x and sdp.g (original)
-len_x_orig = length(sdp.x);
-len_g_orig = length(sdp.g); 
+len_x_orig = length(sdp.x);     % original decision variable length
+len_g_orig = length(sdp.g);     % original constraint length
 
 % create zero initial 
-num_nlin_x = 0;
-num_nlin_g = 0;
+num_nlin_x = 0;     % in decision variables
+num_nlin_g = 0;     % in constraints
 
 % verify DD cones in the constraints and create slack DD variables
 M_g = cell(length(Mdd),1);
@@ -116,8 +116,11 @@ cols = dd_index_x.eq_idx;              % columns from eq_idx
 % place ones along diagonal
 map_dd_eqs(sub2ind([ndd2, len_g_new], rows, cols)) = 1;
 
+% combine non-DD and DD selection matrices
 map.lam_x = [map_non_dd, sparse(len_non_dd, len_g_new);
              sparse(ndd2, len_x_new), map_dd_eqs];
 
+% map lam_a (dual variables for g)
 map.lam_a = [sparse(len_g_orig, len_x_new), map.g];
+
 end

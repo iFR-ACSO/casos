@@ -31,25 +31,28 @@ total_eq   = nCones;                     % one equality per cone
 total_ineq = sum((sizes.^2 - sizes)/2);  % total inequalities
 
 % preallocate
-M_out = cell(nCones,1);
-eq_constraints   = cell(total_eq,1);
-ineq_constraints = cell(total_ineq,1);
+M_out = cell(nCones,1);                  % slack variable blocks
+eq_constraints   = cell(total_eq,1);     % equality constraints
+ineq_constraints = cell(total_ineq,1);   % inequality constraints
 
-% selector for PSD constraints on M
+% selector for PSD constraints on M (used later)
 M_selector = sparse([1,2,3,4],[1,3,3,2],[1,1,1,1],4,3);
 
+% counter for inequality constraints
 ineq_counter = 1;
+
+% loop over SDD cones
 for i = 1:nCones
-    idx = nCones - i + 1;
-    n   = sizes(idx);
-    numPairs = (n-1)*n/2;
+    idx = nCones - i + 1;   % process cones in reverse order
+    n   = sizes(idx);       % size of current cone
+    numPairs = (n-1)*n/2;   % number of off-diagonal pairs
 
     % locate block in sdp.(field)
     ind = [ length(sdp.(field)) + 1 - sum(sizes(end-i+1:end).^2);
             length(sdp.(field))     - sum(sizes(end-i+2:end).^2) ];
     sdd_block = sdp.(field)(ind(1):ind(2));
 
-    % map M → vec(Y)
+    % map M -> vec(Y)
     vecY = map_M_to_Y(n, numPairs);
 
     % slack variable
@@ -66,31 +69,38 @@ for i = 1:nCones
 end
 
 % concatenate
-eq_constraints   = vertcat(eq_constraints{:});
-ineq_constraints = vertcat(ineq_constraints{:});
+eq_constraints   = vertcat(eq_constraints{:});      % combine equalities
+ineq_constraints = vertcat(ineq_constraints{:});    % combine inequalities
 
 % counts
-num_eq   = length(eq_constraints);
-num_ineq = length(ineq_constraints);
+num_eq   = length(eq_constraints);      % number of equality constraints
+num_ineq = length(ineq_constraints);    % number of inequality constraints
 
 % mapping indices
 if Mlin ~= 0
-    start_idx = Mlin + 1;
+    % constraints start after existing linear constraints
+    start_idx = Mlin + 1;     
 else
     start_idx = 1;
 end
-eq_idx   = start_idx : start_idx+num_eq-1;
-ineq_idx = start_idx+num_eq : start_idx+num_eq+num_ineq-1;
+% indices of equality constraints
+eq_idx   = start_idx : start_idx+num_eq-1;      
+% indices of inequalities
+ineq_idx = start_idx+num_eq : start_idx+num_eq+num_ineq-1; 
 
 % insert constraints
 if strcmp(field,'g')
-    sdp.g = sdp.g(1:end-sum(sizes.^2));  % remove old SDD
+    % remove old SDD
+    sdp.g = sdp.g(1:end-sum(sizes.^2));  
+
+    % insert new equality and inequality constraints
     if Mlin ~= 0
         sdp.g = [sdp.g(1:Mlin); eq_constraints; ineq_constraints; sdp.g(Mlin+1:end)];
     else
         sdp.g = [eq_constraints; ineq_constraints; sdp.g];
     end
 else
+    % for decision variables, same insertion but field='x'
     if Mlin ~= 0
         sdp.g = [sdp.g(1:Mlin); eq_constraints; ineq_constraints; sdp.g(Mlin+1:end)];
     else
