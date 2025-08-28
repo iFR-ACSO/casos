@@ -8,7 +8,7 @@ check_cone(obj.get_cones,opts.Kx,'dd');
 check_cone(obj.get_cones,opts.Kc,'dd');
 
 % get dimensions of cones in the program decision variables
-Nlin = get_dimension(obj.get_cones,opts.Kx,'lin');
+Nlin = get_dimension(obj.get_cones,opts.Kx,'lin'); nlin0  = sum(Nlin);
 Ndd  = get_dimension(obj.get_cones,opts.Kx,'dd');
 % (unused, but collected for completeness)
 Nlor = get_dimension(obj.get_cones,opts.Kx,'lor');
@@ -29,7 +29,7 @@ Msdd = get_dimension(obj.get_cones,opts.Kc,'sdd');
 x_original = sdp.x;
 g_original = sdp.g;
 
-[xlin, xlor, xrot, xpsd, xdd, xsdd] = separate(x_original, [sum(Nlin) sum(Nlor) sum(Nrot) sum(Npsd) sum(Ndd.^2) sum(Nsdd.^2)]);
+[xlin, xlor, xrot, xpsd, xdd, ~] = separate(x_original, [sum(Nlin) sum(Nlor) sum(Nrot) sum(Npsd) sum(Ndd.^2) sum(Nsdd.^2)]);
 
 % create zero initial 
 num_nlin_x = 0;
@@ -65,8 +65,24 @@ args.dd_ubx = [args.dd_ubx;  inf(n_added,1)];
 opts.Kx = setfield(opts.Kx,'lin',Nlin);
 opts.Kc = setfield(opts.Kc,'lin',Mlin);
 
-% map from new sdp.x to old (only the non-dd variables)
-map.x = jacobian(x_original, sdp.x);
+% map from new sdp.x to old (only the non-DD variables)
+len_x_orig = length(x_original);
+len_x_new  = length(sdp.x);
+
+% original variables occupy:
+%  - first nlin0 entries unchanged
+%  - then after insertion, the rest continues
+idx_xlin  = 1:nlin0;
+idx_xrest = (nlin0 + length(added_vars) + 1) : len_x_new;
+
+% sanity: lengths must match
+assert( length(idx_xlin) + length(idx_xrest) == len_x_orig, ...
+    'Indexing mismatch building map.x (lengths do not add up).');
+
+idx_original = [idx_xlin, idx_xrest];
+
+% selection matrix (one 1 per row) <=> map.x = jacobian(x_original, sdp.x)
+map.x = sparse(1:len_x_orig, idx_original, 1, len_x_orig, len_x_new);
 
 % map from new sdp.g to old
 map.g = [speye(length(g_original)), sparse(length(g_original), length(sdp.g)-length(g_original))];
