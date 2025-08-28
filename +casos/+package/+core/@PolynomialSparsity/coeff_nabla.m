@@ -1,5 +1,5 @@
 function [S,coeffs] = coeff_nabla(obj,coeffs,x)
-% Compute coefficient matrix for polynomial nabla operator.
+% Compute coefficient matrix for polynomial nabla operation.
 
 x = casos.Indeterminates(x);
 

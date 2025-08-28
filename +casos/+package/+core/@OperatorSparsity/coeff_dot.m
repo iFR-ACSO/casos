@@ -1,5 +1,5 @@
 function [S,coeffs] = coeff_dot(obj,S2,coeff1,coeff2)
-% Compute coefficient matrix for dot operator.
+% Compute coefficient matrix for dot operation.
 
 if ~is_operator(S2)
     % operator evaluation
@@ -66,7 +66,7 @@ else
         coeffs = reshape(sum2(A*B),size(M1,1),size(M2,2));
 
     else
-        % composite operator matrices
+        % composition of operator matrices
         coeffs = M1*M2;
     end
 

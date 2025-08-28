@@ -238,7 +238,7 @@ methods
     % sparsify coefficients
     b = sparsify(obj);
 
-    %% Unary operators
+    %% Unary operations
     b = power(a,n);
     b = transpose(a);
     
@@ -252,7 +252,7 @@ methods
         p.coeffs = uplus(p.coeffs);
     end
 
-    %% Binary operators
+    %% Binary operations
     c = dot(a,b);
 
     function c = minus(a,b)
@@ -265,7 +265,7 @@ methods
     c = rdivide(p,b);
     c = times(a,b);
 
-    %% Matrix operators
+    %% Matrix operations
     c = kron(a,b);
     c = mldivide(a,p);
     b = mpower(a,n);

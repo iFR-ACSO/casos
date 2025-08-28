@@ -1,5 +1,5 @@
 function [S,coeffs] = coeff_int(obj,coeffs,x,range)
-% Compute coefficient matrix for polynomial integral operator.
+% Compute coefficient matrix for polynomial integral operations.
 
 x = casos.Indeterminates(x);
 
