@@ -113,7 +113,7 @@ methods
 
         % decision variables
         x = sdp.x;
-        
+
         % parameter
         if isfield(sdp,'p')
             p = sdp.p;
@@ -232,6 +232,9 @@ methods (Access=protected)
 
     % replace DD cones (constraint or decision variable form)
     [sdp,args,M_out,num_nlin,dd_index,opts] = replaceDDcones(obj,sdp,sizes,Mlin,args,opts,field)
+
+    % replace DD cones (constraint or decision variable form)
+    [sdp,args,M_out,num_nlin,sdd_index,opts] = replaceSDDcones(obj,sdp,sizes,Mlin,args,opts,field)
 
     function S = copyElement(obj)
         % Use copy constructor.
