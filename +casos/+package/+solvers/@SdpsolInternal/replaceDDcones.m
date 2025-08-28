@@ -17,12 +17,13 @@ function [sdp, args, M_out, num_nlin, dd_index, opts] = replaceDDcones(~, sdp, s
 %              'x' → replace DD cones in decision variables
 %
 % Outputs:
-%   sdp     - updated struct with DD cones replaced by linear constraints
-%   args    - updated struct with augmented bounds
-%   M_out   - cell array of slack variable blocks (one per DD cone)
-%   num_eq  - number of equality constraints introduced
-%   num_ineq- number of inequality constraints introduced
-%   opts    - updated cone specification struct
+%   sdp      - updated struct with DD cones replaced by linear constraints
+%   args     - updated struct with augmented bounds
+%   M_out    - cell array of slack variable blocks (one per DD cone)
+%   num_nlin - number of equality and inequality constraints introduced
+%   dd_index - struct with indexes for the equality and inequality
+%              constraints introduced
+%   opts     - updated cone specification struct
 
     % add linear constraint to guarantee DD
     Mconstr_selector = sparse([1, 2, 3, 4, 1, 2, 3, 4],   ...
