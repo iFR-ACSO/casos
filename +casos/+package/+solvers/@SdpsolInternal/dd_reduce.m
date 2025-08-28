@@ -110,16 +110,16 @@ assert(length(cols_non_dd) == len_non_dd, ...
 map_non_dd = sparse(1:len_non_dd, cols_non_dd, 1, len_non_dd, len_x_new);
 
 % DD part uses map.g through equality indices
-map_dd_eqs = sparse(ndd2, size(map.g,2));
+map_dd_eqs = sparse(ndd2, len_g_new);
 n_eq = dd_index_x.num_eq;              % number of equalities
 rows = 1:n_eq;                         % choose first n_eq rows (or any specific ones)
 cols = dd_index_x.eq_idx;              % columns from eq_idx
 
 % place ones along diagonal
-map_dd_eqs(sub2ind(size(map_dd_eqs), rows, cols)) = 1;
+map_dd_eqs(sub2ind([ndd2, len_g_new], rows, cols)) = 1;
 
-map.lam_x = [map_non_dd, sparse(size(map_non_dd, 1), size(map.g,2));
-             zeros(ndd2, size(map_non_dd,2)), map_dd_eqs];
+map.lam_x = [map_non_dd, sparse(len_non_dd, len_g_new);
+             sparse(ndd2, len_x_new), map_dd_eqs];
 
-map.lam_a = [sparse(size(map.g,1), size(map_non_dd,2)), map.g];
+map.lam_a = [sparse(len_g_orig, len_x_new), map.g];
 end

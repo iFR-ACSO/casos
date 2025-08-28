@@ -112,18 +112,18 @@ assert(length(cols_non_sdd) == len_non_sdd, ...
 map_non_sdd = sparse(1:len_non_sdd, cols_non_sdd, 1, len_non_sdd, len_x_new);
 
 % map.lam_x for SDD variables using equality indices
-map_sdd_eqs = sparse(nsdd2, size(map.g,2));
+map_sdd_eqs = sparse(nsdd2, len_g_new);
 n_eq = sdd_index_x.num_eq;              % number of equalities
 rows = 1:n_eq;                          % choose first n_eq rows (or any specific ones)
 cols = sdd_index_x.eq_idx;              % columns from eq_idx
 
 % place ones along diagonal
-map_sdd_eqs(sub2ind(size(map_sdd_eqs), rows, cols)) = 1;
+map_sdd_eqs(sub2ind([nsdd2, len_g_new], rows, cols)) = 1;
 
-map.lam_x = [map_non_sdd, sparse(size(map_non_sdd, 1), size(map.g,2));
-             zeros(nsdd2, size(map_non_sdd,2)), map_sdd_eqs];
+map.lam_x = [map_non_sdd, sparse(len_non_sdd, len_g_new);
+             sparse(nsdd2, len_x_new), map_sdd_eqs];
 
-map.lam_a = [sparse(size(map.g,1), size(map_non_sdd,2)), map.g];
+map.lam_a = [sparse(len_g_orig, len_x_new), map.g];
 
 end
 
