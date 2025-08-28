@@ -54,19 +54,21 @@ sdp.x = [sdp.x(1:Nlin); added_vars; sdp.x(Nlin+1:end)];
 Mlin = Mlin + num_nlin_x + num_nlin_g;
 
 % add the variables M to sdp.x
-n_added = sum(Ndd.^2) + length(added_vars);
+n_added = ndd2 + n_inserted;
 Nlin = Nlin + n_added;
 
 args.dd_lbx = [args.dd_lbx; -inf(n_added,1)];
 args.dd_ubx = [args.dd_ubx;  inf(n_added,1)];
 
 % update linear variables and constraints
-opts.Kx = setfield(opts.Kx,'lin',Nlin);
-opts.Kc = setfield(opts.Kc,'lin',Mlin);
+opts.Kx.lin = Nlin;
+opts.Kc.lin = Mlin;
 
 % map from new sdp.x to old (only the non-DD variables)
 len_x_orig = length(x_original);
 len_x_new  = length(sdp.x);
+len_g_orig = length(g_original); 
+len_g_new  = length(sdp.g);
 
 % original variables occupy:
 %  - first nlin0 entries unchanged
@@ -84,7 +86,7 @@ idx_original = [idx_xlin, idx_xrest];
 map.x = sparse(1:len_x_orig, idx_original, 1, len_x_orig, len_x_new);
 
 % map from new sdp.g to old
-map.g = [speye(length(g_original)), sparse(length(g_original), length(sdp.g)-length(g_original))];
+map.g = [speye(len_g_orig), sparse(len_g_orig, len_g_new-len_g_orig)];
 
 % map from new lam_* to original lam
 len_non_dd = nlin0 + nlor + nrot + npsd;
