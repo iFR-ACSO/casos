@@ -32,6 +32,7 @@ methods
         end
     end
 
+    %% Options & Cones
     function print_cones(obj)
         % Print list of supported cones.
         disp('Supported Cones:')
@@ -63,7 +64,7 @@ methods
 
         % print specified cone, if any
         if ~ismember(names{1},{'Kx' 'Kc'}) %TODO: check for type rather than name
-            assert(length(names) == 1,'Undefined behaviour.')
+            assert(isscalar(names), 'Undefined behaviour.')
         elseif length(names) > 1
             print_cone(obj,names{2});
         else

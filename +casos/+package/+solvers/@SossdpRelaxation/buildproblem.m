@@ -8,17 +8,24 @@ n = length(sos.x);
 m = length(sos.g);
 
 % get cone dimensions
-Nl = get_dimension(obj.get_cones,opts.Kx,'lin');
-Ns = get_dimension(obj.get_cones,opts.Kx,'sos');
-Ml = get_dimension(obj.get_cones,opts.Kc,'lin');
-Ms = get_dimension(obj.get_cones,opts.Kc,'sos');
+% get cone dimensions for the decision variables 
+Nl   = get_dimension(obj.get_cones,opts.Kx,'lin');
+Ns   = get_dimension(obj.get_cones,opts.Kx,'sos');
+Nds  = get_dimension(obj.get_cones,opts.Kx,'dsos');
+Nsds = get_dimension(obj.get_cones,opts.Kx,'sdsos');
 
-assert(n == (Nl + Ns), 'Dimension of Kx must be equal to number of variables (%d).', n);
-assert(m == (Ml + Ms), 'Dimension of Kc must be equal to number of constraints (%d).', m)
+% get cone dimensions for the constraints
+Ml   = get_dimension(obj.get_cones,opts.Kc,'lin');
+Ms   = get_dimension(obj.get_cones,opts.Kc,'sos');
+Mds  = get_dimension(obj.get_cones,opts.Kc,'dsos');
+Msds = get_dimension(obj.get_cones,opts.Kc,'sdsos');
+
+assert(n == (Nl + Ns + Nds + Nsds), 'Dimension of Kx must be equal to number of variables (%d).', n);
+assert(m == (Ml + Ms + Mds + Msds), 'Dimension of Kc must be equal to number of constraints (%d).', m)
 
 % select sum-of-squares variables and constraints
-Is = [false(Nl,1); true(Ns,1)];
-Js = [false(Ml,1); true(Ms,1)];
+Is = [false(Nl,1); true(Ns,1); true(Nds,1); true(Nsds,1)];
+Js = [false(Ml,1); true(Ms,1); true(Mds,1); true(Msds,1)];
 
 % obtain Gram basis for decision variables
 [Zvar_s,Ksdp_x_s,~,Mp_x,Md_x] = grambasis(sparsity(sos.x),Is,opts.newton_solver);
@@ -98,16 +105,37 @@ sdp.x = [Qvar_sdp; Qcon_G];
 sdp.f = sdp_f;
 sdp.g = sdp_g - map_g*Qcon_G;
 sdp.p = Qpar;
+
 % store derivatives
 sdp.derivatives.Hf = blockcat(map_x'*sdp_Hf*map_x, ...
                               sparse(nnz_lin_x+nnz_gram_x,nnz_gram_g), ...
                               sparse(nnz_gram_g,nnz_lin_x+nnz_gram_x), ...
                               sparse(nnz_gram_g,nnz_gram_g));
+
 sdp.derivatives.Jf = horzcat(sdp_Jf*map_x, sparse(1,nnz_gram_g));
 sdp.derivatives.Jg = horzcat(sdp_Jg*map_x, -map_g);
+
 % SDP options
 sdpopt = opts.sdpsol_options;
-sdpopt.Kx = struct('lin', nnz_lin_x, 'psd', [Ksdp_x_s; Ksdp_g_s]);
+
+% define the cones in the sdp level
+sdpopt.Kx.lin = nnz_lin_x;
+
+% Split the matrices using mat2cell
+cellArray_x = mat2cell(Ksdp_x_s, [Ns Nds Nsds], 1);
+cellArray_g = mat2cell(Ksdp_g_s, [Ms Mds Msds], 1);
+
+% concatenate
+temp_split = cellfun(@(x, g) [x; g], cellArray_x , cellArray_g, 'UniformOutput', false);
+
+% assign to struct fields
+[sdpopt.Kx.psd, sdpopt.Kx.dd, sdpopt.Kx.sdd] = deal(temp_split{:});
+
+% remove empty fields
+fieldnames_temp = fieldnames(sdpopt.Kx);
+sdpopt.Kx = rmfield(sdpopt.Kx, fieldnames_temp(structfun(@isempty, sdpopt.Kx)));
+
+% assign number of linear cones in constraints
 sdpopt.Kc = struct('lin', nnz_lin_g + nnz_sos_g);
 
 % initialize SDP solver
@@ -132,7 +160,7 @@ sdpsol.lam_x = casadi.SX.sym('sol_lam_x',size(sdp.x));
 sdpsol.lam_g = casadi.SX.sym('sol_lam_g',size(sdp.g));
 sdpsol.lam_p = casadi.SX.sym('sol_lam_p',size(sdp.p));
 
-% coordinates of SOS solution
+% % coordinates of SOS solution
 sossol.x = blkdiag(speye(nnz_lin_x), Mp_x, sparse(0,nnz_gram_g))*sdpsol.x;
 sossol.f = sdpsol.f;
 sossol.g = [
