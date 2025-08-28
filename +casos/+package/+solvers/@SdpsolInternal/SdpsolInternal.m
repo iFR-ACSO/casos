@@ -84,32 +84,36 @@ methods
         % rebuild problem from SDD to SOCP
         if isfield(opts.Kx,'sdd') || isfield(opts.Kc,'sdd')
             [sdp, args, map, opts] = sdd_reduce(obj, sdp, opts, args);
-            map_SDD_2_ORIG = map;
+            map_sdd_to_primal = map;
+            map_to_dual    = map.lam_x;
         else
             % if no SDD was present create an identity map
-            map_SDD_2_ORIG.x = speye(length(sdp.x));
-            map_SDD_2_ORIG.g = speye(length(sdp.g));
+            map_sdd_to_primal.x = speye(length(sdp.x));
+            map_sdd_to_primal.g = speye(length(sdp.g));
+            map_to_dual     = [speye(length(sdp.x)), zeros(length(sdp.x), length(sdp.g))];
         end
 
         % rebuild problem from DD to LP
         if isfield(opts.Kx,'dd') || isfield(opts.Kc,'dd')
             [sdp, args, map, opts] = dd_reduce(obj, sdp, opts, args);
-            map_DD_2_ORIG = map;
+            map_dd_to_primal = map;
+            map_to_dual   = map.lam_x;
         else
             % if no DD was present create an identity map
-            map_DD_2_ORIG.x = speye(length(sdp.x));
-            map_DD_2_ORIG.g = speye(length(sdp.g));
+            map_dd_to_primal.x = speye(length(sdp.x));
+            map_dd_to_primal.g = speye(length(sdp.g));
+            map_to_dual    = [speye(length(sdp.x)), zeros(length(sdp.x), length(sdp.g))];
         end
 
         % Create the full map
-        obj.map.x = map_SDD_2_ORIG.x*map_DD_2_ORIG.x;
-        obj.map.g = map_SDD_2_ORIG.g*map_DD_2_ORIG.g;
-        obj.map.lam_x = [speye(size(obj.map.x)), zeros(size(obj.map.x,1), size(obj.map.g,2))];
-        %obj.map.lam_x = map.lam_x;
+        obj.map.x = map_sdd_to_primal.x*map_dd_to_primal.x;
+        obj.map.g = map_sdd_to_primal.g*map_dd_to_primal.g;
+        obj.map.lam_x = map_to_dual;
         obj.map.lam_a = [zeros(size(obj.map.g,1), size(obj.map.x,2)), speye(size(obj.map.g))];
 
         % decision variables
         x = sdp.x;
+        
         % parameter
         if isfield(sdp,'p')
             p = sdp.p;
