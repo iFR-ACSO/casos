@@ -131,9 +131,7 @@ K.q = [Na.q Nx.q];
 K.r = [Na.r Nx.r];
 K.s = [Na.s Nx.s];
 
-% Check if any entry in K.s is equal to 1, and throw an error if so
-assert(~any(K.s == 1), 'COPT does not support PSD cones of size 1. Use a linear cone instead.');
-
+% update obj.cone 
 obj.cone = K;
 
 % reorder decision variables (z,s) to (l,q,r,s)
@@ -208,6 +206,7 @@ lam_x_l = Sc{6} - Sc{1};    % y_ubx - y_lbx
 lam_a_c = -Sc{5};  %  -y_cba
 lam_x_c = -Sc{2};  %  -y_cbx
 
+% Build CasADi function to return primal, objective, and duals
 obj.ghan = casadi.Function('g',[struct2cell(obj.args_in)' {X S}],{Mx'*x (g'*x) Mc'*[lam_a_l; lam_a_c] Mx'*[lam_x_l; lam_x_c]},[fieldnames(obj.args_in)' {'X' 'S'}],obj.names_out);
 
 end
