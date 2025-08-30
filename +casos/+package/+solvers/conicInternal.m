@@ -14,6 +14,10 @@ switch lower(solver)
         % solve conic problem using SCS
         sol = casos.package.solvers.SCSInterface(name,conic,varargin{:});
 
+    case 'copt'
+        % solve conic problem using COPT
+        sol = casos.package.solvers.COPTInterface(name,conic,varargin{:});
+
     case 'clarabel'
         % solve conic problem using Clarabel
         sol = casos.package.solvers.ClarabelInterface(name,conic,varargin{:});
