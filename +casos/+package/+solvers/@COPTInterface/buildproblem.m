@@ -67,9 +67,38 @@ Na.q = (obj.getdimc(Kc,'lor'));
 Na.r = (obj.getdimc(Kc,'rot'));
 Na.s = (obj.getdimc(Kc,'psd'));
 
+% reorder due to PSD(1)
+[Mx, new_linx] = reordering_map(n, Nx);     % due to reordering on Kx
+[Mc, new_linc] = reordering_map(m, Na);     % due to reordering on Kc
+
+a = Mc*a*Mx'; % perform permuation
+g = Mx*g;     % perform permutaion
+
+% extend lbx and ubx if PSD(1) existed in Kx
+lbx = [lbx; zeros(new_linx)];
+ubx = [ubx;   inf(new_linx)];
+
+% extend lba and uba if PSD(1) existed in Kc
+lba = [lba; zeros(new_linc)];
+uba = [uba;   inf(new_linc)];
+
+% update cbx due to variable reordering
+[cbxq, cbxr, cbxs]= separate(cbx, [sum(Nx.q); sum(Nx.r); sum(Nx.s.^2)]);
+cbx_split = cell(length(Nx.s), 1);
+[cbx_split{:}] = separate(cbxs, Nx.s.^2); 
+cbx = [cbxq; cbxr; vertcat(cbx_split{Nx.s~=1})];
+
+% handle PSD cones of size 1 (change cone sizes)
+Nx.l = Nx.l + sum(Nx.s == 1);
+Nx.s = Nx.s(Nx.s > 1);
+
+Na.l = Na.l + sum(Na.s == 1);
+Na.s = Na.s(Na.s > 1);
+
 % define xl = zl + lbx, xc = zc + cbx, 
 % where zl is a nonnegative variable and zc is element of Kx
 zb = [lbx; cbx];
+
 % rewrite linear and state constraints, that is,
 %
 %   lba <= al*x <= uba, ac*x in Kc
@@ -147,8 +176,8 @@ obj.fhan = casadi.Function('f',struct2cell(obj.args_in),{A_copt b_copt c_copt},f
 X = casadi.MX.sym('x',size(c_copt));
 % slack/dual variables
 S = casadi.MX.sym('s',size(c_copt));
-% Y is not used since slack variables are provided by COPT
-% Y = casadi.MX.sym('y',size(b_copt)); 
+
+
 
 % separate X into linear and PSD components
 [Xlin, Xpsd] = separate(X, [size(Alin,2) size(Abar_vec,2)], 1);
@@ -179,13 +208,53 @@ lam_x_l = Sc{6} - Sc{1};    % y_ubx - y_lbx
 lam_a_c = -Sc{5};  %  -y_cba
 lam_x_c = -Sc{2};  %  -y_cbx
 
-obj.ghan = casadi.Function('g',[struct2cell(obj.args_in)' {X S}],{x (g'*x) [lam_a_l; lam_a_c] [lam_x_l; lam_x_c]},[fieldnames(obj.args_in)' {'X' 'S'}],obj.names_out);
+obj.ghan = casadi.Function('g',[struct2cell(obj.args_in)' {X S}],{Mx'*x (g'*x) Mc'*[lam_a_l; lam_a_c] Mx'*[lam_x_l; lam_x_c]},[fieldnames(obj.args_in)' {'X' 'S'}],obj.names_out);
 
 end
 
 
 function varargout = separate(A,varargin)
 % Separate array into subarrays.
-
     varargout = mat2cell(A,varargin{:});
+end
+
+function [M, new_lin] = reordering_map(size, N)
+% Moves scalar PSD cones to the linear part and keeps other cones in order.
+%
+% Inputs:
+%   size - total number of variables
+%   N    - structure with fields l, q, r, s (number of variables per cone)
+%
+% Outputs:
+%   M        - sparse permutation matrix
+%   new_lin  - number of scalar PSD cones moved to linear part
+
+    % start with identity mapping
+    M = speye(size);
+
+    % sizes of each group
+    sz_l = sum(N.l);
+    sz_q = sum(N.q);
+    sz_r = sum(N.r);
+    sz_s = sum(N.s.^2);
+
+    % separate the mapping into each component
+    [Ml, Mq, Mr, Ms]= separate(M, [sz_l; sz_q; sz_r; sz_s]);
+    
+    % split each PSD cone
+    Ms_split = cell(length(N.s), 1);
+    [Ms_split{:}] = separate(Ms, N.s.^2); 
+    
+    % indices of scalar PSD cones
+    psd1_idx = (N.s == 1);
+    
+    % build the mapping
+    M = vertcat(Ml,                             ...
+                vertcat(Ms_split{psd1_idx}),    ...    % all size-1 PSD cones
+                Mq,                             ...
+                Mr,                             ...
+                vertcat(Ms_split{~psd1_idx}));         % all larger PSD cones
+    
+    % number of scalar PSD cones moved to linear
+    new_lin = nnz(psd1_idx);
 end
