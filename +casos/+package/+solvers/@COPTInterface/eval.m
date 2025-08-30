@@ -128,6 +128,8 @@ elseif strcmp(obj.info.status, 'unbounded')
 elseif strcmp(obj.info.status, 'numerical') 
    obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_LIMITED;
    assert(~obj.opts.error_on_fail,'Conic problem has encountered numerical problems.')
+   x_copt = zeros(size(A,2),1);
+   s_copt = zeros(size(A,2),1);
 else
     % handle success case
     obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_SUCCESS;
