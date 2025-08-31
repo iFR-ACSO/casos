@@ -173,6 +173,7 @@ methods
         
         % project arguments to obtain SDP inputs
         % only linear coefficients are handled (p, lbx, ubx, lbg, ubg)
+        in{1} = coordinates(argin{1}, obj.sparsity_x);
         in{2} = coordinates(argin{2}, obj.sparsity_p);
         in{3} = coordinates(argin{3}, obj.sparsity_xl);
         in{4} = coordinates(argin{4}, obj.sparsity_xl);

@@ -84,6 +84,11 @@ methods
         error('Function "grambasis" not supported by class "%s".', class(obj));
     end
 
+    function S = gramunit(obj) %#ok<STOUT>
+        % Return gram unit basis for a monomial sparsity pattern.
+        error('Function "gramunit" not supported by class "%s".', class(obj));
+    end
+
     function [i,j] = get_triplet(obj)
         % Return triplets for polynomial sparsity pattern.
         [i,j] = matrix_triplet(obj); % TODO

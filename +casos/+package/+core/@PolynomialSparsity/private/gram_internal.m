@@ -1,10 +1,7 @@
-function [Z,K,Mp,Md] = gram_internal(Lz,degmat,indets)
+function [Z,K,Mp,Md] = gram_internal(Lz,degmat,indets,Lz_red)
 % Compute Gram basis and mappings.
 
 lp = size(Lz,1);
-
-% dimension K(i) of Gram basis for p(i)
-K = full(sum(Lz,2));
 
 % build square matrix of monomials
 nt = size(degmat,1);
@@ -42,8 +39,26 @@ coeffs = casadi.Sparsity.triplet(nT,lp,i-1,j-1);
 [coeffs,degmat,Iuni] = uniqueDeg(coeffs,D);
 Z = new_from_coefficients(coeffs,degmat,indets,[lp 1]);
 
+if nargin > 3
+    % build square matrix for the reduced Gram basis
+    L = kron(Lz_red,ones(1,nt)) & kron(ones(1,nt),Lz_red);
+    % remove unused monomials
+    L(:,~I) = [];
+    % enumerate entries
+    [i,j] = find(L');
+
+    % dimension K(i) of reduced Gram basis for p(i)
+    K = full(sum(Lz_red,2));
+
+else
+    % dimension K(i) of Gram basis for p(i)
+    K = full(sum(Lz,2));
+end
+
 % compute primal mapping
-[id,ic] = Iuni{:};
+% NOTE: Iuni only depends on the degree matrix
+[~,ic] = Iuni{:};
+
 % enumerate nonzero elements in L' relative to nonzeros of Luni'
 % NOTE: We use an internal MATLAB function here for speed-up 
 % since the result of find is already sorted.
@@ -59,6 +74,9 @@ Mp = sparse(idx,1:nnz(L),1,nnz(coeffs),nnz(L));
 % Mp = sparse(Innz(ii),1:nnz(L),1,nnz(Luni),nnz(L));
 
 % return adjoint inverse
-Md = sum(Mp,2).\Mp;
+row_sums = sum(Mp,2);
+% create mapping from nonzero elements of L to nonzero elements Luni
+% scaled by the number of times each element is mapped in Mp
+Md = sparse(idx,1:nnz(L),row_sums(idx).\1,nnz(Z.coeffs),nnz(L));
 
 end

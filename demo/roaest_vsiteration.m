@@ -8,7 +8,6 @@ f = [-x(2); x(1) + (x(1)^2 - 1)*x(2)];
 
 % Lyapunov function candidate
 Vval = 1.5*x(1)^2 - x(1)*x(2) + x(2)^2;
-p = x'*x;
 
 % Lyapunov function candidate
 V = casos.PS.sym('v',monomials(x,2));
@@ -23,6 +22,9 @@ l = 1e-6*(x'*x);
 % level of stability
 g = casos.PS.sym('g');
 b = casos.PS.sym('b');
+
+% quadratic shape function
+p = x'*x;
 
 % options
 opts = struct('sossol','sedumi');
@@ -80,3 +82,19 @@ for iter = 1:10
 
     fprintf('Iteration %d: b = %g, g = %g.\n',iter,full(bval),full(gval));
 end
+
+%% Plot results
+% Lyapunov function
+Vfun = to_function(Vval);
+% shape function
+pfun = to_function(p);
+% stable level sets
+bsol = full(bval);
+gsol = full(gval);
+
+figure
+fcontour(@(x,y) full(Vfun(x,y)), [-2 2], 'b', "LevelList", [gsol gsol])
+hold on
+fcontour(@(x,y) full(pfun(x,y)), [-2 2], 'r--', "LevelList", [bsol bsol])
+hold off
+grid on

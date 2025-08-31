@@ -78,11 +78,19 @@ Lz(:,~I) = [];
 
 % removes monomials outside half Newton polytope
 if ~isempty(newton_solver)
-    Lz = arrayfun(@(i) newton_reduce(S.degmat(Ldegmat(i,:),Iv),degmat,newton_solver), idx, 'UniformOutput', false);
-    Lz = horzcat(Lz{:})';
+    Lz_red = arrayfun(@(i) newton_reduce(S.degmat(Ldegmat(i,:),Iv),degmat,newton_solver), idx, 'UniformOutput', false);
+    Lz_red = horzcat(Lz_red{:})';
+    
+    [Z,K,Mp,Md] = gram_internal(Lz,degmat,z.indets,Lz_red);
+else
+    [Z,K,Mp,Md] = gram_internal(Lz,degmat,z.indets);	
 end
-z = casos.Sparsity.create(build_monomials(degmat,z.indets)); % do we need this?
 
-[Z,K,Mp,Md] = gram_internal(Lz,degmat,z.indets);
+% build half-basis for each element
+[i,j] = find(Lz');
+coeffs = casadi.Sparsity.triplet(size(Lz,2),lp,i-1,j-1);
+% set output
+[coeffs,degmat] = uniqueDeg(coeffs,degmat);
+z = new_from_coefficients(coeffs,degmat,indets,[lp 1]);
 
 end

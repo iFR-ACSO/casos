@@ -332,6 +332,13 @@ methods
         [S,varargout{1:nargout-1}] = grambasis(obj.pattern,varargin{:});
     end
 
+    function S = gramunit(obj)
+        % Return Gram unit basis for a monomial sparsity pattern.
+        assert(~is_null(obj), 'Null pointer.')
+        assert(~is_operator(obj), 'Not allowed for operators.')
+        S = gramunit(obj.pattern);
+    end
+
     function z = monomials(obj) 
         % Return scalar monomial sparsity pattern.
         assert(~is_null(obj), 'Null pointer.')

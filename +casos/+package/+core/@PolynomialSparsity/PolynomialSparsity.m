@@ -259,6 +259,9 @@ methods
     % gram basis for polynomial
     varargout = grambasis(obj,varargin);
 
+    % gram unit basis
+    Z = gramunit(obj);
+
     function z = monomials(obj)
         % Return scalar monomial sparsity pattern.
         z = build_monomials(obj.degmat,obj.indets);

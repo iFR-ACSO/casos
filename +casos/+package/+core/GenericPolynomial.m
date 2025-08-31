@@ -49,9 +49,9 @@ methods
     end
 
     %% Getters
-    function Z = grambasis(obj)
+    function varargout = grambasis(obj,varargin)
         % Return a Gram basis for this polynomial.
-        Z = grambasis(obj.poly_sparsity);
+        [varargout{1:nargout}] = grambasis(obj.poly_sparsity,varargin{:});
     end
 
     function x = indeterminates(obj)

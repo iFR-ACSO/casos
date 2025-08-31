@@ -33,6 +33,8 @@ function buildproblem(obj)
 % Lorentz cone, rotated Lorentz cone, and PSD cone can be shifted by a
 % lower bound (cb).
 
+if ~isfield(obj.opts,'cholesky_method'), obj.opts.cholesky_method = 'numerical'; end
+
 opts = obj.opts;
 
 % retrieve MOSEK symbolic constants
@@ -162,27 +164,62 @@ prob.g = [gacc + Fcb; cbx_v];
 prob.blx = [lbx; -inf(Nx_q,1)];
 prob.bux = [ubx; +inf(Nx_q,1)];
 
+
+% arguments to problem
+args_in = obj.args_in;
+
 % handle quadratic cost function
 % MOSEK cannot solve conic problems with quadratic cost
+
 if nnz(h) > 0
-    % only SX supports Cholesky decomposition
-    H = casadi.SX.sym('H',sparsity(h));
-    chol_f = casadi.Function('chol',{H},{chol(H)});
-    % rewrite quadratic cost
-    %
-    %   min_x 1/2 x'*Q*x + c'*x
-    %
-    % into 
-    %
-    %   min_{x,y} c'*x + y, s.t. 1 + y >= ||(sqrt(2)*U*x, 1 - y)||
-    %
-    % with additional variable y and Cholesky decomposition U'*U = Q
-    U = chol_f(h);
+    
+    % use casadi to compute cholesky
+    if strcmp(obj.opts.cholesky_method,'analytical') 
+
+        % only SX supports Cholesky decomposition
+        H = casadi.SX.sym('H',sparsity(h));
+        %Performs an LDL transformation [L,D] = ldl(A) and returns 
+        % diag(sqrt(D))*L'
+        chol_f = casadi.Function('chol',{H},{chol(H)});
+    
+        % ldl_f = casadi.Function('ldl',{H},{ldl(H)});
+        % rewrite quadratic cost
+        %
+        %   min_x 1/2 x'*Q*x + c'*x
+        %
+        % into 
+        %
+        %   min_{x,y} c'*x + y, s.t. 1 + y >= ||(sqrt(2)*U*x, 1 - y)||
+        %
+        % with additional variable y and Cholesky decomposition U'*U = Q
+        U = chol_f(h);
+    
+    else % parameterize solver with cholesky sparsity pattern and compute numerically online
+
+        % get sparisty pattern from h
+        H = sparsity(h);
+        [rr,~] = get_triplet(H);
+        
+        i = min(rr); j = max(rr); % row numbers are sorted
+        
+        spU = casadi.Sparsity.upper(j - i + 1);
+        
+        spU.enlarge(size(H,1), size(H,2), i:j, i:j);
+        
+        U = casadi.MX.sym('U', spU); %+casadi.Sparsity.diag(length(H)));
+
+       % evaluate Cholesky decomposition in situ
+       args_in.h = U;
+   
+    end
+
     % build affine cone constraint 
     % L(y,x) + k = (1+y, sqrt(2)*U*x, 1-y) in SOC
     % note: additional variable y is first decision variable
     L = [1 casadi.DM(1,n); casadi.DM(n,1) sqrt(2)*U; -1 casadi.DM(1,n)];
     k = [1; casadi.DM(n,1); 1];
+
+
     % number of additional variables and constraints
     Nx_cost = 1;
     Na_cost = n + 2;
@@ -219,9 +256,9 @@ end
 % must be mutually exclusive unless explicity permitted.
 fopt = struct('allow_duplicate_io_names',true);
 % return MOSEK prob structure
-obj.fhan = casadi.Function('f',struct2cell(obj.args_in),struct2cell(prob),fieldnames(obj.args_in),fieldnames(prob),fopt);
+obj.fhan = casadi.Function('f',struct2cell(args_in),struct2cell(prob),fieldnames(args_in),fieldnames(prob),fopt);
 % return bar values
-obj.barv = casadi.Function('v',struct2cell(obj.args_in),struct2cell(barv),fieldnames(obj.args_in),fieldnames(barv),fopt);
+obj.barv = casadi.Function('v',struct2cell(args_in),struct2cell(barv),fieldnames(args_in),fieldnames(barv),fopt);
 
 % build conic information
 Accs = [
@@ -260,7 +297,7 @@ sol.bars = casadi.MX.sym('bars',[sum(Nx_S) 1]);
 Xc_s = obj.sdp_mat(sol.barx,Nx.s,1) + cbx_s;
 Sc_s = obj.sdp_mat(sol.bars,Nx.s,1);
 % de-vectorize duals corresponding to semidefinite constraints
-Yc_s = obj.sdp_mat(Yas,Na.s,1);
+Yc_s = obj.sdp_mat(Yas,Na.s,[]);
 % multipliers for box constraints
 lam_a_l = sol.suc - sol.slc;
 lam_x_l = Slu - Slx;
@@ -280,6 +317,14 @@ sol_x = vertcat(Xc_l,Xc_s);
 cost = sol.pobjval;
 
 obj.ghan = casadi.Function('g',[struct2cell(sol); struct2cell(obj.args_in)],{sol_x cost lam_a lam_x},[fieldnames(sol); fieldnames(obj.args_in)],obj.names_out);
+
+% linear constraints and linear decision variables
+obj.info.SDP_data.size_A_nnz = nnz(prob.a);
+obj.info.SDP_data.size_A     = size(prob.a);
+
+% add size for the current conic solver
+obj.info.conic.size_A = size(obj.args_in.a);
+obj.info.conic.n_decVar = length(obj.args_in.x0);
 
 end
 

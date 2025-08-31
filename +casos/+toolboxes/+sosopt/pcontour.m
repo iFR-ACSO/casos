@@ -108,7 +108,7 @@ yg = linspace(domain(3),domain(4),Ny);
 polyFun = to_function(poly);
 
 % evaluate casadi function
-pgrid = full(polyFun([xg(:)';yg(:)']));
+pgrid = full(polyFun(xg(:)',yg(:)'));
 
 % reshape to grid
 pgrid = reshape(pgrid,size(xg));

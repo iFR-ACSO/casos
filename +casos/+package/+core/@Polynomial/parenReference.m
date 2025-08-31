@@ -9,12 +9,12 @@ if length(indexOp) > 1
     [varargout{1:nargout}] = parenReference@casos.package.core.GenericPolynomial(obj,indexOp);
     return
 
-elseif isequal(idx.Indices,{':'})
+elseif isequal(idx.Indices,{":"})
     % handle vectorization
     varargout = {reshape(obj,numel(obj),1)};
     return
 
-elseif isequal(idx.Indices,{':' ':'})
+elseif isequal(idx.Indices,{":" ":"})
     % nothing to do
     varargout = {obj};
     return
