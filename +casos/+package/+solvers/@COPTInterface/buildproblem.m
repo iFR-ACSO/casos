@@ -88,6 +88,12 @@ cbx_split = cell(length(Nx.s), 1);
 [cbx_split{:}] = separate(cbxs, Nx.s.^2); 
 cbx = [cbxq; cbxr; vertcat(cbx_split{Nx.s~=1})];
 
+% update cba due to variable reordering
+[cbaq, cbar, cbas]= separate(cba, [sum(Na.q); sum(Na.r); sum(Na.s.^2)]);
+cba_split = cell(length(Na.s), 1);
+[cba_split{:}] = separate(cbas, Na.s.^2); 
+cba = [cbaq; cbar; vertcat(cba_split{Na.s~=1})];
+
 % handle PSD cones of size 1 (change cone sizes)
 Nx.l = Nx.l + sum(Nx.s == 1);
 Nx.s = Nx.s(Nx.s > 1);
@@ -174,8 +180,6 @@ obj.fhan = casadi.Function('f',struct2cell(obj.args_in),{A_copt b_copt c_copt},f
 X = casadi.MX.sym('x',size(c_copt));
 % slack/dual variables
 S = casadi.MX.sym('s',size(c_copt));
-
-
 
 % separate X into linear and PSD components
 [Xlin, Xpsd] = separate(X, [size(Alin,2) size(Abar_vec,2)], 1);
