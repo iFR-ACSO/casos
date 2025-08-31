@@ -40,8 +40,8 @@ p = x'*x;
 opts = struct('sossol','mosek');
 opts.verbose = 1;
 opts.hessian_approx = 'BFGS';
-opts.Hessian_init   = 'Identity';
-opt.scale_BFGS0     = 1e-3;
+opts.hessian_init   = 'Identity';
+opts.scale_BFGS0     = 1e-3;
 
 sos = struct('x',[V;s2;s1;b],'f',-b,'p',[]);
 
