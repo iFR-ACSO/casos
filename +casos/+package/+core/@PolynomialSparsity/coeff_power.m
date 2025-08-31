@@ -19,9 +19,8 @@ if nva == 0 ... % base polynomial is a constant
         % copy pattern
         coeffs = casadi.Sparsity(coeffs);
     end
-    if nva > 0
-        degmat = n.*obj.degmat;
-    end
+    % multiply degrees
+    degmat = n.*obj.degmat;
 
     % new sparsity pattern
     S = new_from_coefficients(coeffs,degmat,obj.indets,size(obj));

@@ -25,7 +25,7 @@ degA = obj.degmat(:,~tf);
 % select expressions to substitute with
 [S2,coeff2] = coeff_subsref(S2,coeff2,xloc(tf),[1 nnz(tf)]);
 % repeat to match number of lhs terms
-[S2,coeff2] = coeff_repmat(S2,coeff2,obj.nterm,1);
+[S2,coeff2] = coeff_repmat(S2,coeff2,[obj.nterm 1]);
 
 % compute exponents b^a1
 [Sb,coeffb] = coeff_power(S2,coeff2,deg0);
