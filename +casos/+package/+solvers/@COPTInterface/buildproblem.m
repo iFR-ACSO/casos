@@ -68,11 +68,11 @@ Na.r = (obj.getdimc(Kc,'rot'));
 Na.s = (obj.getdimc(Kc,'psd'));
 
 % reorder due to PSD(1)
-[Mx, new_linx] = reordering_map(n, Nx);     % due to reordering on Kx
-[Mc, new_linc] = reordering_map(m, Na);     % due to reordering on Kc
+[perm_x, new_linx] = reordering_map(n, Nx);     % due to reordering on Kx
+[perm_c, new_linc] = reordering_map(m, Na);     % due to reordering on Kc
 
-a = Mc*a*Mx'; % perform permuation
-g = Mx*g;     % perform permutaion
+a = perm_c*a*perm_x'; % perform permuation
+g = perm_x*g;     % perform permutaion
 
 % extend lbx and ubx if PSD(1) existed in Kx
 lbx = [lbx; zeros(new_linx, 1)];
@@ -211,7 +211,17 @@ lam_a_c = -Sc{5};  %  -y_cba
 lam_x_c = -Sc{2};  %  -y_cbx
 
 % Build CasADi function to return primal, objective, and duals
-obj.ghan = casadi.Function('g',[struct2cell(obj.args_in)' {X S}],{Mx'*x (g'*x) Mc'*[lam_a_l; lam_a_c] Mx'*[lam_x_l; lam_x_c]},[fieldnames(obj.args_in)' {'X' 'S'}],obj.names_out);
+% compute outputs for CasADi function
+x_primal     = perm_x'*x;                    % permuted primal variables
+obj_value    = g'*x;                         % objective value
+dual_a       = perm_c'*[lam_a_l; lam_a_c];   % duals for constraints
+dual_x       = perm_x'*[lam_x_l; lam_x_c];   % duals for variables
+
+input_args   = [struct2cell(obj.args_in)' {X, S}];
+output_args  = {x_primal, obj_value, dual_a, dual_x};
+input_names  = [fieldnames(obj.args_in)' {'X', 'S'}];
+
+obj.ghan = casadi.Function('g', input_args, output_args, input_names, obj.names_out);
 
 end
 
