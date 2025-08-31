@@ -587,10 +587,22 @@ methods (Access={?casos.package.core.PolynomialInterface, ?casos.package.core.Ab
         [S,coeffs] = coeff_cat(obj.pattern,S2,coeff1,coeff2,dim);
     end
 
+    function [S,coeffs] = coeff_compose(obj,S2,coeff1,coeff2)
+        % Coefficient matrix of operator composition.
+        assert(~is_null(obj), 'Null pointer.')
+        [S,coeffs] = coeff_compose(obj.pattern,S2,coeff1,coeff2);
+    end
+
     function [S,coeffs] = coeff_dot(obj,S2,coeff1,coeff2)
         % Coefficient matrix of dot product.
         assert(~is_null(obj), 'Null pointer.')
         [S,coeffs] = coeff_dot(obj.pattern,S2,coeff1,coeff2);
+    end
+
+    function [S,coeffs] = coeff_evaluate(obj,S2,coeff1,coeff2)
+        % Coefficient matrix of operator evaluation.
+        assert(~is_null(obj), 'Null pointer.')
+        [S,coeffs] = coeff_evaluate(obj.pattern,S2,coeff1,coeff2);
     end
     
     function [cf1,cf2] = coeff_expand(obj,S2,coeff1,coeff2) 
@@ -829,25 +841,42 @@ methods
         S = coeff_cat(S1,S2,S1.coeff_sparsity,S2.coeff_sparsity,dim);
     end
 
+    function c = compose(a,b)
+        % Operator composition.
+        a = casos.Sparsity(a);
+        b = casos.Sparsity(b);
+
+        assert(is_operator(a) && is_operator(b), 'Composition only allowed for operators.')
+        assert(all(size(a.sparsity_in) == size(b.sparsity_out)), 'Dimension mismatch for operator composition.')
+
+        % compose coefficient matrices
+        c = coeff_compose(a.pattern,b,a.coeff_sparsity,b.coeff_sparsity);
+    end
+
     function c = dot(a,b)
         % Dot product.
         a = casos.Sparsity(a);
         b = casos.Sparsity(b);
 
-        if is_operator(b)
-            % composition of operators
-            if ~is_operator(a), a = dualize(a); end
-            assert(all(size(a.sparsity_in) == size(b.sparsity_out)), 'Dimension mismatch for operator composition.')
-        elseif ~is_operator(a)
-            % inner product of polynomials
-            assert(all(size(a) == size(b)), 'Dimension mismatch for polynomial inner product.')
-        else
-            % evaluation of operator on polynomial
-            assert(all(size(a.sparsity_in) == size(b)), 'Dimension mismatch for operator evaluation.')
-        end
+        assert(is_operator(a) == is_operator(b), 'Must not mix polynomials and operators.')
+
+        % inner product of polynomials or operators
+        assert(all(size(a) == size(b)), 'Dimension mismatch for inner product.')
 
         % compute dot product
         c = coeff_dot(a.pattern,b,a.coeff_sparsity,b.coeff_sparsity);
+    end
+
+    function c = evaluate(a,b)
+        % Operator evaluation.
+        a = casos.Sparsity(a);
+        b = casos.Sparsity(b);
+
+        assert(is_operator(a), 'Evaluation only allowed for operators.')
+        assert(all(size(a.sparsity_in) == size(b)), 'Dimension mismatch for operator evaluation.')
+
+        % evaluate on coefficients
+        c = coeff_evaluate(a.pattern,b,a.coeff_sparsity,b.coeff_sparsity);
     end
 
     function b = integral(a,x,range)

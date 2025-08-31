@@ -19,27 +19,27 @@ I = jacobian(iv,v);
 f = casos.PS(sparsity(v),randn(6,1));
 
 disp('The derivative of f is')
-disp(dot(D,f))
+disp(evaluate(D,f))
 disp(' ')
 
 disp('And the antiderivative of f is')
-disp(dot(I,f))
+disp(evaluate(I,f))
 disp(' ')
 
 % operators can be added to form a new operator
 disp('The sum of the derivative and the antiderivative of is')
-disp(dot(D + I,f))
+disp(evaluate(D + I,f))
 disp(' ')
 
 % as well as 'chained' together via composition
 % (here, the derivative partially reverses the antiderivative)
-DI = dot(D,I);
-ID = dot(I,D);
+DI = compose(D,I);
+ID = compose(I,D);
 
 disp('The deriviative of the antiderivative of is')
-disp(dot(DI,f))
+disp(evaluate(DI,f))
 disp(' ')
 
 disp('Whereas the antideriviative of the derivative of is')
-disp(dot(ID,f))
+disp(evaluate(ID,f))
 disp(' ')

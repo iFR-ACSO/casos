@@ -198,8 +198,18 @@ methods (Access={?casos.Sparsity, ?casos.package.core.AbstractSparsity})
     end
 
     %% Protected interface for polynomial operations
+    function [cf1,cf2] = coeff_compose(obj,S2,coeff1,coeff2) %#ok<STOUT,INUSD>
+        % Coefficient matrix of operator composition.
+        error('Function "coeff_compose" not supported by class "%s".', class(obj))
+    end
+
+    function [cf1,cf2] = coeff_evalue(obj,S2,coeff1,coeff2) %#ok<STOUT,INUSD>
+        % Coefficient matrix of operator evaluation.
+        error('Function "coeff_evaluation" not supported by class "%s".', class(obj))
+    end
+    
     function [cf1,cf2] = coeff_expand(obj,S2,coeff1,coeff2) %#ok<STOUT,INUSD>
-        % Expanded coefficient matrices.
+        % Expand coefficient matrices.
         error('Function "coeff_expand" not supported by class "%s".', class(obj))
     end
 

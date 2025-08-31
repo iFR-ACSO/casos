@@ -253,7 +253,9 @@ methods
     end
 
     %% Binary operations
+    c = compose(a,b);
     c = dot(a,b);
+    c = evaluate(a,b);
 
     function c = minus(a,b)
         % Substract two polynomials.
