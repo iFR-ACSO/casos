@@ -63,9 +63,9 @@ methods
         error('Function "is_matrix" not supported by class "%s".', class(obj))
     end
 
-    function tf = is_monom(obj) %#ok<STOUT>
+    function tf = is_monom(obj) %#ok<MANU>
         % Check if polynomial sparsity pattern is a vector of monomials.
-        error('Function "is_monom" not supported by class "%s".', class(obj))
+        tf = false;
     end
 
     %% Polynomial Sparsity interface
