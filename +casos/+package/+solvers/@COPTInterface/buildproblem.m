@@ -75,12 +75,12 @@ a = Mc*a*Mx'; % perform permuation
 g = Mx*g;     % perform permutaion
 
 % extend lbx and ubx if PSD(1) existed in Kx
-lbx = [lbx; zeros(new_linx)];
-ubx = [ubx;   inf(new_linx)];
+lbx = [lbx; zeros(new_linx, 1)];
+ubx = [ubx;   inf(new_linx, 1)];
 
 % extend lba and uba if PSD(1) existed in Kc
-lba = [lba; zeros(new_linc)];
-uba = [uba;   inf(new_linc)];
+lba = [lba; zeros(new_linc, 1)];
+uba = [uba;   inf(new_linc, 1)];
 
 % update cbx due to variable reordering
 [cbxq, cbxr, cbxs]= separate(cbx, [sum(Nx.q); sum(Nx.r); sum(Nx.s.^2)]);
