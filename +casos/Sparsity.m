@@ -659,6 +659,12 @@ methods (Access={?casos.package.core.PolynomialInterface, ?casos.package.core.Ab
         [S,coeffs] = coeff_project(obj.pattern,coeffs,S,varargin{:});
     end
 
+    function [S,coeffs] = coeff_project_operator(obj,coeffs,Si,So,varargin)
+        % Coefficient matrix of operator projection.
+        assert(~is_null(obj), 'Null pointer.')
+        [S,coeffs] = coeff_project_operator(obj.pattern,coeffs,Si,So,varargin{:});
+    end
+
     function [S,coeffs] = coeff_repmat(obj,coeffs,varargin) 
         % Coefficient matrix of matrix repetition.
         assert(~is_null(obj), 'Null pointer.')

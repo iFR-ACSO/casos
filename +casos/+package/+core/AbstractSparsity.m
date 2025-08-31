@@ -243,6 +243,11 @@ methods (Access={?casos.Sparsity, ?casos.package.core.AbstractSparsity})
         error('Function "coeff_prod" not supported by class "%s".', class(obj))
     end
 
+    function [S,coeffs] = coeff_project_operator(obj,coeffs,Si,So,keep_zeros) %#ok<INUSD,STOUT>
+        % Project operator matrix onto input-output patterns.
+        error('Function "coeff_project_operator" not supported by class "%s".', class(obj))
+    end
+
     function [S,coeffs] = coeff_sum(obj,coeffs,dim) %#ok<STOUT,INUSD>
         % Coefficient matrix of matrix sum.
         error('Function "coeff_sum" not supported by class "%s".', class(obj))
