@@ -2,31 +2,43 @@
 
 ## Polynomial types
 ```mermaid
-flowchart LR
-  subgraph casadi
-    casadi.DM[DM]
-    casadi.SX[SX]
-    casadi.Sparsity[Sparsity]
-  end
-  subgraph casos
-    casos.PD[PD]
-    casos.PS[PS]
-    casos.Sparsity[Sparsity] -.-> casos.Indeterminates[Indeterminates]
-  end
-  subgraph casos.package.core
-    Polynomial --> GenericPolynomial
-    GenericPolynomial --> AlgebraicObject
-    GenericPolynomial --> PolynomialInterface
-    PolynomialInterface --> Printable
-  end
-  casos.PD --> Polynomial
-  casos.PD -.-> casadi.DM
-  casos.PS --> Polynomial
-  casos.PS -.-> casadi.SX
-  casos.Sparsity --> PolynomialInterface
-  casos.Sparsity -.-> casadi.Sparsity
-  casos.Indeterminates --> AlgebraicObject
-  GenericPolynomial -.-> casos.Sparsity
+---
+config:
+  class:
+    hideEmptyMembersBox: true
+---
+classDiagram
+  direction LR
+  namespace casadi {
+    class casadi.DM["DM"]
+    class casadi.SX["SX"]
+    class casadi.Sparsity["Sparsity"]
+  }
+  namespace casos.package.core {
+    class Polynomial
+    class GenericPolynomial
+    class AlgebraicObject
+    class PolynomialInterface
+    class Printable
+  }
+  Polynomial --|> GenericPolynomial
+  GenericPolynomial --|> AlgebraicObject
+  GenericPolynomial --|> PolynomialInterface
+  PolynomialInterface --|> Printable
+  %% general
+  class casos.PD
+  class casos.PS
+  class casos.Sparsity
+  class casos.Indeterminates
+  casos.Sparsity o-- casos.Indeterminates
+  casos.PD --|> Polynomial
+  casos.PD -- casadi.DM
+  casos.PS --|> Polynomial
+  casos.PS -- casadi.SX
+  casos.Sparsity --|> PolynomialInterface
+  casos.Sparsity -- casadi.Sparsity
+  casos.Indeterminates --|> AlgebraicObject
+  GenericPolynomial o-- casos.Sparsity
 ```
 
 ## Sparsity types
@@ -44,10 +56,10 @@ classDiagram
     class OperatorSparsity
   }
   AbstractSparsity <|-- PolynomialSparsity
-  PolynomialSparsity --> casos.Indeterminates
-  PolynomialSparsity --> casadi.Sparsity
+  PolynomialSparsity o-- casos.Indeterminates
+  PolynomialSparsity -- casadi.Sparsity
   AbstractSparsity <|-- OperatorSparsity
-  OperatorSparsity --> casadi.Sparsity
+  OperatorSparsity -- casadi.Sparsity
   casos.Sparsity *-- AbstractSparsity
 ```
 
