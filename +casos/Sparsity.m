@@ -245,6 +245,11 @@ methods
         tf = is_equal(obj.pattern,S);
     end
 
+    function tf = is_homogeneous(obj,varargin)
+        % Check if sparsity pattern is homogeneous.
+        tf = all(obj.mindeg == [obj.maxdeg varargin{:}]);
+    end
+
     function tf = is_matrix(obj)
         % Check if operator is mapping between vectors.
         assert(~is_null(obj), 'Null pointer.')
