@@ -1,4 +1,4 @@
-function D = hessian(f,x)
+function b = hessian(a,x)
 % Compute symbolic Hessian matrix of vector polynomial expression.
 
 
@@ -8,18 +8,18 @@ if is_indet(x)
 end
 
 assert(is_symbolic(x),'Second argument must be symbolic polynomial.')
-assert(isscalar(f) && is_zerodegree(f),'Objective must be scalar variable.')
+assert(isscalar(a) && is_zerodegree(a),'Objective must be scalar variable.')
 
 % project x to basis
 [X,zi] = poly2basis(x);
 
 % project f to basis
-F = poly2basis(f);
+A = poly2basis(a);
 
 % G is jacobian of coefficients
-H = hessian(F,X);
+B = hessian(A,X);
 
 % return operator
-D = casos.package.operator(H,zi,zi);
+b = a.new_poly(B,zi,zi);
 
 end

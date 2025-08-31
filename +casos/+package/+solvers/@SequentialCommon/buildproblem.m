@@ -28,7 +28,7 @@ Dg = jacobian(nlsos.g,nlsos.x);
 % Hessian /BFGS matrix
 B = casadi.SX.sym('B',nnz(base_x),nnz(base_x));
 
-Hf = casos.PSOperator(B,base_x,base_x);
+Hf = casos.PS(B,base_x,base_x);
 
 %% build quadratic SOS problem
 sos_qp = [];
@@ -37,10 +37,10 @@ sos_qp.x = casos.PS.sym('x_convex',base_x);
 % search direction
 d = sos_qp.x - nlsos.x;
 % quadratic cost function
-sos_qp.f = (1/2)*dot2(Hf,d,d) + dot(Df,d);
+sos_qp.f = (1/2)*dot(evaluate(Hf,d),d) + dot(Df,d);
 
 % linear constraints
-sos_qp.g = nlsos.g + dot(Dg,d);
+sos_qp.g = nlsos.g + evaluate(Dg,d);
 
 % parameters to subproblem
 % * parameters to nonlinear problem, current (nonlinear) solution, Hessian
@@ -53,7 +53,7 @@ sosopt.Kc            = opts.Kc;
 sosopt.error_on_fail = false;
 
 sos_qp.derivatives.Hf = Hf;
-sos_qp.derivatives.Df = Df + dot(casos.PSOperator.from_primal(d),Hf); % correct for shift in variables
+sos_qp.derivatives.Df = Df + compose(dualize(d),Hf); % correct for shift in variables
 sos_qp.derivatives.Dg = Dg;
 
 % initialize convex SOS solver
@@ -129,18 +129,18 @@ if obj.opts.enable_SOC
     % search direction
     d = sos_soc.x - nlsos.x;
     % quadratic cost function
-    sos_soc.f = (1/2)*dot2(Hf,d,d) + dot(Df,d);
+    sos_soc.f = (1/2)*dot(evaluate(Hf,d),d) + dot(Df,d);
     % augmented linear constraints (see Nocedal p.544)
     dk        = x_star_par - nlsos.x ;
     % actually xk cancelles out; just for readability
-    sos_soc.g = dot(Dg,d) + conFun(nlsos.x + dk,nlsos.p) - dot(Dg, dk);
+    sos_soc.g = evaluate(Dg,d) + conFun(nlsos.x + dk,nlsos.p) - evaluate(Dg, dk);
     % parameters to subproblem
     % * parameters to nonlinear problem, current (nonlinear) solution, Hessian,
     % solution QP
     sos_soc.p = [nlsos.p; nlsos.x; B(:);x_star_par];
 
     sos_soc.derivatives.Hf = Hf;
-    sos_soc.derivatives.Df = Df + dot(casos.PSOperator.from_primal(d),Hf);
+    sos_soc.derivatives.Df = Df + compose(dualize(d),Hf);
     sos_soc.derivatives.Dg = Dg;
 
     % SOS options
@@ -206,7 +206,7 @@ obj.eval_cost      = casos.Function('f',{basis_nlsos_x,basis_nlsos_p}, { full(nl
 obj.eval_gradCost  = casos.Function('f',{basis_nlsos_x,basis_nlsos_p}, { op2basis( jacobian(nlsos.f,nlsos.x) ) });
 % norm gradient langrangian
 obj.eval_gradLag =  casos.Function('f',{basis_nlsos_x,basis_nlsos_p,basis_lam_gs}, { norm( op2basis(jacobian(Lagrangian,nlsos.x)),inf ) });
-obj.eval_gradLag2  =  casos.Function('f',{basis_nlsos_x,basis_nlsos_p,basis_lam_gs}, { norm(dot(lam_gs,nlsos.g),inf) });
+obj.eval_gradLag2  =  casos.Function('f',{basis_nlsos_x,basis_nlsos_p,basis_lam_gs}, { norm(full(dot(lam_gs,nlsos.g)),inf) });
 obj.eval_constraint = casos.Function('f',{basis_nlsos_x,basis_nlsos_p}, {poly2basis(nlsos.g)});
 
 %% get parameter that are needed for initilization
