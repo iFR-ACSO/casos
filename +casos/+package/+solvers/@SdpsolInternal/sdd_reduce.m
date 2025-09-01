@@ -17,13 +17,13 @@ Npsd = get_dimension(obj.get_cones,opts.Kx,'psd'); npsd   = sum(Npsd);
 Ndd  = get_dimension(obj.get_cones,opts.Kx,'dd');  ndd2   = sum(Ndd.^2);
 
 % get dimensions of cones in the program constraints
-Mlin = get_dimension(obj.get_cones,opts.Kc,'lin');
-Msdd = get_dimension(obj.get_cones,opts.Kc,'sdd');
-Mpsd = get_dimension(obj.get_cones,opts.Kc,'psd');
-Mdd  = get_dimension(obj.get_cones,opts.Kc,'dd');
+Mlin = get_dimension(obj.get_cones,opts.Kc,'lin'); mlin0 = sum(Mlin);
+Msdd = get_dimension(obj.get_cones,opts.Kc,'sdd'); msdd2 = sum(Msdd.^2);
+Mpsd = get_dimension(obj.get_cones,opts.Kc,'psd'); mpsd  = sum(Mpsd.^2);
+Mdd  = get_dimension(obj.get_cones,opts.Kc,'dd');  mdd2  = sum(Mdd.^2);
 % (unused, but collected for completeness)
-Mlor = get_dimension(obj.get_cones,opts.Kc,'lor');
-Mrot = get_dimension(obj.get_cones,opts.Kc,'rot');
+Mlor = get_dimension(obj.get_cones,opts.Kc,'lor'); mlor  = sum(Mlor);
+Mrot = get_dimension(obj.get_cones,opts.Kc,'rot'); mrot  = sum(Mrot);
 
 % save sizes of sdp.x and sdp.g (original)
 len_x_orig = length(sdp.x);     % original decision variable length
@@ -34,15 +34,21 @@ sdd_index_g.num_eq = 0;         % in constraints
 sdd_index_x.num_eq = 0;         % in decision variables
 
 % verify SDD cones in the constraints and create slack SDD variables
-M_g = cell(length(Mdd),1);
+M_g = cell(length(Msdd),1);
 if isfield(opts.Kc,'sdd')
     [sdp,args,M_g,~,sdd_index_g,opts] = obj.replaceSDDcones(sdp, Msdd, Mlin, args, opts, 'g');
+else
+    sdd_index_g.num_eq = 0;
+    sdd_index_g.eq_idx = [];
 end
 
 % verify SDD cones in decision variables
-M_x = cell(length(Ndd),1);
+M_x = cell(length(Nsdd),1);
 if isfield(opts.Kx, 'sdd')
     [sdp,args,M_x,~,sdd_index_x, opts] = obj.replaceSDDcones(sdp, Nsdd, Mlin, args, opts, 'x');
+else
+    sdd_index_x.num_eq = 0;
+    sdd_index_x.eq_idx = [];
 end
 
 % update decision variables
@@ -106,23 +112,40 @@ assert(length(cols_non_sdd) == len_non_sdd, ...
 
 % selection matrix for non-SDD variables
 % equivalent to xtemp = jacobian([xlin; xlor; xrot; xpsd; xdd], sdp.x);
-map_non_sdd = sparse(1:len_non_sdd, cols_non_sdd, 1, len_non_sdd, len_x_new);
+map_non_sdd_x = sparse(1:len_non_sdd, cols_non_sdd, 1, len_non_sdd, len_x_new);
 
-% map.lam_x for SDD variables using equality indices
-map_sdd_eqs = sparse(nsdd2, len_g_new);
-n_eq = sdd_index_x.num_eq;              % number of equalities
-rows = 1:n_eq;                          % choose first n_eq rows (or any specific ones)
-cols = sdd_index_x.eq_idx;              % columns from eq_idx
+% empty map
+map_sdd_eqs_x = sparse(nsdd2, len_g_new);
+map_sdd_eqs_g = sparse(msdd2, len_g_new);
+
+% SDD part to deal with constraints
+n_eq_c = sdd_index_g.num_eq;       % number of equalities from processing Kc
+n_eq_x = sdd_index_x.num_eq;       % number of equalities from processing Kx
+
+rows_x = 1:n_eq_x;                % choose first n_eq rows (or any specific ones)
+rows_g = 1:n_eq_c;
+
+cols_g = sdd_index_g.eq_idx;       % columns from eq_idx
+cols_x = sdd_index_x.eq_idx;       % columns from eq_idx
 
 % place ones along diagonal
-map_sdd_eqs(sub2ind([nsdd2, len_g_new], rows, cols)) = 1;
+if nsdd2~=0
+    map_sdd_eqs_x(sub2ind([nsdd2, len_g_new], rows_x, cols_x)) = 1;
+end
+if msdd2~=0
+    map_sdd_eqs_g(sub2ind([msdd2, len_g_new], rows_g, cols_g)) = 1;
+end
 
-% combine non-SDD and SDD selection matrices
-map.lam = [map_non_sdd, sparse(len_non_sdd, len_g_new);
-             sparse(nsdd2, len_x_new), map_sdd_eqs];
+% construct the combined selection matrix for the dual variables.
+% treat lam_x
+map.lam = [ ...
+    map_non_sdd_x,               sparse(len_non_sdd, len_g_new);     % lam_x (non-SDD part)
+    sparse(nsdd2, len_x_new),     map_sdd_eqs_x ...                  % lam_x (SDD part)
+];
 
+% treat lam_g
 map.lam = [map.lam;
-           sparse(len_g_orig, len_x_new), map.g];
+           sparse(len_g_orig, len_x_new), map.g];       % lam_g (original constraints)
 
 end
 

@@ -12,18 +12,18 @@ Nlin = get_dimension(obj.get_cones,opts.Kx,'lin'); nlin0  = sum(Nlin);
 Ndd  = get_dimension(obj.get_cones,opts.Kx,'dd');  ndd2   = sum(Ndd.^2);
 Nlor = get_dimension(obj.get_cones,opts.Kx,'lor'); nlor   = sum(Nlor);
 Nrot = get_dimension(obj.get_cones,opts.Kx,'rot'); nrot   = sum(Nrot);
-Npsd = get_dimension(obj.get_cones,opts.Kx,'psd'); npsd   = sum(Npsd);
+Npsd = get_dimension(obj.get_cones,opts.Kx,'psd'); npsd   = sum(Npsd.^2);
 % (unused, but collected for completeness)
 Nsdd = get_dimension(obj.get_cones,opts.Kx,'sdd'); nsdd2  = sum(Nsdd.^2);
 
 % get dimensions of cones in the program constraints
-Mlin = get_dimension(obj.get_cones,opts.Kc,'lin');
-Mdd  = get_dimension(obj.get_cones,opts.Kc,'dd');
+Mlin = get_dimension(obj.get_cones,opts.Kc,'lin'); mlin0 = sum(Mlin);
+Mdd  = get_dimension(obj.get_cones,opts.Kc,'dd');  mdd2  = sum(Mdd.^2);
 % (unused, but collected for completeness)
-Mlor = get_dimension(obj.get_cones,opts.Kc,'lor');
-Mrot = get_dimension(obj.get_cones,opts.Kc,'rot');
-Mpsd = get_dimension(obj.get_cones,opts.Kc,'psd');
-Msdd = get_dimension(obj.get_cones,opts.Kc,'sdd');
+Mlor = get_dimension(obj.get_cones,opts.Kc,'lor'); mlor  = sum(Mlor);
+Mrot = get_dimension(obj.get_cones,opts.Kc,'rot'); mrot  = sum(Mrot);
+Mpsd = get_dimension(obj.get_cones,opts.Kc,'psd'); mpsd  = sum(Mpsd.^2);
+Msdd = get_dimension(obj.get_cones,opts.Kc,'sdd'); msdd2 = sum(Msdd.^2);
 
 % save sizes of sdp.x and sdp.g (original)
 len_x_orig = length(sdp.x);     % original decision variable length
@@ -37,12 +37,18 @@ num_nlin_g = 0;     % in constraints
 M_g = cell(length(Mdd),1);
 if isfield(opts.Kc,'dd')
     [sdp,args,M_g,num_nlin_g,dd_index_g,opts] = obj.replaceDDcones(sdp, Mdd, Mlin, args, opts, 'g');
+else
+    dd_index_g.num_eq = 0;
+    dd_index_g.eq_idx = [];
 end
 
 % verify DD cones in decision variables
 M_x = cell(length(Ndd),1);
 if isfield(opts.Kx, 'dd')
     [sdp,args,M_x,num_nlin_x,dd_index_x, opts] = obj.replaceDDcones(sdp, Ndd, Mlin, args, opts, 'x');
+else
+    dd_index_x.num_eq = 0;
+    dd_index_x.eq_idx = [];
 end
 
 % update decision variables
@@ -105,21 +111,38 @@ assert(length(cols_non_dd) == len_non_dd, ...
 
 % build selection matrix (1 in each row at the column where the variable lives)
 % equivalent to xtemp = jacobian([xlin; xlor; xrot; xpsd], sdp.x)
-map_non_dd = sparse(1:len_non_dd, cols_non_dd, 1, len_non_dd, len_x_new);
+map_non_dd_x = sparse(1:len_non_dd, cols_non_dd, 1, len_non_dd, len_x_new);
 
-% DD part uses map.g through equality indices
-map_dd_eqs = sparse(ndd2, len_g_new);
-n_eq = dd_index_x.num_eq;              % number of equalities
-rows = 1:n_eq;                         % choose first n_eq rows (or any specific ones)
-cols = dd_index_x.eq_idx;              % columns from eq_idx
+% empty map
+map_dd_eqs_x = sparse(ndd2, len_g_new);
+map_dd_eqs_g = sparse(mdd2, len_g_new);
+
+% DD part to deal with the constraints
+n_eq_c = dd_index_g.num_eq;       % number of equalities from processing Kc
+n_eq_x = dd_index_x.num_eq;       % number of equalities from processing Kx
+
+rows_x = 1:n_eq_x;                % choose first n_eq rows (or any specific ones)
+rows_g = 1:n_eq_c;
+
+cols_g = dd_index_g.eq_idx;       % columns from eq_idx
+cols_x = dd_index_x.eq_idx;       % columns from eq_idx
 
 % place ones along diagonal
-map_dd_eqs(sub2ind([ndd2, len_g_new], rows, cols)) = 1;
+if ndd2~=0
+    map_dd_eqs_x(sub2ind([ndd2, len_g_new], rows_x, cols_x)) = 1;
+end
+if mdd2~=0
+    map_dd_eqs_g(sub2ind([mdd2, len_g_new], rows_g, cols_g)) = 1;
+end
 
-% combine non-DD and DD selection matrices
-map.lam = [map_non_dd, sparse(len_non_dd, len_g_new);
-             sparse(ndd2, len_x_new), map_dd_eqs];
+% construct the combined selection matrix for the dual variables.
+% treat lam_x
+map.lam = [ ...
+    map_non_dd_x,                sparse(len_non_dd, len_g_new);     % lam_x (non-DD part)
+    sparse(ndd2, len_x_new),     map_dd_eqs_x ...                   % lam_x (DD part)
+];
 
+% treat lam_g
 map.lam = [map.lam;
-           sparse(len_g_orig, len_x_new), map.g];
+           sparse(len_g_orig, len_x_new), map.g];       % lam_g (original constraints)
 end
