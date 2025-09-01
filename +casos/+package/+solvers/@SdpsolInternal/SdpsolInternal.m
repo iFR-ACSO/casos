@@ -81,37 +81,46 @@ methods
         args.dd_lbx = []; 
         obj.map = [];
 
+        % original sizes
+        len_x = length(sdp.x);
+        len_g = length(sdp.g);
+
         % rebuild problem from SDD to SOCP
         if isfield(opts.Kx,'sdd') || isfield(opts.Kc,'sdd')
             [sdp, args, map, opts] = sdd_reduce(obj, sdp, opts, args);
             map_sdd_to_primal = map;
-            map_sdd_to_dual    = map.lam_x;
+            map_sdd_to_dual   = map.lam;
+        else
+            [map_sdd_to_primal, map_sdd_to_dual] = identity_maps(sdp);
         end
 
         % rebuild problem from DD to LP
         if isfield(opts.Kx,'dd') || isfield(opts.Kc,'dd')
             [sdp, args, map, opts] = dd_reduce(obj, sdp, opts, args);
             map_dd_to_primal = map;
-            map_dd_to_dual   = map.lam_x;
+            map_dd_to_dual   = map.lam;
         else
-            % if no DD was present create an identity map
-            map_dd_to_primal.x = speye(length(sdp.x));
-            map_dd_to_primal.g = speye(size(sdp.g,1));
-            map_dd_to_dual     = [speye(length(sdp.x)), zeros(length(sdp.x), size(sdp.g,1))];
+            [map_dd_to_primal, map_dd_to_dual] = identity_maps(sdp);
         end
 
-        % Select which map to use (SDD reduction takes precedence) 
-        if exist('map_sdd_to_dual', 'var')
-            obj.map.lam_x = map_sdd_to_dual;
-            obj.map.x = map_sdd_to_primal.x;
-            obj.map.g = map_sdd_to_primal.g;
-        else
-            obj.map.lam_x = map_dd_to_dual;
-            obj.map.x = map_dd_to_primal.x;
-            obj.map.g = map_dd_to_primal.g;
-        end
+        % combine maps
+        % primal variable mapping
+        primal_x_map = map_sdd_to_primal.x*map_dd_to_primal.x;
+        primal_g_map = map_sdd_to_primal.g*map_dd_to_primal.g;
+        
+        % dual variable mapping
+        dual_map = map_sdd_to_dual*map_dd_to_dual;
 
-        obj.map.lam_a = [zeros(size(obj.map.g,1), size(obj.map.x,2)), speye(size(obj.map.g))];
+        % assign to object
+        obj.map.x = primal_x_map;
+        obj.map.g = primal_g_map;
+        obj.map.lam_x = dual_map(1:len_x, :);       % duals for decision variables
+        obj.map.lam_a = dual_map(len_x+1:end, :);   % duals for constraints
+
+        % sanity check
+        % verify that the column size of obj.map.lam_a is len_g
+        assert(size(obj.map.lam_a, 1) == len_g, ...
+                'Mismatch in constraint mapping size.');
 
         % decision variables
         x = sdp.x;
@@ -250,4 +259,12 @@ methods (Access=protected)
     end
 end
 
+end
+
+% Helper functions
+function [primal_map, dual_map] = identity_maps(sdp)
+    % Create identity maps for primal and dual variables
+    primal_map.x = speye(numel(sdp.x));
+    primal_map.g = speye(numel(sdp.g));
+    dual_map = blkdiag(speye(numel(sdp.x)), speye(numel(sdp.g)));
 end

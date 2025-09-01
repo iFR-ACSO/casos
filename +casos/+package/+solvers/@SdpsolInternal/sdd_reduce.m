@@ -118,11 +118,14 @@ cols = sdd_index_x.eq_idx;              % columns from eq_idx
 map_sdd_eqs(sub2ind([nsdd2, len_g_new], rows, cols)) = 1;
 
 % combine non-SDD and SDD selection matrices
-map.lam_x = [map_non_sdd, sparse(len_non_sdd, len_g_new);
+map.lam = [map_non_sdd, sparse(len_non_sdd, len_g_new);
              sparse(nsdd2, len_x_new), map_sdd_eqs];
 
+map.lam = [map.lam;
+           sparse(len_g_orig, len_x_new), map.g];
+
 % map lam_a (dual variables for g)
-map.lam_a = [sparse(len_g_orig, len_x_new), map.g];
+% map.lam_a = [sparse(len_g_orig, len_x_new), map.g];
 
 end
 
