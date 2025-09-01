@@ -75,11 +75,11 @@ a = perm_c*a*perm_x'; % perform permuation
 g = perm_x*g;     % perform permutaion
 
 % extend lbx and ubx if PSD(1) existed in Kx
-lbx = [lbx; zeros(new_linx, 1)];
+lbx = [lbx; sparse(new_linx, 1)];
 ubx = [ubx;   inf(new_linx, 1)];
 
 % extend lba and uba if PSD(1) existed in Kc
-lba = [lba; zeros(new_linc, 1)];
+lba = [lba; sparse(new_linc, 1)];
 uba = [uba;   inf(new_linc, 1)];
 
 % update cbx due to variable reordering
@@ -184,13 +184,13 @@ S = casadi.MX.sym('s',size(c_copt));
 % separate X into linear and PSD components
 [Xlin, Xpsd] = separate(X, [size(Alin,2) size(Abar_vec,2)], 1);
 % reshape the PSD component into proper SDP matrix form
-Xpsd = obj.sdp_mat(Xpsd,  [Nx.s Na.s], 1, 1, false);    
+Xpsd = obj.sdp_mat(Xpsd,  [Nx.s Na.s], 1, 1, true);    
 Xfull = [Xlin; Xpsd];   % combine linear and PSD parts
 
 % separate S into linear and PSD components
 [Slin, Spsd] = separate(S, [size(Alin,2) size(Abar_vec,2)], 1);
 % reshape the PSD component into proper SDP matrix form
-Spsd = obj.sdp_mat(Spsd,  [Nx.s Na.s], 1, 1, false);  
+Spsd = obj.sdp_mat(Spsd,  [Nx.s Na.s], 1, 1, true);  
 Sfull = [Slin; Spsd];   % combine linear and PSD parts
 
 % primal decision variables in the NEW order
