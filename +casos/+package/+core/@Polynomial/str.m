@@ -8,10 +8,7 @@ if isempty(obj)
 
 elseif is_operator(obj)
     % return string representation for operator
-    sp_in = to_char(obj.sparsity_in);
-    sp_out = to_char(obj.sparsity_out);
-    
-    out = compose('Operator: [%s] -> [%s]',sp_in,sp_out);
+    out = compose('%s Operator',size_to_char(obj.get_sparsity));
     return
 end
 

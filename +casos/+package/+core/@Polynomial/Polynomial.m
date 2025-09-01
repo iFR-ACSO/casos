@@ -283,17 +283,6 @@ methods
     end
 
     %% Display
-    function disp(obj)
-        % Display polynomial.
-        if ~is_operator(obj)
-            % display as matrix
-            disp_matrix(obj);
-        else
-            % display operator
-            disp@casos.package.core.GenericPolynomial(obj);
-        end
-    end
-
     % string representation
     out = str(obj);
 end
