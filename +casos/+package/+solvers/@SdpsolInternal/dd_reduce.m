@@ -122,8 +122,4 @@ map.lam = [map_non_dd, sparse(len_non_dd, len_g_new);
 
 map.lam = [map.lam;
            sparse(len_g_orig, len_x_new), map.g];
-
-% map lam_a (dual variables for g)
-% map.lam_a = [sparse(len_g_orig, len_x_new), map.g];
-
 end
