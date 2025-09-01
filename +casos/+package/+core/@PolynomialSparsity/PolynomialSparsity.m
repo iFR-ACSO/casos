@@ -323,6 +323,13 @@ methods
     % signature representation
     dim = signature(obj,flag);
 
+    function s = size_to_char(obj)
+        % Return string representation of size.
+        out = str(obj);
+        assert(isscalar(out), 'Notify the developers.')
+        s = out{1};
+    end
+
     % string representation
     out = str(obj);
 end

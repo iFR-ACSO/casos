@@ -274,6 +274,11 @@ methods
         if ~is_dense(obj), s = compose('%s,%dnz',s{:},nnz(obj)); end
     end
 
+    function s = size_to_char(obj)
+        % Return string representation of size.
+        s = sprintf('%dx%d,%dnz',numel(obj.sparsity_out),numel(obj.sparsity_in),nnz(obj));
+    end
+
     function print_matrix(obj)
         % Print operator matrix pattern.
         disp(obj.sparsity_M)

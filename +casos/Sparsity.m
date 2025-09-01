@@ -445,6 +445,12 @@ methods
         dim = signature(obj.pattern,varargin{:});
     end
 
+    function s = size_to_char(obj)
+        % Return string representation of size.
+        assert(~is_null(obj), 'Null pointer.')
+        s = size_to_char(obj.pattern);
+    end
+
     function spy(obj)
         % Visualize polynomial sparsity pattern.
         assert(~is_null(obj), 'Null pointer.')

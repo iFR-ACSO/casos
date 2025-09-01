@@ -33,6 +33,7 @@ methods (Abstract)
 
     %% Display output
     dim = signature(obj);
+    s = size_to_char(obj);
 end
 
 methods (Abstract, Access={?casos.Sparsity, ?casos.package.core.AbstractSparsity})
