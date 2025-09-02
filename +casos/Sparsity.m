@@ -525,12 +525,12 @@ methods (Static)
     %% Operator constructors
     function S = dense_operator(varargin)
         % Create dense operator pattern.
-        S = casos.Sparsity.create(casos.package.core.OperatorSparsity.pattern(casadi.Sparsity.dense(varargin{:})));
+        S = casos.Sparsity.create(casos.package.core.OperatorSparsity.dense(varargin{:}));
     end
 
     function S = diag_operator(varargin)
         % Create diagonal operator pattern.
-        S = casos.Sparsity.create(casos.package.core.OperatorSparsity.pattern(casadi.Sparsity.diag(varargin{:})));
+        S = casos.Sparsity.create(casos.package.core.OperatorSparsity.diag(varargin{:}));
     end
 
     function S = sparse_operator(varargin)

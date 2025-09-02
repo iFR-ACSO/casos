@@ -72,25 +72,25 @@ end
 
 methods (Static)
     %% Public constructor
-    function S = pattern(S,Si,So)
+    function S = pattern(M,Si,So)
         % Create operator sparsity pattern.
         if nargin < 1
             % nothing to do
             error('Forbidden.')
 
-        elseif isa(S,'casos.Sparsity')
+        elseif isa(M,'casos.Sparsity')
             % convert polynomial sparsity pattern
             error('Cannot convert polynomial sparsity pattern.')
 
         elseif nargin < 2
             % matrix multiplication pattern
-            Si = casos.Sparsity.dense(size(S,2),1);
-            So = casos.Sparsity.dense(size(S,1),1);
+            Si = casos.Sparsity.dense(size(M,2),1);
+            So = casos.Sparsity.dense(size(M,1),1);
 
         elseif nargin < 3
             % dual operator pattern
             Si = casos.Sparsity(Si);
-            So = casos.Sparsity.dense(size(S,1),1);
+            So = casos.Sparsity.dense(size(M,1),1);
 
         elseif nargin < 4
             % construct operator pattern
@@ -101,20 +101,20 @@ methods (Static)
             error('Undefined syntax.')
         end
 
-        assert(size(S,2) == nnz(Si), 'Input dimensions mismatch.')
-        assert(size(S,1) == nnz(So), 'Output dimensions mismatch.')
+        assert(size(M,2) == nnz(Si), 'Input dimensions mismatch.')
+        assert(size(M,1) == nnz(So), 'Output dimensions mismatch.')
 
-        S = casos.package.core.OperatorSparsity(S,Si,So);
+        S = casos.package.core.OperatorSparsity(M,Si,So);
     end
 
-    function S = sparse(n,m)
-        % Create all-sparse operator pattern.
-        Si = casos.Sparsity(m,1);
-        So = casos.Sparsity(n,1);
+    % dense operator pattern
+    S = dense(varargin);
 
-        % create operator with sparse coefficients
-        S = casos.package.core.OperatorSparsity(casadi.Sparsity(0,0),Si,So);
-    end
+    % diagonal operator pattern
+    S = diag(varargin);
+
+    % all-sparse operator pattern
+    S = sparse(varargin);
 end
 
 methods
