@@ -40,7 +40,7 @@ elseif strcmpi(obj.opts.hessian_init,'analytical')
     % initialize Hessian approximation with regularization
     H = full(obj.eval_Hessian(x_k,p0,dual_k));
 
-    Bk = casos.package.solvers.SequentialCommon.regularize_Hessian(H);
+    Bk = casos.package.solvers.SequentialCommon.regularize_scaledFrobNorm(H);
 
 else
     error('Unknown option "%s" for Hessian initialization.',obj.opts.hessian_init)

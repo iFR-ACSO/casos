@@ -178,15 +178,19 @@ if strcmpi(obj.opts.hessian_approx,'BFGS')
     % damped BFGS
     Bk = damped_BFGS(obj,Bk,x_k,p0,sol_iter,iter);
 
-elseif strcmpi(obj.opts.hessian_approx,'levenberg')
+elseif strcmpi(obj.opts.hessian_approx,'gerschgorin')
     % see Betts book
     H  = full(obj.eval_Hessian(x_k1,p0,dual_k1));
-    Bk = casos.package.solvers.SequentialCommon.hessian_Levenberg(H);
+    Bk = casos.package.solvers.SequentialCommon.regularize_gerschgorinBound(H);
 
-elseif strcmpi(obj.opts.hessian_approx,'regularization')
-    % own regularization method
+elseif strcmpi(obj.opts.hessian_approx,'scaledFrob')
+    % scaled Frobenius
     H = full(obj.eval_Hessian(x_k1,p0,dual_k1));
-    Bk = casos.package.solvers.SequentialCommon.regularize_Hessian(H);
+    Bk = casos.package.solvers.SequentialCommon.regularize_scaledFrobNorm(H);
+elseif strcmpi(obj.opts.hessian_approx,'minFrob')
+    % min. Frobenius
+    H = full(obj.eval_Hessian(x_k1,p0,dual_k1));
+    Bk = casos.package.solvers.SequentialCommon.regularize_minFrobNorm(H);
 
 elseif strcmpi(obj.opts.hessian_approx,'mirroring')
     % Verschueren

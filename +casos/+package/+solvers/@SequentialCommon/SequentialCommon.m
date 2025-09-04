@@ -83,8 +83,9 @@ classdef (Abstract) SequentialCommon < casos.package.solvers.SosoptCommon
 
     methods (Static)
         % iteration for overloading
-        varargout = regularize_Hessian(varargin);
-        varargout = hessian_regularization(varargin);
+        varargout = regularize_minFrobNorm(varargin);
+        varargout = regularize_scaledFrobNorm(varargin);
+        varargout = regularize_gerschgorinBound(varargin);
     end
 
     methods
@@ -142,7 +143,7 @@ classdef (Abstract) SequentialCommon < casos.package.solvers.SosoptCommon
             if ~isfield(obj.opts,'tolerance_opt'), obj.opts.tolerance_opt                       = 1e-4; end
             if ~isfield(obj.opts,'scale_BFGS0'), obj.opts.scale_BFGS0                           = 1; end
             if ~isfield(obj.opts,'hessian_init'),   obj.opts.hessian_init                       = 'analytical'; end
-            if ~isfield(obj.opts,'hessian_approx'), obj.opts.hessian_approx                     = 'regularization'; end
+            if ~isfield(obj.opts,'hessian_approx'), obj.opts.hessian_approx                     = 'scaledFrob'; end % minFrob, gerschgorin, mirroring, BFGS
             if ~isfield(obj.opts,'feasibility_restoration'), obj.opts.feasibility_restoration   = 'regularize'; end
             if ~isfield(obj.opts,'enable_SOC'), obj.opts.enable_SOC                             = true; end
             if ~isfield(obj.opts,'filter_struct'), obj.opts.filter_struct                       = filter_struct; end
