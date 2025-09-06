@@ -2,7 +2,7 @@ classdef (InferiorClasses = {?casadi.DM, ?casadi.SX, ?casos.PD, ?casos.Indetermi
         PS < casos.package.core.Polynomial
 % Polynomial with symbolic coefficients of type casadi.SX.
 %
-% Constructor summary:
+%% Constructor summary:
 %
 %   PS()
 %
@@ -27,7 +27,7 @@ classdef (InferiorClasses = {?casadi.DM, ?casadi.SX, ?casos.PD, ?casos.Indetermi
 %
 %   PS(Sparsity)
 %
-% create from list of monomials 
+% create polynomial from list of monomials 
 % (all non-sparse coefficients equate to 1).
 %
 %   PS(Sparsity,scalar double | DM)
@@ -56,7 +56,7 @@ classdef (InferiorClasses = {?casadi.DM, ?casadi.SX, ?casos.PD, ?casos.Indetermi
 %
 % create operator with symbolic coefficients.
 %
-% Static constructor summary:
+%% Static constructor summary:
 %
 %   sym(char,[vector int])
 %
@@ -87,7 +87,7 @@ classdef (InferiorClasses = {?casadi.DM, ?casadi.SX, ?casos.PD, ?casos.Indetermi
 %
 % create zero-degree operator.
 %
-
+%%
 
 methods (Static,Access=protected)
     %% Polynomial interface

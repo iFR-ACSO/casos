@@ -2,7 +2,7 @@ classdef (InferiorClasses = {?casadi.DM, ?casos.Indeterminates}) ...
         PD < casos.package.core.Polynomial
 % Polynomial with constant coefficients of type casadi.DM.
 %
-% Constructor summary:
+%% Constructor summary:
 %
 %   PD()
 %
@@ -23,7 +23,7 @@ classdef (InferiorClasses = {?casadi.DM, ?casos.Indeterminates}) ...
 %
 %   PD(Sparsity)
 %
-% create from list of monomials 
+% create polynomial from list of monomials 
 % (all non-sparse coefficients equate to 1).
 %
 %   PD(Sparsity,scalar double | DM)
@@ -39,7 +39,7 @@ classdef (InferiorClasses = {?casadi.DM, ?casos.Indeterminates}) ...
 %
 % create operator with constant coefficients.
 %
-% Static constructor summary:
+%% Static constructor summary:
 %
 %   empty([int],[int])
 %   eye([int],[int])
@@ -54,6 +54,7 @@ classdef (InferiorClasses = {?casadi.DM, ?casos.Indeterminates}) ...
 %
 % create zero-degree operator.
 %
+%%
 
 methods (Static,Access=protected)
     %% Polynomial interface
