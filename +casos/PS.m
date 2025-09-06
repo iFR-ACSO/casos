@@ -273,6 +273,17 @@ methods
         % Polynomial Taylor expansion.
         c = ptaylor@casos.package.core.Polynomial(casos.PS(a),x,casos.PS(b),deg);
     end
+
+
+    function c = compose(a,b)
+        % Compose operators.
+        c = compose@casos.package.core.Polynomial(casos.PS(a),casos.PS(b));
+    end
+
+    function c = evaluate(a,b)
+        % Evaluate operator.
+        c = evaluate@casos.package.core.Polynomial(casos.PS(a),casos.PS(b));
+    end
 end
 
 end
