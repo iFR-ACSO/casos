@@ -77,7 +77,7 @@ methods
 
         else
             % get nonzero coordinates for basis
-            in = cellfun(@(p,i) poly2basis(p,get_sparsity_in(obj,i)), argin(:), num2cell((1:get_n_in(obj))'-1), 'UniformOutput', false);
+            in = cellfun(@(p,i) coordinates(p,get_sparsity_in(obj,i)), argin(:), num2cell((1:get_n_in(obj))'-1), 'UniformOutput', false);
             % evaluate on coordinates
             out = eval_on_basis(obj,in);
             % return polynomials as result
