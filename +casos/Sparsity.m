@@ -626,7 +626,7 @@ methods (Access={?casos.package.core.PolynomialInterface, ?casos.package.core.Ab
     function [cf1,cf2] = coeff_expand(obj,S2,coeff1,coeff2) 
         % Expand coefficient matrices.
         assert(~is_null(obj), 'Null pointer.')
-        [cf1,cf2] = coeff_expand(obj,S2,coeff1,coeff2);
+        [cf1,cf2] = coeff_expand(obj.pattern,S2,coeff1,coeff2);
     end
 
     function [S,coeffs] = coeff_int(obj,coeffs,x,range) 
