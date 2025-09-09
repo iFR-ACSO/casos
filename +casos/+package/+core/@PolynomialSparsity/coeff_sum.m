@@ -6,6 +6,8 @@ sz = sizeofMatrixOp(obj,dim);
 if isa(coeffs,'casadi.Sparsity')
     % compute sparsity pattern
     coeffs = sparsity_sum(coeffs,size(obj),dim);
+    degmat = obj.degmat;
+    indets = obj.indets;
 
 else
     % prepare for operation on coefficients
