@@ -6,6 +6,6 @@ function [S,I] = op_subsref(obj,ii)
 % get indices of referenced nonzeros
 [ic,jc] = get_triplet(obj.sparsity_M);
 % find referenced coefficients
-I = find(ismember(I1,ic+1) & ismember(I2,jc+1));    % CasADi has 0-index
+I = find(ismember(ic+1,I1) & ismember(jc+1,I2));    % CasADi has 0-index
 
 end
