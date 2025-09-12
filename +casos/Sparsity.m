@@ -737,6 +737,19 @@ methods (Access={?casos.package.core.PolynomialInterface, ?casos.package.core.Ab
         r = coeff_properint(obj.pattern,coeffs);
     end
 
+    %% Manipulate nonzero coefficients
+    function v = coeff_getnz(obj,I)
+        % Return nonzero coefficients.
+        assert(~is_null(obj), 'Null pointer.')
+        v = coeff_getnz(obj.pattern,I);
+    end
+
+    function [S,coeffs] = coeff_setnz(obj,I,varargin)
+        % Set nonzero coefficients.
+        assert(~is_null(obj), 'Null pointer.')
+        [S,coeffs] = coeff_setnz(obj.pattern,I,varargin{:});
+    end
+
     % Protected interface for conversion
     function x = vector_to_indeterminates(obj)
         % Convert vector of monomials to indeterminate variables.

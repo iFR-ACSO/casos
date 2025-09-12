@@ -390,6 +390,10 @@ methods (Access={?casos.Sparsity, ?casos.package.core.AbstractSparsity})
     [S,coeffs] = coeff_transpose(obj,coeffs);
     [S,coeffs] = coeff_update(obj,coeffs,sz,dim);
 
+    % manipulate nonzero coefficients
+    v = coeff_getnz(obj,I);
+    [S,coeffs] = coeff_setnz(obj,I,v);
+
     % protected interface for conversion
     x = vector_to_indeterminates(obj);
 
