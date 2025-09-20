@@ -78,7 +78,7 @@ methods
     %% Getters (Boolean)
     function tf = is_constant(obj)
         % Check if polynomial is constant.
-        tf = (is_zerodegree(obj) && ~is_symexpr(obj));
+        tf = is_constant(obj.coeffs);
     end
 
     function tf = is_equal(obj,p)
@@ -108,11 +108,6 @@ methods
     function tf = is_symbolic(obj)
         % Check if polynomial has symbolic coefficients.
         tf = is_symbolic(obj.coeffs(coeff_find(obj.get_sparsity)));
-    end
-
-    function tf = is_symexpr(obj)
-        % Check if polynomial contains symbolic expressions.
-        tf = ~is_constant(obj.coeffs);
     end
 
     % check well-posedness
