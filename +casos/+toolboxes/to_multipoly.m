@@ -1,7 +1,7 @@
 function q = to_multipoly(p)
 % Convert a polynomial with constant coefficients into a multipoly object.
 
-assert(~is_symexpr(p), 'Cannot convert polynomials with symbolic coefficients.')
+assert(is_constant(p), 'Cannot convert polynomials with symbolic coefficients.')
 
 p = casos.PD(p);
 

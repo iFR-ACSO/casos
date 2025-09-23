@@ -13,6 +13,11 @@ properties (Dependent)
     mindeg;
 end
 
+methods (Abstract)
+    %% Abstract interface
+    tf = is_constant(obj);
+end
+
 methods
     %% Getter
     function n = get.nvars(obj)
@@ -88,6 +93,11 @@ methods
     function tf = is_homogeneous(obj,varargin)
         % Check if polynomial is homogeneous.
         tf = is_homogeneous(obj.poly_sparsity,varargin{:});
+    end
+
+    function tf = is_constant_poly(obj)
+        % Check if polynomial is a constant value.
+        tf = (is_constant(obj) && is_zerodegree(obj));
     end
 
     function tf = is_dense(obj)

@@ -97,7 +97,7 @@ methods
 
     function p = casos.PD(obj)
         % Convert to double polynomial.
-        assert(~is_symexpr(obj), 'Cannot convert symbolic polynomials.')
+        assert(is_constant(obj), 'Cannot convert symbolic polynomials.')
 
         p = casos.PD(obj.get_sparsity);
         p.coeffs = casadi.DM(obj.coeffs);
