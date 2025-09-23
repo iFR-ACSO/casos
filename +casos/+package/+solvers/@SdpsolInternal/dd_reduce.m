@@ -93,7 +93,8 @@ map.x = sparse(1:len_x_orig, idx_original, 1, len_x_orig, len_x_new);
 map.g = [speye(len_g_orig), sparse(len_g_orig, len_g_new-len_g_orig)];
 
 % map from new lam_* to original lam
-len_non_dd = nlin0 + nlor + nrot + npsd;
+len_non_ndd = nlin0 + nlor + nrot + npsd;
+len_non_mdd = mlin0 + mlor + mrot + mpsd;
 
 % figure out the columns in sdp.x where those non-DD variables now live
 cols_xlin = 1:nlin0;                                            % unchanged
@@ -106,12 +107,25 @@ cols_non_dd = [cols_xlin, cols_xlor, cols_xrot, cols_xpsd];
 % sanity checks
 assert(all(cols_non_dd >= 1 & cols_non_dd <= len_x_new), ...
     'xtemp: some indices out of bounds in sdp.x.');
-assert(length(cols_non_dd) == len_non_dd, ...
+assert(length(cols_non_dd) == len_non_ndd, ...
     'xtemp: mismatch between expected and actual length.');
 
 % build selection matrix (1 in each row at the column where the variable lives)
 % equivalent to xtemp = jacobian([xlin; xlor; xrot; xpsd], sdp.x)
-map_non_dd_x = sparse(1:len_non_dd, cols_non_dd, 1, len_non_dd, len_x_new);
+map_non_dd_x = sparse(1:len_non_ndd, cols_non_dd, 1, len_non_ndd, len_x_new);
+
+
+% figure out the columns in sdp.g where those non-DD constraints now live
+cols_xlin = 1:mlin0;                                            % unchanged
+cols_xlor = (mlin0 + num_nlin_x + num_nlin_g) + (1:mlor);                    % shifted by n_inserted
+cols_xrot = (mlin0 + num_nlin_x + num_nlin_g + mlor) + (1:mrot);
+cols_xpsd = (mlin0 + num_nlin_x + num_nlin_g + mlor + mrot) + (1:mpsd);
+
+cols_non_dd = [cols_xlin, cols_xlor, cols_xrot, cols_xpsd];
+
+% build selection matrix (1 in each row at the column where the variable lives)
+% equivalent to gtemp = jacobian([glin; glor; grot; gpsd], sdp.g)
+map_non_dd_g = sparse(1:len_non_mdd, cols_non_dd, 1, len_non_mdd, len_g_new);
 
 % empty map
 map_dd_eqs_x = sparse(ndd2, len_g_new);
@@ -138,16 +152,10 @@ end
 % construct the combined selection matrix for the dual variables.
 % treat lam_x
 map.lam = [ ...
-    map_non_dd_x,                sparse(len_non_dd, len_g_new);     % lam_x (non-DD part)
+    map_non_dd_x,                sparse(len_non_ndd, len_g_new);     % lam_x (non-DD part)
     sparse(ndd2, len_x_new),     map_dd_eqs_x ...                   % lam_x (DD part)
 ];
 
-% treat lam_g
-if isempty(Mdd)
-    map_non_dd_g = map.g;
-else
-    map_non_dd_g = [];
-end
 map.lam = [map.lam;
            sparse(len_g_orig, len_x_new), [ map_non_dd_g;                                               % lam_g (original constraints)
                                             0.5*(speye(mdd2)+blockCommutation(Mdd))*map_dd_eqs_g]];     % map to the duals of DD 
