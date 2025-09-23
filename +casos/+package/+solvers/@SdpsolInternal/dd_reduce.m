@@ -156,15 +156,44 @@ end
 
 
 function K = blockCommutation(Mdd)
-    % Mdd = [n1, n2, ..., nk] where each ni is a block size
-    mdd2 = sum(Mdd.^2);
-    K = sparse(mdd2, mdd2);
-    offset = 0;
-    for i = 1:length(Mdd)
-        ni = Mdd(i);
-        Ki = commutationMatrix(ni);    % your existing K_{n,n} builder
-        idx = offset + (1:ni^2);
-        K(idx, idx) = Ki;
-        offset = offset + ni^2;
+% Mdd = [n1, n2, ..., nk] where each ni is a block size
+% Build commutation matrices for each block
+Kblocks = cellfun(@commutationMatrix, num2cell(Mdd), 'UniformOutput', false);
+
+% Assemble block diagonal matrix
+K = blkdiag(Kblocks{:});
+
+% Ensure sparse format
+K = sparse(K);
+end
+
+function K = commutationMatrix(n)
+% commutationMatrix: Construct commutation matrix K_{n,n}.
+%   K = commutationMatrix(n) returns the sparse commutation matrix of size
+%   n^2-by-n^2 such that:
+%       K * vec(X) = vec(X.')
+
+% Preallocate indices
+rows = zeros(n^2,1);
+cols = zeros(n^2,1);
+
+% Compute permutation mapping
+idx = 1;
+for i = 1:n
+    for j = 1:n
+        % vec(X) index for (i,j)
+        col = (j-1)*n + i;
+        % vec(X.') index for (i,j)
+        row = (i-1)*n + j;
+
+        rows(idx) = row;
+        cols(idx) = col;
+        idx = idx + 1;
     end
 end
+
+% Build sparse permutation matrix
+K = sparse(rows, cols, 1, n^2, n^2);
+end
+
+
