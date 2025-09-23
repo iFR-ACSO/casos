@@ -13,13 +13,11 @@ Ndd  = get_dimension(obj.get_cones,opts.Kx,'dd');  ndd2   = sum(Ndd.^2);
 Nlor = get_dimension(obj.get_cones,opts.Kx,'lor'); nlor   = sum(Nlor);
 Nrot = get_dimension(obj.get_cones,opts.Kx,'rot'); nrot   = sum(Nrot);
 Npsd = get_dimension(obj.get_cones,opts.Kx,'psd'); npsd   = sum(Npsd.^2);
-% (unused, but collected for completeness)
 Nsdd = get_dimension(obj.get_cones,opts.Kx,'sdd'); nsdd2  = sum(Nsdd.^2);
 
 % get dimensions of cones in the program constraints
 Mlin = get_dimension(obj.get_cones,opts.Kc,'lin'); mlin0 = sum(Mlin);
 Mdd  = get_dimension(obj.get_cones,opts.Kc,'dd');  mdd2  = sum(Mdd.^2);
-% (unused, but collected for completeness)
 Mlor = get_dimension(obj.get_cones,opts.Kc,'lor'); mlor  = sum(Mlor);
 Mrot = get_dimension(obj.get_cones,opts.Kc,'rot'); mrot  = sum(Mrot);
 Mpsd = get_dimension(obj.get_cones,opts.Kc,'psd'); mpsd  = sum(Mpsd.^2);
@@ -57,7 +55,8 @@ n_inserted = length(added_vars);
 sdp.x = [sdp.x(1:Nlin); added_vars; sdp.x(Nlin+1:end)];
 
 % add linear cones to constraints
-Mlin = Mlin + num_nlin_x + num_nlin_g;
+m_inserted = num_nlin_x + num_nlin_g;
+Mlin = Mlin + m_inserted;
 
 % add the variables M to sdp.x
 n_added = ndd2 + n_inserted;
@@ -117,11 +116,19 @@ map_non_dd_x = sparse(1:len_non_ndd, cols_non_dd, 1, len_non_ndd, len_x_new);
 
 % figure out the columns in sdp.g where those non-DD constraints now live
 cols_xlin = 1:mlin0;                                            % unchanged
-cols_xlor = (mlin0 + num_nlin_x + num_nlin_g) + (1:mlor);                    % shifted by n_inserted
-cols_xrot = (mlin0 + num_nlin_x + num_nlin_g + mlor) + (1:mrot);
-cols_xpsd = (mlin0 + num_nlin_x + num_nlin_g + mlor + mrot) + (1:mpsd);
+cols_xlor = (mlin0 + m_inserted) + (1:mlor);                    % shifted by m_inserted
+cols_xrot = (mlin0 + m_inserted + mlor) + (1:mrot);
+cols_xpsd = (mlin0 + m_inserted + mlor + mrot) + (1:mpsd);
 
 cols_non_dd = [cols_xlin, cols_xlor, cols_xrot, cols_xpsd];
+
+% sanity checks for sdp.g
+assert(all(cols_non_dd >= 1 & cols_non_dd <= len_g_new), ...
+    'map_non_dd_g: some indices out of bounds in sdp.g.');
+assert(length(cols_non_dd) == len_non_mdd, ...
+    'map_non_dd_g: mismatch between expected and actual length.');
+assert(length(unique(cols_non_dd)) == length(cols_non_dd), ...
+    'map_non_dd_g: duplicate indices detected in sdp.g mapping.');
 
 % build selection matrix (1 in each row at the column where the variable lives)
 % equivalent to gtemp = jacobian([glin; glor; grot; gpsd], sdp.g)
@@ -150,12 +157,13 @@ if mdd2~=0
 end
 
 % construct the combined selection matrix for the dual variables.
-% treat lam_x
+% lam_x: non-DD and DD parts
 map.lam = [ ...
     map_non_dd_x,                sparse(len_non_ndd, len_g_new);     % lam_x (non-DD part)
     sparse(ndd2, len_x_new),     map_dd_eqs_x ...                   % lam_x (DD part)
 ];
 
+% lam_g: original constraints and DD constraints
 map.lam = [map.lam;
            sparse(len_g_orig, len_x_new), [ map_non_dd_g;                                               % lam_g (original constraints)
                                             0.5*(speye(mdd2)+blockCommutation(Mdd))*map_dd_eqs_g]];     % map to the duals of DD 
