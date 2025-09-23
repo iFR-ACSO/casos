@@ -143,6 +143,28 @@ map.lam = [ ...
 ];
 
 % treat lam_g
+if isempty(Mdd)
+    map_non_dd_g = map.g;
+else
+    map_non_dd_g = [];
+end
 map.lam = [map.lam;
-           sparse(len_g_orig, len_x_new), map.g];       % lam_g (original constraints)
+           sparse(len_g_orig, len_x_new), [ map_non_dd_g;                                               % lam_g (original constraints)
+                                            0.5*(speye(mdd2)+blockCommutation(Mdd))*map_dd_eqs_g]];     % map to the duals of DD 
+
+end
+
+
+function K = blockCommutation(Mdd)
+    % Mdd = [n1, n2, ..., nk] where each ni is a block size
+    mdd2 = sum(Mdd.^2);
+    K = sparse(mdd2, mdd2);
+    offset = 0;
+    for i = 1:length(Mdd)
+        ni = Mdd(i);
+        Ki = commutationMatrix(ni);    % your existing K_{n,n} builder
+        idx = offset + (1:ni^2);
+        K(idx, idx) = Ki;
+        offset = offset + ni^2;
+    end
 end
