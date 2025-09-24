@@ -247,6 +247,9 @@ methods (Access=protected)
     % replace DD cones (constraint or decision variable form)
     [sdp,args,M_out,num_nlin,sdd_index,opts] = replaceSDDcones(obj,sdp,sizes,Mlin,args,opts,field)
 
+    % build commutation matrices for each block
+    K = blockCommutation(obj,Msdd)
+
     function S = copyElement(obj)
         % Use copy constructor.
         S = casos.package.solvers.SdpsolInternal(obj);

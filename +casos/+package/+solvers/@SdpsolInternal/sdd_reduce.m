@@ -12,7 +12,7 @@ Nlin = get_dimension(obj.get_cones,opts.Kx,'lin'); nlin0  = sum(Nlin);
 Nsdd = get_dimension(obj.get_cones,opts.Kx,'sdd'); nsdd2  = sum(Nsdd.^2);
 Nlor = get_dimension(obj.get_cones,opts.Kx,'lor'); nlor   = sum(Nlor);
 Nrot = get_dimension(obj.get_cones,opts.Kx,'rot'); nrot   = sum(Nrot);
-Npsd = get_dimension(obj.get_cones,opts.Kx,'psd'); npsd   = sum(Npsd);
+Npsd = get_dimension(obj.get_cones,opts.Kx,'psd'); npsd   = sum(Npsd.^2);
 % (unused, but collected for completeness)
 Ndd  = get_dimension(obj.get_cones,opts.Kx,'dd');  ndd2   = sum(Ndd.^2);
 
@@ -56,6 +56,8 @@ added_vars = [vertcat(M_g{:}); vertcat(M_x{:})];
 n_inserted = length(added_vars);
 sdp.x = [sdp.x(1:Nlin); added_vars; sdp.x(Nlin+1:end)];
 
+n_eq_c = sdd_index_g.num_eq;   % number of equalities from processing Kc
+
 % add the variables M to sdp.x
 Nlin = Nlin + nsdd2+n_inserted;
 Mlin = Mlin + sdd_index_x.num_eq+sdd_index_g.num_eq; 
@@ -94,7 +96,8 @@ map.x = sparse(1:len_x_orig, idx_original, 1, len_x_orig, len_x_new);
 map.g = [speye(len_g_orig), sparse(len_g_orig, len_g_new-len_g_orig)];
 
 % map.lam_x for non-SDD variables
-len_non_sdd = nlin0 + nlor + nrot + npsd;
+len_non_sdd_x   = nlin0 + nlor + nrot + npsd;
+len_non_sdd_g = mlin0 + mlor + mrot + mpsd + mdd2;
 
 % figure out the columns in sdp.x where non-SDD variables now live
 cols_xlin = 1:nlin0;                                          % unchanged
@@ -107,12 +110,29 @@ cols_non_sdd = [cols_xlin, cols_xlor, cols_xrot, cols_xpsd];
 % sanity checks
 assert(all(cols_non_sdd >= 1 & cols_non_sdd <= len_x_new), ...
     'xtemp: some indices out of bounds in sdp.x.');
-assert(length(cols_non_sdd) == len_non_sdd, ...
+assert(length(cols_non_sdd) == len_non_sdd_x, ...
     'xtemp: mismatch between expected and actual length.');
 
 % selection matrix for non-SDD variables
 % equivalent to xtemp = jacobian([xlin; xlor; xrot; xpsd; xdd], sdp.x);
-map_non_sdd_x = sparse(1:len_non_sdd, cols_non_sdd, 1, len_non_sdd, len_x_new);
+map_non_sdd_x = sparse(1:len_non_sdd_x, cols_non_sdd, 1, len_non_sdd_x, len_x_new);
+
+% figure out indices where these now live in sdp.g
+cols_glin = 1:mlin0;                        % linear constraints unchanged
+cols_glor = (mlin0 + n_eq_c) + (1:mlor);    % shifted by inserted equalities
+cols_grot = (mlin0 + n_eq_c + mlor) + (1:mrot);
+cols_gpsd = (mlin0 + n_eq_c + mlor + mrot) + (1:mpsd);
+cols_gdd  = (mlin0 + n_eq_c + mlor + mrot + mpsd) + (1:mdd2);
+
+cols_non_sdd_g = [cols_glin, cols_glor, cols_grot, cols_gpsd, cols_gdd];
+
+% sanity check
+assert(length(cols_non_sdd_g) == len_non_sdd_g, ...
+    'Mismatch between expected and actual non-SDD g length.');
+
+% selection matrix for non-SDD constraints
+map_non_sdd_g = sparse(1:len_non_sdd_g, cols_non_sdd_g, 1, len_non_sdd_g, len_g_new);
+
 
 % empty map
 map_sdd_eqs_x = sparse(nsdd2, len_g_new);
@@ -139,15 +159,18 @@ end
 % construct the combined selection matrix for the dual variables.
 % treat lam_x
 map.lam = [ ...
-    map_non_sdd_x,               sparse(len_non_sdd, len_g_new);     % lam_x (non-SDD part)
+    map_non_sdd_x,               sparse(len_non_sdd_x, len_g_new);     % lam_x (non-SDD part)
     sparse(nsdd2, len_x_new),     map_sdd_eqs_x ...                  % lam_x (SDD part)
 ];
 
 % treat lam_g
 map.lam = [map.lam;
-           sparse(len_g_orig, len_x_new), map.g];       % lam_g (original constraints)
+           sparse(len_g_orig, len_x_new), [map_non_sdd_g;
+                                           0.5*(speye(msdd2)+obj.blockCommutation(Msdd))*map_sdd_eqs_g]];       % lam_g (original constraints)
 
 end
+
+
 
 
 

@@ -166,50 +166,8 @@ map.lam = [ ...
 % lam_g: original constraints and DD constraints
 map.lam = [map.lam;
            sparse(len_g_orig, len_x_new), [ map_non_dd_g;                                               % lam_g (original constraints)
-                                            0.5*(speye(mdd2)+blockCommutation(Mdd))*map_dd_eqs_g]];     % map to the duals of DD 
+                                            0.5*(speye(mdd2)+obj.blockCommutation(Mdd))*map_dd_eqs_g]];     % map to the duals of DD 
 
-end
-
-
-function K = blockCommutation(Mdd)
-% Mdd = [n1, n2, ..., nk] where each ni is a block size
-% Build commutation matrices for each block
-Kblocks = cellfun(@commutationMatrix, num2cell(Mdd), 'UniformOutput', false);
-
-% Assemble block diagonal matrix
-K = blkdiag(Kblocks{:});
-
-% Ensure sparse format
-K = sparse(K);
-end
-
-function K = commutationMatrix(n)
-% commutationMatrix: Construct commutation matrix K_{n,n}.
-%   K = commutationMatrix(n) returns the sparse commutation matrix of size
-%   n^2-by-n^2 such that:
-%       K * vec(X) = vec(X.')
-
-% Preallocate indices
-rows = zeros(n^2,1);
-cols = zeros(n^2,1);
-
-% Compute permutation mapping
-idx = 1;
-for i = 1:n
-    for j = 1:n
-        % vec(X) index for (i,j)
-        col = (j-1)*n + i;
-        % vec(X.') index for (i,j)
-        row = (i-1)*n + j;
-
-        rows(idx) = row;
-        cols(idx) = col;
-        idx = idx + 1;
-    end
-end
-
-% Build sparse permutation matrix
-K = sparse(rows, cols, 1, n^2, n^2);
 end
 
 
