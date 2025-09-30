@@ -16,6 +16,11 @@ properties (Dependent)
     sparsity_out;
 end
 
+methods (Abstract)
+    %% Abstract interface
+    tf = is_constant(obj);
+end
+
 methods
     %% Getters (Dependent variables)
     function d = get.maxdeg(obj)
@@ -96,6 +101,11 @@ methods
         tf = isempty@casos.package.core.PolynomialInterface(obj);
     end
 
+    function tf = is_constant_poly(obj)
+        % Check if polynomial is a constant value.
+        tf = (is_constant(obj) && is_zerodegree(obj));
+    end
+
     function tf = is_dense(obj)
         % Check if polynomial has no sparse coefficients.
         tf = is_dense(obj.poly_sparsity);
@@ -113,7 +123,7 @@ methods
 
     function tf = is_homogeneous(obj,varargin)
         % Check if polynomial is homogeneous.
-        tf = all(obj.mindeg == [obj.maxdeg varargin{:}]);
+        tf = is_homogeneous(obj.poly_sparsity,varargin{:});
     end
 
     function tf = is_matrix(obj)
@@ -199,6 +209,20 @@ methods
         % Return a list of indeterminate variables.
         l = list_of_indets(obj.poly_sparsity);
     end
+
+    %% Display
+    function disp(obj)
+        % Print string representation to command line.
+        if ~is_operator(obj)
+            % display as matrix
+            disp_matrix(obj);
+        else
+            % display with signature
+            in = signature(obj.sparsity_in,true); 
+            out = signature(obj.sparsity_out,true);
+            fprintf('%s: [%s]->[%s]\n',to_char(obj),in{:},out{:});
+        end
+    end
 end
 
 methods (Access=protected)
@@ -278,13 +302,15 @@ methods (Static,Access=protected)
         if nargin < 1
             % default syntax
             S = casos.Sparsity.scalar;
-        elseif isnumeric(w)
-            % constant polynomial
-            assert(nargin < 2, 'Undefined syntax.')
+        elseif isnumeric(w) && nargin < 2
+            % zero-degree polynomial (syntax 1)
             S = casos.Sparsity.dense(w);
         elseif nargin < 2
             % sparsity pattern
             S = casos.Sparsity(w);
+        elseif isnumeric(w) && isnumeric(sz)
+            % zero-degree polynomial (syntax 2)
+            S = casos.Sparsity.dense(w,sz);
         elseif ischar(sz)
             % type given
             assert(nargin < 3, 'Undefined syntax.')
