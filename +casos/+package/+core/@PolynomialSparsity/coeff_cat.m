@@ -1,6 +1,24 @@
 function [S,coeffs] = coeff_cat(obj,S2,coeff1,coeff2,dim)
 % Concatenate polynomial coefficient matrices.
 
+if (dim == 0)
+    % block diagonal concatenation
+    Sa = casos.Sparsity.dense(size(obj,1),size(S2,2));
+    Sb = casos.Sparsity.dense(size(S2,1),size(obj,2));
+
+    cfa = Sa.coeffs;
+    cfb = Sb.coeffs;
+
+    if ~isa(coeff1,'casadi.Sparsity')
+        % create zero coefficients
+        cfa = coeff1.zeros(cfa);
+        cfb = coeff2.zeros(cfb);
+    end
+
+    [S,coeffs] = coeff_blkcat(obj,Sa,Sb,S2,coeff1,cfa,cfb,coeff2);
+    return
+end
+
 assert(any(dim==[1 2]),'Operating dimension must be either 1 or 2.')
 
 % detect empty polynomials
