@@ -19,7 +19,7 @@ szp = size(p);
 
 if szp(1) ~= sza(1)
     % dimensions are compatible if size(a,1) == size(p,1)
-    throw(casos.package.core.IncompatibleSizesError.matrix(a,p));
+    throw(casos.package.core.IncompatibleSizesError.mdivide(a,p));
 end
 
 % else

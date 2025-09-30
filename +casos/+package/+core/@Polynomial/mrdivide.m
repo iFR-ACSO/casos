@@ -1,7 +1,7 @@
 function c = mrdivide(p,b)
 % Matrix right division with constant or symbolic matrix.
 %
-% Note: c = p/B is equivalent to solving the linear equation B*c = p.
+% Note: c = p/B is equivalent to solving the linear equation c*B = p.
 
 assert(is_zerodegree(b),'Only division by constant or symbolic matrix possible.')
 
@@ -19,7 +19,7 @@ szb = size(b);
 
 if szb(2) ~= szp(2)
     % dimensions are compatible if size(b,2) == size(p,2)
-    throw(casos.package.core.IncompatibleSizesError.matrix(p,b));
+    throw(casos.package.core.IncompatibleSizesError.mdivide(p,b));
 end
 
 % else
