@@ -79,7 +79,8 @@ methods
 
     function tf = is_equal(obj,var)
         % Check if indeterminate variables are equal.
-        tf = isequal(obj.variables,var.variables);
+        tf = (isempty(obj) && isempty(var)) ...
+            || isequal(obj.variables,var.variables);
     end
 
     function tf = isrow(obj)
