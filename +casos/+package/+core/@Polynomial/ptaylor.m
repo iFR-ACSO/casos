@@ -25,7 +25,7 @@ c = a.new_poly;
 % shift to operating point
 y = x + b;
 % TODO: use internal operation
-[S,coeffs] = coeff_subs(a.get_sparsity,a.coeffs,x,y.get_sparsity,y.coeffs);
+[S,coeffs] = coeff_substitute(a.get_sparsity,a.coeffs,x,y.get_sparsity,y.coeffs);
 
 % remove terms with exceeding degrees
 [S,c.coeffs] = coeff_project(S,coeffs,restrict_terms(S,0:deg));

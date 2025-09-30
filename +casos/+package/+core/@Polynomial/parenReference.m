@@ -28,7 +28,7 @@ if ~isempty(ii)
     % new polynomial
     p = obj.new_poly;
     % reference coefficients
-    [S,p.coeffs] = coeff_subsref(obj.get_sparsity,obj.coeffs,ii,size(ii));
+    [S,p.coeffs] = coeff_subsref(obj.get_sparsity,obj.coeffs,ii(:),size(ii));
 
     % set sparsity
     p = set_sparsity(p,S);
