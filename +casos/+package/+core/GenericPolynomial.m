@@ -13,6 +13,11 @@ properties (Dependent)
     mindeg;
 end
 
+methods (Abstract)
+    %% Abstract interface
+    tf = is_constant(obj);
+end
+
 methods
     %% Getter
     function n = get.nvars(obj)
@@ -90,6 +95,11 @@ methods
         tf = is_homogeneous(obj.poly_sparsity,varargin{:});
     end
 
+    function tf = is_constant_poly(obj)
+        % Check if polynomial is a constant value.
+        tf = (is_constant(obj) && is_zerodegree(obj));
+    end
+
     function tf = is_dense(obj)
         % Check if polynomial has no sparse coefficients.
         tf = is_dense(obj.poly_sparsity);
@@ -105,9 +115,9 @@ methods
         S = casos.Sparsity(obj.poly_sparsity);
     end
 
-    function Z = grambasis(obj)
+    function varargout = grambasis(obj,varargin)
         % Return a Gram basis for this polynomial.
-        Z = grambasis(obj.poly_sparsity);
+        [varargout{1:nargout}] = grambasis(obj.poly_sparsity,varargin{:});
     end
 
     function l = list_of_degree(obj)
