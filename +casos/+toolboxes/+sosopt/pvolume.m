@@ -63,8 +63,8 @@ end
 if isempty(domain)
     % Default domain: [-1, 1] for each variable
     nvar = p.nvars;
-    xmin = -ones(1,nvar);
-    xmax = ones(1,nvar);
+    xmin = -ones(nvar,1);
+    xmax = ones(nvar,1);
 else
     % Extract variables and bounds from the domain
     nvar = size(domain,1); 
