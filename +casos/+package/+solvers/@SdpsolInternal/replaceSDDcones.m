@@ -56,7 +56,7 @@ for i = 1:nCones
     vecY = map_M_to_Y(n, numPairs);
 
     % slack variable
-    M_out{i} = casadi.SX.sym([field '_M' num2str(i)], 3*numPairs, 1);
+    M_out{i} = casadi.SX.sym([field 'sdd_M' num2str(i)], 3*numPairs, 1);
 
     % equality constraint
     eq_constraints{i} = sdd_block - vecY*M_out{i};

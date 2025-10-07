@@ -58,7 +58,7 @@ function [sdp, args, M_out, num_nlin, dd_index, opts] = replaceDDcones(~, sdp, s
         vecY = map_M_to_Y(n, numPairs);
 
         % slack variable
-        M_out{i} = casadi.SX.sym([field '_M' num2str(i)], 3*numPairs, 1);
+        M_out{i} = casadi.SX.sym([field 'dd_M' num2str(i)], 3*numPairs, 1);
 
         % equality and inequality constraints
         eq_constraints{i} = dd_block - vecY*M_out{i};
