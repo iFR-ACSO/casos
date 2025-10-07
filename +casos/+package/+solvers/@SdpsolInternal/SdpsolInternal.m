@@ -250,6 +250,9 @@ methods (Access=protected)
     % build commutation matrices for each block
     K = blockCommutation(obj,Msdd)
 
+    % build commutation matrix
+    K = commutationMatrix(obj,n)
+
     function S = copyElement(obj)
         % Use copy constructor.
         S = casos.package.solvers.SdpsolInternal(obj);

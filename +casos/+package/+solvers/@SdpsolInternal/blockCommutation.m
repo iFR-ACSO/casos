@@ -1,7 +1,7 @@
-function K = blockCommutation(~,Msdd)
+function K = blockCommutation(obj,Msdd)
 % Mdd = [n1, n2, ..., nk] where each ni is a block size
 % Build commutation matrices for each block
-Kblocks = cellfun(@commutationMatrix, num2cell(Msdd), 'UniformOutput', false);
+Kblocks = cellfun(@obj.commutationMatrix, num2cell(Msdd), 'UniformOutput', false);
 
 % Assemble block diagonal matrix
 K = blkdiag(Kblocks{:});
