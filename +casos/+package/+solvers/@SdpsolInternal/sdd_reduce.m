@@ -157,16 +157,33 @@ if msdd2~=0
 end
 
 % construct the combined selection matrix for the dual variables.
-% treat lam_x
-map.lam = [ ...
-    map_non_sdd_x,               sparse(len_non_sdd_x, len_g_new);     % lam_x (non-SDD part)
-    sparse(nsdd2, len_x_new),     map_sdd_eqs_x ...                  % lam_x (SDD part)
-];
+% dual variables associated with x
+% Non-SDD part
+lam_x_non_sdd = [map_non_sdd_x, sparse(len_non_sdd_x, len_g_new)];
 
-% treat lam_g
-map.lam = [map.lam;
-           sparse(len_g_orig, len_x_new), [map_non_sdd_g;
-                                           0.5*(speye(msdd2)+obj.blockCommutation(Msdd))*map_sdd_eqs_g]];       % lam_g (original constraints)
+% SDD part
+comm_Nsdd     = obj.blockCommutation(Nsdd);
+lam_x_sdd     = [sparse(nsdd2, len_x_new), 0.5 * (speye(nsdd2) + comm_Nsdd) * map_sdd_eqs_x];
+
+% Combine lambda_x components
+lam_x = [lam_x_non_sdd; lam_x_sdd];
+
+% dual variables associated with g
+% Non-SDD part
+lam_g_non_sdd = map_non_sdd_g;
+
+% SDD part
+comm_Msdd     = obj.blockCommutation(Msdd);
+lam_g_sdd     = 0.5 * (speye(msdd2) + comm_Msdd) * map_sdd_eqs_g;
+
+% Combine lambda_g components
+lam_g = [lam_g_non_sdd; lam_g_sdd];
+
+% Assemble the full mapping
+map.lam = [
+    lam_x;
+    sparse(len_g_orig, len_x_new), lam_g
+];
 
 end
 
