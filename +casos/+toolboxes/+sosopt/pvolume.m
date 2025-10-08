@@ -51,7 +51,7 @@ end
 if isempty(v)
     v = 1;
 elseif ~isa(v, 'double') 
-    assert(v.is_constant, 'Level set value must be a constant');
+    assert(is_constant_poly(v), 'Level set value must be a constant');
     v = full(casos.PD(v));
 end
 
@@ -63,8 +63,8 @@ end
 if isempty(domain)
     % Default domain: [-1, 1] for each variable
     nvar = p.nvars;
-    xmin = -ones(1,nvar);
-    xmax = ones(1,nvar);
+    xmin = -ones(nvar,1);
+    xmax = ones(nvar,1);
 else
     % Extract variables and bounds from the domain
     nvar = size(domain,1); 
@@ -75,7 +75,7 @@ else
     assert(is_indet(var), 'First column of the domain must be a vector of indeterminate variables.');
 
     % Check if the domain does not contain symbolic variables
-    assert(bounds.is_constant, 'Domain must not contain symbolic variables.');
+    assert(is_constant_poly(bounds), 'Domain must not contain symbolic variables.');
 
     % Convert bounds to PD followed by conversion to double via full
     bounds = full(casos.PD(bounds));
