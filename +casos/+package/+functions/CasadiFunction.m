@@ -91,6 +91,11 @@ methods
         % Return stats.
         s = stats(obj.func);
     end
+
+    function s = get_info(obj)
+        % Return info.
+        s = info(obj.func);
+    end
 end
 
 end
