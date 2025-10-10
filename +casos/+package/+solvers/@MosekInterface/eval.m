@@ -5,12 +5,6 @@ msk_prob = obj.cone;
 
 args = cell2struct(argin',fieldnames(obj.args_in));
 
-% compute cholseky numerically
-if nnz(obj.args_in.h) > 0 && strcmp(obj.opts.cholesky_method,'numerical')
-    args.h = chol((args.h));
-end
-
-
 % evaluate problem structure
 prob = call(obj.fhan,args);
 data = call(obj.barv,args);

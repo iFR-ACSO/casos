@@ -33,8 +33,6 @@ function buildproblem(obj)
 % Lorentz cone, rotated Lorentz cone, and PSD cone can be shifted by a
 % lower bound (cb).
 
-if ~isfield(obj.opts,'cholesky_method'), obj.opts.cholesky_method = 'numerical'; end
-
 opts = obj.opts;
 
 % retrieve MOSEK symbolic constants
@@ -172,57 +170,41 @@ args_in = obj.args_in;
 % MOSEK cannot solve conic problems with quadratic cost
 
 if nnz(h) > 0
-    
-    % use casadi to compute cholesky
-    if strcmp(obj.opts.cholesky_method,'analytical') 
+    % inverse permutation matrix for Cholesky decomposition
+    Pinv = obj.opts.hessian_permute;
+    P = Pinv'/(Pinv*Pinv');
 
-        % only SX supports Cholesky decomposition
-        H = casadi.SX.sym('H',sparsity(h));
-        %Performs an LDL transformation [L,D] = ldl(A) and returns 
-        % diag(sqrt(D))*L'
-        chol_f = casadi.Function('chol',{H},{chol(H)});
+    % permute Hessian
+    hPerm = P'*h*P;
     
-        % ldl_f = casadi.Function('ldl',{H},{ldl(H)});
-        % rewrite quadratic cost
-        %
-        %   min_x 1/2 x'*Q*x + c'*x
-        %
-        % into 
-        %
-        %   min_{x,y} c'*x + y, s.t. 1 + y >= ||(sqrt(2)*U*x, 1 - y)||
-        %
-        % with additional variable y and Cholesky decomposition U'*U = Q
-        U = chol_f(h);
+    % only SX supports Cholesky decomposition
+    H = casadi.SX.sym('H',sparsity(hPerm));
+    % performs a Cholesky decomposition R'*R = (P'*H*P)
+    chol_f = casadi.Function('chol',{H},{chol(H)});
+
+    % rewrite quadratic cost
+    %
+    %   min_x 1/2 x'*Q*x + c'*x
+    %
+    % into 
+    %
+    %   min_{x,y} c'*x + y, s.t. 1 + y >= ||(sqrt(2)*U*x, 1 - y)||
+    %
+    % with additional variable y and Cholesky decomposition U'*U = Q
+    U = chol_f(hPerm);
     
-    else % parameterize solver with cholesky sparsity pattern and compute numerically online
-
-        % get sparisty pattern from h
-        H = sparsity(h);
-        [rr,~] = get_triplet(H);
-        
-        i = min(rr); j = max(rr); % row numbers are sorted
-        
-        spU = casadi.Sparsity.upper(j - i + 1);
-        
-        spU.enlarge(size(H,1), size(H,2), i:j, i:j);
-        
-        U = casadi.MX.sym('U', spU); %+casadi.Sparsity.diag(length(H)));
-
-       % evaluate Cholesky decomposition in situ
-       args_in.h = U;
-   
-    end
+    % number of variables after permutation
+    nP = length(U);
 
     % build affine cone constraint 
-    % L(y,x) + k = (1+y, sqrt(2)*U*x, 1-y) in SOC
+    % L(y,x) + k = (1+y, sqrt(2)*U/P*x, 1-y) in SOC
     % note: additional variable y is first decision variable
-    L = [1 casadi.DM(1,n); casadi.DM(n,1) sqrt(2)*U; -1 casadi.DM(1,n)];
-    k = [1; casadi.DM(n,1); 1];
-
+    L = [1 casadi.DM(1,n); casadi.DM(nP,1) sqrt(2)*U*Pinv; -1 casadi.DM(1,n)];
+    k = [1; casadi.DM(nP,1); 1];
 
     % number of additional variables and constraints
     Nx_cost = 1;
-    Na_cost = n + 2;
+    Na_cost = nP + 2;
     % separate ACC for vector and matrix variables
     [Llin,Lbar] = separate(L,Na_cost,[Nx_v+1 sum(Nx.s.^2)]);
     % get nonzero elements and subindices (i,j,k,l) for Lbar

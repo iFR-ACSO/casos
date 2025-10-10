@@ -98,6 +98,7 @@ sdp.x = [Qvar_sdp; Qcon_G];
 sdp.f = sdp_f;
 sdp.g = sdp_g - map_g*Qcon_G;
 sdp.p = Qpar;
+
 % store derivatives
 sdp.derivatives.Hf = blockcat(map_x'*sdp_Hf*map_x, ...
                               sparse(nnz_lin_x+nnz_gram_x,nnz_gram_g), ...
@@ -109,6 +110,9 @@ sdp.derivatives.Jg = horzcat(sdp_Jg*map_x, -map_g);
 sdpopt = opts.sdpsol_options;
 sdpopt.Kx = struct('lin', nnz_lin_x, 'psd', [Ksdp_x_s; Ksdp_g_s]);
 sdpopt.Kc = struct('lin', nnz_lin_g + nnz_sos_g);
+
+% inverse permutation of Hessian for Cholesky decomposition
+sdpopt.hessian_permute = [map_x sparse(nnz_lin_x+nnz_sos_x,nnz_gram_g)];
 
 % initialize SDP solver
 obj.sdpsolver = casos.package.solvers.SdpsolInternal('SDP',solver,sdp,sdpopt);
