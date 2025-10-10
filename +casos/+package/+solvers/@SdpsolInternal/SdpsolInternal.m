@@ -82,8 +82,8 @@ methods
         obj.map = [];
 
         % original sizes
-        len_x = length(sdp.x);
-        len_g = length(sdp.g);
+        len_x = size(sdp.x, 1);
+        len_g = size(sdp.g, 1);
 
         % rebuild problem from SDD to SOCP
         if isfield(opts.Kx,'sdd') || isfield(opts.Kc,'sdd')

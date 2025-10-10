@@ -26,8 +26,8 @@ Mlor = get_dimension(obj.get_cones,opts.Kc,'lor'); mlor  = sum(Mlor);
 Mrot = get_dimension(obj.get_cones,opts.Kc,'rot'); mrot  = sum(Mrot);
 
 % save sizes of sdp.x and sdp.g (original)
-len_x_orig = length(sdp.x);     % original decision variable length
-len_g_orig = length(sdp.g);     % original constraint length
+len_x_orig = size(sdp.x, 1);     % original decision variable length
+len_g_orig = size(sdp.g, 1);     % original constraint length
 
 % initialize SDD index structs in case the fields don't exist
 sdd_index_g.num_eq = 0;         % in constraints

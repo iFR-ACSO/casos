@@ -24,8 +24,8 @@ Mpsd = get_dimension(obj.get_cones,opts.Kc,'psd'); mpsd  = sum(Mpsd.^2);
 Msdd = get_dimension(obj.get_cones,opts.Kc,'sdd'); msdd2 = sum(Msdd.^2);
 
 % save sizes of sdp.x and sdp.g (original)
-len_x_orig = length(sdp.x);     % original decision variable length
-len_g_orig = length(sdp.g);     % original constraint length
+len_x_orig = size(sdp.x, 1);     % original decision variable length
+len_g_orig = size(sdp.g, 1);     % original constraint length
 
 % create zero initial 
 num_nlin_x = 0;     % in decision variables
