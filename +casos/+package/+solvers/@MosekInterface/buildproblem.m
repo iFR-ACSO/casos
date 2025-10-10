@@ -172,17 +172,21 @@ args_in = obj.args_in;
 % MOSEK cannot solve conic problems with quadratic cost
 
 if nnz(h) > 0
+    % inverse permutation matrix for Cholesky decomposition
+    Pinv = obj.opts.hessian_permute;
+    P = Pinv'/(Pinv*Pinv');
+
+    % permute Hessian
+    hPerm = P'*h*P;
     
     % use casadi to compute cholesky
     if strcmp(obj.opts.cholesky_method,'analytical') 
 
         % only SX supports Cholesky decomposition
-        H = casadi.SX.sym('H',sparsity(h));
-        %Performs an LDL transformation [L,D] = ldl(A) and returns 
-        % diag(sqrt(D))*L'
+        H = casadi.SX.sym('H',sparsity(hPerm));
+        % performs a Cholesky decomposition R'*R = (P'*H*P)
         chol_f = casadi.Function('chol',{H},{chol(H)});
     
-        % ldl_f = casadi.Function('ldl',{H},{ldl(H)});
         % rewrite quadratic cost
         %
         %   min_x 1/2 x'*Q*x + c'*x
@@ -192,12 +196,12 @@ if nnz(h) > 0
         %   min_{x,y} c'*x + y, s.t. 1 + y >= ||(sqrt(2)*U*x, 1 - y)||
         %
         % with additional variable y and Cholesky decomposition U'*U = Q
-        U = chol_f(h);
+        U = chol_f(hPerm);
     
     else % parameterize solver with cholesky sparsity pattern and compute numerically online
 
         % get sparisty pattern from h
-        H = sparsity(h);
+        H = sparsity(hPerm);
         [rr,~] = get_triplet(H);
         
         i = min(rr); j = max(rr); % row numbers are sorted
@@ -213,16 +217,18 @@ if nnz(h) > 0
    
     end
 
-    % build affine cone constraint 
-    % L(y,x) + k = (1+y, sqrt(2)*U*x, 1-y) in SOC
-    % note: additional variable y is first decision variable
-    L = [1 casadi.DM(1,n); casadi.DM(n,1) sqrt(2)*U; -1 casadi.DM(1,n)];
-    k = [1; casadi.DM(n,1); 1];
+    % number of variables after permutation
+    nP = length(U);
 
+    % build affine cone constraint 
+    % L(y,x) + k = (1+y, sqrt(2)*U/P*x, 1-y) in SOC
+    % note: additional variable y is first decision variable
+    L = [1 casadi.DM(1,n); casadi.DM(nP,1) sqrt(2)*U*Pinv; -1 casadi.DM(1,n)];
+    k = [1; casadi.DM(nP,1); 1];
 
     % number of additional variables and constraints
     Nx_cost = 1;
-    Na_cost = n + 2;
+    Na_cost = nP + 2;
     % separate ACC for vector and matrix variables
     [Llin,Lbar] = separate(L,Na_cost,[Nx_v+1 sum(Nx.s.^2)]);
     % get nonzero elements and subindices (i,j,k,l) for Lbar

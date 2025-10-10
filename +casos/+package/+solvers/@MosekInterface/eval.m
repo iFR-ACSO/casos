@@ -7,7 +7,9 @@ args = cell2struct(argin',fieldnames(obj.args_in));
 
 % compute cholseky numerically
 if nnz(obj.args_in.h) > 0 && strcmp(obj.opts.cholesky_method,'numerical')
-    args.h = chol((args.h));
+    Pinv = obj.opts.hessian_permute;
+    P = Pinv'/(Pinv*Pinv');
+    args.h = chol(P'*args.h*P);
 end
 
 

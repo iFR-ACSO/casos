@@ -29,7 +29,9 @@ properties (Access=protected)
 end
 
 properties (Constant, Access=protected)
-    conic_options = casos.package.solvers.SolverCallback.solver_options;
+    conic_options = [casos.package.solvers.SolverCallback.solver_options
+        {'hessian_permute', 'Inverse permutation matrix for the Hessian.'}
+    ];
 
     conic_cones = casos.package.Cones([
         casos.package.Cones.LIN
@@ -78,6 +80,7 @@ methods
         % default options
         if ~isfield(obj.opts,'Kx'), obj.opts.Kx = struct('lin',n); end
         if ~isfield(obj.opts,'Kc'), obj.opts.Kc = struct('lin',m); end
+        if ~isfield(obj.opts,'hessian_permute'), obj.opts.hessian_permute = 1; end
 
         % check cone dimensions
         assert(obj.getnumc(obj.opts.Kx) == n, 'Dimension of Kx must equal to number of variables (%d).', n)
