@@ -18,12 +18,24 @@ properties (Constant, Access=protected)
          'cholesky_method','Parameter that defines how cholseky is computed (symbollically or numerically online) '
          'mosek_echo',  'Verbosity level passed to MOSEK (default: 0).'}
     ];
+
+    mosek_cones = [casos.package.solvers.ConicSolver.conic_cones
+        [casos.package.Cones.POW
+         casos.package.Cones.DPOW
+         casos.package.Cones.EXP
+         casos.package.Cones.DEXP]
+    ];
 end
 
 methods (Static)
     function options = get_options
         % Return static options.
         options = casos.package.solvers.MosekInterface.mosek_options;
+    end
+
+    function cones = get_cones
+        % Return supported cones.
+        cones = casos.package.solvers.MosekInterface.mosek_cones;
     end
 end
 
