@@ -33,8 +33,6 @@ function buildproblem(obj)
 % Lorentz cone, rotated Lorentz cone, and PSD cone can be shifted by a
 % lower bound (cb).
 
-if ~isfield(obj.opts,'cholesky_method'), obj.opts.cholesky_method = 'numerical'; end
-
 opts = obj.opts;
 
 % retrieve MOSEK symbolic constants
@@ -179,44 +177,22 @@ if nnz(h) > 0
     % permute Hessian
     hPerm = P'*h*P;
     
-    % use casadi to compute cholesky
-    if strcmp(obj.opts.cholesky_method,'analytical') 
+    % only SX supports Cholesky decomposition
+    H = casadi.SX.sym('H',sparsity(hPerm));
+    % performs a Cholesky decomposition R'*R = (P'*H*P)
+    chol_f = casadi.Function('chol',{H},{chol(H)});
 
-        % only SX supports Cholesky decomposition
-        H = casadi.SX.sym('H',sparsity(hPerm));
-        % performs a Cholesky decomposition R'*R = (P'*H*P)
-        chol_f = casadi.Function('chol',{H},{chol(H)});
+    % rewrite quadratic cost
+    %
+    %   min_x 1/2 x'*Q*x + c'*x
+    %
+    % into 
+    %
+    %   min_{x,y} c'*x + y, s.t. 1 + y >= ||(sqrt(2)*U*x, 1 - y)||
+    %
+    % with additional variable y and Cholesky decomposition U'*U = Q
+    U = chol_f(hPerm);
     
-        % rewrite quadratic cost
-        %
-        %   min_x 1/2 x'*Q*x + c'*x
-        %
-        % into 
-        %
-        %   min_{x,y} c'*x + y, s.t. 1 + y >= ||(sqrt(2)*U*x, 1 - y)||
-        %
-        % with additional variable y and Cholesky decomposition U'*U = Q
-        U = chol_f(hPerm);
-    
-    else % parameterize solver with cholesky sparsity pattern and compute numerically online
-
-        % get sparisty pattern from h
-        H = sparsity(hPerm);
-        [rr,~] = get_triplet(H);
-        
-        i = min(rr); j = max(rr); % row numbers are sorted
-        
-        spU = casadi.Sparsity.upper(j - i + 1);
-        
-        spU.enlarge(size(H,1), size(H,2), i:j, i:j);
-        
-        U = casadi.MX.sym('U', spU); %+casadi.Sparsity.diag(length(H)));
-
-       % evaluate Cholesky decomposition in situ
-       args_in.h = U;
-   
-    end
-
     % number of variables after permutation
     nP = length(U);
 
