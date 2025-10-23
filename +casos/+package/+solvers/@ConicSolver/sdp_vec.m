@@ -55,8 +55,8 @@ if nargin < 4 || isempty(scale)
     scale = sqrt(2);
 end
 
-% ensure matrix dimensions are a row vector
-s = reshape(Ks,1,[]);
+% ensure matrix dimensions are a column vector
+s = reshape(Ks,[],1);
 % number of elements in each matrix block
 Nq = s.^2;
 
@@ -66,14 +66,14 @@ assert(size(M,dim) == sum(Nq), 'Number and size of block entries in M must corre
 subI = cell(1,2);
 [subI{:}] = ind2sub(size(M),find(sparsity(M)));
 
-% select dimension and ensure linear indices are a row vector
-I = reshape(subI{dim},1,[]);
+% select dimension and ensure linear indices are a column vector
+I = reshape(subI{dim},[],1);
 
 % number of elements before matrix variables Mij
-S = cumsum([0 Nq(1:end-1)]);
+S = cumsum([0; Nq(1:end-1)]);
 
 % compute off-dimension index of corresponding matrix variable
-J = sum(I > S', 1); % interface is 1-based
+J = sum(I > S', 2); % interface is 1-based
 
 % compute linear indices of elements in each matrix
 I0 = I - S(J);
@@ -86,24 +86,32 @@ k = I0 - s(J).*(l-1); % row
 % determine strictly upper triangle
 triu = (k < l);
 
-% remove indices for strictly upper triangle
-J(triu) = [];
-l(triu) = [];
-k(triu) = [];
+% symmetrize indices for strictly upper triangle
+[l(triu),k(triu)] = deal(k(triu),l(triu));
+
+% remove duplicate indices
+[~,ip,iq] = unique([subI{3-dim}(:) J k l],'rows','stable');
+
+% unique indices for lower triangle
+J = J(ip);
+l = l(ip);
+k = k(ip);
 
 % linear indices for lower triangular entries
-subItril = {subI{1}(~triu) subI{2}(~triu)};
-Itril = sub2ind(size(M),subItril{:});
+subItril = {subI{1}(ip) subI{2}(ip)};
 
-% determine strictly lower and upper triangle
+% determine strictly lower triangle
 tril = (k > l);
+
+% sum duplicate values
+summat = sparse(iq,1:length(iq),1,length(ip),length(iq));
 
 % scale strictly lower triangle
 scaling = ones(size(tril));
-scaling(tril) = scale;
+scaling(tril) = scale/2;        % divide by two for symmetrization
 
 % nonzero elements of lower triangular matrices, scaled
-val = scaling.*reshape(M(Itril),1,length(Itril));
+val = scaling.*(summat*sparsity_cast(M,casadi.Sparsity.dense(length(iq),1)));
 
 if nargout > 1
     % return subindices (i,j) of matrices Mij
@@ -126,7 +134,7 @@ else
     % sparsity pattern of block matrix
     Sp = casadi.Sparsity.triplet(sz(1),sz(2),subIv{:});
     % return block matrix V
-    v = feval(class(M),Sp,val');
+    v = sparsity_cast(val,Sp);
 end
 
 end
