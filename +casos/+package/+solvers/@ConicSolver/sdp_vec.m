@@ -107,8 +107,8 @@ tril = (k > l);
 summat = sparse(iq,1:length(iq),1,length(ip),length(iq));
 
 % scale strictly lower triangle
-scaling = 1./sum(summat,2);
-scaling(tril) = scale*scaling(tril);
+scaling = ones(size(tril));
+scaling(tril) = scale/2;        % divide by two for symmetrization
 
 % nonzero elements of lower triangular matrices, scaled
 val = scaling.*(summat*sparsity_cast(M,casadi.Sparsity.dense(length(iq),1)));
