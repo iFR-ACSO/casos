@@ -86,6 +86,7 @@ methods
     function s = get_info(obj)
         % Return info.
         s = obj.info;
+        s.sdp_info = obj.sdpsolver.info;
     end
 end
 
