@@ -94,6 +94,14 @@ obj.ghan = casadi.Function('g', ...
             fopt ...
 );
 
+% number of decision variables
+obj.sdp_info.nx = numel(sz_x);
+
+% number of constraints (lin/conic)
+obj.sdp_info.nc.lin = Ng_l;
+obj.sdp_info.nc.conic = Ng_c;
+
+
 % TODO:
 % Embed conic interface into (expr_in)->(expr_out).
 % f = obj.fhan;
