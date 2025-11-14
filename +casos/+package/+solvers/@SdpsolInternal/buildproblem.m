@@ -102,7 +102,7 @@ obj.sdp_info.nc.lin = Ng_l;
 obj.sdp_info.nc.conic = Ng_c;
 
 % number of nonzero elements in linear constraints (Ap)
-obj.sdp_info.nnz_lin = sparsity(Ap).nnz;
+obj.sdp_info.nnz_Ap = nnz(Ap);
 
 
 % TODO:
