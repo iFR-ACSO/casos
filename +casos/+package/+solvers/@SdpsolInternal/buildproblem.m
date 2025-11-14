@@ -101,6 +101,9 @@ obj.sdp_info.nx = numel(sz_x);
 obj.sdp_info.nc.lin = Ng_l;
 obj.sdp_info.nc.conic = Ng_c;
 
+% number of nonzero elements in linear constraints (Ap)
+obj.sdp_info.nnz_lin = sparsity(Ap).nnz;
+
 
 % TODO:
 % Embed conic interface into (expr_in)->(expr_out).
