@@ -107,6 +107,16 @@ methods
         % construct CasADi callback
         construct(obj,name);
     end
+
+
+    function s = info(obj)
+        s.numel_x   = size(obj.args_in.h, 2);
+        s.numel_h   = nnz(obj.args_in.h);
+        s.numel_g   = nnz(obj.args_in.g);
+        s.numel_a   = nnz(obj.args_in.a);
+        s.Kx        = obj.opts.Kx;
+        s.Kc        = obj.opts.Kc;
+    end
 end
 
 methods (Access=protected)
