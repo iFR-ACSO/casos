@@ -95,7 +95,7 @@ obj.ghan = casadi.Function('g', ...
 );
 
 % number of decision variables
-obj.sdp_info.numel_x = numel(sz_x);
+obj.sdp_info.numel_x = numel(x);
 
 % number of nonzero elements in linear constraints (Ap)
 obj.sdp_info.numel_f = numel(fx);
