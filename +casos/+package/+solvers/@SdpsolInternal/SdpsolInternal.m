@@ -109,7 +109,7 @@ methods
     function s = info(obj)
         % Return info.
         s = obj.sdp_info;
-        s.conic_info = obj.solver.info;
+        s.conic = obj.solver.info;
     end
 
     function print_options(obj)
