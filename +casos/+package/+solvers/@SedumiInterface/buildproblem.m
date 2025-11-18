@@ -140,4 +140,6 @@ lam_x_c = -Sc{2};  %  -y_cbx
 
 obj.ghan = casadi.Function('g',[struct2cell(obj.args_in)' {X Y}],{x (g'*x) [lam_a_l; lam_a_c] [lam_x_l; lam_x_c]},[fieldnames(obj.args_in)' {'X' 'Y'}],obj.names_out);
 
+obj.solver_info = struct; % TODO add solver information
+
 end

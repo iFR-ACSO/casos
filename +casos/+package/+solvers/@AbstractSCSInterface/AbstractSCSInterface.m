@@ -6,7 +6,9 @@ properties (Access=protected)
     ghan;
     cone;
 
-    solver_stats;
+    
+    solver_info  = struct;
+    solver_stats = struct;
 end
 
 methods (Abstract, Static, Access=protected)

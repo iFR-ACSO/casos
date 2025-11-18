@@ -5,9 +5,8 @@ properties (Access=protected)
     fhan;
     ghan;
     cone;
-end
 
-properties (Access=private)
+    solver_info  = struct;
     solver_stats = struct;
 end
 
@@ -35,7 +34,7 @@ methods
         % default options
         if ~isfield(obj.opts,'sedumi'), obj.opts.sedumi = []; end
     end
-
+    
     function s = stats(obj)
         % Return stats.
         s = obj.solver_stats;

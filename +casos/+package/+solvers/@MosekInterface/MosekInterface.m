@@ -6,9 +6,8 @@ properties (Access=protected)
     ghan;
     barv;
     cone;
-end
 
-properties (Access=private)
+    solver_info  = struct;
     solver_stats = struct;
 end
 
