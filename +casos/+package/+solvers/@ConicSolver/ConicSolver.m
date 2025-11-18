@@ -110,12 +110,16 @@ methods
 
 
     function s = info(obj)
-        s.numel_x   = size(obj.args_in.h, 2);
-        s.numel_h   = nnz(obj.args_in.h);
-        s.numel_g   = nnz(obj.args_in.g);
-        s.numel_a   = nnz(obj.args_in.a);
-        s.Kx        = obj.opts.Kx;
-        s.Kc        = obj.opts.Kc;
+        % Low-level interface info
+        s.n_decVar   = size(obj.args_in.h, 2);
+        s.size_H_nnz = nnz(obj.args_in.h);
+        s.size_H     = size(obj.args_in.h);
+        s.size_g_nnz = nnz(obj.args_in.g);
+        s.size_g     = size(obj.args_in.g);
+        s.size_a_nnz = nnz(obj.args_in.a);
+        s.size_a     = size(obj.args_in.a);
+        s.Kx         = obj.opts.Kx;
+        s.Kc         = obj.opts.Kc;
     end
 end
 
