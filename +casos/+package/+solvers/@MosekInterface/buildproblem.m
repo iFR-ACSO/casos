@@ -318,13 +318,11 @@ cost = sol.pobjval;
 
 obj.ghan = casadi.Function('g',[struct2cell(sol); struct2cell(obj.args_in)],{sol_x cost lam_a lam_x},[fieldnames(sol); fieldnames(obj.args_in)],obj.names_out);
 
-% % linear constraints and linear decision variables
-% obj.solver_info.SDP_data.size_A_nnz = nnz(prob.a);
-% obj.solver_info.SDP_data.size_A     = size(prob.a);
 
-% add size for the current conic solver
-obj.solver_info.size_A = size(obj.args_in.a);
-obj.solver_info.n_decVar = length(obj.args_in.x0);
+% fill info struct
+obj.solver_info.name        = 'mosek';
+obj.solver_info.n_decVar    = length(obj.args_in.x0);
+obj.solver_info.size_A      = size(obj.args_in.a);
 
 end
 
