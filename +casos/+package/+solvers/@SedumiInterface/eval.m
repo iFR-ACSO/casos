@@ -79,24 +79,24 @@ K.f = length(If);
 K.l = K.l - nnz(J) - length(If);
 
 % call SeDuMi
-[x_,y_,obj.info] = sedumi(A,b,full(c),K,opts);
+[x_,y_,obj.solver_stats] = sedumi(A,b,full(c),K,opts);
 
 % assign full solution
 x = sparse(idx,1,x_,length(J),1);
 y = sparse(find(~I),1,y_,length(I),1);
 
-if obj.info.pinf
+if obj.solver_stats.pinf
     % primal infeasible
     obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_INFEASIBLE;
     assert(~obj.opts.error_on_fail,'Conic problem is primal infeasible.')
-elseif obj.info.dinf
+elseif obj.solver_stats.dinf
     % dual infeasible
     obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_INFEASIBLE;
     assert(~obj.opts.error_on_fail,'Conic problem is dual infeasible.')
-elseif obj.info.numerr
+elseif obj.solver_stats.numerr
     % numerical errors
     obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_NAN;
-    assert(~obj.opts.error_on_fail,'Optimizer run into numerical error (numerr=%d, feasratio=%g)',obj.info.numerr,obj.info.feasratio)
+    assert(~obj.opts.error_on_fail,'Optimizer run into numerical error (numerr=%d, feasratio=%g)',obj.solver_stats.numerr,obj.solver_stats.feasratio)
 else
     % success
     obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_SUCCESS;

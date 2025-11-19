@@ -3,6 +3,8 @@ classdef SdpsolInternal < casos.package.solvers.SolverCallback & matlab.mixin.Co
 
 properties (Access=private)
     solver;
+
+    sdp_info;
 end
 
 properties (Access=protected)
@@ -102,6 +104,12 @@ methods
     function s = stats(obj)
         % Return stats.
         s = obj.solver.stats;
+    end
+
+    function s = info(obj)
+        % Return info.
+        s = obj.sdp_info;
+        s.conic = obj.solver.info;
     end
 
     function print_options(obj)

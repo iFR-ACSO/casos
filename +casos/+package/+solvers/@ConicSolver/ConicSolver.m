@@ -26,6 +26,7 @@ end
 
 properties (Access=protected)
     status = casos.package.UnifiedReturnStatus.SOLVER_RET_UNKNOWN;
+    conic_info = struct;
 end
 
 properties (Constant, Access=protected)
@@ -42,6 +43,8 @@ end
 properties (Abstract, Access=protected)
     fhan;
     ghan;
+
+    solver_info;
 end
 
 methods (Abstract, Access=protected)
@@ -101,11 +104,27 @@ methods
         obj.args_in.lam_x0 = casadi.MX.sym('lam_x0',n);
         obj.args_in.lam_a0 = casadi.MX.sym('lam_a0',m);
 
+        % Low-level interface info
+        obj.conic_info.n_decVar   = size(obj.args_in.h, 2);
+        obj.conic_info.size_H_nnz = nnz(obj.args_in.h);
+        obj.conic_info.size_H     = size(obj.args_in.h);
+        obj.conic_info.size_g_nnz = nnz(obj.args_in.g);
+        obj.conic_info.size_g     = size(obj.args_in.g);
+        obj.conic_info.size_a_nnz = nnz(obj.args_in.a);
+        obj.conic_info.size_a     = size(obj.args_in.a);
+        obj.conic_info.Kx         = obj.opts.Kx;
+        obj.conic_info.Kc         = obj.opts.Kc;
+        
         % build conic problem
         buildproblem(obj);
 
         % construct CasADi callback
         construct(obj,name);
+    end
+
+    function s = info(obj)
+        s = obj.conic_info;
+        s.solver = obj.solver_info;
     end
 end
 

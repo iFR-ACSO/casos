@@ -97,7 +97,7 @@ methods (Access=protected)
         clarabel_info.r_prim     = sol.r_prim;
         clarabel_info.r_dual     = sol.r_dual;
        
-        obj.info.clarabel_info = clarabel_info;
+        obj.solver_stats.clarabel_info = clarabel_info;
        
         % get solution status
         if strcmp(sol.status,'Solved')

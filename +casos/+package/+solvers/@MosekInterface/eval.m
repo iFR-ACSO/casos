@@ -47,7 +47,7 @@ msk_cmd = sprintf('minimize echo(%d) info statuskeys(0)',msk_echo);
 
 % store info (if any)
 if isfield(res,'info')
-    obj.info.mosek_info = res.info;
+    obj.solver_stats.mosek_info = res.info;
 end
 
 % pre-initialize solution struct
@@ -68,8 +68,8 @@ end
 % check solution
 if ~isempty(msk_sol)
     % check problem status
-    obj.info.mosek_prosta = msk_sol.prosta;
-    obj.info.mosek_solsta = msk_sol.solsta;
+    obj.solver_stats.mosek_prosta = msk_sol.prosta;
+    obj.solver_stats.mosek_solsta = msk_sol.solsta;
     switch (msk_sol.prosta)
         case {'PRIMAL_AND_DUAL_FEASIBLE' 'PRIMAL_FEASIBLE' 'DUAL_FEASIBLE'}
             % feasible problem, check solution status

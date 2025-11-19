@@ -6,10 +6,9 @@ properties (Access=protected)
     ghan;
     barv;
     cone;
-end
 
-properties (Access=private)
-    info = struct;
+    solver_info  = struct;
+    solver_stats = struct;
 end
 
 properties (Constant, Access=protected)
@@ -42,7 +41,7 @@ methods
 
     function s = stats(obj)
         % Return stats.
-        s = obj.info;
+        s = obj.solver_stats;
         s = addfield(obj.status,s);
     end
 

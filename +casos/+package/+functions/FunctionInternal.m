@@ -63,6 +63,11 @@ methods
         s = struct;
     end
 
+    function s = get_info(~)
+        % Return empty info.
+        s = struct;
+    end
+
     function J = jacobian(obj) %#ok<STOUT>
         % Return Jacobian function if supported.
         error('Derivatives cannot be calculated for %s.',obj.name)
