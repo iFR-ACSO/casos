@@ -131,6 +131,7 @@ if ~isempty(msk_sol)
             
             else
                 obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_LIMITED; % Solution is questionable
+                assert(~obj.opts.error_on_fail,'Problem status unknown (might be ill-posed).')
             end
 
 
