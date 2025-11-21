@@ -1,5 +1,5 @@
 classdef (Sealed) MosekInterface < casos.package.solvers.ConicSolver
-    % Interface for conic solver MOSEK.
+% Interface for conic solver MOSEK.
 
     properties (Access=protected)
         fhan;
@@ -36,7 +36,6 @@ classdef (Sealed) MosekInterface < casos.package.solvers.ConicSolver
             % Construct MOSEK interface.
             obj@casos.package.solvers.ConicSolver(name,conic,varargin{:});
 
-
             % default options
             if ~isfield(obj.opts,'mosek_param'), obj.opts.mosek_param = struct; end
             if ~isfield(obj.opts,'mosek_echo'), obj.opts.mosek_echo = 0; end
@@ -48,11 +47,7 @@ classdef (Sealed) MosekInterface < casos.package.solvers.ConicSolver
                 obj.opts.augmented_check.feasTol     = 1e-6; % relaxed threshold
                 obj.opts.augmented_check.relativeGap = 0.05; % Ensure relative gap is less than X percent (default 5%)
                 obj.opts.augmented_check.maxNorm     = 1e10; % Avoid using solutions with extremely large norms (ill-conditioning)
-
-
-
             end
-
         end
 
         function s = stats(obj)
@@ -66,7 +61,6 @@ classdef (Sealed) MosekInterface < casos.package.solvers.ConicSolver
             if (i == 0)
                 % Hessian pattern
                 sp = sparsity(obj.args_in.h);
-
             else
                 sp = get_sparsity_in@casos.package.solvers.ConicSolver(obj,i);
             end
@@ -76,5 +70,5 @@ classdef (Sealed) MosekInterface < casos.package.solvers.ConicSolver
     methods (Access=protected)
         buildproblem(obj);
     end
-
+    
 end
