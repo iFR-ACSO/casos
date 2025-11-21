@@ -17,7 +17,7 @@ properties (Constant, Access=protected)
         {'mosek_param', 'Parameters to be passed to MOSEK.'
          'cholesky_method','Parameter that defines how cholseky is computed (symbollically or numerically online) '
          'mosek_echo',  'Verbosity level passed to MOSEK (default: 0).'
-         'mosek_augmented_feasCheck', 'Struct with lowered tolerances to find an acceptable solution.'}
+         'augmented_check', 'Struct with lowered tolerances to find an acceptable solution.'}
     ];
 end
 
@@ -38,17 +38,17 @@ methods
         
         % default values for augmented solution check, in case mosek
         % returns unknown as solution status
-        mosek_augmented_feasCheck.optMeas     = 0.5;  % Compute optimality measure from Mosek's solver status
+        augmented_check.optMeas     = 0.5;  % Compute optimality measure from Mosek's solver status
                                                       % It should converge to +1 to be optimal% Ensure relative gap is less than x percen
-        mosek_augmented_feasCheck.feasTol     = 1e-6; % relaxed threshold
-        mosek_augmented_feasCheck.relativeGap = 0.05; % Ensure relative gap is less than X percent (default 5%)
-        mosek_augmented_feasCheck.maxNorm     = 1e10; % Avoid using solutions with extremely large norms (ill-conditioning)
+        augmented_check.feasTol     = 1e-6; % relaxed threshold
+        augmented_check.relativeGap = 0.05; % Ensure relative gap is less than X percent (default 5%)
+        augmented_check.maxNorm     = 1e10; % Avoid using solutions with extremely large norms (ill-conditioning)
         
 
         % default options
         if ~isfield(obj.opts,'mosek_param'), obj.opts.mosek_param = struct; end
         if ~isfield(obj.opts,'mosek_echo'), obj.opts.mosek_echo = 0; end
-        if ~isfield(obj.opts,'mosek_augmented_feasCheck'), obj.opts.mosek_augmented_feasCheck = mosek_augmented_feasCheck; end
+        if ~isfield(obj.opts,'augmented_check'), obj.opts.augmented_check = augmented_check; end
         
     end
 

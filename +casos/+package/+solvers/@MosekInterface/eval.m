@@ -70,6 +70,7 @@ if ~isempty(msk_sol)
     % check problem status
     obj.info.mosek_prosta = msk_sol.prosta;
     obj.info.mosek_solsta = msk_sol.solsta;
+    obj.info.acceptable_solution = [];
     switch (msk_sol.prosta)
         case {'PRIMAL_AND_DUAL_FEASIBLE' 'PRIMAL_FEASIBLE' 'DUAL_FEASIBLE'}
             % feasible problem, check solution status
@@ -107,7 +108,7 @@ if ~isempty(msk_sol)
             
             % Compute optimality measure from Mosek's solver status
             % It should converge to +1 to be optimal
-            optMeas = res.info.MSK_DINF_INTPNT_OPT_STATUS > obj.opts.mosek_augmented_feasCheck.optMeas;
+            optMeas = res.info.MSK_DINF_INTPNT_OPT_STATUS > obj.opts.augmented_check.optMeas;
             
             % Check for potential ill-conditioning by looking at large norm values
             maxNorm = max([res.info.MSK_DINF_SOL_ITR_NRM_XX, ... % Norm of primal variables
@@ -115,29 +116,30 @@ if ~isempty(msk_sol)
             
             % Define an adaptive feasibility tolerance based on problem scale
             % If the objective values are large, allow a slightly relaxed threshold
-            feasibilityTol = obj.opts.mosek_augmented_feasCheck.feasTol * max(1, max([abs(res.info.MSK_DINF_SOL_ITR_PRIMAL_OBJ), ...
+            feasibilityTol = obj.opts.augmented_check.feasTol * max(1, max([abs(res.info.MSK_DINF_SOL_ITR_PRIMAL_OBJ), ...
                                                                                       abs(res.info.MSK_DINF_SOL_ITR_DUAL_OBJ)]));
             
-            % log additional decision logic
-            obj.info.mosek_acceptable_info.primMaxVio  = primMaxVio;
-            obj.info.mosek_acceptable_info.primMaxVio  = dualMaxVio;
-            obj.info.mosek_acceptable_info.relativeGap = relativeGap;
-            obj.info.mosek_acceptable_info.optMeas     = optMeas;
-            obj.info.mosek_acceptable_info.maxNorm     = maxNorm;
+            % log values for decision logic
+            obj.info.acceptable_solution.primMaxVio  = primMaxVio;
+            obj.info.acceptable_solution.primMaxVio  = dualMaxVio;
+            obj.info.acceptable_solution.relativeGap = relativeGap;
+            obj.info.acceptable_solution.optMeas     = optMeas;
+            obj.info.acceptable_solution.maxNorm     = maxNorm;
             
-            % store the decision values 
-            obj.info.mosek_acceptable_info.tolerances.primMaxVio  = feasibilityTol;
-            obj.info.mosek_acceptable_info.tolerances.dualMaxVio  = feasibilityTol;
-            obj.info.mosek_acceptable_info.tolerances.relativeGap = obj.opts.mosek_augmented_feasCheck.relativeGap;
-            obj.info.mosek_acceptable_info.tolerances.maxNorm     = obj.opts.mosek_augmented_feasCheck.maxNorm;
-            obj.info.mosek_acceptable_info.tolerances.optMeas     = obj.opts.mosek_augmented_feasCheck.optMeas;
+            % store the decision values thresholds; user can check what led
+            % to the decision
+            obj.info.acceptable_solution.tolerances.primMaxVio_tol  = feasibilityTol;
+            obj.info.acceptable_solution.tolerances.dualMaxVio_tol  = feasibilityTol;
+            obj.info.acceptable_solution.tolerances.relativeGap_tol = obj.opts.augmented_check.relativeGap;
+            obj.info.acceptable_solution.tolerances.maxNorm_tol     = obj.opts.augmented_check.maxNorm;
+            obj.info.acceptable_solution.tolerances.optMeas_tol     = obj.opts.augmented_check.optMeas;
             
             % Decision logic for solution acceptability
-            if relativeGap < obj.opts.mosek_augmented_feasCheck.relativeGap && ...           % Ensure relative gap is less than 5%
+            if relativeGap < obj.opts.augmented_check.relativeGap && ...           % Ensure relative gap is less than 5%
                primMaxVio <= feasibilityTol && ... % Check primal feasibility within adaptive tolerance
                dualMaxVio <= feasibilityTol && ... % Check dual feasibility within adaptive tolerance
                optMeas && ...                       % Ensure optimality measure is reasonable
-               maxNorm < obj.opts.mosek_augmented_feasCheck.maxNorm                       % Avoid using solutions with extremely large norms (ill-conditioning)
+               maxNorm < obj.opts.augmented_check.maxNorm                       % Avoid using solutions with extremely large norms (ill-conditioning)
             
                 obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_SUCCESS; % Solution is acceptable
                 
