@@ -10,7 +10,6 @@ if nnz(obj.args_in.h) > 0 && strcmp(obj.opts.cholesky_method,'numerical')
     args.h = chol((args.h));
 end
 
-
 % evaluate problem structure
 prob = call(obj.fhan,args);
 data = call(obj.barv,args);
@@ -31,13 +30,11 @@ msk_prob.barf.val = full(data.f);
 %TODO: initial guess, quadratic cost
 
 % options to MOSEK
-
 msk_param = obj.opts.mosek_param;
 msk_param.MSK_IPAR_AUTO_UPDATE_SOL_INFO = 'MSK_ON';
 msk_param.MSK_IPAR_INTPNT_BASIS         ='MSK_BI_NEVER';
 % msk_param.MSK_IPAR_INTPNT_STARTING_POINT = 'MSK_STARTING_POINT_CONSTANT';
 msk_echo  = obj.opts.mosek_echo;
-    
 
 % build MOSEK command string
 msk_cmd = sprintf('minimize echo(%d) info statuskeys(0)',msk_echo);
@@ -71,6 +68,7 @@ if ~isempty(msk_sol)
     obj.info.mosek_prosta = msk_sol.prosta;
     obj.info.mosek_solsta = msk_sol.solsta;
     obj.info.acceptable_solution = [];
+    
     switch (msk_sol.prosta)
         case {'PRIMAL_AND_DUAL_FEASIBLE' 'PRIMAL_FEASIBLE' 'DUAL_FEASIBLE'}
             % feasible problem, check solution status
@@ -82,74 +80,73 @@ if ~isempty(msk_sol)
                 obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_UNKNOWN;
                 assert(~obj.opts.error_on_fail,'Problem appears feasible (%s) but solution is not (%s).',msk_sol.prosta,msk_sol.solsta)
             end
+            
         case {'PRIMAL_INFEASIBLE' 'DUAL_INFEASIBLE' 'PRIMAL_AND_DUAL_INFEASIBLE' 'PRIMAL_INFEASIBLE_OR_UNBOUNDED'}
             % infeasible problem
             obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_INFEASIBLE;
             assert(~obj.opts.error_on_fail,'Problem is primal and/or dual infeasible or unbounded.')
-         case {'UNKNOWN'}
-            % in this case mosek can not decide about the solution so we
-            % need some additional check here!
+            
+        case {'UNKNOWN'}
+            % in this case mosek can not decide about the solution so we need some additional check here!
 
-             % Compute relative primal-dual gap
+             % compute relative primal-dual gap
             relativeGap = abs(res.info.MSK_DINF_SOL_ITR_PRIMAL_OBJ - res.info.MSK_DINF_SOL_ITR_DUAL_OBJ) ...
                           / max([abs(res.info.MSK_DINF_SOL_ITR_PRIMAL_OBJ), abs(res.info.MSK_DINF_SOL_ITR_DUAL_OBJ)]);
             
-            % Compute max primal constraint violation across different categories
+            % compute max primal constraint violation across different categories
             primMaxVio = max([abs(res.info.MSK_DINF_SOL_ITR_PVIOLCON), ...   % General constraints
                               abs(res.info.MSK_DINF_SOL_ITR_PVIOLACC), ...   % Affine conic constraints
                               abs(res.info.MSK_DINF_SOL_ITR_PVIOLCONES), ... % Conic constraints
                               abs(res.info.MSK_DINF_SOL_ITR_PVIOLVAR)]);     % Variable bound violations
             
-            % Compute max dual constraint violation across different categories
+            % compute max dual constraint violation across different categories
             dualMaxVio = max([abs(res.info.MSK_DINF_SOL_ITR_DVIOLCON), ... % General constraints
                               abs(res.info.MSK_DINF_SOL_ITR_DVIOLACC), ... % Affine conic constraints
                               abs(res.info.MSK_DINF_SOL_ITR_DVIOLCONES), ... % Conic constraints
                               abs(res.info.MSK_DINF_SOL_ITR_DVIOLVAR)]); % Variable bound violations
             
-            % Compute optimality measure from Mosek's solver status
-            % It should converge to +1 to be optimal
-            optMeas = res.info.MSK_DINF_INTPNT_OPT_STATUS > obj.opts.augmented_check.optMeas;
+            % compute optimality measure from Mosek's solver status
+            % it should converge to +1 to be optimal
+            optMeas = res.info.MSK_DINF_INTPNT_OPT_STATUS;
             
-            % Check for potential ill-conditioning by looking at large norm values
+            % check for potential ill-conditioning by looking at large norm values
             maxNorm = max([res.info.MSK_DINF_SOL_ITR_NRM_XX, ... % Norm of primal variables
                            res.info.MSK_DINF_SOL_ITR_NRM_Y]);    % Norm of dual variables
             
-            % Define an adaptive feasibility tolerance based on problem scale
-            % If the objective values are large, allow a slightly relaxed threshold
+            % define an adaptive feasibility tolerance based on problem scale
+            % if the objective values are large, allow a slightly relaxed threshold
             feasibilityTol = obj.opts.augmented_check.feasTol * max(1, max([abs(res.info.MSK_DINF_SOL_ITR_PRIMAL_OBJ), ...
                                                                                       abs(res.info.MSK_DINF_SOL_ITR_DUAL_OBJ)]));
             
             % log values for decision logic
             obj.info.acceptable_solution.primMaxVio  = primMaxVio;
-            obj.info.acceptable_solution.primMaxVio  = dualMaxVio;
+            obj.info.acceptable_solution.dualMaxVio  = dualMaxVio;
             obj.info.acceptable_solution.relativeGap = relativeGap;
             obj.info.acceptable_solution.optMeas     = optMeas;
             obj.info.acceptable_solution.maxNorm     = maxNorm;
             
-            % store the decision values thresholds; user can check what led
-            % to the decision
-            obj.info.acceptable_solution.tolerances.primMaxVio_tol  = feasibilityTol;
-            obj.info.acceptable_solution.tolerances.dualMaxVio_tol  = feasibilityTol;
-            obj.info.acceptable_solution.tolerances.relativeGap_tol = obj.opts.augmented_check.relativeGap;
-            obj.info.acceptable_solution.tolerances.maxNorm_tol     = obj.opts.augmented_check.maxNorm;
-            obj.info.acceptable_solution.tolerances.optMeas_tol     = obj.opts.augmented_check.optMeas;
+            % store the decision values thresholds
+            % user can check what led to the decision
+            obj.info.acceptable_solution.tolerances.primMaxVio  = feasibilityTol;
+            obj.info.acceptable_solution.tolerances.dualMaxVio  = feasibilityTol;
+            obj.info.acceptable_solution.tolerances.relativeGap = obj.opts.augmented_check.relativeGap;
+            obj.info.acceptable_solution.tolerances.maxNorm     = obj.opts.augmented_check.maxNorm;
+            obj.info.acceptable_solution.tolerances.optMeas     = obj.opts.augmented_check.optMeas;
             
-            % Decision logic for solution acceptability
-            if relativeGap < obj.opts.augmented_check.relativeGap && ...           % Ensure relative gap is less than 5%
-               primMaxVio <= feasibilityTol && ... % Check primal feasibility within adaptive tolerance
-               dualMaxVio <= feasibilityTol && ... % Check dual feasibility within adaptive tolerance
-               optMeas && ...                       % Ensure optimality measure is reasonable
-               maxNorm < obj.opts.augmented_check.maxNorm                       % Avoid using solutions with extremely large norms (ill-conditioning)
-            
-                obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_SUCCESS; % Solution is acceptable
-                
+            % decision logic for solution acceptability
+            if (relativeGap < obj.opts.augmented_check.relativeGap) ...    % ensure relative gap is less than 5%
+               && (primMaxVio <= feasibilityTol) ...                       % check primal feasibility within adaptive tolerance
+               && (dualMaxVio <= feasibilityTol) ...                       % check dual feasibility within adaptive tolerance
+               && (optMeas > obj.opts.augmented_check.optMeas) ...         % ensure optimality measure is reasonable
+               && (maxNorm < obj.opts.augmented_check.maxNorm)             % avoid using solutions with extremely large norms (ill-conditioning)
+                % solution is acceptable
+                obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_SUCCESS;
             else
-                obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_LIMITED; % Solution is questionable
+                % solution is questionable
+                obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_LIMITED;
                 assert(~obj.opts.error_on_fail,'Problem status unknown (might be ill-posed).')
             end
 
-
-            
         otherwise
             % problem status unknown or ill-posed
             obj.status = casos.package.UnifiedReturnStatus.SOLVER_RET_LIMITED;
