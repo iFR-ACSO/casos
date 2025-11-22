@@ -36,18 +36,15 @@ methods
         % Construct MOSEK interface.
         obj@casos.package.solvers.ConicSolver(name,conic,varargin{:});
         
-
         % default options
         if ~isfield(obj.opts,'mosek_param'), obj.opts.mosek_param = struct; end
         if ~isfield(obj.opts,'mosek_echo'), obj.opts.mosek_echo = 0; end
         if ~isfield(obj.opts,'augmented_check')
-                    % default values for augmented solution check, in case mosek
-        % returns unknown as solution status
-        obj.opts.augmented_check.optMeas     = 0.5;  % Compute optimality measure from Mosek's solver status
-                                                      % It should converge to +1 to be optimal% Ensure relative gap is less than x percen
-        obj.opts.augmented_check.feasTol     = 1e-6; % relaxed threshold
-        obj.opts.augmented_check.relativeGap = 0.05; % Ensure relative gap is less than X percent (default 5%)
-        obj.opts.augmented_check.maxNorm     = 1e10; % Avoid using solutions with extremely large norms (ill-conditioning)             
+            % default values for augmented solution check, in case mosek returns unknown as solution status
+            obj.opts.augmented_check.optMeas     = 0.5;  % threshold for Mosek's optimality measure (should converge to +1 to be optimal)
+            obj.opts.augmented_check.feasTol     = 1e-6; % relaxed tolerance for primal/dual feasibility
+            obj.opts.augmented_check.relativeGap = 0.05; % ensure relative gap is less than X percent (default 5%)
+            obj.opts.augmented_check.maxNorm     = 1e10; % avoid using solutions with extremely large norms (ill-conditioning)             
         end
     end
 
