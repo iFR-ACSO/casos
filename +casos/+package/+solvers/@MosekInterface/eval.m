@@ -67,7 +67,6 @@ if ~isempty(msk_sol)
     % check problem status
     obj.info.mosek_prosta = msk_sol.prosta;
     obj.info.mosek_solsta = msk_sol.solsta;
-    obj.info.acceptable_solution = [];
     
     switch (msk_sol.prosta)
         case {'PRIMAL_AND_DUAL_FEASIBLE' 'PRIMAL_FEASIBLE' 'DUAL_FEASIBLE'}
