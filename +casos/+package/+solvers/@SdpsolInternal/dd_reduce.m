@@ -33,7 +33,7 @@ num_nlin_g = 0;     % in constraints
 
 % verify DD cones in the constraints and create slack DD variables
 M_g = cell(length(Mdd),1);
-if isfield(opts.Kc,'dd')
+if mdd2 > 0
     [sdp,args,M_g,num_nlin_g,dd_index_g,opts] = obj.replaceDDcones(sdp, Mdd, Mlin, args, opts, 'g');
 else
     dd_index_g.num_eq = 0;
@@ -42,7 +42,7 @@ end
 
 % verify DD cones in decision variables
 M_x = cell(length(Ndd),1);
-if isfield(opts.Kx, 'dd')
+if ndd2 > 0
     [sdp,args,M_x,num_nlin_x,dd_index_x, opts] = obj.replaceDDcones(sdp, Ndd, Mlin, args, opts, 'x');
 else
     dd_index_x.num_eq = 0;
@@ -52,7 +52,11 @@ end
 % update decision variables
 added_vars = [vertcat(M_g{:}); vertcat(M_x{:})];
 n_inserted = length(added_vars);
-sdp.x = [sdp.x(1:Nlin); added_vars; sdp.x(Nlin+1:end)];
+
+% move the DD variables to the lin position
+ddvar  = sdp.x(nlin0+nlor+nrot+npsd+1:end);
+psdvar = sdp.x(nlin0+nlor+nrot+1:nlin0+nlor+nrot+npsd);
+sdp.x  = [sdp.x(1:Nlin); added_vars; ddvar; psdvar]; 
 
 % add linear cones to constraints
 m_inserted = num_nlin_x + num_nlin_g;
@@ -77,13 +81,16 @@ len_g_new  = length(sdp.g);
 %  - first nlin0 entries unchanged
 %  - then after insertion, the rest continues
 idx_xlin  = 1:nlin0;
+idx_xpsd  = (nlin0+1):(nlin0+npsd);
+idx_xdd   = (nlin0+npsd+1):(nlin0+npsd+ndd2);
+
 idx_xrest = (nlin0 + n_inserted + 1) : len_x_new;
 
 % sanity: lengths must match
 assert( length(idx_xlin) + length(idx_xrest) == len_x_orig, ...
     'Indexing mismatch building map.x (lengths do not add up).');
 
-idx_original = [idx_xlin, idx_xrest];
+idx_original = [idx_xlin, n_inserted+idx_xdd, n_inserted+idx_xpsd];
 
 % selection matrix (one 1 per row) <=> map.x = jacobian(x_original, sdp.x)
 map.x = sparse(1:len_x_orig, idx_original, 1, len_x_orig, len_x_new);

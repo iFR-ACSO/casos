@@ -35,7 +35,7 @@ sdd_index_x.num_eq = 0;         % in decision variables
 
 % verify SDD cones in the constraints and create slack SDD variables
 M_g = cell(length(Msdd),1);
-if isfield(opts.Kc,'sdd')
+if msdd2 > 0
     [sdp,args,M_g,~,sdd_index_g,opts] = obj.replaceSDDcones(sdp, Msdd, Mlin, args, opts, 'g');
 else
     sdd_index_g.num_eq = 0;
@@ -44,7 +44,7 @@ end
 
 % verify SDD cones in decision variables
 M_x = cell(length(Nsdd),1);
-if isfield(opts.Kx, 'sdd')
+if nsdd2 > 0
     [sdp,args,M_x,~,sdd_index_x, opts] = obj.replaceSDDcones(sdp, Nsdd, Mlin, args, opts, 'x');
 else
     sdd_index_x.num_eq = 0;
@@ -54,7 +54,10 @@ end
 % update decision variables
 added_vars = [vertcat(M_g{:}); vertcat(M_x{:})];
 n_inserted = length(added_vars);
-sdp.x = [sdp.x(1:Nlin); added_vars; sdp.x(Nlin+1:end)];
+
+sddvar  = sdp.x(nlin0+nlor+nrot+npsd+ndd2+1:end);
+restvar = sdp.x(nlin0+nlor+nrot+1:nlin0+nlor+nrot+npsd+ndd2);
+sdp.x = [sdp.x(1:Nlin); added_vars; sddvar; restvar];
 
 n_eq_c = sdd_index_g.num_eq;   % number of equalities from processing Kc
 
