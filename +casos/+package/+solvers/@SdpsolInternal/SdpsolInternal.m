@@ -86,7 +86,7 @@ methods
         len_g = size(sdp.g, 1);
 
         % rebuild problem from SDD to SOCP
-        if isfield(opts.Kx,'sdd') || isfield(opts.Kc,'sdd')
+        if (sum(get_dimension(obj.get_cones,opts.Kc, 'sdd'))+sum(get_dimension(obj.get_cones,opts.Kx, 'sdd')))>0
             [sdp, args, map, opts] = sdd_reduce(obj, sdp, opts, args);
             map_sdd_to_primal = map;
             map_sdd_to_dual   = map.lam;
@@ -95,7 +95,7 @@ methods
         end
 
         % rebuild problem from DD to LP
-        if isfield(opts.Kx,'dd') || isfield(opts.Kc,'dd')
+        if (sum(get_dimension(obj.get_cones,opts.Kc, 'dd'))+sum(get_dimension(obj.get_cones,opts.Kx, 'dd')))>0
             [sdp, args, map, opts] = dd_reduce(obj, sdp, opts, args);
             map_dd_to_primal = map;
             map_dd_to_dual   = map.lam;
@@ -134,12 +134,31 @@ methods
         % constraint function (vectorized)
         sdp_g = sdp.g(:);
 
+        % use pre-computed derivatives (undocumented)
         if isfield(sdp,'derivatives')
-            % use pre-computed derivatives (undocumented)
+            % the mapping transforms derivatives from original space to the
+            % expanded space after cone relaxations (SDD -> SOCP, DD -> LP).
+            % The new variable space is LARGER than the original
+
+            % transform Hessian to expanded space: H_expanded = M' * H_original * M
             H = obj.map.x'*sdp.derivatives.Hf*obj.map.x;
+
+            % transform objective gradient to expanded space: g_expanded = g_original * M
             g = sdp.derivatives.Jf*obj.map.x;
-            A = [sdp.derivatives.Jg*obj.map.x; 
-                 jacobian(sdp_g(size(sdp.derivatives.Jg,1)+1:end), x)];
+    
+            % partial Jacobian available 
+            precomputed_rows = size(sdp.derivatives.Jg, 1);
+
+            % transform pre-computed portion to expanded space
+            A_precomputed =  obj.map.g(:,1:precomputed_rows)'*sdp.derivatives.Jg * obj.map.x;     
+
+            % compute remaining constraints symbolically if needed
+            if precomputed_rows < size(sdp_g, 1)
+                A_remaining = jacobian(sdp_g(precomputed_rows+1:end), x);
+                A = [A_precomputed; A_remaining];
+            else
+                A = A_precomputed;
+            end
         else
             % quadratic cost
             H = hessian(sdp.f, x);
@@ -148,6 +167,7 @@ methods
             % linear constraint
             A = jacobian(sdp_g, x);
         end
+
         % constant constraint
         b = -sdp_g;
         
@@ -244,7 +264,7 @@ methods (Access=protected)
     % replace DD cones (constraint or decision variable form)
     [sdp,args,M_out,num_nlin,dd_index,opts] = replaceDDcones(obj,sdp,sizes,Mlin,args,opts,field)
 
-    % replace DD cones (constraint or decision variable form)
+    % replace SDD cones (constraint or decision variable form)
     [sdp,args,M_out,num_nlin,sdd_index,opts] = replaceSDDcones(obj,sdp,sizes,Mlin,args,opts,field)
 
     % build commutation matrices for each block

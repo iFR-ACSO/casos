@@ -90,7 +90,9 @@ idx_xrest = (nlin0 + n_inserted + 1) : len_x_new;
 assert( length(idx_xlin) + length(idx_xrest) == len_x_orig, ...
     'Indexing mismatch building map.x (lengths do not add up).');
 
-idx_original = [idx_xlin, n_inserted+idx_xdd, n_inserted+idx_xpsd];
+%idx_original = [idx_xlin, n_inserted+idx_xdd, n_inserted+idx_xpsd];
+idx_original = [idx_xlin, ndd2+n_inserted+idx_xpsd, n_inserted+idx_xdd-npsd];
+
 
 % selection matrix (one 1 per row) <=> map.x = jacobian(x_original, sdp.x)
 map.x = sparse(1:len_x_orig, idx_original, 1, len_x_orig, len_x_new);
