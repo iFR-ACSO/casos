@@ -187,16 +187,16 @@ sdpsol.lam_g = casadi.SX.sym('sol_lam_g',size(sdp.g));
 sdpsol.lam_p = casadi.SX.sym('sol_lam_p',size(sdp.p));
 
 % % coordinates of SOS solution
-sossol.x = blkdiag(speye(nnz_lin_x), Mp_x, sparse(0,nnz_gram_g))*sdpsol.x;
+sossol.x = blkdiag(speye(nnz_lin_x), Mp_x, sparse(0,nnz_gram_g))*permMat'*sdpsol.x;
 sossol.f = sdpsol.f;
 sossol.g = [
     blkdiag(speye(nnz_lin_g), sparse(0,nnz_sos_g))*sdpsol.g
-    blkdiag(sparse(0,nnz_lin_x+nnz_gram_x),  Mp_g)*sdpsol.x
+    blkdiag(sparse(0,nnz_lin_x+nnz_gram_x),  Mp_g)*permMat'*sdpsol.x
 ];
-sossol.lam_x = blkdiag(speye(nnz_lin_x), Md_x, sparse(0,nnz_gram_g))*sdpsol.lam_x;
+sossol.lam_x = blkdiag(speye(nnz_lin_x), Md_x, sparse(0,nnz_gram_g))*permMat'*sdpsol.lam_x;
 sossol.lam_g = [
     blkdiag(speye(nnz_lin_g), sparse(0,nnz_sos_g))*sdpsol.lam_g
-    blkdiag(sparse(0,nnz_lin_x+nnz_gram_x),  Md_g)*sdpsol.lam_x
+    blkdiag(sparse(0,nnz_lin_x+nnz_gram_x),  Md_g)*permMat'*sdpsol.lam_x
 ];
 
 % options for Casadi functions
