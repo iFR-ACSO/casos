@@ -150,6 +150,22 @@ methods
         end
     end
 
+    function tf = is_empty(obj,K,name)
+        % Check if specified cone is empty.
+        assert(has(obj,name), 'Unknown cone "%s".',name)
+        % check if cone is specified
+        if ~isfield(K,name)
+            tf = true;
+            return
+        end
+
+        % else
+        switch (name)
+            case {'pow' 'dpow'}, tf = ~any(K.(name).dim > 0);
+            otherwise, tf = ~any(K.(name) > 0);
+        end
+    end
+
     function print_all(obj)
         % Print all cones.
         disp(obj.entries)

@@ -74,19 +74,14 @@ methods
         end
 
         % relax problem to smaller easier cones (LP and SOCP)
-        args = struct;
-        args.dd_ubg = []; 
-        args.dd_lbg = []; 
-        args.dd_ubx = []; 
-        args.dd_lbx = []; 
-        obj.map = [];
+        args = struct('dd_ubg',[],'dd_lbg',[],'dd_ubx',[],'dd_lbx',[]); 
 
         % original sizes
         len_x = size(sdp.x, 1);
         len_g = size(sdp.g, 1);
 
-        % rebuild problem from SDD to SOCP
-        if (sum(get_dimension(obj.get_cones,opts.Kc, 'sdd'))+sum(get_dimension(obj.get_cones,opts.Kx, 'sdd')))>0
+        if ~is_empty(obj.get_cones,opts.Kc,'sdd') || ~is_empty(obj.get_cones,opts.Kx,'sdd')
+            % rebuild problem from SDD to SOCP
             [sdp, args, map, opts] = sdd_reduce(obj, sdp, opts, args);
             map_sdd_to_primal = map;
             map_sdd_to_dual   = map.lam;
@@ -94,8 +89,8 @@ methods
             [map_sdd_to_primal, map_sdd_to_dual] = identity_maps(sdp);
         end
 
-        % rebuild problem from DD to LP
-        if (sum(get_dimension(obj.get_cones,opts.Kc, 'dd'))+sum(get_dimension(obj.get_cones,opts.Kx, 'dd')))>0
+        if ~is_empty(obj.get_cones,opts.Kc,'dd') || ~is_empty(obj.get_cones,opts.Kx,'dd')
+            % rebuild problem from DD to LP
             [sdp, args, map, opts] = dd_reduce(obj, sdp, opts, args);
             map_dd_to_primal = map;
             map_dd_to_dual   = map.lam;
@@ -119,8 +114,7 @@ methods
 
         % sanity check
         % verify that the column size of obj.map.lam_a is len_g
-        assert(size(obj.map.lam_a, 1) == len_g, ...
-                'Mismatch in constraint mapping size.');
+        assert(size(obj.map.lam_a, 1) == len_g, 'Mismatch in constraint mapping size.');
 
         % decision variables
         x = sdp.x;
@@ -287,7 +281,7 @@ end
 
 end
 
-% Helper functions
+%% Helper functions
 function [primal_map, dual_map] = identity_maps(sdp)
     % Create identity maps for primal and dual variables
     primal_map.x = speye(numel(sdp.x));
