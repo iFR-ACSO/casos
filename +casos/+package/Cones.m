@@ -11,8 +11,18 @@ properties (Constant)
     LOR = {'lor' 'LIST' 'Lorentz (quadratic, second-order) cone.'};
     ROT = {'rot' 'LIST' 'Rotated Lorentz cone.'};
     PSD = {'psd' 'LIST' 'Cone of positive semidefinite matrices.'};
+    % Analytic cones
+    POW = {'pow' 'STRUCT' 'Primal power cone.'};
+    DPOW = {'dpow' 'STRUCT' 'Dual power cone.'};
+    EXP = {'exp' 'NUM' 'Primal exponential cone (dimension must be multiple of three).'};
+    DEXP = {'dexp' 'NUM' 'Dual exponential cone (dimension must be multiple of three).'};
+    % Matrix cones
+    DD  = {'dd'  'LIST' 'Cone of symmetric diagonally dominant matrices.'};
+    SDD = {'sdd' 'LIST' 'Cone of symmetric scaled diagonally dominant matrices.'};
     % Polynomial cones
-    SOS = {'sos' 'NUM' 'Cone of sum-of-squares polynomials.'}
+    SOS   = {'sos' 'NUM' 'Cone of sum-of-squares polynomials.'}
+    DSOS  = {'dsos' 'NUM' 'Cone of diagonally dominant sum-of-squares polynomials.'}
+    SDSOS = {'sdsos' 'NUM' 'Cone of scaled diagonally dominant sum-of-squares polynomials.'}
 end
 
 methods
@@ -62,7 +72,7 @@ methods
     function check(obj,K)
         % Check cone structure.
         fn_cone = fieldnames(K);
-        % check if cones exist
+        % check cones
         cellfun(@(fn) check_cone(obj,K,fn), fn_cone);
     end
 
@@ -83,6 +93,17 @@ methods
                 assert(isvector(K.(name)), 'Cone "%s" must be specified as vector.', name);
             case {'struct' 'cones'}
                 assert(isstruct(K.(name)), 'Cone "%s" must be specified as struct.', name);
+        end
+
+        switch (name)
+            case {'exp' 'dexp'}
+                assert(mod(K.(name),3) == 0, 'Dimension of cone "%s" must be multiple of three.', name);
+            case {'pow' 'dpow'}
+                tf = ismember(fieldnames(K.(name)),{'dim' 'alpha'});
+                % check structure of power cones
+                assert(length(tf) == 2 && all(tf), 'Cone "%s" must have exactly two fields, "dim" and "alpha".', name);
+                arrayfun(@(s) assert(isscalar(s.dim), 'Field "dim" of cone "%s" must be a scalar.',name), K.(name));
+                arrayfun(@(s) assert(isvector(s.alpha), 'Field "alpha" of cone "%s" must be a vector.',name), K.(name));
         end
     end
 
@@ -106,7 +127,8 @@ methods
 
         % else
         switch (name)
-            case 'psd', l = sum(K.(name).^2);
+            case {'psd' 'dd' 'sdd'}, l = sum(K.(name).^2);
+            case {'pow' 'dpow'}, l = sum([K.(name).dim]);
             otherwise,  l = sum(K.(name));
         end
     end
@@ -119,8 +141,28 @@ methods
             d = K.(name);
         elseif strcmpi(obj.entries.type{name},'list')
             d = [];
+        elseif strcmpi(obj.entries.type{name},'struct')
+            d = struct([]);
+        elseif strcmpi(obj.entries.type{name},'cones')
+            d = struct;
         else
             d = 0;
+        end
+    end
+
+    function tf = is_empty(obj,K,name)
+        % Check if specified cone is empty.
+        assert(has(obj,name), 'Unknown cone "%s".',name)
+        % check if cone is specified
+        if ~isfield(K,name)
+            tf = true;
+            return
+        end
+
+        % else
+        switch (name)
+            case {'pow' 'dpow'}, tf = ~any(K.(name).dim > 0);
+            otherwise, tf = ~any(K.(name) > 0);
         end
     end
 

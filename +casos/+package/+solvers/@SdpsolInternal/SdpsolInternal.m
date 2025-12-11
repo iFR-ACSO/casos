@@ -1,8 +1,16 @@
 classdef SdpsolInternal < casos.package.solvers.SolverCallback & matlab.mixin.Copyable
 % Internal interface for convex cone (SDP) solvers.
 
+properties (Constant,Access=protected)
+    matrix_cones = casos.package.Cones([
+        casos.package.Cones.DD;
+        casos.package.Cones.SDD
+    ]);
+end
+
 properties (Access=private)
     solver;
+    map;    % maps from the relaxed sdp and the orignal sdp
 end
 
 properties (Access=protected)
@@ -11,13 +19,16 @@ properties (Access=protected)
 end
 
 methods (Access=private)
-    buildproblem(obj,prob,data,opts);
+    buildproblem(obj,prob,data,opts,args);
 end
 
 methods (Static)
     function cones = get_cones
         % Return supported cones.
-        cones = casos.package.solvers.ConicSolver.get_cones;
+        cones = [
+            casos.package.solvers.ConicSolver.get_cones
+            casos.package.solvers.SdpsolInternal.matrix_cones
+        ];
     end
 end
 
@@ -50,8 +61,64 @@ methods
             opts = struct;
         end
 
+        % ensure cone has default value
+        if ~isfield(opts,'Kx')
+            opts.Kx.lin = numel(sdp.x);
+        elseif ~isfield(opts.Kx,'lin')
+            opts.Kx.lin = 0; 
+        end
+        if ~isfield(opts,'Kc')
+            opts.Kc.lin = numel(sdp.g);
+        elseif ~isfield(opts.Kc,'lin')
+            opts.Kc.lin = 0;
+        end
+
+        % relax problem to smaller easier cones (LP and SOCP)
+        args = struct('dd_ubg',[],'dd_lbg',[],'dd_ubx',[],'dd_lbx',[]); 
+
+        % original sizes
+        len_x = size(sdp.x, 1);
+        len_g = size(sdp.g, 1);
+
+        if ~is_empty(obj.get_cones,opts.Kc,'sdd') || ~is_empty(obj.get_cones,opts.Kx,'sdd')
+            % rebuild problem from SDD to SOCP
+            [sdp, args, map, opts] = sdd_reduce(obj, sdp, opts, args);
+            map_sdd_to_primal = map;
+            map_sdd_to_dual   = map.lam;
+        else
+            [map_sdd_to_primal, map_sdd_to_dual] = identity_maps(sdp);
+        end
+
+        if ~is_empty(obj.get_cones,opts.Kc,'dd') || ~is_empty(obj.get_cones,opts.Kx,'dd')
+            % rebuild problem from DD to LP
+            [sdp, args, map, opts] = dd_reduce(obj, sdp, opts, args);
+            map_dd_to_primal = map;
+            map_dd_to_dual   = map.lam;
+        else
+            [map_dd_to_primal, map_dd_to_dual] = identity_maps(sdp);
+        end
+
+        % combine maps
+        % primal variable mapping
+        primal_x_map = map_sdd_to_primal.x*map_dd_to_primal.x;
+        primal_g_map = map_sdd_to_primal.g*map_dd_to_primal.g;
+        
+        % dual variable mapping
+        dual_map = map_sdd_to_dual*map_dd_to_dual;
+
+        % assign to object
+        obj.map.x = primal_x_map;
+        obj.map.g = primal_g_map;
+        obj.map.lam_x = dual_map(1:len_x, :);       % duals for decision variables
+        obj.map.lam_a = dual_map(len_x+1:end, :);   % duals for constraints
+
+        % sanity check
+        % verify that the column size of obj.map.lam_a is len_g
+        assert(size(obj.map.lam_a, 1) == len_g, 'Mismatch in constraint mapping size.');
+
         % decision variables
         x = sdp.x;
+
         % parameter
         if isfield(sdp,'p')
             p = sdp.p;
@@ -61,20 +128,40 @@ methods
         % constraint function (vectorized)
         sdp_g = sdp.g(:);
 
+        % use pre-computed derivatives (undocumented)
         if isfield(sdp,'derivatives')
-            % use pre-computed derivatives (undocumented)
-            H = sdp.derivatives.Hf;
-            g = sdp.derivatives.Jf;
-            A = sdp.derivatives.Jg;
+            % the mapping transforms derivatives from original space to the
+            % expanded space after cone relaxations (SDD -> SOCP, DD -> LP).
+            % The new variable space is LARGER than the original
 
+            % transform Hessian to expanded space: H_expanded = M' * H_original * M
+            H = obj.map.x'*sdp.derivatives.Hf*obj.map.x;
+
+            % transform objective gradient to expanded space: g_expanded = g_original * M
+            g = sdp.derivatives.Jf*obj.map.x;
+    
+            % partial Jacobian available 
+            precomputed_rows = size(sdp.derivatives.Jg, 1);
+
+            % transform pre-computed portion to expanded space
+            A_precomputed =  obj.map.g(:,1:precomputed_rows)'*sdp.derivatives.Jg * obj.map.x;     
+
+            % compute remaining constraints symbolically if needed
+            if precomputed_rows < size(sdp_g, 1)
+                A_remaining = jacobian(sdp_g(precomputed_rows+1:end), x);
+                A = [A_precomputed; A_remaining];
+            else
+                A = A_precomputed;
+            end
         else
-        % quadratic cost
-        H = hessian(sdp.f, x);
-        % linear cost
-        g = jacobian(sdp.f, x);
-        % linear constraint
-        A = jacobian(sdp_g, x);
+            % quadratic cost
+            H = hessian(sdp.f, x);
+            % linear cost
+            g = jacobian(sdp.f, x);
+            % linear constraint
+            A = jacobian(sdp_g, x);
         end
+
         % constant constraint
         b = -sdp_g;
         
@@ -93,7 +180,7 @@ methods
         prob = casadi.Function('S',{x p},{sdp.f sdp_g});
 
         % build SDP problem
-        buildproblem(obj,prob,data,opts);
+        buildproblem(obj,prob,data,opts,args);
 
         % construct CasADi callback
         construct(obj,name);
@@ -104,20 +191,69 @@ methods
         s = obj.solver.stats;
     end
 
+    %% Options & Cones
     function print_options(obj)
         % Print list of options.
         print_options(obj.solver);
+        % also print matrix cones
+        print_matrix_cones(obj);
     end
 
     function print_option(obj,name)
         % Print information about an option.
-        print_option(obj.solver,name);
+        names = split(name,'.');
+
+        if length(names) > 1 && ismember(names{1},{'Kx' 'Kc'}) && has(obj.matrix_cones,names{2})
+            % print option
+            print_one(obj.solver.get_options,names{1});
+            % print matrix cone
+            print_one(obj.matrix_cones,names{2});
+        else
+            % print option & cones
+            print_option(obj.solver,name);
+
+            if isscalar(names) && ismember(names{1},{'Kx' 'Kc'})
+                % print matrix cones
+                print_matrix_cones(obj);
+            end
+        end
     end
 
-    function has_option(obj,name)
+    function tf = has_option(obj,name)
         % Check if option "name" exists.
-        has_option(obj.solver,name);
+        tf = has_option(obj.solver,name);
     end
+
+    function print_cones(obj)
+        % Print list of supported cones.
+        print_cones(obj.solver);
+        % also print matrix cones
+        print_matrix_cones(obj);
+    end
+
+    function print_cone(obj,name)
+        % Print information about a cone.
+        if has(obj.matrix_cones,name)
+            % print matrix cone
+            print_one(obj.matrix_cones,name);
+        else
+            % print cone from solver
+            print_cone(obj.solver,name);
+        end
+    end
+
+    function tf = has_cone(obj,name)
+        % Check if cone "name" is supported.
+        tf = has(obj.matrix_cones,name) || has_cone(obj.solver,name);
+    end
+end
+
+methods (Access=private)
+    % reduce DD constraints to LPs
+    [sdp,args,map,opts] = dd_reduce(obj,sdp,opts,args);
+
+    % reduce SDD constraints to SOCP
+    [sdp,args,map,opts] = sdd_reduce(obj,sdp,opts,args);
 end
 
 methods (Access=protected)
@@ -125,6 +261,20 @@ methods (Access=protected)
         % Use copy constructor.
         S = casos.package.solvers.SdpsolInternal(obj);
     end
+
+    function print_matrix_cones(obj)
+        % Print list of supported matrix cones.
+        disp('Supported Matrix Cones:')
+        print_all(obj.matrix_cones);
+    end
 end
 
+end
+
+%% Helper functions
+function [primal_map, dual_map] = identity_maps(sdp)
+    % Create identity maps for primal and dual variables
+    primal_map.x = speye(numel(sdp.x));
+    primal_map.g = speye(numel(sdp.g));
+    dual_map = blkdiag(speye(numel(sdp.x)), speye(numel(sdp.g)));
 end

@@ -8,17 +8,24 @@ n = length(sos.x);
 m = length(sos.g);
 
 % get cone dimensions
-Nl = get_dimension(obj.get_cones,opts.Kx,'lin');
-Ns = get_dimension(obj.get_cones,opts.Kx,'sos');
-Ml = get_dimension(obj.get_cones,opts.Kc,'lin');
-Ms = get_dimension(obj.get_cones,opts.Kc,'sos');
+% get cone dimensions for the decision variables 
+Nl   = get_dimension(obj.get_cones,opts.Kx,'lin');
+Ns   = get_dimension(obj.get_cones,opts.Kx,'sos');
+Nds  = get_dimension(obj.get_cones,opts.Kx,'dsos');
+Nsds = get_dimension(obj.get_cones,opts.Kx,'sdsos');
 
-assert(n == (Nl + Ns), 'Dimension of Kx must be equal to number of variables (%d).', n);
-assert(m == (Ml + Ms), 'Dimension of Kc must be equal to number of constraints (%d).', m)
+% get cone dimensions for the constraints
+Ml   = get_dimension(obj.get_cones,opts.Kc,'lin');
+Ms   = get_dimension(obj.get_cones,opts.Kc,'sos');
+Mds  = get_dimension(obj.get_cones,opts.Kc,'dsos');
+Msds = get_dimension(obj.get_cones,opts.Kc,'sdsos');
+
+assert(n == (Nl + Ns + Nds + Nsds), 'Dimension of Kx must be equal to number of variables (%d).', n);
+assert(m == (Ml + Ms + Mds + Msds), 'Dimension of Kc must be equal to number of constraints (%d).', m)
 
 % select sum-of-squares variables and constraints
-Is = [false(Nl,1); true(Ns,1)];
-Js = [false(Ml,1); true(Ms,1)];
+Is = [false(Nl,1); true(Ns,1); true(Nds,1); true(Nsds,1)];
+Js = [false(Ml,1); true(Ms,1); true(Mds,1); true(Msds,1)];
 
 % obtain Gram basis for decision variables
 [Zvar_s,Ksdp_x_s,~,Mp_x,Md_x] = grambasis(sparsity(sos.x),Is,opts.newton_solver);
@@ -58,56 +65,87 @@ assert(length(Qvar) == (nnz_lin_x + nnz_sos_x), 'Sum-of-squares decision varible
 % matrix decision variables
 Qvar_sdp = [Qvar_l; Qvar_G];
 
+if (Nds + Nsds + Mds + Msds) > 0
+    % create reordering map (for DSOS/SDSOS)
+    permMat = process_reorder(Qvar_G, Qcon_G,     ...
+                              Ksdp_x_s, Ksdp_g_s, ...
+                              Qvar_l,             ...
+                              Ns, Ms, Nds, Mds);
+else
+    permMat = speye(length(Qvar_sdp) + length(Qcon_G));
+end
+
 % replace sum-of-squares decision variables
 % and pre-compute derivatives
 % gradient and hessian of objective
 if ~isfield(sos,'derivatives')
-    % compute derivatives
+    % compute derivatives if not  pre-computed
     Hf = hessian(Qobj,Qvar);
     Df = jacobian(Qobj,Qvar);
     Dg = jacobian(Qcon,Qvar);
 else
     % use pre-computed derivatives (undocumented)
     Hf = op2basis(sos.derivatives.Hf,Zvar,Zvar);
-    % Df = jacobian(Qobj,Qvar);
     Df = op2basis(sos.derivatives.Df,Zvar,Zobj);
     Dg = op2basis(sos.derivatives.Dg,Zvar,Zcon);
 end
 
-% replace sum-of-squares decision variables
-% and pre-compute derivatives
-% gradient and hessian of objective
-sosprob_f = casadi.Function('sos_f',{Qvar},{Hf Df Qobj},struct('allow_free',true)); %hessian_old(sosprob,0,0);
-
-% sosprob_f = casadi.Function('sos_f',{Qvar},{hessian(Qobj,Qvar) jacobian(Qobj,Qvar) Qobj},struct('allow_free',true)); %hessian_old(sosprob,0,0);
-% jacobian of constraints
-sosprob_g = casadi.Function('sos_g',{Qvar},{Dg Qcon},struct('allow_free',true)); %jacobian_old(sosprob,0,1);
+% create CasADi functions for objective and constraints
+sosprob_f = casadi.Function('sos_f', {Qvar}, {Hf Df Qobj}, struct('allow_free', true));
+sosprob_g = casadi.Function('sos_g', {Qvar}, {Dg Qcon}, struct('allow_free', true));
 
 % map sum-of-squares decision variables to matrix variables
 map_x = blkdiag(speye(nnz_lin_x), Mp_x);
 Qvar_mapped = map_x*Qvar_sdp;
-% [sdp_f,sdp_g] = sosprob(Qvar_mapped);
-[sdp_Hf,sdp_Jf,sdp_f] = sosprob_f(Qvar_mapped);
-[sdp_Jg,sdp_g] = sosprob_g(Qvar_mapped);
+
+% evaluate functions
+[sdp_Hf, sdp_Jf, sdp_f] = sosprob_f(Qvar_mapped);
+[sdp_Jg, sdp_g] = sosprob_g(Qvar_mapped);
 
 % map sum-of-squares constraints to matrix variables
 map_g = blkdiag(sparse(nnz_lin_g,0), Mp_g);
 
 % build SDP problem
-sdp.x = [Qvar_sdp; Qcon_G];
+sdp.x = permMat*[Qvar_sdp; Qcon_G];
 sdp.f = sdp_f;
 sdp.g = sdp_g - map_g*Qcon_G;
 sdp.p = Qpar;
+
+% transpose of permutation matrix
+permMat_t = permMat';
+% number of SDP variables
+nnz_sdp_x = nnz_lin_x + nnz_gram_x;
+
 % store derivatives
-sdp.derivatives.Hf = blockcat(map_x'*sdp_Hf*map_x, ...
-                              sparse(nnz_lin_x+nnz_gram_x,nnz_gram_g), ...
-                              sparse(nnz_gram_g,nnz_lin_x+nnz_gram_x), ...
-                              sparse(nnz_gram_g,nnz_gram_g));
-sdp.derivatives.Jf = horzcat(sdp_Jf*map_x, sparse(1,nnz_gram_g));
-sdp.derivatives.Jg = horzcat(sdp_Jg*map_x, -map_g);
+sdp.derivatives.Hf = permMat_t(1:nnz_sdp_x,:)'*map_x'*sdp_Hf*map_x*permMat_t(1:(nnz_sdp_x),:);
+sdp.derivatives.Jf = sdp_Jf*map_x*permMat_t(1:nnz_sdp_x,:);
+sdp.derivatives.Jg = sdp_Jg*map_x*permMat_t(1:nnz_sdp_x,:)-map_g*permMat_t(nnz_sdp_x+1:end,:);
+
 % SDP options
 sdpopt = opts.sdpsol_options;
-sdpopt.Kx = struct('lin', nnz_lin_x, 'psd', [Ksdp_x_s; Ksdp_g_s]);
+
+% define the cones in the sdp level
+sdpopt.Kx.lin = nnz_lin_x;
+
+% split the matrices using mat2cell
+cell_Kmat_x = mat2cell(Ksdp_x_s, [Ns Nds Nsds], 1);
+cell_Kmat_g = mat2cell(Ksdp_g_s, [Ms Mds Msds], 1);
+
+% split and assign to struct fields
+if ~isempty(cell_Kmat_x{1}) || ~isempty(cell_Kmat_g{1})
+    % PSD cones
+    sdpopt.Kx.psd = [cell_Kmat_x{1}; cell_Kmat_g{1}];
+end
+if ~isempty(cell_Kmat_x{2}) || ~isempty(cell_Kmat_g{2})
+    % DD cones
+    sdpopt.Kx.dd  = [cell_Kmat_x{2}; cell_Kmat_g{2}];
+end
+if ~isempty(cell_Kmat_x{3}) || ~isempty(cell_Kmat_g{3})
+    % SDD cones
+    sdpopt.Kx.sdd = [cell_Kmat_x{3}; cell_Kmat_g{3}];
+end
+
+% number of linear cones in constraints
 sdpopt.Kc = struct('lin', nnz_lin_g + nnz_sos_g);
 
 % initialize SDP solver
@@ -132,17 +170,17 @@ sdpsol.lam_x = casadi.SX.sym('sol_lam_x',size(sdp.x));
 sdpsol.lam_g = casadi.SX.sym('sol_lam_g',size(sdp.g));
 sdpsol.lam_p = casadi.SX.sym('sol_lam_p',size(sdp.p));
 
-% coordinates of SOS solution
-sossol.x = blkdiag(speye(nnz_lin_x), Mp_x, sparse(0,nnz_gram_g))*sdpsol.x;
+% % coordinates of SOS solution
+sossol.x = blkdiag(speye(nnz_lin_x), Mp_x, sparse(0,nnz_gram_g))*permMat'*sdpsol.x;
 sossol.f = sdpsol.f;
 sossol.g = [
     blkdiag(speye(nnz_lin_g), sparse(0,nnz_sos_g))*sdpsol.g
-    blkdiag(sparse(0,nnz_lin_x+nnz_gram_x),  Mp_g)*sdpsol.x
+    blkdiag(sparse(0,nnz_lin_x+nnz_gram_x),  Mp_g)*permMat'*sdpsol.x
 ];
-sossol.lam_x = blkdiag(speye(nnz_lin_x), Md_x, sparse(0,nnz_gram_g))*sdpsol.lam_x;
+sossol.lam_x = blkdiag(speye(nnz_lin_x), Md_x, sparse(0,nnz_gram_g))*permMat'*sdpsol.lam_x;
 sossol.lam_g = [
     blkdiag(speye(nnz_lin_g), sparse(0,nnz_sos_g))*sdpsol.lam_g
-    blkdiag(sparse(0,nnz_lin_x+nnz_gram_x),  Md_g)*sdpsol.lam_x
+    blkdiag(sparse(0,nnz_lin_x+nnz_gram_x),  Md_g)*permMat'*sdpsol.lam_x
 ];
 
 % options for Casadi functions

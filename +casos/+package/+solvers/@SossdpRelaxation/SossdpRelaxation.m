@@ -79,6 +79,7 @@ methods
         % Return stats.
         s = obj.sdpsolver.stats;
     end
+
 end
 
 end

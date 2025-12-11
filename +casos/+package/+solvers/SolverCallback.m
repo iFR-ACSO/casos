@@ -25,17 +25,17 @@ methods
     %% Common function interface
     function print_options(obj)
         % Print list of options.
-        print_options@casos.package.functions.FunctionCommon(obj);
+        print_options@casos.package.solvers.SolverCommon(obj);
     end
 
     function print_option(obj,name)
         % Print information about an option.
-        print_option@casos.package.functions.FunctionCommon(obj,name);
+        print_option@casos.package.solvers.SolverCommon(obj,name);
     end
 
     function tf = has_option(obj,name)
         % Check if option "name" exists.
-        tf = has_option@casos.package.functions.FunctionCommon(obj,name);
+        tf = has_option@casos.package.solvers.SolverCommon(obj,name);
     end
 
     %% Common Callback interface
