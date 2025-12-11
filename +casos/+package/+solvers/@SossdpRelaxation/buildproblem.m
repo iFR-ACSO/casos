@@ -1,7 +1,6 @@
 function buildproblem(obj,solver,sos)
 % Build SDP problem from SOS relaxation.
 
-% extract options
 opts   = obj.opts;
 
 % problem size
@@ -21,7 +20,6 @@ Ms   = get_dimension(obj.get_cones,opts.Kc,'sos');
 Mds  = get_dimension(obj.get_cones,opts.Kc,'dsos');
 Msds = get_dimension(obj.get_cones,opts.Kc,'sdsos');
 
-% validate dimensions
 assert(n == (Nl + Ns + Nds + Nsds), 'Dimension of Kx must be equal to number of variables (%d).', n);
 assert(m == (Ml + Ms + Mds + Msds), 'Dimension of Kc must be equal to number of constraints (%d).', m)
 
@@ -31,25 +29,20 @@ Js = [false(Ml,1); true(Ms,1); true(Mds,1); true(Msds,1)];
 
 % obtain Gram basis for decision variables
 [Zvar_s,Ksdp_x_s,~,Mp_x,Md_x] = grambasis(sparsity(sos.x),Is,opts.newton_solver);
-
 % obtain Gram basis for sum-of-squares constraints
 [Zcon_s,Ksdp_g_s,~,Mp_g,Md_g] = grambasis(sparsity(sos.g),Js,opts.newton_solver);
 
 % matrix decision variables for variables
 Qvar_G = casadi.SX.sym('P',sum(Ksdp_x_s.^2),1);
-
 % matrix decision variables for constraints
 Qcon_G = casadi.SX.sym('Q',sum(Ksdp_g_s.^2),1);
 
 % linear decision variables
 [Qvar_l,Zvar_l] = poly2basis(sos.x,~Is); % TODO: internal
-
 % linear constraints
 Zcon_l = basis(sos.g,~Js);
-
 % handle parameters
 [Qpar,Zpar] = poly2basis(sos.p);
-
 % get cost function
 [Qobj,Zobj] = poly2basis(sos.f);
 
@@ -60,23 +53,20 @@ Zcon_l = basis(sos.g,~Js);
 % number of linear variables / constraints
 nnz_lin_x = nnz(Zvar_l);
 nnz_lin_g = nnz(Zcon_l);
-
 % number of sum-of-squares variables / constraints
 nnz_sos_x = nnz(Zvar_s);
 nnz_sos_g = nnz(Zcon_s);
-
 % number of Gram variables / constraints
 nnz_gram_x = sum(Ksdp_x_s.^2);
 nnz_gram_g = sum(Ksdp_g_s.^2);
 
-% validate sum-of-squares variable count
 assert(length(Qvar) == (nnz_lin_x + nnz_sos_x), 'Sum-of-squares decision varibles must be in Gram form.')
 
 % matrix decision variables
 Qvar_sdp = [Qvar_l; Qvar_G];
 
-% Create reordering map if needed (for DSOS/SDSOS)
 if (Nds + Nsds + Mds + Msds) > 0
+    % create reordering map (for DSOS/SDSOS)
     permMat = process_reorder(Qvar_G, Qcon_G,     ...
                               Ksdp_x_s, Ksdp_g_s, ...
                               Qvar_l,             ...
@@ -121,21 +111,15 @@ sdp.f = sdp_f;
 sdp.g = sdp_g - map_g*Qcon_G;
 sdp.p = Qpar;
 
-% store derivatives in SDP problem
+% transpose of permutation matrix
 permMat_t = permMat';
-n_vars = nnz_lin_x + nnz_gram_x;
+% number of SDP variables
+nnz_sdp_x = nnz_lin_x + nnz_gram_x;
 
 % store derivatives
-sdp.derivatives.Hf = permMat_t(1:n_vars, :)'*map_x'*sdp_Hf*map_x*permMat_t(1:(n_vars),:);
-sdp.derivatives.Jf = sdp_Jf*map_x*permMat_t(1:n_vars, :);
-sdp.derivatives.Jg = sdp_Jg*map_x*permMat_t(1:n_vars, :)-map_g*permMat_t(n_vars+1:end, :);
-
-%sdp.derivatives.Hf = blockcat(map_x'*sdp_Hf*map_x, ...
-%                              sparse(nnz_lin_x+nnz_gram_x,nnz_gram_g), ...
-%                              sparse(nnz_gram_g,nnz_lin_x+nnz_gram_x), ...
-%                              sparse(nnz_gram_g,nnz_gram_g));
-%sdp.derivatives.Jf = horzcat(sdp_Jf*map_x, sparse(1,nnz_gram_g));
-%sdp.derivatives.Jg = horzcat(sdp_Jg*map_x, -map_g);
+sdp.derivatives.Hf = permMat_t(1:nnz_sdp_x,:)'*map_x'*sdp_Hf*map_x*permMat_t(1:(nnz_sdp_x),:);
+sdp.derivatives.Jf = sdp_Jf*map_x*permMat_t(1:nnz_sdp_x,:);
+sdp.derivatives.Jg = sdp_Jg*map_x*permMat_t(1:nnz_sdp_x,:)-map_g*permMat_t(nnz_sdp_x+1:end,:);
 
 % SDP options
 sdpopt = opts.sdpsol_options;
@@ -148,20 +132,20 @@ cell_Kmat_x = mat2cell(Ksdp_x_s, [Ns Nds Nsds], 1);
 cell_Kmat_g = mat2cell(Ksdp_g_s, [Ms Mds Msds], 1);
 
 % split and assign to struct fields
-% PSD cones
 if ~isempty(cell_Kmat_x{1}) || ~isempty(cell_Kmat_g{1})
+    % PSD cones
     sdpopt.Kx.psd = [cell_Kmat_x{1}; cell_Kmat_g{1}];
 end
-% DD cones
 if ~isempty(cell_Kmat_x{2}) || ~isempty(cell_Kmat_g{2})
+    % DD cones
     sdpopt.Kx.dd  = [cell_Kmat_x{2}; cell_Kmat_g{2}];
 end
-% SDD cones
 if ~isempty(cell_Kmat_x{3}) || ~isempty(cell_Kmat_g{3})
+    % SDD cones
     sdpopt.Kx.sdd = [cell_Kmat_x{3}; cell_Kmat_g{3}];
 end
 
-% assign number of linear cones in constraints
+% number of linear cones in constraints
 sdpopt.Kc = struct('lin', nnz_lin_g + nnz_sos_g);
 
 % initialize SDP solver
@@ -214,4 +198,3 @@ obj.gram2sos = casadi.Function('L', ...
 );
 
 end
-
