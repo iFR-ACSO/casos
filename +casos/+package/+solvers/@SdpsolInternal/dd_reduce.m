@@ -171,7 +171,7 @@ end
 lam_x_non_dd = [map_non_dd_x, sparse(len_non_ndd, len_g_new)];
 
 % DD part
-comm_Ndd     = obj.blockCommutation(Ndd);
+comm_Ndd     = blockCommutation(Ndd);
 lam_x_dd     = [sparse(ndd2, len_x_new), 0.5 * (speye(ndd2) + comm_Ndd) * map_dd_eqs_x];
 
 % Combine lambda_x components
@@ -182,7 +182,7 @@ lam_x = [lam_x_non_dd; lam_x_dd];
 lam_g_non_dd = map_non_dd_g;
 
 % DD part
-comm_Mdd     = obj.blockCommutation(Mdd);
+comm_Mdd     = blockCommutation(Mdd);
 lam_g_dd     = 0.5 * (speye(mdd2) + comm_Mdd) * map_dd_eqs_g;
 
 % Combine lambda_g components
