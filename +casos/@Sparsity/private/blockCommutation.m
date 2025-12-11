@@ -1,4 +1,4 @@
-function K = blockCommutation(obj,Msdd)
+function K = blockCommutation(Msdd)
 % Mdd = [n1, n2, ..., nk] where each ni is a block size
 % Build commutation matrices for each block
 

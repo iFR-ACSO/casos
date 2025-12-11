@@ -1,4 +1,4 @@
-function K = commutationMatrix(~, n)
+function K = commutationMatrix(n)
 % commutationMatrix: Construct commutation matrix K_{n,n}.
 %   K = commutationMatrix(n) returns the sparse commutation matrix of size
 %   n^2-by-n^2 such that:
