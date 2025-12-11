@@ -13,7 +13,6 @@ Ndd  = get_dimension(obj.get_cones,opts.Kx,'dd');  ndd2   = sum(Ndd.^2);
 Nlor = get_dimension(obj.get_cones,opts.Kx,'lor'); nlor   = sum(Nlor);
 Nrot = get_dimension(obj.get_cones,opts.Kx,'rot'); nrot   = sum(Nrot);
 Npsd = get_dimension(obj.get_cones,opts.Kx,'psd'); npsd   = sum(Npsd.^2);
-Nsdd = get_dimension(obj.get_cones,opts.Kx,'sdd'); nsdd2  = sum(Nsdd.^2);
 
 % get dimensions of cones in the program constraints
 Mlin = get_dimension(obj.get_cones,opts.Kc,'lin'); mlin0 = sum(Mlin);
@@ -21,7 +20,6 @@ Mdd  = get_dimension(obj.get_cones,opts.Kc,'dd');  mdd2  = sum(Mdd.^2);
 Mlor = get_dimension(obj.get_cones,opts.Kc,'lor'); mlor  = sum(Mlor);
 Mrot = get_dimension(obj.get_cones,opts.Kc,'rot'); mrot  = sum(Mrot);
 Mpsd = get_dimension(obj.get_cones,opts.Kc,'psd'); mpsd  = sum(Mpsd.^2);
-Msdd = get_dimension(obj.get_cones,opts.Kc,'sdd'); msdd2 = sum(Msdd.^2);
 
 % save sizes of sdp.x and sdp.g (original)
 len_x_orig = size(sdp.x, 1);     % original decision variable length
@@ -34,7 +32,7 @@ num_nlin_g = 0;     % in constraints
 % verify DD cones in the constraints and create slack DD variables
 M_g = cell(length(Mdd),1);
 if mdd2 > 0
-    [sdp,args,M_g,num_nlin_g,dd_index_g,opts] = obj.replaceDDcones(sdp, Mdd, Mlin, args, opts, 'g');
+    [sdp,args,M_g,num_nlin_g,dd_index_g,opts] = replaceDDcones(sdp, Mdd, Mlin, args, opts, 'g');
 else
     dd_index_g.num_eq = 0;
     dd_index_g.eq_idx = [];
@@ -43,7 +41,7 @@ end
 % verify DD cones in decision variables
 M_x = cell(length(Ndd),1);
 if ndd2 > 0
-    [sdp,args,M_x,num_nlin_x,dd_index_x, opts] = obj.replaceDDcones(sdp, Ndd, Mlin, args, opts, 'x');
+    [sdp,args,M_x,num_nlin_x,dd_index_x, opts] = replaceDDcones(sdp, Ndd, Mlin, args, opts, 'x');
 else
     dd_index_x.num_eq = 0;
     dd_index_x.eq_idx = [];
@@ -195,5 +193,3 @@ map.lam = [
 ];
 
 end
-
-

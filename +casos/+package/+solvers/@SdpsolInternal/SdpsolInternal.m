@@ -248,19 +248,15 @@ methods
     end
 end
 
-methods (Access=protected)
+methods (Access=private)
     % reduce DD constraints to LPs
     [sdp,args,map,opts] = dd_reduce(obj,sdp,opts,args);
 
     % reduce SDD constraints to SOCP
     [sdp,args,map,opts] = sdd_reduce(obj,sdp,opts,args);
+end
 
-    % replace DD cones (constraint or decision variable form)
-    [sdp,args,M_out,num_nlin,dd_index,opts] = replaceDDcones(obj,sdp,sizes,Mlin,args,opts,field)
-
-    % replace SDD cones (constraint or decision variable form)
-    [sdp,args,M_out,num_nlin,sdd_index,opts] = replaceSDDcones(obj,sdp,sizes,Mlin,args,opts,field)
-
+methods (Access=protected)
     function S = copyElement(obj)
         % Use copy constructor.
         S = casos.package.solvers.SdpsolInternal(obj);

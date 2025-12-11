@@ -1,4 +1,4 @@
-function [sdp,args,map,opts] = sdd_reduce(obj, sdp, opts, args)
+function [sdp,args,map,opts] = sdd_reduce(obj,sdp,opts,args)
 % Reduce a SDD cone program to SOCP 
 
 % check cones
@@ -36,7 +36,7 @@ sdd_index_x.num_eq = 0;         % in decision variables
 % verify SDD cones in the constraints and create slack SDD variables
 M_g = cell(length(Msdd),1);
 if msdd2 > 0
-    [sdp,args,M_g,~,sdd_index_g,opts] = obj.replaceSDDcones(sdp, Msdd, Mlin, args, opts, 'g');
+    [sdp,args,M_g,~,sdd_index_g,opts] = replaceSDDcones(sdp, Msdd, Mlin, args, opts, 'g');
 else
     sdd_index_g.num_eq = 0;
     sdd_index_g.eq_idx = [];
@@ -45,7 +45,7 @@ end
 % verify SDD cones in decision variables
 M_x = cell(length(Nsdd),1);
 if nsdd2 > 0
-    [sdp,args,M_x,~,sdd_index_x, opts] = obj.replaceSDDcones(sdp, Nsdd, Mlin, args, opts, 'x');
+    [sdp,args,M_x,~,sdd_index_x, opts] = replaceSDDcones(sdp, Nsdd, Mlin, args, opts, 'x');
 else
     sdd_index_x.num_eq = 0;
     sdd_index_x.eq_idx = [];
@@ -189,9 +189,3 @@ map.lam = [
 ];
 
 end
-
-
-
-
-
-

@@ -1,4 +1,4 @@
-function [sdp, args, M_out, num_nlin, sdd_index, opts] = replaceSDDcones(~, sdp, sizes, Mlin, args, opts, field)
+function [sdp,args,M_out,num_nlin,sdd_index,opts] = replaceSDDcones(sdp,sizes,Mlin,args,opts,field)
 % Replace SDD cones (constraint or decision variable form)
 %
 % Inputs:
@@ -145,5 +145,6 @@ function vecY = map_M_to_Y(n, numPairs)
     kronY = cell2mat(arrayfun(@(k) kron(T{k}', S{k}), 1:numPairs, 'UniformOutput', false));
 
     % obtain vec(Y)
-    vecY = kronY*kron(speye(numPairs),M_selector); %*M;
+    vecY = kronY*kron(speye(numPairs),M_selector);
+
 end
