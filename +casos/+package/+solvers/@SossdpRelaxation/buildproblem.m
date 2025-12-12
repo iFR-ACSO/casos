@@ -60,19 +60,16 @@ nnz_sos_g = nnz(Zcon_s);
 nnz_gram_x = sum(Ksdp_x_s.^2);
 nnz_gram_g = sum(Ksdp_g_s.^2);
 
-assert(length(Qvar) == (nnz_lin_x + nnz_sos_x), 'Sum-of-squares decision varibles must be in Gram form.')
+assert(numel(Qvar) == (nnz_lin_x + nnz_sos_x), 'Sum-of-squares decision variables must be in Gram form.')
 
 % matrix decision variables
 Qvar_sdp = [Qvar_l; Qvar_G];
 
 if (Nds + Nsds + Mds + Msds) > 0
     % create reordering map (for DSOS/SDSOS)
-    permMat = process_reorder(Qvar_G, Qcon_G,     ...
-                              Ksdp_x_s, Ksdp_g_s, ...
-                              Qvar_l,             ...
-                              Ns, Ms, Nds, Mds);
+    permMat = process_reorder(Qvar_G,Qcon_G,Ksdp_x_s,Ksdp_g_s,Qvar_l,Ns,Ms,Nds,Mds);
 else
-    permMat = speye(length(Qvar_sdp) + length(Qcon_G));
+    permMat = speye(numel(Qvar_sdp) + numel(Qcon_G));
 end
 
 % replace sum-of-squares decision variables
