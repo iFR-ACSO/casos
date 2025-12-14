@@ -1,13 +1,19 @@
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/9b946f23-057c-40ca-bd27-c582637990e4">
+  <source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/328a5eae-98dd-41ec-b270-6c8f60ed34a0">
+  <img alt="CaΣoS: A nonlinear sum-of-squares optimization suite">
+</picture>
+
+----
+
 [![Paper](https://img.shields.io/badge/Paper-ACC63710.2025.11107794-00629B?logo=ieee&style=plastic)](https://doi.org/10.23919/ACC63710.2025.11107794)
 [![License](https://img.shields.io/badge/License-GPLv3-A42E2B?logo=gnu&style=plastic)](https://github.com/iFR-ACSO/casos?tab=GPL-3.0-1-ov-file#GPL-3.0-1-ov-file)
 
-# CaΣoS, the nonlinear sum-of-squares optimization suite
-
-CaΣoS provides tools for [symbolic polynomial expressions](https://github.com/ifr-acso/casos/wiki/polynomial-data-types), [conic optimization](https://github.com/ifr-acso/casos/wiki/conic-optimization), and parametrized (convex and nonconvex) [sum-of-squares optimization](https://github.com/ifr-acso/casos/wiki/sum-of-squares-optimization), making use of the [CasADi](https://web.casadi.org) software for symbolic expressions, automatic differentiation, and numerical optimization. CaΣoS is developed by researchers at the Institute of Flight Mechanics and Controls of the University of Stuttgart and distributed open-source under the GPL-3.0 license.
+**CaΣoS** provides tools for [symbolic polynomial expressions](https://github.com/ifr-acso/casos/wiki/polynomial-data-types), [conic optimization](https://github.com/ifr-acso/casos/wiki/conic-optimization), and parametrized (convex and nonconvex) [sum-of-squares optimization](https://github.com/ifr-acso/casos/wiki/sum-of-squares-optimization), making use of the [CasADi](https://web.casadi.org) software for symbolic expressions, automatic differentiation, and numerical optimization. CaΣoS is developed by researchers at the Institute of Flight Mechanics and Controls of the University of Stuttgart and distributed open-source under the GPL-3.0 license.
 
 ### Downloads
 
-- All platforms: [v1.0.0 release candidate](https://github.com/ifr-acso/casos/releases/tag/v1.0.0-rc) ([zip](https://github.com/ifr-acso/casos/archive/refs/tags/v1.0.0-rc.zip) | [tar.gz](https://github.com/ifr-acso/casos/archive/refs/tags/v1.0.0-rc.tar.gz))
+- All platforms: [version 1.0.0](https://github.com/ifr-acso/casos/releases/tag/v1.0.0) ([zip](https://github.com/ifr-acso/casos/archive/refs/tags/v1.0.0.zip) | [tar.gz](https://github.com/ifr-acso/casos/archive/refs/tags/v1.0.0.tar.gz))
 
 ### Quick links
 
@@ -24,6 +30,7 @@ CaΣoS provides tools for [symbolic polynomial expressions](https://github.com/i
 If you use CaΣoS, please cite us:
 
 > T. Cunis and J. Olucak, ‘CaΣoS: A nonlinear sum-of-squares optimization suite’, in _2025 American Control Conference_, (Boulder, CO), pp. 1659–1666, 2025 doi: [10.23919/ACC63710.2025.11107794](https://doi.org/10.23919/ACC63710.2025.11107794).
+
 
 <details>
 
@@ -44,5 +51,3 @@ If you use CaΣoS, please cite us:
 </details>
 
 ----
-
-![casos](https://github.com/iFR-ACSO/casos/assets/14878869/ec1bd5f4-0fe5-41d4-abe6-518f1afb74ff)
