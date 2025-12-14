@@ -34,7 +34,7 @@ sdd_index_g.num_eq = 0;         % in constraints
 sdd_index_x.num_eq = 0;         % in decision variables
 
 % verify SDD cones in the constraints and create slack SDD variables
-M_g = cell(length(Msdd),1);
+M_g = cell(numel(Msdd),1);
 if msdd2 > 0
     [sdp,args,M_g,~,sdd_index_g,opts] = replaceSDDcones(sdp, Msdd, Mlin, args, opts, 'g');
 else
@@ -53,7 +53,7 @@ end
 
 % update decision variables
 added_vars = [vertcat(M_g{:}); vertcat(M_x{:})];
-n_inserted = length(added_vars);
+n_inserted = numel(added_vars);
 
 sddvar  = sdp.x(nlin0+nlor+nrot+npsd+ndd2+1:end);
 restvar = sdp.x(nlin0+nlor+nrot+1:nlin0+nlor+nrot+npsd+ndd2);
@@ -76,8 +76,8 @@ opts.Kc.lin = Mlin;
 opts.Kc.psd = Mpsd;
 
 % get sizes of NEW sdp.x and sdp.g
-len_x_new  = length(sdp.x);
-len_g_new  = length(sdp.g);
+len_x_new  = numel(sdp.x);
+len_g_new  = numel(sdp.g);
 
 % original variables occupy:
 %  - first nlin0 entries unchanged
