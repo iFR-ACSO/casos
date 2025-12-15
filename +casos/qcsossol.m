@@ -1,8 +1,13 @@
 function f = qcsossol(varargin)
 % Interface for quasiconvex sum-of-squares (SOS) solvers.
         
-node = casos.package.solvers.qcsossolInternal(varargin{:});
+try
+    node = casos.package.solvers.qcsossolInternal(varargin{:});
+    
+    f = casos.Function.create(node);
 
-f = casos.Function.create(node);
+catch e
+    throwAsCaller(e)
+end
 
 end

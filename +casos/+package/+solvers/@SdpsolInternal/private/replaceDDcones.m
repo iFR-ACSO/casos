@@ -47,26 +47,35 @@ ineq_counter = 1;
 for i = 1:nCones
     idx = nCones - i + 1;   % process cones in reverse order
     n   = sizes(idx);       % size of current cone
-    numPairs = (n-1)*n/2;   % number of off-diagonal pairs
 
     % locate block in sdp.(field)
-    ind = [ length(sdp.(field)) + 1 - sum(sizes(end-i+1:end).^2); ...
-            length(sdp.(field))     - sum(sizes(end-i+2:end).^2) ];
+    ind = [length(sdp.(field)) + 1 - sum(sizes(end-i+1:end).^2); ...
+           length(sdp.(field))     - sum(sizes(end-i+2:end).^2) ];
     dd_block = sdp.(field)(ind(1):ind(2));
-
-    % mapping
-    vecY = map_M_to_Y(n, numPairs);
-
-    % slack variable
-    M_out{i} = casadi.SX.sym([field 'dd_M' num2str(i)], 3*numPairs, 1);
-
-    % equality and inequality constraints
-    eq_constraints{i} = dd_block - vecY*M_out{i};
     
-    % inequality constraints
-    for j = 1:numPairs
-        ineq_constraints{ineq_counter} = Mconstr_selector * M_out{i}((j-1)*3+1:j*3);
+    if n == 1
+        M_out{i} = casadi.SX.sym([field 'dd_M' num2str(i)], 1, 1);
+        eq_constraints{i} = dd_block - M_out{i};
+        ineq_constraints{ineq_counter} = M_out{i};
         ineq_counter = ineq_counter + 1;
+    else
+        % number of off-diagonal pairs
+        numPairs = (n-1)*n/2;   
+    
+        % mapping
+        vecY = map_M_to_Y(n, numPairs);
+    
+        % slack variable
+        M_out{i} = casadi.SX.sym([field 'dd_M' num2str(i)], 3*numPairs, 1);
+    
+        % equality and inequality constraints
+        eq_constraints{i} = dd_block - vecY*M_out{i};
+        
+        % inequality constraints
+        for j = 1:numPairs
+            ineq_constraints{ineq_counter} = Mconstr_selector * M_out{i}((j-1)*3+1:j*3);
+            ineq_counter = ineq_counter + 1;
+        end
     end
 end
 
