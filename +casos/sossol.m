@@ -1,8 +1,13 @@
 function f = sossol(varargin)
 % Interface for convex sum-of-squares (SOS) solvers.
-        
-node = casos.package.solvers.sossolInternal(varargin{:});
 
-f = casos.Function.create(node);
+try
+    node = casos.package.solvers.sossolInternal(varargin{:});
+    
+    f = casos.Function.create(node);
+
+catch e
+    throwAsCaller(e)
+end
 
 end

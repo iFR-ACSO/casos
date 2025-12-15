@@ -160,6 +160,8 @@ classdef (Abstract) SequentialCommon < casos.package.solvers.SosoptCommon
                 obj.log = casos.package.Logger.Debug;
             end
 
+            assert(is_empty(obj.get_cones,obj.opts.Kc,'lin'), 'Nonlinear (in)equality constraints are currently not supported.')
+
             % Initialize solvers
             buildproblem(obj,nlsos);
         end
