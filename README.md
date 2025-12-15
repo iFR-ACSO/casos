@@ -1,6 +1,6 @@
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/9b946f23-057c-40ca-bd27-c582637990e4">
-  <source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/328a5eae-98dd-41ec-b270-6c8f60ed34a0">
+  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/iFR-ACSO/.github/blob/main/assets/logo-casos-inverted.png">
+  <source media="(prefers-color-scheme: light)" srcset="https://github.com/iFR-ACSO/.github/blob/main/assets/logo-casos-trans.png">
   <img alt="CaΣoS: A nonlinear sum-of-squares optimization suite">
 </picture>
 
