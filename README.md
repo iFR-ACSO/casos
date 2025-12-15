@@ -1,13 +1,20 @@
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/iFR-ACSO/.github/blob/main/assets/logo-casos-inverted.png">
+  <source media="(prefers-color-scheme: light)" srcset="https://github.com/iFR-ACSO/.github/blob/main/assets/logo-casos-trans.png">
+  <img alt="CaΣoS: A nonlinear sum-of-squares optimization suite">
+</picture>
+
+----
+
 [![Paper](https://img.shields.io/badge/Paper-ACC63710.2025.11107794-00629B?logo=ieee&style=plastic)](https://doi.org/10.23919/ACC63710.2025.11107794)
 [![License](https://img.shields.io/badge/License-GPLv3-A42E2B?logo=gnu&style=plastic)](https://github.com/iFR-ACSO/casos?tab=GPL-3.0-1-ov-file#GPL-3.0-1-ov-file)
 
-# CaΣoS, the nonlinear sum-of-squares optimization suite
-
-CaΣoS provides tools for [symbolic polynomial expressions](https://github.com/ifr-acso/casos/wiki/polynomial-data-types), [conic optimization](https://github.com/ifr-acso/casos/wiki/conic-optimization), and parametrized (convex and nonconvex) [sum-of-squares optimization](https://github.com/ifr-acso/casos/wiki/sum-of-squares-optimization), making use of the [CasADi](https://web.casadi.org) software for symbolic expressions, automatic differentiation, and numerical optimization. CaΣoS is developed by researchers at the Institute of Flight Mechanics and Controls of the University of Stuttgart and distributed open-source under the GPL-3.0 license.
+**CaΣoS** provides tools for [symbolic polynomial expressions](https://github.com/ifr-acso/casos/wiki/polynomial-data-types), [conic optimization](https://github.com/ifr-acso/casos/wiki/conic-optimization), and parametrized (convex and nonconvex) [sum-of-squares optimization](https://github.com/ifr-acso/casos/wiki/sum-of-squares-optimization), making use of the [CasADi](https://web.casadi.org) software for symbolic expressions, automatic differentiation, and numerical optimization. CaΣoS is developed by researchers at the Institute of Flight Mechanics and Controls of the University of Stuttgart and distributed open-source under the GPL-3.0 license.
 
 ### Downloads
 
-- All platforms: [v1.0.0 release candidate](https://github.com/ifr-acso/casos/releases/tag/v1.0.0-rc) ([zip](https://github.com/ifr-acso/casos/archive/refs/tags/v1.0.0-rc.zip) | [tar.gz](https://github.com/ifr-acso/casos/archive/refs/tags/v1.0.0-rc.tar.gz))
+- All platforms: [version 1.0.0](https://github.com/ifr-acso/casos/releases/tag/v1.0.0) ([zip](https://github.com/ifr-acso/casos/archive/refs/tags/v1.0.0.zip) | [tar.gz](https://github.com/ifr-acso/casos/archive/refs/tags/v1.0.0.tar.gz))
+- CaΣoS [example package](https://github.com/ifr-acso/casos-example-package) ([zip](https://github.com/ifr-acso/casos-example-package/archive/refs/heads/main.zip))
 
 ### Quick links
 
@@ -19,11 +26,12 @@ CaΣoS provides tools for [symbolic polynomial expressions](https://github.com/i
 - [Transitioning](https://github.com/ifr-acso/casos/wiki/transitioning-from-other-toolboxes) from other toolboxes
 - Example [code snippets](https://github.com/ifr-acso/casos/wiki/numerical-examples)
 
-### Cite us
+### Publications
 
 If you use CaΣoS, please cite us:
 
-> T. Cunis and J. Olucak, ‘CaΣoS: A nonlinear sum-of-squares optimization suite’, in _2025 American Control Conference_, (Boulder, CO), pp. 1659–1666, 2025 doi: [10.23919/ACC63710.2025.11107794](https://doi.org/10.23919/ACC63710.2025.11107794).
+> T. Cunis and J. Olucak, ‘CaΣoS: A nonlinear sum-of-squares optimization suite’, in _2025 American Control Conference_, (Denver, CO), pp. 1659–1666, 2025. doi: [10.23919/ACC63710.2025.11107794](https://doi.org/10.23919/ACC63710.2025.11107794)
+
 
 <details>
 
@@ -34,7 +42,7 @@ If you use CaΣoS, please cite us:
 	author = {Cunis, Torbjørn and Olucak, Jan},
 	title = {{CaΣoS}: {A} nonlinear sum-of-squares optimization suite},
 	booktitle = {2025 American Control Conference},
-	address = {Boulder, CO},
+	address = {Denver, CO},
 	year = {2025},
 	pages = {1659--1666},
 	doi = {10.23919/ACC63710.2025.11107794},
@@ -43,6 +51,14 @@ If you use CaΣoS, please cite us:
 
 </details>
 
-----
+#### Applications
+We provide the [source code](https://doi.org/10.18419/darus-4499) for our benchmarks and comparison to other toolboxes.
 
-![casos](https://github.com/iFR-ACSO/casos/assets/14878869/ec1bd5f4-0fe5-41d4-abe6-518f1afb74ff)
+Further applications of CaΣoS include:
+
+1. R. Loureiro and T. Cunis, ‘Nonlinear Observer Synthesis for Stochastic Polynomial Dynamical Systems’, in 2025 American Control Conference, (Denver, CO), 2025, pp. 2509–2514. [DOI](https://doi.org/10.23919/ACC63710.2025.11107965)
+2. R. Loureiro and T. Cunis, ‘Estimating Robust Regions of Attraction with Uncertain Equilibrium Points’, in 2025 American Control Conference, (Denver, CO), 2025, pp. 1045–1050. [DOI](https://doi.org/10.23919/ACC63710.2025.11107427)
+
+3. J. Olucak, A. C. B. de Oliveira, and T. Cunis, ‘Safe-by-Design: Approximate Nonlinear Model Predictive Control with Realtime Feasibility’, Preprint. [arXiv](https://arxiv.org/abs/2509.22422), [Source code](https://doi.org/10.18419/darus-5297)
+
+----
