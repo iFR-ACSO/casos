@@ -60,8 +60,5 @@ Further applications of CaΣoS include:
 2. R. Loureiro and T. Cunis, ‘Estimating Robust Regions of Attraction with Uncertain Equilibrium Points’, in 2025 American Control Conference, (Denver, CO), 2025, pp. 1045–1050. [DOI](https://doi.org/10.23919/ACC63710.2025.11107427)
 
 3. J. Olucak, A. C. B. de Oliveira, and T. Cunis, ‘Safe-by-Design: Approximate Nonlinear Model Predictive Control with Realtime Feasibility’, Preprint. [arXiv](https://arxiv.org/abs/2509.22422), [Source code](https://doi.org/10.18419/darus-5297)
-4. F. Geyer, F. Tuttas, W. Fichter, and T. Cunis, ‘Sum-of-Squares Stability Verification on Manifolds with Applications in Spacecraft Attitude Control’, Preprint.
-
-
 
 ----
