@@ -25,11 +25,11 @@
 - [Transitioning](https://github.com/ifr-acso/casos/wiki/transitioning-from-other-toolboxes) from other toolboxes
 - Example [code snippets](https://github.com/ifr-acso/casos/wiki/numerical-examples)
 
-### Cite us
+### Publications
 
 If you use CaΣoS, please cite us:
 
-> T. Cunis and J. Olucak, ‘CaΣoS: A nonlinear sum-of-squares optimization suite’, in _2025 American Control Conference_, (Boulder, CO), pp. 1659–1666, 2025 doi: [10.23919/ACC63710.2025.11107794](https://doi.org/10.23919/ACC63710.2025.11107794).
+> T. Cunis and J. Olucak, ‘CaΣoS: A nonlinear sum-of-squares optimization suite’, in _2025 American Control Conference_, (Denver, CO), pp. 1659–1666, 2025. doi: [10.23919/ACC63710.2025.11107794](https://doi.org/10.23919/ACC63710.2025.11107794)
 
 
 <details>
@@ -41,7 +41,7 @@ If you use CaΣoS, please cite us:
 	author = {Cunis, Torbjørn and Olucak, Jan},
 	title = {{CaΣoS}: {A} nonlinear sum-of-squares optimization suite},
 	booktitle = {2025 American Control Conference},
-	address = {Boulder, CO},
+	address = {Denver, CO},
 	year = {2025},
 	pages = {1659--1666},
 	doi = {10.23919/ACC63710.2025.11107794},
@@ -49,5 +49,18 @@ If you use CaΣoS, please cite us:
 ```
 
 </details>
+
+#### Applications
+We provide the [source code](https://doi.org/10.18419/darus-4499) for our benchmarks and comparison to other toolboxes.
+
+Further applications of CaΣoS include:
+
+1. R. Loureiro and T. Cunis, ‘Nonlinear Observer Synthesis for Stochastic Polynomial Dynamical Systems’, in 2025 American Control Conference, (Denver, CO), 2025, pp. 2509–2514. [DOI](https://doi.org/10.23919/ACC63710.2025.11107965)
+2. R. Loureiro and T. Cunis, ‘Estimating Robust Regions of Attraction with Uncertain Equilibrium Points’, in 2025 American Control Conference, (Denver, CO), 2025, pp. 1045–1050. [DOI](https://doi.org/10.23919/ACC63710.2025.11107427)
+
+3. J. Olucak, A. C. B. de Oliveira, and T. Cunis, ‘Safe-by-Design: Approximate Nonlinear Model Predictive Control with Realtime Feasibility’, Preprint. [arXiv](https://arxiv.org/abs/2509.22422), [Source code](https://doi.org/10.18419/darus-5297)
+4. F. Geyer, F. Tuttas, W. Fichter, and T. Cunis, ‘Sum-of-Squares Stability Verification on Manifolds with Applications in Spacecraft Attitude Control’, Preprint.
+
+
 
 ----
