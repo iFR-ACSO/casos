@@ -6,6 +6,7 @@ methods
         % Create a new function.
         import casos.package.functions.*
 
+        try
         if nargin < 1
             % null function
             wrap = [];
@@ -46,6 +47,10 @@ methods
             error('No matching function for inputs (%s).', [str{:}]);
         end
 
+        end
+
+        catch e
+            throwAsCaller(e)
         end
 
         f@casos.package.functions.FunctionWrapper(wrap);
