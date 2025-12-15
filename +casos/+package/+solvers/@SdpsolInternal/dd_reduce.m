@@ -49,7 +49,7 @@ end
 
 % update decision variables
 added_vars = [vertcat(M_g{:}); vertcat(M_x{:})];
-n_inserted = length(added_vars);
+n_inserted = numel(added_vars);
 
 % move the DD variables to the lin position
 ddvar  = sdp.x(nlin0+nlor+nrot+npsd+1:end);
@@ -72,8 +72,8 @@ opts.Kx.lin = Nlin;
 opts.Kc.lin = Mlin;
 
 % get sizes of NEW sdp.x and sdp.g
-len_x_new  = length(sdp.x);
-len_g_new  = length(sdp.g);
+len_x_new  = numel(sdp.x);
+len_g_new  = numel(sdp.g);
 
 % original variables occupy:
 %  - first nlin0 entries unchanged
@@ -85,7 +85,7 @@ idx_xdd   = (nlin0+npsd+1):(nlin0+npsd+ndd2);
 idx_xrest = (nlin0 + n_inserted + 1) : len_x_new;
 
 % sanity: lengths must match
-assert( length(idx_xlin) + length(idx_xrest) == len_x_orig, ...
+assert( numel(idx_xlin) + numel(idx_xrest) == len_x_orig, ...
     'Indexing mismatch building map.x (lengths do not add up).');
 
 %idx_original = [idx_xlin, n_inserted+idx_xdd, n_inserted+idx_xpsd];
