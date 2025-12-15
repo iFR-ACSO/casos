@@ -14,6 +14,7 @@
 ### Downloads
 
 - All platforms: [version 1.0.0](https://github.com/ifr-acso/casos/releases/tag/v1.0.0) ([zip](https://github.com/ifr-acso/casos/archive/refs/tags/v1.0.0.zip) | [tar.gz](https://github.com/ifr-acso/casos/archive/refs/tags/v1.0.0.tar.gz))
+- CaΣoS [example package](https://github.com/ifr-acso/casos-example-package) ([zip](https://github.com/ifr-acso/casos-example-package/archive/refs/heads/main.zip))
 
 ### Quick links
 
