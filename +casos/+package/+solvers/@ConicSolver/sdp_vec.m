@@ -1,5 +1,5 @@
-function [v,i,j,k,l] = sdp_vec(~,M,Ks,scale,dim)
-% Index-based lower-triangular vectorization for semi-definite matrices.
+function [v,i,j,k,l] = sdp_vec(~,M,Ks,scale,dim,upper)
+% Index-based triangular vectorization for semi-definite matrices.
 %
 % This function takes a matrix
 %
@@ -15,11 +15,14 @@ function [v,i,j,k,l] = sdp_vec(~,M,Ks,scale,dim)
 %       | vp1 ... vpq |
 %
 % where each block entry vij is a N*(N+1)/2-by-1 (column/row) vector that
-% corresponds to stacking the lower-triangular elements of Mij column-wise.
+% corresponds stacking the triangular elements of Mij column-wise. By
+% default, the lower-triangular elements are stacked, but this can be
+% optionally switched to the upper-triangular elements using the 'upper' 
+% flag. 
 %
 % Syntax #1:
 %
-%   V = sdp_vec(M,Ks,scale,dim)
+%   V = sdp_vec(M,Ks,scale,dim,[upper])
 %
 % Returns the block matrix V as described above with the following
 % parameters:
@@ -31,16 +34,19 @@ function [v,i,j,k,l] = sdp_vec(~,M,Ks,scale,dim)
 % - Ks:     Dimensions Nij of the matrices Mij; if dim = 1, then Ks is a
 %           p-by-1 vector satisfying Nij = K(i); otherwise, Ks is a q-by-1
 %           vector satisfying Nij = K(j) for all (i,j) in {1...p}x{1...q}.
+% - upper:  Optional Boolean flag (default false), which
+%           determines whether the lower- or upper-triangular elements of
+%           each block Mij are stacked.
 %
 % Syntax #2:
 %
 %   [val,i,j,k,l] = sdp_vec(M,...)
 %
 % Returns the nonzero elements of V along with vectors of indices (i,j) and
-% (k,l) corresponding to the lower-triangular elements Mij(k,l). Parameters
-% apply as above.
+% (k,l) corresponding to the lower-triangular (or upper-triangular) elements 
+% Mij(k,l). Parameters apply as above.
 
-if nargin > 4
+if nargin > 4 && ~isempty(dim)
     % dimension provided, nothing to do
 elseif isrow(M)
     % row vector blocks only
@@ -54,6 +60,8 @@ if nargin < 4 || isempty(scale)
     % default scaling for SCS
     scale = sqrt(2);
 end
+
+lower = nargin < 6 || ~upper; % use tril by default
 
 % ensure matrix dimensions are a row vector
 s = reshape(Ks,1,[]);
@@ -83,48 +91,71 @@ I0 = I - S(J);
 l = ceil(I0 ./ s(J)); % col
 k = I0 - s(J).*(l-1); % row
 
-% determine strictly upper triangle
-triu = (k < l);
+% determine strictly lower or upper triangle
+tril_mask = (k > l); % elements below the main diagonal (row > column)
+triu_mask = (k < l); % elements above the main diagonal (row < column)
 
-% remove indices for strictly upper triangle
-J(triu) = [];
-l(triu) = [];
-k(triu) = [];
+% check the flag
+if lower
+    tri2rem = triu_mask;    % indices of strictly upper elements to remove
+    tri2vec = tril_mask;    % indices of strictly lower elements to scale (off-diagonal)
+else
+    tri2rem = tril_mask;    % indices of strictly lower elements to remove
+    tri2vec = triu_mask;    % indices of strictly upper elements to scale (off-diagonal)
+end
 
-% linear indices for lower triangular entries
-subItril = {subI{1}(~triu) subI{2}(~triu)};
-Itril = sub2ind(size(M),subItril{:});
+% remove indices
+J(tri2rem) = [];
+l(tri2rem) = [];
+k(tri2rem) = [];
 
-% determine strictly lower and upper triangle
-tril = (k > l);
+% linear indices for triangular entries to keep
+subItri = {subI{1}(~tri2rem) subI{2}(~tri2rem)};
+Itri = sub2ind(size(M),subItri{:});
 
-% scale strictly lower triangle
-scaling = ones(size(tril));
-scaling(tril) = scale;
+% keep tri2vec consistent with removed elements
+tri2vec = tri2vec(~tri2rem);
+
+% scale strictly the triangular elements
+scaling = ones(size(tri2vec));
+scaling(tri2vec) = scale;
 
 % nonzero elements of lower triangular matrices, scaled
-val = scaling.*reshape(M(Itril),1,length(Itril));
+val = scaling.*reshape(M(Itri),1,length(Itri));
 
 if nargout > 1
     % return subindices (i,j) of matrices Mij
-    subij{dim} = J; subij{3-dim} = subItril{3-dim};
+    subij{dim} = J; subij{3-dim} = subItri{3-dim};
     [i,j] = subij{:};
     % return nonzero elements
     v = val;
 else
     % compute linear indices into each block Vij
     % where Iv0 = (l-1)*(2N-l+2)/2 + k' and k' = k - l + 1
-    kprime = k - l + 1; % number of rows from diagonal
-    Iv0 = (l-1).*(s(J)-l/2+1) + kprime; % number of lower-triangular elements
+    if lower
+        kprime = k - l + 1;                 % number of rows from diagonal
+        Iv0 = (l-1).*(s(J)-l/2+1) + kprime; % number of lower-triangular elements
+    else
+        kprime = l - k + 1;                 % count from diagonal
+        Iv0 = (k-1).*(s(J)-k/2+1) + kprime; % number of upper-triangular elements
+    end
+
     % compute cumulative linear indices
-    Nv = s.*(s+1)/2; Sv = cumsum([0 Nv(1:end-1)]);
+    Nv = s.*(s+1)/2; 
+    Sv = cumsum([0 Nv(1:end-1)]);
     Iv = Sv(J) + Iv0;
+    
     % subindices into block matrix V
-    subIv{dim} = Iv-1; subIv{3-dim} = subItril{3-dim}-1; % CasADi interface has 0-index
+    subIv{dim} = Iv-1; 
+    subIv{3-dim} = subItri{3-dim}-1; % CasADi interface has 0-index
+    
     % size of block matrix V
-    sz = size(M); sz(dim) = sum(Nv);
+    sz = size(M); 
+    sz(dim) = sum(Nv);
+
     % sparsity pattern of block matrix
     Sp = casadi.Sparsity.triplet(sz(1),sz(2),subIv{:});
+    
     % return block matrix V
     v = feval(class(M),Sp,val');
 end
