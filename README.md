@@ -1,42 +1,40 @@
 <!--
 SPDX-FileCopyrightText: 2023 Institute of Flight Mechanics and Controls, University of Stuttgart
 SPDX-FileCopyrightText: Author(s): Torbjørn Cunis <tcunis@ifr.uni-stuttgart.de>
-SPDX-FileCopyrightText: Author(s): For a full list of contributors, see <https://github.com/ifr-ofc/casos> <tcunis@ifr.uni-stuttgart.de>
-SPDX-FileCopyrightText: Author(s): Torbjørn Cunis <tcunis@ifr.uni-stuttgart.de>
 SPDX-FileContributor: For a full list of contributors, see <https://github.com/ifr-ofc/casos>
 
 SPDX-License-Identifier: GPL-3.0-only
 -->
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ifr-ofc/.github/blob/main/assets/logo-casos-inverted.png">
-  <source media="(prefers-color-scheme: light)" srcset="https://github.com/ifr-ofc/.github/blob/main/assets/logo-casos-trans.png">
+  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/casos-opti/.github/blob/main/assets/logo-casos-inverted.png">
+  <source media="(prefers-color-scheme: light)" srcset="https://github.com/casos-opti/.github/blob/main/assets/logo-casos-trans.png">
   <img alt="CaΣoS: A nonlinear sum-of-squares optimization suite">
 </picture>
 
 ----
 
-[![Paper](https://img.shields.io/badge/Paper-ACC63710.2025.11107794-00629B?logo=ieee&style=plastic)](https://doi.org/10.23919/ACC63710.2025.11107794)
-[![License](https://img.shields.io/badge/License-GPLv3-A42E2B?logo=gnu&style=plastic)](https://github.com/ifr-ofc/casos?tab=GPL-3.0-1-ov-file#GPL-3.0-1-ov-file)
+[![Paper](https://img.shields.io/badge/Paper-ACC63710.2025.11107794-00629B?logo=ieee&style=plastic)](https://ieeexplore.ieee.org/document/11107794/)
+[![License](https://img.shields.io/badge/License-GPLv3-A42E2B?logo=gnu&style=plastic)](https://github.com/casos-opti/casos?tab=GPL-3.0-1-ov-file#GPL-3.0-1-ov-file)
 
-**CaΣoS** provides tools for [symbolic polynomial expressions](https://github.com/ifr-ofc/casos/wiki/polynomial-data-types), [conic optimization](https://github.com/ifr-ofc/casos/wiki/conic-optimization), and parametrized (convex and nonconvex) [sum-of-squares optimization](https://github.com/ifr-ofc/casos/wiki/sum-of-squares-optimization), making use of the [CasADi](https://web.casadi.org) software for symbolic expressions, automatic differentiation, and numerical optimization. CaΣoS is developed by researchers at the Institute of Flight Mechanics and Controls of the University of Stuttgart and distributed open-source under the GPL-3.0 license.
+**CaΣoS** provides tools for [symbolic polynomial expressions](https://github.com/casos-opti/casos/wiki/polynomial-data-types), [conic optimization](https://github.com/casos-opti/casos/wiki/conic-optimization), and parametrized (convex and nonconvex) [sum-of-squares optimization](https://github.com/casos-opti/casos/wiki/sum-of-squares-optimization), making use of the [CasADi](https://web.casadi.org) software for symbolic expressions, automatic differentiation, and numerical optimization. CaΣoS is developed by researchers at the Institute of Flight Mechanics and Controls of the University of Stuttgart and distributed open-source under the GPL-3.0 license.
 
 ### Downloads
 
-- All platforms: Stable [version 1.0.0](https://github.com/ifr-ofc/casos/releases/tag/v1.0.0) ([zip](https://github.com/ifr-ofc/casos/archive/refs/tags/v1.0.0.zip) | [tar.gz](https://github.com/ifr-ofc/casos/archive/refs/tags/v1.0.0.tar.gz))
-- Unstable: [version 1.0.1 Preview](https://github.com/iFR-OFC/casos/releases/tag/v1.0.1-pre) ([zip](https://github.com/iFR-OFC/casos/archive/refs/tags/v1.0.1-pre.zip) | [tar.gz](https://github.com/iFR-OFC/casos/archive/refs/tags/v1.0.1-pre.tar.gz))
-- CaΣoS [example package](https://github.com/ifr-ofc/casos-example-package) ([zip](https://github.com/ifr-ofc/casos-example-package/archive/refs/heads/main.zip))
-- [Reference values](https://github.com/iFR-OFC/casos/releases/download/v1.0.1-pre/reference_values.mat) for unit tests
+- All platforms: Stable [version 1.0.0](https://github.com/casos-opti/casos/releases/tag/v1.0.0) ([zip](https://github.com/casos-opti/casos/archive/refs/tags/v1.0.0.zip) | [tar.gz](https://github.com/casos-opti/casos/archive/refs/tags/v1.0.0.tar.gz))
+- Unstable: [version 1.0.1 Preview](https://github.com/casos-opti/casos/releases/tag/v1.0.1-pre) ([zip](https://github.com/casos-opti/casos/archive/refs/tags/v1.0.1-pre.zip) | [tar.gz](https://github.com/casos-opti/casos/archive/refs/tags/v1.0.1-pre.tar.gz))
+- CaΣoS [example package](https://github.com/casos-opti/casos-example-package) ([zip](https://github.com/casos-opti/casos-example-package/archive/refs/heads/main.zip))
+- [Reference values](https://github.com/casos-opti/casos/releases/download/v1.0.1-pre/reference_values.mat) for unit tests
 
 ### Quick links
 
-- [Getting started](https://github.com/ifr-ofc/casos/wiki#getting-started)
-- Available [conic solvers](https://github.com/ifr-ofc/casos/wiki#conic-solvers)
-- Convex and nonconvex [sum-of-squares optimization](https://github.com/ifr-ofc/casos/wiki/sum%E2%80%90of%E2%80%90squares-optimization)
-- Supported [vector, matrix, and polynomial cones](https://github.com/ifr-ofc/casos/wiki/cones)
-- Some [practical tipps](https://github.com/ifr-ofc/casos/wiki/practical-sos-guide) to sum-of-squares
-- [Transitioning](https://github.com/ifr-ofc/casos/wiki/transitioning-from-other-toolboxes) from other toolboxes
-- Example [code snippets](https://github.com/ifr-ofc/casos/wiki/numerical-examples)
+- [Getting started](https://github.com/casos-opti/casos/wiki#getting-started)
+- Available [conic solvers](https://github.com/casos-opti/casos/wiki#conic-solvers)
+- Convex and nonconvex [sum-of-squares optimization](https://github.com/casos-opti/casos/wiki/sum%E2%80%90of%E2%80%90squares-optimization)
+- Supported [vector, matrix, and polynomial cones](https://github.com/casos-opti/casos/wiki/cones)
+- Some [practical tipps](https://github.com/casos-opti/casos/wiki/practical-sos-guide) to sum-of-squares
+- [Transitioning](https://github.com/casos-opti/casos/wiki/transitioning-from-other-toolboxes) from other toolboxes
+- Example [code snippets](https://github.com/casos-opti/casos/wiki/numerical-examples)
 
 ### Publications
 
