@@ -177,7 +177,7 @@ jobs:
             end
             
             % Run tests with minimal summary
-      	    results = runtests('IncludeSubfolders', false, 'OutputDetail', 0);
+            results = runtests('IncludeSubfolders', false, 'OutputDetail', 0);
             disp('Tests completed');
           
   # =============================================================================
