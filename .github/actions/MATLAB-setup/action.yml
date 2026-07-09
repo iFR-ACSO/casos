@@ -1,0 +1,39 @@
+name: 'MATLAB setup'
+description: 'Steps shared across jobs for installing and verifying MATLAB environment'
+runs:
+  using: "composite"
+  steps:
+    # ============================================================
+    # MATLAB INSTALLATION
+    # ============================================================
+
+    # Install MATLAB and associated toolboxes on the GitHub Actions runner
+    # Uses the official MATLAB action from MathWorks
+    - name: Set up MATLAB
+      uses: matlab-actions/setup-matlab@v2
+      with:
+          release: R2023b # Specify MATLAB release version to install
+          products: >
+            Signal_Processing_Toolbox
+            Symbolic_Math_Toolbox
+      
+    # ============================================================
+    # INSTALLATION VERIFICATION
+    # ============================================================
+
+    # Verify that MATLAB was installed correctly and is accessible
+    # Run basic MATLAB commands to confirm functionality
+    - name: Verify MATLAB
+      uses: matlab-actions/run-command@v2
+      with:
+        command: |
+          % Display confirmation message that MATLAB is available
+          disp('MATLAB is available and accessible');
+
+          % Display MATLAB version information for debugging and verification
+          fprintf('\n--- MATLAB Version Information ---\n');
+          version
+
+          % Display installed toolboxes for completeness
+          fprintf('\n--- Installed Toolboxes ---\n');
+          ver

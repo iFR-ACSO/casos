@@ -1,0 +1,73 @@
+name: 'CasADi setup'
+description: 'Install and configure CasADi optimization framework for MATLAB'
+runs:
+  using: "composite"
+  steps:
+    # ============================================================
+    # SYSTEM DEPENDENCIES
+    # ============================================================
+
+    # Install required system packages for downloading and extracting CasADi
+    - name: Install system dependencies
+      shell: bash
+      run: |
+        echo "Installing system dependencies..."
+        sudo apt-get update
+        sudo apt-get install -y curl bzip2 tar
+        echo "System dependencies installed successfully"
+
+    # ============================================================
+    # CASADI DOWNLOAD
+    # ============================================================
+
+    # Download CasADi binary distribution for MATLAB on Linux platform
+    # Version: 3.6.5 (compatible with MATLAB 2018b and later)
+    - name: Download CasADi 3.6.5 for MATLAB (Linux)
+      shell: bash 
+      run: |
+        echo "Downloading CasADi 3.6.5 for MATLAB (Linux)..."
+
+        # Define download URLs and file names
+        CASADI_VERSION="3.6.5"
+        DOWNLOAD_URL="https://github.com/casadi/casadi/releases/download/${CASADI_VERSION}/casadi-${CASADI_VERSION}-linux64-matlab2018b.zip"
+        OUTPUT_ZIP="casadi-${CASADI_VERSION}.zip"
+        EXTRACT_DIR="casadi-${CASADI_VERSION}"
+
+        # Download CasADi archive
+        echo "Downloading from: ${DOWNLOAD_URL}"
+        wget -q --show-progress "${DOWNLOAD_URL}" -O "${OUTPUT_ZIP}"
+
+        # Extract the archive to a versioned directory
+        echo "Extracting CasADi to ${EXTRACT_DIR}/..."
+        unzip -q "${OUTPUT_ZIP}" -d "${EXTRACT_DIR}"
+
+        # Clean up downloaded zip file to save space
+        echo "Cleaning up temporary files..."
+        rm -f "${OUTPUT_ZIP}"
+
+        echo "CasADi ${CASADI_VERSION} downloaded and extracted successfully"
+
+    # ============================================================
+    # VERIFICATION (for debugging)
+    # ============================================================
+
+    # Verify CasADi files were downloaded and extracted correctly
+    - name: Verify CasADi installation
+      shell: bash 
+      if: false
+      run: |
+        echo "Verifying CasADi installation..."
+        echo ""
+        echo "Contents of CasADi directory:"
+        echo "----------------------------------------"
+
+        # Check if directory exists and list contents
+        if [ -d "casadi-3.6.5" ]; then
+          ls -la casadi-3.6.5/
+          echo ""
+          echo "CasADi installation verified successfully"
+          echo "Found $(find casadi-3.6.5 -type f | wc -l) files"
+        else
+          echo "ERROR: CasADi directory not found!"
+          exit 1
+        fi

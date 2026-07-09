@@ -1,0 +1,350 @@
+name: Complete integration test
+
+# WORKFLOW PURPOSE:
+# This workflow performs a complete integration test of the codebase, including:
+# 1. Code quality analysis for MATLAB files
+# 2. Testing polynomial operations against reference implementation (multipoly)
+# 3. Testing SDP solver interfaces (Mosek, SeDuMi)
+# 4. Verifying all demo scripts execute without errors
+
+on:
+  # TRIGGERS:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main]
+  workflow_dispatch: {}   # Allow manual triggering from GitHub UI
+
+# ENVIRONMENT VARIABLES:
+# These are available to all jobs in the workflow
+env:
+  # License tokens for MATLAB and Mosek solvers
+  MLM_LICENSE_TOKEN: ${{ secrets.MLM_LICENSE_TOKEN }}
+  MOSEKLM_LICENSE_FILE: ${{ secrets.MSK_LICENSE }}
+
+  # MOSEK solver configuration - fixed version for consistency across all jobs
+  MOSEK_VERSION: "10.1.17"
+  MOSEK_INSTALL_DIR: ${{ github.workspace }}/mosek
+
+jobs:
+  # =============================================================================
+  # JOB 1: code-analysis
+  # PURPOSE: Run MATLAB code analysis to ensure compliance with coding standards
+  # This job checks code quality and generates reports before running tests
+  # =============================================================================
+  code-analysis:
+    name: MATLAB Code Analysis
+    runs-on: ubuntu-latest
+
+    # Grant necessary permissions for GitHub integrations
+    permissions:
+      checks: write
+      contents: read
+      pull-requests: write
+      statuses: write
+
+    steps:
+      # STEP 1: Checkout the main repository code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # STEP 2: Checkout coding guidelines repository
+      # This contains the configuration for code analysis (rules, patterns, etc.)
+      - name: Checkout coding guidelines
+        uses: actions/checkout@v4
+        with:
+          repository: iFR-OFC/casos-coding-guidelines
+          path: casos-coding-guidelines
+
+      # STEP 3: Debug - List files for verification
+      # Useful for troubleshooting path issues
+      - name: List files generated
+        run: |
+          echo "=== FILES IN ROOT DIRECTORY ==="
+          echo ""
+          echo "Contents in the root folder:"
+          ls -la
+          echo ""
+          cd casos-coding-guidelines
+          echo "Contents in the casos-guidelines:"
+          ls -la
+
+      # STEP 4: Setup MATLAB environment
+      # Uses reusable action from .github/actions
+      - name: Run common steps
+        uses: ./.github/actions/MATLAB-setup
+        with:
+          message: "Setup MATLAB"
+
+      # STEP 5: Run code compliance analysis
+      # Analyzes all .m files against coding guidelines
+      - name: Check code compliance
+        uses: ./.github/actions/code-analyser
+        with:
+          message: "Analysing .m files"
+
+      # STEP 6: Display report in GitHub Actions Summary
+      # Makes results visible in the GitHub UI
+      - name: Add Report to GitHub Summary
+        if: ${{ !env.ACT }}   # Skip when testing locally with 'act' (avoid upload errors)
+        run: |
+          cat code-analysis-report.md >> $GITHUB_STEP_SUMMARY
+
+      # STEP 7: Upload code analysis reports as artifacts
+      # Preserves reports for 30 days for later reference
+      - name: Upload Code Analysis Reports
+        if: ${{ !env.ACT }}   # Skip when testing locally with 'act' 
+        uses: actions/upload-artifact@v4
+        with:
+          name: matlab-code-analysis
+          path: |
+            code-analysis-report.md     # Human-readable markdown report
+            code-analysis-report.json   # Machine-readable JSON report
+          if-no-files-found: warn       # Warn but don't fail if reports missing
+          retention-days: 30
+
+  # =============================================================================
+  # JOB 2: poly-tools
+  # PURPOSE: Test polynomial operations by comparing against reference implementation
+  # DEPENDENCIES: Requires multipoly repository for generating reference values
+  # =============================================================================
+  poly-tools:
+    name: Polynomial Operations
+    #needs: code-analysis
+    runs-on: ubuntu-latest
+
+    permissions:
+      checks: write
+      contents: write
+      pull-requests: write
+      statuses: write 
+    
+    steps:
+      # STEP 1: Checkout the main repository code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # STEP 2: Setup MATLAB environment
+      - name: Setup MATLAB
+        uses: ./.github/actions/MATLAB-setup
+        with:
+          message: "Setup MATLAB"
+
+      # STEP 3: Setup CasADi
+      - name: Setup CasADi
+        uses: ./.github/actions/CasADi-setup
+        with:
+          message: "Setup CasADi"
+
+      # STEP 4: Download multipoly reference implementation
+      # Used to generate ground truth values for polynomial operations
+      #- name: Download multipoly
+      #  run: |
+      #    # Clone the multipoly repository
+      #    git clone https://github.com/SOSAnalysis/multipoly.git 
+
+      # STEP 5: Get reference values
+      - name: Get reference values
+        run: |
+          # download from release assets the .mat file containing the references
+          wget -O tests/references/reference_values.mat  \
+            https://github.com/iFR-OFC/casos/releases/download/v1.0.1-pre.2/reference_values.mat
+
+      # STEP 6: Run polynomial operations tests
+      - name: Run tests
+        uses: matlab-actions/run-command@v2
+        with:
+          command: |
+            % Get the root directory
+            rootDir = pwd;
+
+            % Add all necessary paths
+            addpath(genpath(fullfile(rootDir, 'tests')));
+            addpath(genpath(rootDir));
+
+            disp(rootDir)
+
+            % Run tests from tests/core directory using full path
+            cd(fullfile(rootDir, 'tests', 'core'));
+
+            % Verify reference file exists
+            refFile = fullfile(rootDir, 'tests', 'references', 'reference_values.mat');
+            if exist(refFile, 'file')
+                disp('Reference file found!');
+            else
+                error('Reference file not found at: %s', refFile);
+            end
+            
+            % Run tests
+            runtests;
+          
+  # =============================================================================
+  # JOB 3: sdp-tools
+  # PURPOSE: Test SDP solver interfaces (Mosek, SeDuMi, Clarabel, SCS)
+  # DEPENDENCIES: Requires successful polynomial operations tests (poly-tools)
+  # =============================================================================
+  sdp-tools:
+    name: SDP solvers
+    # needs: poly-tools   # Only run if polynomial operations tests pass
+    runs-on: ubuntu-latest
+
+    permissions:
+      checks: write
+      contents: write
+      pull-requests: write
+      statuses: write 
+    
+    steps:
+      # STEP 1: Checkout the main repository code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # STEP 2: Setup MATLAB environment
+      - name: Setup MATLAB
+        uses: ./.github/actions/MATLAB-setup
+        with:
+          message: "Setup MATLAB"
+
+      # STEP 3: Setup CasADi 
+      - name: Setup CasADi
+        uses: ./.github/actions/CasADi-setup
+        with:
+          message: "Setup CasADi"
+
+      # STEP 4: Setup optimization solvers
+      # Installs and configures Mosek and SeDuMi solvers
+      - name: Setup Solvers
+        uses: ./.github/actions/solvers-setup
+        with:
+          message: "Setup solvers (Mosek, sedumi)"
+
+      # STEP 5: Get reference values
+      - name: Get reference values
+        run: |
+          # download from release assets the .mat file containing the references
+          wget -O tests/references/reference_values.mat  \
+            https://github.com/iFR-OFC/casos/releases/download/v1.0.1-pre.2/reference_values.mat
+
+
+      # STEP 7: Test solver interfaces
+      # Validates that all solvers work correctly with our code
+      - name: Run tests
+        uses: matlab-actions/run-command@v2
+        with:
+          command: |
+            % Get the root directory
+            rootDir = pwd;
+
+            % Add all necessary paths
+            addpath(genpath(fullfile(rootDir, 'tests')));
+            addpath(genpath(rootDir));
+
+            disp(rootDir)
+
+            % Run tests from tests/core directory using full path
+            cd(fullfile(rootDir, 'tests', 'solvers'));
+
+            % Verify reference file exists
+            refFile = fullfile(rootDir, 'tests', 'references', 'reference_values.mat');
+            if exist(refFile, 'file')
+                disp('Reference file found!');
+            else
+                error('Reference file not found at: %s', refFile);
+            end
+            
+            % Run tests
+            runtests;
+    
+      # STEP 8: Create status badge with timestamp
+      # Adds a badge showing when this test was last updated
+      - id: date
+        run: echo "##[set-output name=data;]$(date)"
+      - name: Time badge
+        uses: RubbaBoy/BYOB@v1.3.0
+        with:
+          NAME: time
+          LABEL: 'Updated at'
+          STATUS: ${{ steps.date.outputs.data }}
+          COLOR: 00EEFF
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # =============================================================================
+  # JOB 4: demo-check
+  # PURPOSE: Verify that all demo scripts execute without errors
+  # DEPENDENCIES: Requires successful solver tests (sdp-tools)
+  # This ensures examples for users work correctly
+  # =============================================================================
+  demo-check:
+    name: Demos analysis
+    needs: sdp-tools      # Only run if solver tests pass
+    runs-on: ubuntu-latest
+  
+    permissions:
+      checks: write
+      contents: write
+      pull-requests: write
+      statuses: write 
+
+    steps:
+      # STEP 1: Checkout the main repository code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # STEP 2: Setup MATLAB environment
+      - name: Setup MATLAB
+        uses: ./.github/actions/MATLAB-setup
+        with:
+          message: "Setup MATLAB"
+
+      # STEP 3: Setup CasADi
+      - name: Setup CasADi
+        uses: ./.github/actions/CasADi-setup
+        with:
+          message: "Setup CasADi"
+
+      # STEP 4: Setup optimization solvers
+      - name: Setup Solvers
+        uses: ./.github/actions/solvers-setup
+        with:
+          message: "Setup solvers (Mosek, SeDuMi, SCS, Clarabel)"
+
+      # STEP 5: Execute all demo scripts
+      # Runs each .m file in the demo directory, capturing errors without failing the job
+      # This allows us to see which demos fail vs. stopping at first failure
+      - name: Run tests with test_runner
+        uses: matlab-actions/run-command@v2
+        with:
+          command: |
+            % Add all necessary paths to MATLAB search path
+            addpath(genpath(pwd));
+
+            % Navigate to demo folder containing all example scripts
+            cd('demo') 
+
+            % Find all MATLAB files in the demo directory
+            mfiles = dir('*.m');
+
+            % Save current workspace state before running demos
+            save;
+
+            % Execute each demo file individually
+            % Using try-catch to continue even if a demo fails
+            for i=1:length(mfiles)
+              fprintf('\n# ========================================= #\n')
+              fprintf('  %s\n', mfiles(i).name)
+              fprintf('# ========================================= #\n')
+
+              try 
+                % Run the demo script
+                run(mfiles(i).name)
+                fprintf('%s: successfull!', mfiles(i).name)
+              catch ME
+                % Capture error details but continue to next demo
+                disp(ME);
+                warning('File %s encountered an error!', mfiles(i).name)
+              end
+              % Clear workspace but preserve base variables between demos
+              clear;
+              load;
+            end
+            
