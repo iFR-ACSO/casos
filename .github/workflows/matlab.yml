@@ -176,8 +176,9 @@ jobs:
                 error('Reference file not found at: %s', refFile);
             end
             
-            % Run tests
-            runtests;
+            % Run tests with minimal summary
+      	    results = runtests('IncludeSubfolders', false, 'OutputDetail', 0);
+            disp('Tests completed');
           
   # =============================================================================
   # JOB 3: sdp-tools
