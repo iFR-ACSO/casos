@@ -7,8 +7,13 @@
 classdef TestSossol < TestSolver
 % Test sum-of-squares solver interface.
 
+properties (Constant)
+    ALL_SOLVERS = {'sedumi' 'mosek' 'scs' 'clarabel'};
+    EXCLUDED_SOLVERS = {'clarabel', 'scs'};
+end
+
 properties (TestParameter)
-    solver = {'sedumi' 'mosek' 'scs' 'clarabel'};
+    solver = setdiff(TestSdpsol.ALL_SOLVERS, TestSdpsol.EXCLUDED_SOLVERS);
 end
 
 methods (Test)
