@@ -113,7 +113,7 @@ fid = fopen(reportFile, 'w');
 
 % Write report header
 fprintf(fid, '### MATLAB Code Analysis Report\n\n');
-fprintf(fid, '**Generated:** %s  \n', datestr(now));
+fprintf(fid, '**Generated:** %s  ', datestr(now));
 fprintf(fid, '**MATLAB Release:** %s  \n', allIssues.Release);
 
 % Configuration section

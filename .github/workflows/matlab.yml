@@ -307,7 +307,7 @@ jobs:
       - name: Setup Solvers
         uses: ./.github/actions/solvers-setup
         with:
-          message: "Setup solvers (Mosek, SeDuMi, SCS, Clarabel)"
+          message: "Setup solvers"
 
       # STEP 5: Execute all demo scripts
       # Runs each .m file in the demo directory, capturing errors without failing the job
@@ -325,8 +325,13 @@ jobs:
             % Find all MATLAB files in the demo directory
             mfiles = dir('*.m');
 
-            % Save current workspace state before running demos
-            save;
+            % Initialize arrays to track results
+            success_files = {};
+            failed_files = {};
+            error_messages = {};
+
+            % Save initial workspace variables that we want to preserve
+            track_vars = {'mfiles', 'success_files', 'failed_files', 'error_messages', 'track_vars', 'i'};
 
             % Execute each demo file individually
             % Using try-catch to continue even if a demo fails
@@ -339,13 +344,56 @@ jobs:
                 % Run the demo script
                 run(mfiles(i).name)
                 fprintf('%s: successfull!', mfiles(i).name)
+                success_files{end+1} = mfiles(i).name;
               catch ME
                 % Capture error details but continue to next demo
                 disp(ME);
                 warning('File %s encountered an error!', mfiles(i).name)
+                failed_files{end+1} = mfiles(i).name;
+                error_messages{end+1} = sprintf('%s: %s', mfiles(i).name, ME.message);
               end
-              % Clear workspace but preserve base variables between demos
-              clear;
-              load;
+              % Clear workspace but preserve tracking variables
+              % Get list of all variables in current workspace
+              all_vars = who;
+              % Remove tracking variables from the list
+              vars_to_clear = setdiff(all_vars, track_vars);
+              % Clear only the non-tracking variables
+              clear(vars_to_clear{:});
             end
+
+            % ============================================
+            % GENERATE GITHUB STEP SUMMARY
+            % ============================================
+            summary_file = getenv('GITHUB_STEP_SUMMARY');
+
+            if ~isempty(summary_file)
+              fid = fopen(summary_file, 'a');
+              fprintf(fid, '## Demo Execution Summary\n\n');
+              fprintf(fid, '| Metric | Value |\n');
+              fprintf(fid, '|--------|-------|\n');
+              fprintf(fid, '| Total Demos | %d |\n', length(mfiles));
+              fprintf(fid, '| ✅ Successful | %d |\n', length(success_files));
+              fprintf(fid, '| ❌ Failed | %d |\n', length(failed_files));
+            
+              if ~isempty(success_files)
+                fprintf(fid, '\n### ✅ Successful Demos\n\n');
+                for i = 1:length(success_files)
+                  fprintf(fid, '- ✅ %s\n', success_files{i});
+                end
+              end
+              
+              if ~isempty(failed_files)
+                fprintf(fid, '\n### ❌ Failed Demos\n\n');
+                for i = 1:length(failed_files)
+                  fprintf(fid, '- ❌ %s\n', failed_files{i});
+                end
+                fprintf(fid, '\n<details>\n<summary>Error Details</summary>\n\n');
+                for i = 1:length(error_messages)
+                  fprintf(fid, '```\n%s\n```\n\n', error_messages{i});
+                end
+                fprintf(fid, '</details>\n');
+              end
+              fclose(fid);
+            end
+
             
