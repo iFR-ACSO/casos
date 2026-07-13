@@ -244,41 +244,77 @@ jobs:
                 % ============================================================
                 if totalFailed > 0
                     fprintf(fid, '## ❌ Failed Tests\n\n');
-                    fprintf(fid, '| Test Name | Failure Reason |\n');
-                    fprintf(fid, '|-----------|----------------|\n');
             
-                    % Extract failure details for each failed test
+                    % get all of the classes
+                    flag = zeros(length(failedResults), 1);
+                    id_plus = 0;
+                    str_collection = {};
                     for i = 1:length(failedResults)
-                        testName = failedResults(i).Name;
+                        str = failedResults(i).Details.DiagnosticRecord.EventLocation;
+                        str_split = strsplit(str, '/');
+                        str_main = str_split{1};  % 'TestBinaryPD'
+                        if ~ismember(str_main, str_collection)
+                            str_collection{end+1} = str_main;
+                            id_plus = id_plus+1;
+                        end
+                        flag(i)=id_plus;
+                    end
             
-                        % Extract failure reason
-                        failureReason = 'No details available';
-                        if ~isempty(failedResults(i).Details) && ...
-                                isfield(failedResults(i).Details, 'DiagnosticRecord')
-                            records = failedResults(i).Details.DiagnosticRecord;
-                            if ~isempty(records)
-                                % Get the first failure message and clean it
-                                try
-                                    failureReason = records(1).FrameworkDiagnosticResults.DiagnosticText;
-                                catch
-                                    failureReason = records.Exception.message;
-                                end
-                                % Replace newlines and pipes for Markdown table
-                                failureReason = strrep(failureReason, newline, ' ');
-                                failureReason = strrep(failureReason, '|', '\\|');
-                                % Truncate if too long
-                                if length(failureReason) > 100
-                                    failureReason = [failureReason(1:100) '...'];
+                    for i = 1:length(str_collection)
+                        fprintf(fid,'<details>\n');
+                        fprintf(fid,'<summary><code>%s</code></summary>\n', str_collection{i});
+                        fprintf(fid,'<table>\n');
+                        fprintf(fid,'<thead>\n');
+                        fprintf(fid,'<tr>\n');
+                        fprintf(fid,'<th>Test Name</th>\n');
+                        fprintf(fid,'<th>Failure Reason</th>\n');
+                        fprintf(fid,'</tr>\n');
+                        fprintf(fid,'</thead>\n');
+                            
+                        fprintf(fid,'<tbody>\n');
+                        tempResults = failedResults(flag==i); 
+                            
+                        for j = 1:length(tempResults)
+            
+                            testName = tempResults(j).Name;
+            
+                            % Extract failure reason
+                            failureReason = 'No details available';
+                            if ~isempty(tempResults(j).Details) && ...
+                                isfield(tempResults(j).Details, 'DiagnosticRecord')
+                                records = tempResults(j).Details.DiagnosticRecord;
+                                if ~isempty(records)
+                                    % Get the first failure message and clean it
+                                    try
+                                        failureReason = records(1).FrameworkDiagnosticResults.DiagnosticText;
+                                    catch
+                                        failureReason = records.Exception.message;
+                                    end
+                                    % Replace newlines and pipes for Markdown table
+                                    failureReason = strrep(failureReason, newline, ' ');
+                                    failureReason = strrep(failureReason, '|', '\\|');
+                                    % Truncate if too long
+                                    if length(failureReason) > 100
+                                        failureReason = [failureReason(1:100) '...'];
+                                    end
                                 end
                             end
+                            % Escape test name for Markdown
+                            testName = strrep(testName, '|', '\\|');
+                            
+                            fprintf(fid,'<tr>\n');
+                            fprintf(fid,'<td><code>%s</code></td>\n', testName);
+                            fprintf(fid,'<td>%s</td>\n', failureReason);
+                            fprintf(fid,'</tr>\n');
                         end
-            
-                        % Escape test name for Markdown
-                        testName = strrep(testName, '|', '\\|');
-            
-                        fprintf(fid, '| `%s` | %s |\n', testName, failureReason);
+                        fprintf(fid,'</tbody>\n');
+                        fprintf(fid,'</table>\n');
+                        fprintf(fid,'</details>\n');
                     end
+            
                     fprintf(fid, '\n');
+                else
+                    fprintf(fid, '## ✅ All core tests passed!\n\n');
                 end
             catch ME
                 fclose(fid);
