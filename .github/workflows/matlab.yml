@@ -451,8 +451,7 @@ jobs:
 
             ${jobList}
 
-            ### 📊 View Full Results
-            [Click here to view the complete test report](${serverUrl}/${repo}/actions/runs/${runId})
+            For detailed results, check the [complete test report](${serverUrl}/${repo}/actions/runs/${runId}).
 
             ---
             *This comment updates automatically when all tests pass.*`;
