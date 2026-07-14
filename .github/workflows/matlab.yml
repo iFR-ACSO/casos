@@ -9,9 +9,6 @@ name: Complete integration test
 
 on:
   # TRIGGERS:
-  push:
-    branches: 
-      - '**' # All branches
   pull_request:
     branches: [main]
   workflow_dispatch: {}   # Allow manual triggering from GitHub UI
@@ -167,9 +164,8 @@ jobs:
             addpath(genpath(rootDir));
 
             % Now run the test script
-            % poly_tests;
+            poly_tests;
 
-            exitCode = 0; % force failure
             % Exit with the test result code
             exit(exitCode);
       
