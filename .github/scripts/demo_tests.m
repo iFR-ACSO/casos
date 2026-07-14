@@ -62,6 +62,9 @@ fid = fopen(summaryFile, 'a');
 if fid == -1
     error('Could not open GITHUB_STEP_SUMMARY file: %s', summaryFile);
 end
+
+exitCode = 0;
+
 try
     fprintf(fid, '#   MATLAB Test Results: Demos\n\n');
     fprintf(fid, '##  Summary\n\n');
@@ -69,6 +72,10 @@ try
     fprintf(fid, '|--------|-----------------|---------------|---------------|----------------|\n');
     fprintf(fid, '| Value | %d | %d | %d | %.1f%% |\n', length(mfiles), length(success_files), ...
         length(failed_files), 100*length(success_files)/length(mfiles));
+
+    if ~isempty(failed_files)
+        exitCode = 1;
+    end
 
     % ============================================================
     % WRITE FAILED TESTS TABLE (ONLY IF THERE ARE FAILURES)
@@ -119,6 +126,7 @@ try
         fprintf(fid, '\n');
     end
 catch ME
+    exitCode = 1;
     fclose(fid);
     rethrow(ME);
 end

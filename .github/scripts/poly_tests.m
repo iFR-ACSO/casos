@@ -50,6 +50,8 @@ if fid == -1
     error('Could not open GITHUB_STEP_SUMMARY file: %s', summaryFile);
 end
 
+exitCode = 0;
+
 try
     % Filter results
     failedResults = results([results.Failed]);
@@ -59,7 +61,11 @@ try
     totalFailed = sum([results.Failed]);
     totalPassed = totalTests - totalFailed;
     passRate = (totalPassed / totalTests) * 100;
-
+    
+    if totalFailed > 0
+        exitCode = 1;
+    end
+    
     % ============================================================
     % WRITE HEADER
     % ============================================================
@@ -161,6 +167,7 @@ try
 
     fprintf(fid, '\n');
 catch ME
+    exitCode = 1;
     fclose(fid);
     rethrow(ME);
 end

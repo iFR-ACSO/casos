@@ -200,8 +200,7 @@ jobs:
             }
 
             const commentBody = `#### REUSE Compliance Issues Detected
-            Non-compliant .m files were found in this pull request. Please add the required license identifiers and copyright notices.
-            For detailed results, check the [REUSE compliance report](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}).`;
+            Non-compliant .m files were found in this pull request. Please add the required license identifiers and copyright notices. For detailed results, check the [REUSE compliance report](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}).`;
       
             console.log('Creating new comment for non-compliant files');
 
