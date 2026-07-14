@@ -232,7 +232,7 @@ jobs:
             Non-compliant .m files were found in this pull request. Please add the required license identifiers and copyright notices. For detailed results, check the [REUSE compliance report](${serverUrl}/${repo}/actions/runs/${runId}).
       
             ---
-            *This comment updates automatically when all REUSE checks pass.*`;
+            *This comment updates automatically.*`;
 
             console.log('Creating/updating REUSE compliance comment');
 
