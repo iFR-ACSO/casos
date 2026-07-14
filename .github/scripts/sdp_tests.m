@@ -6,6 +6,11 @@ addpath(genpath(fullfile(rootDir, 'tests')));
 addpath(genpath(rootDir));
 
 disp(rootDir)
+% SPDX-FileCopyrightText: 2026 Institute of Flight Mechanics and Controls, University of Stuttgart
+% SPDX-FileCopyrightText: Author(s): Torbjørn Cunis and Renato Loureiro <tcunis@ifr.uni-stuttgart.de>
+% SPDX-FileContributor: For a full list of contributors, see <https://github.com/ifr-ofc/casos>
+%
+% SPDX-License-Identifier: GPL-3.0-only
 
 % Run tests from tests/core directory using full path
 cd(fullfile(rootDir, 'tests', 'solvers'));
