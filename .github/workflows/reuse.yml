@@ -213,7 +213,7 @@ jobs:
             const nonCompliantFiles = '${{ steps.check.outputs.non_compliant_files }}' || 'Check the workflow run for details';
             
             const commentBody = `#### REUSE Compliance Issues Detected
-            Non-compliant .m files were found in this pull request. Please add the required license identifiers and copyright notices. For detailed results, check the [REUSE compliance report](${serverUrl}/${repo}/actions/runs/${runId}).
+            Non-compliant files were found in this pull request. Please add the required license identifiers and copyright notices. For detailed results, check the [REUSE compliance report](${serverUrl}/${repo}/actions/runs/${runId}).
       
             ---
             *This comment updates automatically.*`;
