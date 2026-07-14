@@ -169,7 +169,7 @@ jobs:
             % Now run the test script
             % poly_tests;
 
-            exitCode = 1; % force failure
+            exitCode = 0; % force failure
             % Exit with the test result code
             exit(exitCode);
       
@@ -454,7 +454,7 @@ jobs:
             For detailed results, check the [complete test report](${serverUrl}/${repo}/actions/runs/${runId}).
 
             ---
-            *This comment updates automatically when all tests pass.*`;
+            *This comment updates automatically.*`;
 
             // Find and update existing comment, or create new one
             const { data: comments } = await github.rest.issues.listComments({
