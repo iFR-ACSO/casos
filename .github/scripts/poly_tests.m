@@ -1,15 +1,15 @@
+% SPDX-FileCopyrightText: 2026 Institute of Flight Mechanics and Controls, University of Stuttgart
+% SPDX-FileCopyrightText: Author(s): Torbjørn Cunis and Renato Loureiro <tcunis@ifr.uni-stuttgart.de>
+% SPDX-FileContributor: For a full list of contributors, see <https://github.com/ifr-ofc/casos>
+%
+% SPDX-License-Identifier: GPL-3.0-only
+
 % Get the root directory
 rootDir = pwd;
 
 % Also add test directories as before
 addpath(genpath(fullfile(rootDir, 'tests')));
 addpath(genpath(rootDir));
-
-% SPDX-FileCopyrightText: 2026 Institute of Flight Mechanics and Controls, University of Stuttgart
-% SPDX-FileCopyrightText: Author(s): Torbjørn Cunis and Renato Loureiro <tcunis@ifr.uni-stuttgart.de>
-% SPDX-FileContributor: For a full list of contributors, see <https://github.com/ifr-ofc/casos>
-%
-% SPDX-License-Identifier: GPL-3.0-only
 
 % Change to tests/core directory
 cd(fullfile(rootDir, 'tests', 'core'));
@@ -32,17 +32,51 @@ suite = matlab.unittest.TestSuite.fromFolder('.');
 % Create a silent runner
 runner = TestRunner.withNoPlugins();
 
-% Add the DiagnosticsRecordingPlugin (this is the key step!)
+% Add the DiagnosticsRecordingPlugin
 runner.addPlugin(DiagnosticsRecordingPlugin());
 
 % Run tests and capture results
 results = runner.run(suite);
 
+%%
+% ============================================================
+% DISPLAY RESULTS IN THE TERMINAL
+% ============================================================
+
+% Filter results
+failedResults = results([results.Failed]);
+passedResults = results(~[results.Failed]);
+
+totalTests = numel(results);
+totalFailed = sum([results.Failed]);
+totalPassed = totalTests - totalFailed;
+passRate = (totalPassed / totalTests) * 100;
+
+% Summary of the results
+fprintf('Total tests: %d\n', totalTests);
+fprintf('Failed tests: %d\n', totalFailed);
+fprintf('Passed tests: %d\n\n', totalPassed);
+
+if ~isempty(totalFailed)
+    fprintf('#################################################################\n');
+    fprintf('######################    FAILED TESTS    #######################');
+    fprintf('#################################################################\n\n');
+end
+
+% Display all of the issues
+for i = 1:length(failedResults)
+    fprintf('-------------------------------------------------------\n');
+    fprintf('%s\n', failedResults(i).Name);
+    fprintf('-------------------------------------------------------\n');
+    fprintf('%s\n', failedResults(i).Details.DiagnosticRecord.Report);
+end
+
+%%
 % ============================================================
 % CREATE GITHUB STEP SUMMARY
 % ============================================================
 
-%% Get GITHUB_STEP_SUMMARY environment variable
+% Get GITHUB_STEP_SUMMARY environment variable
 summaryFile = getenv('GITHUB_STEP_SUMMARY');
 
 if isempty(summaryFile)
@@ -59,14 +93,7 @@ end
 exitCode = 0;
 
 try
-    % Filter results
-    failedResults = results([results.Failed]);
-    passedResults = results(~[results.Failed]);
-
-    totalTests = numel(results);
-    totalFailed = sum([results.Failed]);
-    totalPassed = totalTests - totalFailed;
-    passRate = (totalPassed / totalTests) * 100;
+    
     
     if totalFailed > 0
         exitCode = 1;
