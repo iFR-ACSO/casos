@@ -1,7 +1,9 @@
-# SPDX-FileCopyrightText: 2022 Free Software Foundation Europe e.V. <https://fsfe.org>
+# SPDX-FileCopyrightText: 2026 Institute of Flight Mechanics and Controls, University of Stuttgart
+# SPDX-FileCopyrightText: Author(s): Torbjørn Cunis and Renato Loureiro <tcunis@ifr.uni-stuttgart.de>
+# SPDX-FileContributor: For a full list of contributors, see <https://github.com/ifr-ofc/casos>
 #
-# SPDX-License-Identifier: CC0-1.0
----
+# SPDX-License-Identifier: GPL-3.0-only
+
 name: REUSE Compliance Check
 
 on: 
