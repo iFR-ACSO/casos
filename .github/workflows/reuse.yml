@@ -24,18 +24,13 @@ jobs:
       - name: Install REUSE
         run: pip install reuse
 
-      - name: Check only .m files
+      - name: Check all files
         id: check
         run: |
-          # Create a list of .m files
-          find . -name "*.m" -type f | sort > m_files.txt
-
           # Run REUSE check and capture output
           echo "# REUSE Compliance Check Results" > reuse-report.md
           echo "" >> reuse-report.md
-          #echo "## Summary" >> reuse-report.md
-          #echo "" >> reuse-report.md
-          
+
           # Run the check and capture both stdout and stderr
           set +e  # Temporarily disable exit on error
           reuse lint 2>&1 | tee reuse-lint-output.txt
@@ -44,109 +39,98 @@ jobs:
           EXIT_CODE=${PIPESTATUS[0]}
           set -e  # Re-enable exit on error
 
-          # Count total .m files
-          total_m_files=$(cat m_files.txt | wc -l)
-          echo "DEBUG: Total .m files: $total_m_files"
-
-          # Create a list of actual .m files for comparison
-          cat m_files.txt | sed 's|^\./||' > m_files_clean.txt
+          # Get total files 
+          total_files=$(git ls-files | wc -l)
+          echo "DEBUG: Total files: $total_files"
 
           # Check if any .m files have issues by looking at the output
           non_compliant_count=0
 
-          # Check MISSING COPYRIGHT section for .m files
+          # Create a list of all non-compliant files
+          declare -a non_compliant_files=()
+
+          # Check MISSING COPYRIGHT section
           in_copyright_section=0
           while IFS= read -r line; do
             if [[ $line == *"MISSING COPYRIGHT"* ]]; then
               in_copyright_section=1
               continue
             fi
-            if [[ $line == *"SUMMARY"* ]]; then
+            if [[ $line == *"MISSING LICENSES"* ]] || [[ $line == *"SUMMARY"* ]]; then
               in_copyright_section=0
             fi
-            if [[ $in_copyright_section -eq 1 ]] && [[ $line == *".m"* ]]; then
-              # Extract filename and check if it ends with .m
+            if [[ $in_copyright_section -eq 1 ]] && [[ $line == "* "* ]]; then
+              # Extract filename (skip the "* " prefix)
               file=$(echo "$line" | sed 's/^\* //' | xargs)
-              if [[ $file == *.m ]]; then
-                echo "DEBUG: Found non-compliant .m file in copyright section: $file"
+              if [[ -n "$file" ]]; then
+                echo "DEBUG: Found non-compliant file in copyright section: $file"
+                non_compliant_files+=("$file")
                 non_compliant_count=$((non_compliant_count + 1))
               fi
             fi
           done < reuse-lint-output.txt
 
-          # Check MISSING LICENSES section for .m files
+          # Check MISSING LICENSES section
           in_licenses_section=0
           while IFS= read -r line; do
             if [[ $line == *"MISSING LICENSES"* ]]; then
               in_licenses_section=1
               continue
             fi
-            if [[ $line == *"MISSING COPYRIGHT"* ]]; then
+            if [[ $line == *"MISSING COPYRIGHT"* ]] || [[ $line == *"SUMMARY"* ]]; then
               in_licenses_section=0
             fi
-            if [[ $in_licenses_section -eq 1 ]] && [[ $line == *".m"* ]]; then
-              # Extract filename and check if it ends with .m
+            if [[ $in_licenses_section -eq 1 ]] && [[ $line == "* "* ]]; then
+              # Extract filename (skip the "* " prefix)
               file=$(echo "$line" | sed 's/^\* //' | xargs)
-              if [[ $file == *.m ]]; then
-                echo "DEBUG: Found non-compliant .m file in licenses section: $file"
+              if [[ -n "$file" ]]; then
+                echo "DEBUG: Found non-compliant file in licenses section: $file"
+                non_compliant_files+=("$file")
                 non_compliant_count=$((non_compliant_count + 1))
               fi
             fi
           done < reuse-lint-output.txt
 
-          echo "DEBUG: Total non-compliant .m files: $non_compliant_count"
+          # Remove duplicates from non_compliant_files
+          non_compliant_files=($(printf "%s\n" "${non_compliant_files[@]}" | sort -u))
+          non_compliant_count=${#non_compliant_files[@]}
+
+          echo "DEBUG: Total non-compliant files: $non_compliant_count"
 
           if [ $non_compliant_count -gt 0 ]; then
             echo "DEBUG: Found non-compliant files, entering FAILED branch"
-            # There are issues with .m files
+            # There are issues with files
             echo "## Files Checked" >> reuse-report.md
             echo "" >> reuse-report.md
             echo "| File | Status |" >> reuse-report.md
             echo "|------|--------|" >> reuse-report.md
 
-            # Get all non-compliant .m files
+            # Process all non-compliant files
             in_copyright_section=0
             in_licenses_section=0
 
-            while IFS= read -r line; do
-              if [[ $line == *"MISSING LICENSES"* ]]; then
-                in_licenses_section=1
-                continue
+            for file in "${non_compliant_files[@]}"; do
+              # Determine the issue type by scanning the output
+              if grep -q "MISSING COPYRIGHT.*$file" reuse-lint-output.txt; then
+                echo "| $file |  Missing copyright/license |" >> reuse-report.md
+              elif grep -q "MISSING LICENSES.*$file" reuse-lint-output.txt; then
+                echo "| $file |  Missing license file |" >> reuse-report.md
+              else
+                echo "| $file |  Non-compliant |" >> reuse-report.md
               fi
-              if [[ $line == *"MISSING COPYRIGHT"* ]]; then
-                in_copyright_section=1
-                in_licenses_section=0
-                continue
-              fi
-              if [[ $line == *"SUMMARY"* ]]; then
-                in_copyright_section=0
-                in_licenses_section=0
-              fi
+            done
 
-              if [[ $line == *".m"* ]]; then
-                file=$(echo "$line" | sed 's/^\* //' | xargs)
-                # Only process if it's actually a .m file
-                if [[ $file == *.m ]]; then
-                  if [ $in_copyright_section -eq 1 ]; then
-                    echo "| $file |  Missing copyright/license |" >> reuse-report.md
-                  elif [ $in_licenses_section -eq 1 ]; then
-                    echo "| $file |  Missing license file |" >> reuse-report.md
-                  fi
-                fi
-              fi
-            done < reuse-lint-output.txt
-
-            # Count compliant .m files
-            compliant_count=$((total_m_files - non_compliant_count))
+            # Count compliant files
+            compliant_count=$((total_files - non_compliant_count))
 
             if [ $compliant_count -gt 0 ]; then
-              echo "| $compliant_count other .m file(s) |  Compliant |" >> reuse-report.md
+              echo "| $compliant_count other file(s) |  Compliant |" >> reuse-report.md
             fi
 
             echo "" >> reuse-report.md
             echo "## Final Status:  FAILED" >> reuse-report.md
             echo "" >> reuse-report.md
-            echo "**Non-compliant .m files found. Please add license identifiers and copyright notices.**" >> reuse-report.md
+            echo "**Non-compliant files found. Please add license identifiers and copyright notices.**" >> reuse-report.md
 
             # Set output
             echo "non_compliant=true" >> $GITHUB_OUTPUT
@@ -154,16 +138,16 @@ jobs:
             exit 1
           else
             echo "DEBUG: No non-compliant files found, entering PASSED branch"
-            # All .m files are compliant
+            # All files are compliant
             echo "## Files Checked" >> reuse-report.md
             echo "" >> reuse-report.md
             echo "| File | Status |" >> reuse-report.md
             echo "|------|--------|" >> reuse-report.md
-            echo "| All $total_m_files .m files |  Compliant |" >> reuse-report.md
+            echo "| All $total_files files |  Compliant |" >> reuse-report.md
             echo "" >> reuse-report.md
             echo "## Final Status:  PASSED" >> reuse-report.md
             echo "" >> reuse-report.md
-            echo "**All .m files are compliant!**" >> reuse-report.md
+            echo "**All files are compliant!**" >> reuse-report.md
 
             # Set output
             echo "non_compliant=false" >> $GITHUB_OUTPUT
