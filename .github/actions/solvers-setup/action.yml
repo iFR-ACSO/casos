@@ -128,6 +128,7 @@ runs:
 
     # Clone SCS repository from GitHub
     - name: Get SCS from GitHub
+      if: false
       shell: bash
       run: |
           # install SCS in Matlab from source
@@ -135,6 +136,7 @@ runs:
 
     # Install and compile SeDuMi in MATLAB
     - uses: matlab-actions/run-command@v2
+      if: false
       with:
         command: |
           % Navigate to SCS directory
@@ -157,6 +159,7 @@ runs:
 
     # Clone Clarabel repository from GitHub
     - name: Get Clarabel from GitHub
+      if: false
       shell: bash
       run: |
           # dependencies
@@ -201,6 +204,7 @@ runs:
 
     # Install and compile Clarabel in MATLAB
     - uses: matlab-actions/run-command@v2
+      if: false
       with:
         command: |
           % Set Eigen path for MATLAB
