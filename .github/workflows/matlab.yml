@@ -223,99 +223,104 @@ jobs:
                 % ============================================================
                 % WRITE HEADER
                 % ============================================================
-                fprintf(fid, '#   MATLAB Test Results: Core\n\n');
+                fprintf(fid, '#   MATLAB Test Results\n\n');
                 fprintf(fid, '##  Summary\n\n');
-                fprintf(fid, '| Metric | Value |\n');
-                fprintf(fid, '|--------|-------|\n');
-                fprintf(fid, '| **Total Tests** | %d |\n', totalTests);
-                fprintf(fid, '| **✅ Passed** | %d |\n', totalPassed);
-                fprintf(fid, '| **❌ Failed** | %d |\n', totalFailed);
-                fprintf(fid, '| **Pass Rate** | %.1f%% |\n', passRate);
+                fprintf(fid, '| Metric | **Total Tests** | **✅ Passed** | **❌ Failed** | **Pass Rate** |\n');
+                fprintf(fid, '|--------|-----------------|---------------|---------------|----------------|\n');
+                fprintf(fid, '| Value | %d | %d | %d | %.1f%% |\n', totalTests, totalPassed, totalFailed, passRate);
             
-                % Add status badge
-                if totalFailed == 0
-                    fprintf(fid, '| **Status** | 🟢 **PASSED** |\n\n');
-                else
-                    fprintf(fid, '| **Status** | 🔴 **FAILED** |\n\n');
+                % ============================================================
+                % WRITE FAILED TESTS TABLE 
+                % ============================================================
+                fprintf(fid, '## Tests Status\n\n');
+            
+                % get all of the classes
+                flag = zeros(length(results), 1);
+                id_plus = 0;
+                str_collection = {};
+                for i = 1:length(results)
+                    str = results(i).Name;
+                    str_split = strsplit(str, '/');
+                    str_main = str_split{1};  
+                    if ~ismember(str_main, str_collection)
+                        str_collection{end+1} = str_main;
+                        id_plus = id_plus+1;
+                    end
+                    flag(i)=id_plus;
                 end
             
-                % ============================================================
-                % WRITE FAILED TESTS TABLE (ONLY IF THERE ARE FAILURES)
-                % ============================================================
-                if totalFailed > 0
-                    fprintf(fid, '## ❌ Failed Tests\n\n');
+                % get all of the classes
+                flag_failed = [results.Failed];
+                flag_passed = [results.Passed];
             
-                    % get all of the classes
-                    flag = zeros(length(failedResults), 1);
-                    id_plus = 0;
-                    str_collection = {};
-                    for i = 1:length(failedResults)
-                        str = failedResults(i).Details.DiagnosticRecord.EventLocation;
-                        str_split = strsplit(str, '/');
-                        str_main = str_split{1};  % 'TestBinaryPD'
-                        if ~ismember(str_main, str_collection)
-                            str_collection{end+1} = str_main;
-                            id_plus = id_plus+1;
-                        end
-                        flag(i)=id_plus;
+            
+                % loop over each collection
+                for i = 1:length(str_collection)
+                    idx = (flag == i); % get index of the tests from current test
+                    
+                    total_fails = sum(flag_failed(idx));
+                    total_succs = sum(flag_passed(idx));
+            
+                    fprintf(fid,'<details>\n');
+                    if total_fails > 0
+                        fprintf(fid,'<summary><code>%s (✅ %d/ ❌ %d )</code></summary>\n', ...
+                            str_collection{i}, total_succs, total_fails);
+                    else
+                        fprintf(fid,'<summary><code>%s (✅ %d)</code></summary>\n', ...
+                            str_collection{i}, total_succs);
                     end
+                    if total_fails > 0
+                    fprintf(fid,'<table>\n');
+                    fprintf(fid,'<thead>\n');
+                    fprintf(fid,'<tr>\n');
+                    fprintf(fid,'<th>Test Name</th>\n');
+                    fprintf(fid,'<th>Failure Reason</th>\n');
+                    fprintf(fid,'</tr>\n');
+                    fprintf(fid,'</thead>\n');
             
-                    for i = 1:length(str_collection)
-                        fprintf(fid,'<details>\n');
-                        fprintf(fid,'<summary><code>%s</code></summary>\n', str_collection{i});
-                        fprintf(fid,'<table>\n');
-                        fprintf(fid,'<thead>\n');
-                        fprintf(fid,'<tr>\n');
-                        fprintf(fid,'<th>Test Name</th>\n');
-                        fprintf(fid,'<th>Failure Reason</th>\n');
-                        fprintf(fid,'</tr>\n');
-                        fprintf(fid,'</thead>\n');
-                            
-                        fprintf(fid,'<tbody>\n');
-                        tempResults = failedResults(flag==i); 
-                            
-                        for j = 1:length(tempResults)
+                    fprintf(fid,'<tbody>\n');
+                    tempResults = results(idx & flag_failed');
             
-                            testName = tempResults(j).Name;
+                    for j = 1:length(tempResults)
             
-                            % Extract failure reason
-                            failureReason = 'No details available';
-                            if ~isempty(tempResults(j).Details) && ...
+                        testName = tempResults(j).Name;
+            
+                        % Extract failure reason
+                        failureReason = 'No details available';
+                        if ~isempty(tempResults(j).Details) && ...
                                 isfield(tempResults(j).Details, 'DiagnosticRecord')
-                                records = tempResults(j).Details.DiagnosticRecord;
-                                if ~isempty(records)
-                                    % Get the first failure message and clean it
-                                    try
-                                        failureReason = records(1).FrameworkDiagnosticResults.DiagnosticText;
-                                    catch
-                                        failureReason = records.Exception.message;
-                                    end
-                                    % Replace newlines and pipes for Markdown table
-                                    failureReason = strrep(failureReason, newline, ' ');
-                                    failureReason = strrep(failureReason, '|', '\\|');
-                                    % Truncate if too long
-                                    if length(failureReason) > 100
-                                        failureReason = [failureReason(1:100) '...'];
-                                    end
+                            records = tempResults(j).Details.DiagnosticRecord;
+                            if ~isempty(records)
+                                % Get the first failure message and clean it
+                                try
+                                    failureReason = records(1).FrameworkDiagnosticResults.DiagnosticText;
+                                catch
+                                    failureReason = records.Exception.message;
+                                end
+                                % Replace newlines and pipes for Markdown table
+                                failureReason = strrep(failureReason, newline, ' ');
+                                failureReason = strrep(failureReason, '|', '\\|');
+                                % Truncate if too long
+                                if length(failureReason) > 100
+                                    failureReason = [failureReason(1:100) '...'];
                                 end
                             end
-                            % Escape test name for Markdown
-                            testName = strrep(testName, '|', '\\|');
-                            
-                            fprintf(fid,'<tr>\n');
-                            fprintf(fid,'<td><code>%s</code></td>\n', testName);
-                            fprintf(fid,'<td>%s</td>\n', failureReason);
-                            fprintf(fid,'</tr>\n');
                         end
-                        fprintf(fid,'</tbody>\n');
-                        fprintf(fid,'</table>\n');
-                        fprintf(fid,'</details>\n');
-                    end
+                        % Escape test name for Markdown
+                        testName = strrep(testName, '|', '\\|');
             
-                    fprintf(fid, '\n');
-                else
-                    fprintf(fid, '## ✅ All core tests passed!\n\n');
+                        fprintf(fid,'<tr>\n');
+                        fprintf(fid,'<td><code>%s</code></td>\n', testName);
+                        fprintf(fid,'<td>%s</td>\n', failureReason);
+                        fprintf(fid,'</tr>\n');
+                    end
+                    fprintf(fid,'</tbody>\n');
+                    fprintf(fid,'</table>\n');
+                    end
+                    fprintf(fid,'</details>\n');
                 end
+            
+                fprintf(fid, '\n');
             catch ME
                 fclose(fid);
                 rethrow(ME);
