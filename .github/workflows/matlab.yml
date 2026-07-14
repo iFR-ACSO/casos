@@ -223,7 +223,7 @@ jobs:
                 % ============================================================
                 % WRITE HEADER
                 % ============================================================
-                fprintf(fid, '#   MATLAB Test Results\n\n');
+                fprintf(fid, '#   MATLAB Test Results: Core\n\n');
                 fprintf(fid, '##  Summary\n\n');
                 fprintf(fid, '| Metric | Value |\n');
                 fprintf(fid, '|--------|-------|\n');
@@ -377,16 +377,16 @@ jobs:
           command: |
             % Get the root directory
             rootDir = pwd;
-
+            
             % Add all necessary paths
             addpath(genpath(fullfile(rootDir, 'tests')));
             addpath(genpath(rootDir));
-
+            
             disp(rootDir)
-
+            
             % Run tests from tests/core directory using full path
             cd(fullfile(rootDir, 'tests', 'solvers'));
-
+            
             % Verify reference file exists
             refFile = fullfile(rootDir, 'tests', 'references', 'reference_values.mat');
             if exist(refFile, 'file')
@@ -395,8 +395,150 @@ jobs:
                 error('Reference file not found at: %s', refFile);
             end
             
-            % Run tests
-            runtests;
+            % Run tests silently (capture results without displaying everything)
+            import matlab.unittest.TestRunner;
+            import matlab.unittest.plugins.DiagnosticsRecordingPlugin;
+            
+            % Create test suite from current directory
+            suite = matlab.unittest.TestSuite.fromFolder('.');
+            
+            % Create a silent runner
+            runner = TestRunner.withNoPlugins();
+            
+            % Add the DiagnosticsRecordingPlugin (this is the key step!)
+            runner.addPlugin(DiagnosticsRecordingPlugin());
+            
+            % Run tests and capture results
+            results = runner.run(suite);
+            
+            % ============================================================
+            % CREATE GITHUB STEP SUMMARY
+            % ============================================================
+            
+            %% Get GITHUB_STEP_SUMMARY environment variable
+            summaryFile = getenv('GITHUB_STEP_SUMMARY');
+            
+            if isempty(summaryFile)
+                warning('GITHUB_STEP_SUMMARY environment variable not found. Running in local mode.');
+                summaryFile = 'test_summary_solvers.md';  % Fallback for local testing
+            end
+            
+            % Open file for writing (append mode)
+            fid = fopen(summaryFile, 'a');
+            if fid == -1
+                error('Could not open GITHUB_STEP_SUMMARY file: %s', summaryFile);
+            end
+            
+            try
+                % Filter results
+                failedResults = results([results.Failed]);
+                passedResults = results(~[results.Failed]);
+            
+                totalTests = numel(results);
+                totalFailed = sum([results.Failed]);
+                totalPassed = totalTests - totalFailed;
+                passRate = (totalPassed / totalTests) * 100;
+            
+                % ============================================================
+                % WRITE HEADER
+                % ============================================================
+                fprintf(fid, '#   MATLAB Test Results: Solvers\n\n');
+                fprintf(fid, '##  Summary\n\n');
+                fprintf(fid, '| Metric | Value |\n');
+                fprintf(fid, '|--------|-------|\n');
+                fprintf(fid, '| **Total Tests** | %d |\n', totalTests);
+                fprintf(fid, '| **✅ Passed** | %d |\n', totalPassed);
+                fprintf(fid, '| **❌ Failed** | %d |\n', totalFailed);
+                fprintf(fid, '| **Pass Rate** | %.1f%% |\n', passRate);
+            
+                % Add status badge
+                if totalFailed == 0
+                    fprintf(fid, '| **Status** | 🟢 **PASSED** |\n\n');
+                else
+                    fprintf(fid, '| **Status** | 🔴 **FAILED** |\n\n');
+                end
+            
+                % ============================================================
+                % WRITE FAILED TESTS TABLE (ONLY IF THERE ARE FAILURES)
+                % ============================================================
+                if totalFailed > 0
+                    fprintf(fid, '## ❌ Failed Tests\n\n');
+            
+                    % get all of the classes
+                    flag = zeros(length(failedResults), 1);
+                    id_plus = 0;
+                    str_collection = {};
+                    for i = 1:length(failedResults)
+                        str = failedResults(i).Details.DiagnosticRecord.EventLocation;
+                        str_split = strsplit(str, '/');
+                        str_main = str_split{1};  % 'TestBinaryPD'
+                        if ~ismember(str_main, str_collection)
+                            str_collection{end+1} = str_main;
+                            id_plus = id_plus+1;
+                        end
+                        flag(i)=id_plus;
+                    end
+            
+                    for i = 1:length(str_collection)
+                        fprintf(fid,'<details>\n');
+                        fprintf(fid,'<summary><code>%s</code></summary>\n', str_collection{i});
+                        fprintf(fid,'<table>\n');
+                        fprintf(fid,'<thead>\n');
+                        fprintf(fid,'<tr>\n');
+                        fprintf(fid,'<th>Test Name</th>\n');
+                        fprintf(fid,'<th>Failure Reason</th>\n');
+                        fprintf(fid,'</tr>\n');
+                        fprintf(fid,'</thead>\n');
+            
+                        fprintf(fid,'<tbody>\n');
+                        tempResults = failedResults(flag==i);
+            
+                        for j = 1:length(tempResults)
+            
+                            testName = tempResults(j).Name;
+            
+                            % Extract failure reason
+                            failureReason = 'No details available';
+                            if ~isempty(tempResults(j).Details) && ...
+                                    isfield(tempResults(j).Details, 'DiagnosticRecord')
+                                records = tempResults(j).Details.DiagnosticRecord;
+                                if ~isempty(records)
+                                    % Get the first failure message and clean it
+                                    try
+                                        failureReason = records(1).FrameworkDiagnosticResults.DiagnosticText;
+                                    catch
+                                        failureReason = records.Exception.message;
+                                    end
+                                    % Replace newlines and pipes for Markdown table
+                                    failureReason = strrep(failureReason, newline, ' ');
+                                    failureReason = strrep(failureReason, '|', '\\|');
+                                    % Truncate if too long
+                                    if length(failureReason) > 100
+                                        failureReason = [failureReason(1:100) '...'];
+                                    end
+                                end
+                            end
+                            % Escape test name for Markdown
+                            testName = strrep(testName, '|', '\\|');
+            
+                            fprintf(fid,'<tr>\n');
+                            fprintf(fid,'<td><code>%s</code></td>\n', testName);
+                            fprintf(fid,'<td>%s</td>\n', failureReason);
+                            fprintf(fid,'</tr>\n');
+                        end
+                        fprintf(fid,'</tbody>\n');
+                        fprintf(fid,'</table>\n');
+                        fprintf(fid,'</details>\n');
+                    end
+            
+                    fprintf(fid, '\n');
+                else
+                    fprintf(fid, '## ✅ All solver tests passed!\n\n');
+                end
+            catch ME
+                fclose(fid);
+                rethrow(ME);
+            end
     
       # STEP 8: Create status badge with timestamp
       # Adds a badge showing when this test was last updated
