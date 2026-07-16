@@ -110,11 +110,9 @@ jobs:
   # =============================================================================
   # JOB 2: poly-tools
   # PURPOSE: Test polynomial operations by comparing against reference implementation
-  # DEPENDENCIES: Requires multipoly repository for generating reference values
   # =============================================================================
   poly-tools:
     name: Polynomial Operations
-    #needs: code-analysis
     runs-on: ubuntu-latest
 
     permissions:
@@ -140,21 +138,14 @@ jobs:
         with:
           message: "Setup CasADi"
 
-      # STEP 4: Download multipoly reference implementation
-      # Used to generate ground truth values for polynomial operations
-      #- name: Download multipoly
-      #  run: |
-      #    # Clone the multipoly repository
-      #    git clone https://github.com/SOSAnalysis/multipoly.git 
-
-      # STEP 5: Get reference values
+      # STEP 4: Get reference values
       - name: Get reference values
         run: |
           # download from release assets the .mat file containing the references
           wget -O tests/references/reference_values.mat  \
             https://github.com/iFR-OFC/casos/releases/download/v1.0.1-pre.2/reference_values.mat
 
-      # STEP 6: Run polynomial operations tests
+      # STEP 5: Run polynomial operations tests
       - name: Run tests
         uses: matlab-actions/run-command@v2
         with:
@@ -208,11 +199,9 @@ jobs:
   # =============================================================================
   # JOB 3: sdp-tools
   # PURPOSE: Test SDP solver interfaces (Mosek, SeDuMi, Clarabel, SCS)
-  # DEPENDENCIES: Requires successful polynomial operations tests (poly-tools)
   # =============================================================================
   sdp-tools:
     name: SDP solvers
-    # needs: poly-tools   # Only run if polynomial operations tests pass
     runs-on: ubuntu-latest
 
     permissions:
@@ -253,7 +242,7 @@ jobs:
             https://github.com/iFR-OFC/casos/releases/download/v1.0.1-pre.2/reference_values.mat
 
 
-      # STEP 7: Test solver interfaces
+      # STEP 6: Test solver interfaces
       # Validates that all solvers work correctly with our code
       - name: Run tests
         uses: matlab-actions/run-command@v2
@@ -303,7 +292,6 @@ jobs:
   # JOB 4: demo-check
   # PURPOSE: Verify that all demo scripts execute without errors
   # DEPENDENCIES: Requires successful solver tests (sdp-tools)
-  # This ensures examples for users work correctly
   # =============================================================================
   demo-check:
     name: Demos analysis
