@@ -90,7 +90,6 @@ try
 
     idx_error_message = 0;
     for i=1:length(mfiles)
-
         fprintf(fid,'<details>\n');
 
         if flag_failed(i)==1
@@ -100,7 +99,6 @@ try
             fprintf(fid,'<summary><code>%s (✅)</code></summary>\n', ...
                 mfiles(i).name);
         end
-
 
         if flag_failed(i)==1
             fprintf(fid,'<table>\n');
@@ -123,8 +121,6 @@ try
             end
             fprintf(fid,'<td>%s</td>\n', failureReason);
                     fprintf(fid,'</tr>\n');
-            
-            
         end
         fprintf(fid,'</tbody>\n');
         fprintf(fid,'</table>\n');

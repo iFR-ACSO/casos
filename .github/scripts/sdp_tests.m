@@ -136,7 +136,6 @@ try
             tempResults = results(idx & flag_failed');
 
             for j = 1:length(tempResults)
-
                 testName = tempResults(j).Name;
 
                 % Extract failure reason

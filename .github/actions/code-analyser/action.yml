@@ -53,5 +53,3 @@ runs:
                 fprintf('\n Code analysis failed: %s\n', ME.message);
                 rethrow(ME);  % Fail the step if analysis fails
             end
-
-            

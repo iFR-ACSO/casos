@@ -93,8 +93,6 @@ end
 exitCode = 0;
 
 try
-    
-    
     if totalFailed > 0
         exitCode = 1;
     end
@@ -160,7 +158,6 @@ try
             tempResults = results(idx & flag_failed');
 
             for j = 1:length(tempResults)
-
                 testName = tempResults(j).Name;
 
                 % Extract failure reason

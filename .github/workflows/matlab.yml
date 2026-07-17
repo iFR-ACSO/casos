@@ -195,7 +195,6 @@ jobs:
         if: env.POLY_TESTS_FAILED == 'true'
         run: exit 1
           
-    
   # =============================================================================
   # JOB 3: sdp-tools
   # PURPOSE: Test SDP solver interfaces (Mosek, SeDuMi, Clarabel, SCS)
@@ -240,7 +239,6 @@ jobs:
           # download from release assets the .mat file containing the references
           wget -O tests/references/reference_values.mat  \
             https://github.com/iFR-OFC/casos/releases/download/v1.0.1-pre.2/reference_values.mat
-
 
       # STEP 6: Test solver interfaces
       # Validates that all solvers work correctly with our code
@@ -502,4 +500,3 @@ jobs:
               console.log('Removed old failure comment');
             }
 
-              
