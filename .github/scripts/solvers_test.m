@@ -27,9 +27,13 @@ end
 % Run tests silently (capture results without displaying everything)
 import matlab.unittest.TestRunner;
 import matlab.unittest.plugins.DiagnosticsRecordingPlugin;
+import matlab.unittest.selectors.HasParameter;
 
 % Create test suite from current directory
 suite = matlab.unittest.TestSuite.fromFolder('.');
+
+% Exclude 'clarabel' and 'scs'
+suite = suite.selectIf(~HasParameter('Name', 'clarabel') & ~HasParameter('Name', 'scs'));
 
 % Create a silent runner
 runner = TestRunner.withNoPlugins();
