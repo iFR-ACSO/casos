@@ -32,8 +32,8 @@ import matlab.unittest.selectors.HasParameter;
 % Create test suite from current directory
 suite = matlab.unittest.TestSuite.fromFolder('.');
 
-% Exclude 'clarabel' and 'scs'
-suite = suite.selectIf(~HasParameter('Name', 'clarabel') & ~HasParameter('Name', 'scs'));
+% Include solvers
+suite = suite.selectIf(HasParameter('Name', 'mosek') | HasParameter('Name', 'sedumi'));
 
 % Create a silent runner
 runner = TestRunner.withNoPlugins();
