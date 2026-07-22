@@ -145,7 +145,7 @@ jobs:
           wget -O tests/references/reference_values.mat  \
             https://github.com/iFR-OFC/casos/releases/download/v1.0.1-pre.2/reference_values.mat
 
-      # STEP 5: Run polynomial operations tests
+      # STEP 5: Run core polynomial operations tests
       - name: Run tests
         uses: matlab-actions/run-command@v2
         with:
@@ -161,7 +161,7 @@ jobs:
             addpath(genpath(rootDir));
 
             % Now run the test script
-            poly_tests;
+            core_tests;
 
             % Exit with the test result code
             exit(exitCode);
@@ -173,26 +173,26 @@ jobs:
           if [ -f test_status.txt ]; then
             status=$(head -n 1 test_status.txt)
             if [ "$status" = "FAILED" ]; then
-              echo "POLY_TESTS_FAILED=true" >> $GITHUB_ENV
-              echo "POLY_TESTS_FAILED=true" >> $GITHUB_OUTPUT
+              echo "CORE_TESTS_FAILED=true" >> $GITHUB_ENV
+              echo "CORE_TESTS_FAILED=true" >> $GITHUB_OUTPUT
             else
-              echo "POLY_TESTS_FAILED=false" >> $GITHUB_ENV
-              echo "POLY_TESTS_FAILED=false" >> $GITHUB_OUTPUT
+              echo "CORE_TESTS_FAILED=false" >> $GITHUB_ENV
+              echo "CORE_TESTS_FAILED=false" >> $GITHUB_OUTPUT
             fi
           else
             # If step failed before creating test_status.txt
-            if [ "${{ steps.poly_tests.outcome }}" = "failure" ]; then
-              echo "POLY_TESTS_FAILED=true" >> $GITHUB_ENV
-              echo "POLY_TESTS_FAILED=true" >> $GITHUB_OUTPUT
+            if [ "${{ steps.core_tests.outcome }}" = "failure" ]; then
+              echo "CORE_TESTS_FAILED=true" >> $GITHUB_ENV
+              echo "CORE_TESTS_FAILED=true" >> $GITHUB_OUTPUT
             else
-              echo "POLY_TESTS_FAILED=false" >> $GITHUB_ENV
-              echo "POLY_TESTS_FAILED=false" >> $GITHUB_OUTPUT
+              echo "CORE_TESTS_FAILED=false" >> $GITHUB_ENV
+              echo "CORE_TESTS_FAILED=false" >> $GITHUB_OUTPUT
             fi
           fi
 
       # STEP 7: Fail the job if tests failed (after capturing results)
       - name: Fail if tests failed
-        if: env.POLY_TESTS_FAILED == 'true'
+        if: env.CORE_TESTS_FAILED == 'true'
         run: exit 1
           
   # =============================================================================
@@ -257,7 +257,7 @@ jobs:
             addpath(genpath(rootDir));
 
             % Now run the test script
-            sdp_tests;
+            solvers_test;
 
             % Exit with the test result code
             exit(exitCode);
@@ -269,21 +269,21 @@ jobs:
           if [ -f test_status.txt ]; then
             status=$(head -n 1 test_status.txt)
             if [ "$status" = "FAILED" ]; then
-              echo "SDP_TESTS_FAILED=true" >> $GITHUB_ENV
+              echo "SOLVERS_TESTS_FAILED=true" >> $GITHUB_ENV
             else
-              echo "SDP_TESTS_FAILED=false" >> $GITHUB_ENV
+              echo "SOLVERS_TESTS_FAILED=false" >> $GITHUB_ENV
             fi
           else
-            if [ "${{ steps.sdp_tests.outcome }}" = "failure" ]; then
-              echo "SDP_TESTS_FAILED=true" >> $GITHUB_ENV
+            if [ "${{ steps.solvers_tests.outcome }}" = "failure" ]; then
+              echo "SOLVERS_TESTS_FAILED=true" >> $GITHUB_ENV
             else
-              echo "SDP_TESTS_FAILED=false" >> $GITHUB_ENV
+              echo "SOLVERS_TESTS_FAILED=false" >> $GITHUB_ENV
             fi
           fi
 
       # STEP 8: Fail if tests failed
       - name: Fail if tests failed
-        if: env.SDP_TESTS_FAILED == 'true'
+        if: env.SOLVERS_TESTS_FAILED == 'true'
         run: exit 1
    
   # =============================================================================
