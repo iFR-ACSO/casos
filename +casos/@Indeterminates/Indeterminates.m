@@ -4,8 +4,29 @@
 %
 % SPDX-License-Identifier: GPL-3.0-only
 
-classdef Indeterminates < casos.package.core.AlgebraicObject & casos.package.core.Printable
+classdef (InferiorClasses = {?casadi.DM, ?casadi.SX, ?casadi.MX}) ...
+    Indeterminates < casos.package.core.AlgebraicObject & casos.package.core.Printable
 % Indeterminate variables.
+%
+%% Constructor summary:
+%
+%   Indeterminates()
+%
+% create empty list of indeterminate variables.
+%
+%   Indeterminates(char, ...)
+%   Indeterminates(char, int)
+%
+% create list of indeterminate variables.
+%
+%% Static constructor summary:
+%
+%   [x1, ...] = create(char, ...)
+%   [x1, ...] = create(char, int)
+%
+% create indeterminate variables individually.
+%
+%%
 
 properties (GetAccess=protected, SetAccess=private)
     % cell array of strings {x1,...,xN}
@@ -102,6 +123,15 @@ methods (Static)
         % Create empty indeterminate variables.
         v = casos.Indeterminates;
     end
+
+    function varargout = create(varargin)
+        % Create indeterminate variables individually.
+        %
+        %   [x1, ...] = create(char, ...)
+        %   [x1, ...] = create(char, int)
+        %
+        varargout = tuple2cell(casos.Indeterminates(varargin{:}));
+    end
 end
 
 methods
@@ -112,8 +142,16 @@ methods
     function tf = is_indet(~), tf = true; end
 
     function z = mpower(obj,deg)
-        % Return monomial(s).
-        z = power(casos.package.polynomial(obj),deg);
+        % Return sum of monomial(s).
+        %
+        % For an even degree p, this corresponds to the p-norm ||x||_p 
+        % of the vector x to the power of p.
+        if ~isscalar(deg)
+            error('Power of indeterminates must be scalar.'); 
+        end
+        
+        % else:
+        z = sum(power(obj,deg));
     end
 
     function z = power(obj,deg)
@@ -121,6 +159,20 @@ methods
         z = power(casos.package.polynomial(obj),deg);
     end
 
+    function z = prod(obj,~)
+        % Return product of variables.
+        z = prod(casos.package.polynomial(obj));
+    end
+
+    function c = subs(a,x,b)
+        % Substitute indeterminate variables.
+        c = subs(casos.package.polynomial(a),x,casos.package.polynomial(b));
+    end
+
+    function z = sum(obj,~)
+        % Return sum of variables.
+        z = sum(casos.package.polynomial(obj));
+    end
     function obj = transpose(obj)
         % Toggle transpose flag.
         obj.transp = ~obj.transp;
@@ -144,6 +196,12 @@ methods (Access=protected)
     obj = parenAssign(obj,idx,varargin);
     obj = parenDelete(obj,idx);
     varargout = parenReference(obj,index);
+
+    % Convert to cell of single variables
+    function cell_of_indets = tuple2cell(obj)
+        % Return a cell array of individual indeterminate variables.
+        cell_of_indets = cellfun(@(var) casos.Indeterminates(var), obj.variables, 'UniformOutput', false);
+    end
 end
 
 methods (Access={?casos.package.core.PolynomialInterface})

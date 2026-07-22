@@ -65,8 +65,23 @@ if strcmpi(obj.opts.conVioCheck,'signed-distance')
     %% constrained violation check via signed distance
     % sparsity patterns of nonlinear constraints
 
-    % check only the nonlinear constraints
-    I = true(length(nlsos.g),1);
+    % get cone dimensions
+    Ml = get_dimension(obj.get_cones,opts.Kc,'lin');
+    Ms = get_dimension(obj.get_cones,opts.Kc,'sos');
+
+    % create logical indices for SOS
+    I = [false(Ml,1); true(Ms,1)];
+
+    % create function to check the linear equality contraints violation
+    coordinates_lin = poly2basis(nlsos.g,~I);
+    nnz_lin = coordinates_lin.nnz;
+
+    % set upper and lower bounds
+    ub = casadi.SX.sym('ub', nnz_lin, 1);
+    lb = casadi.SX.sym('lb', nnz_lin, 1);
+
+    % create function to evaluate the violation of the linear cone 
+    obj.linvio = casadi.Function('linvio', {poly2basis(nlsos.x), poly2basis(nlsos.p), lb, ub}, {[coordinates_lin-ub; lb-coordinates_lin]});
 
     % for idx = 1:length(nlsos.g)
     %     I(idx) = ~is_linear(nlsos.g(idx),nlsos.x);
@@ -95,6 +110,9 @@ if strcmpi(obj.opts.conVioCheck,'signed-distance')
     sosopt               = opts.sossol_options;
     sosopt.Kx            = struct('lin',length(r));
     sosopt.Kc            = opts.Kc;
+    if isfield(sosopt.Kc, 'lin')
+        sosopt.Kc = rmfield(sosopt.Kc, 'lin');
+    end
     sosopt.error_on_fail = true;
 
     % initialize convex SOS solver

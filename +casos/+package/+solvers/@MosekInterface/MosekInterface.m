@@ -17,10 +17,13 @@ properties (Access=protected)
     solver_stats = struct;
 end
 
+properties (Access=private)
+    fhan_pre;   % precomputation (numerical Hessian workaround)
+end
+
 properties (Constant, Access=protected)
     mosek_options = [casos.package.solvers.ConicSolver.conic_options
         {'mosek_param', 'Parameters to be passed to MOSEK.'
-         'cholesky_method','Parameter that defines how cholseky is computed (symbollically or numerically online) '
          'mosek_echo',  'Verbosity level passed to MOSEK (default: 0).'
          'augmented_check', 'Struct with lowered tolerances to find an acceptable solution.'}
     ];

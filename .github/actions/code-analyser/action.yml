@@ -1,0 +1,55 @@
+# SPDX-FileCopyrightText: 2026 Institute of Flight Mechanics and Controls, University of Stuttgart
+# SPDX-FileCopyrightText: Author(s): Torbjørn Cunis and Renato Loureiro <tcunis@ifr.uni-stuttgart.de>
+# SPDX-FileContributor: For a full list of contributors, see <https://github.com/casos-opti/casos>
+#
+# SPDX-License-Identifier: GPL-3.0-only
+
+name: 'Code analyser'
+description: 'Run MATLAB code analysis to check for errors, warnings, and style issues'
+runs:
+  using: "composite"
+  steps:
+    # ============================================================
+    # MATLAB CODE ANALYSIS
+    # ============================================================
+
+    # Execute code analysis to identify potential issues in MATLAB files
+    # This includes syntax errors, potential bugs, and style violations
+    - name: Analyse MATLAB code
+      uses: matlab-actions/run-command@v2
+      with: 
+        command: |
+            % ======================================================
+            % ENVIRONMENT SETUP
+            % ======================================================
+
+            % Add all project folders and subfolders to MATLAB search path
+            % This ensures all dependencies and custom functions are accessible
+            fprintf('Setting up MATLAB path...\n');
+            addpath(genpath(pwd));
+            fprintf('Path setup complete\n\n');
+
+            % Execute the main test script
+            code_analyser
+
+            % ======================================================
+            % CODE ANALYSIS EXECUTION
+            % ======================================================
+
+            % Display analysis start message
+            fprintf('Starting MATLAB code analysis...\n');
+            fprintf('========================================\n\n');
+
+            % Execute the main code analysis script
+            % This script typically contains:
+            %   - Code quality checks
+            %   - Static analysis (using checkcode, Code Analyzer, etc.)
+            %   - Style verification
+            %   - Potential error detection
+            try
+                code_analyser
+                fprintf('\n Code analysis completed successfully\n');
+            catch ME
+                fprintf('\n Code analysis failed: %s\n', ME.message);
+                rethrow(ME);  % Fail the step if analysis fails
+            end

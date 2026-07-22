@@ -26,19 +26,49 @@ methods
         b = transpose(a);
     end
 
-    function c = plus(a,b)
-        % Add algebraic objects.
-        c = plus(casos.package.polynomial(a),casos.package.polynomial(b));
+    function c = dot(a,b)
+        % Inner product of algebraic objects.
+        c = dot(casos.package.polynomial(a),casos.package.polynomial(b));
     end
 
-    function c = times(a,b)
-        % Multiply algebraic objects (element-wise).
-        c = times(casos.package.polynomial(a),casos.package.polynomial(b));
+    function c = kron(a,b)
+        % Kronecker product of algebraic objects.
+        c = kron(casos.package.polynomial(a),casos.package.polynomial(b));
+    end
+
+    function c = ldivide(b,a)
+        % Left-hand divide algebraic objects (element-wise).
+        c = ldivide(casos.package.polynomial(b),casos.package.polynomial(a));
+    end
+
+    function c = mldivide(b,a)
+        % Left-hand divide algebraic objects (matrix division).
+        c = mldivide(casos.package.polynomial(b),casos.package.polynomial(a));
+    end
+
+    function c = mrdivide(a,b)
+        % Right-hand divide algebraic objects (matrix division).
+        c = mrdivide(casos.package.polynomial(a),casos.package.polynomial(b));
     end
 
     function c = mtimes(a,b)
         % Multiply algebraic objects (matrix product).
         c = mtimes(casos.package.polynomial(a),casos.package.polynomial(b));
+    end
+
+    function c = plus(a,b)
+        % Add algebraic objects.
+        c = plus(casos.package.polynomial(a),casos.package.polynomial(b));
+    end
+
+    function c = rdivide(a,b)
+        % Right-hand divide algebraic objects (element-wise).
+        c = rdivide(casos.package.polynomial(a),casos.package.polynomial(b));
+    end
+
+    function c = times(a,b)
+        % Multiply algebraic objects (element-wise).
+        c = times(casos.package.polynomial(a),casos.package.polynomial(b));
     end
 
     function b = uminus(a)

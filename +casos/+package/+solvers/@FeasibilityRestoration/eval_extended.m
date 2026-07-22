@@ -47,11 +47,20 @@ args_conVio{2}  =  [p0;  x_k];
 args_conVio{3}  = -inf(obj.init_para.conVio.no_con,1);
 args_conVio{4}  =  inf(obj.init_para.conVio.no_con,1);
 
+args_conVio{6} = [];
+args_conVio{7} = [];
+
 sol_convio = eval_on_basis(obj.solver_conVio, args_conVio);
 
-theta_x_k = full(max(0,max(sol_convio{1})));
-f_x_k     = full(obj.eval_cost(x_k,p0));
+lb = args{6};
+ub = args{7};
+linviolation = obj.linvio(x_k,p0,lb,ub);
 
+% largest constraint violation
+theta_x_k = full(max(0,max([sol_convio{1}; linviolation])));   
+
+% compute cost
+f_x_k     = full(obj.eval_cost(x_k,p0));
 
 filter = [max(1,theta_x_k)*10, inf];
 

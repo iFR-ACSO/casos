@@ -30,19 +30,19 @@ All code contributions must follow the [CaΣoS Coding Guidelines](https://github
 
 It is understood that the copyright for all code is given to the CaΣoS maintainers. We use the [REUSE specification](https://reuse.software/spec-3.3/) for copyright declaration and organisation of license declarations in all files included in the repository. All new files therefore must contain the following header in a comment of the respective programming languages:
 
-# REUSE-IgnoreStart
+<!-- REUSE-IgnoreStart -->
 ```matlab
 % SPDX-FileCopyrightText: YEAR Institute of Flight Mechanics and Controls, Stuttgart
 % SPDX-FileCopyrightText: Author(s): Torbjørn Cunis and FURTHER AUTHORS <tcunis@ifr.uni-stuttgart.de>
 % SPDX-FileCopyrightText: For a full list of contributors, see <https://github.com/ifr-ofc/casos>
 %
-% SDPX-License-Identifier: GPL-3.0-only
+% SPDX-License-Identifier: GPL-3.0-only
 ```
-# REUSE-IgnoreEnd
+<!-- REUSE-IgnoreEnd -->
 
 Contributors may become authors of the respective files if they are responsible for a significant part of the addition. Other changes to either copyright or the [license](https://github.com/iFR-OFC/casos#GPL-3.0-1-ov-file) are generally not permitted. In exceptional cases, third-party code can be included under a different license contingent on compliance. In this case, the relevant inclusions including details of the copyright holder(s), version history, and license must be identified using REUSE's [in-line snippet comments](https://reuse.software/spec-3.3/#in-line-snippet-comments) as follows:
 
-# REUSE-IgnoreStart
+<!-- REUSE-IgnoreStart -->
 ```matlab
 % SPDX-SnippetBegin
 % SPDX-SnippetCopyrightText: 2022 Jane Doe <jane@example.com>
@@ -52,7 +52,7 @@ print("Hello, world!");
 
 % SPDX-SnippetEnd
 ```
-# REUSE-IgnoreEnd
+<!-- REUSE-IgnoreEnd -->
 
 ## Examples
 

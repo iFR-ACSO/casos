@@ -47,14 +47,14 @@ methods
         % Check if constraint is satisfied by actual polynomial.
         results = satisfiedByConstraints(constraint,actual);
         
-        tf = all(struct2array(results));
+        tf = all(results{1,:}); % access booleans from first row of table) 
     end
 
     function diagnostic = getDiagnosticFor(constraint,actual)
         % Return diagnostic for actual polynomial.
         [results,actual_values] = satisfiedByConstraints(constraint,actual);
 
-        if all(struct2array(results))
+        if all(results{1,:})  % access booleans from first row of table
             % constraint passed
             diagnostic = matlab.unittest.diagnostics.ConstraintDiagnostic;
             diagnostic.Description = 'IsEqualPolynomialTo passed.';
@@ -121,7 +121,7 @@ end
 methods (Access=private)
     function [results,actuals] = satisfiedByConstraints(constraint,actual)
         % Check if sub-constraints are satisfied by actual polynomial.
-        results = struct;
+        results = table;
         actuals  = struct;
 
         % only compare nonzero terms

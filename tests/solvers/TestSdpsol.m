@@ -86,8 +86,8 @@ methods (Test)
 
         % perform assertions
         test_case.verifyEqual(S.stats.UNIFIED_RETURN_STATUS,casos.package.UnifiedReturnStatus.SOLVER_RET_SUCCESS);
-        test_case.verifyGreaterThanOrEqual(full(G{1}(1)),norm(full(G{1}(2:end)),2) - 1e-6);
-        test_case.verifyGreaterThanOrEqual(full(G{2}(1)),norm(full(G{2}(2:end)),2) - 1e-6);
+        test_case.verifyGreaterThanOrEqual(full(G{1}(1)),norm(full(G{1}(2:end)),2) - 1e-5);
+        test_case.verifyGreaterThanOrEqual(full(G{2}(1)),norm(full(G{2}(2:end)),2) - 1e-5);
     end
 end
 

@@ -1,0 +1,343 @@
+# SPDX-FileCopyrightText: 2026 Institute of Flight Mechanics and Controls, University of Stuttgart
+# SPDX-FileCopyrightText: Author(s): Torbjørn Cunis and Renato Loureiro <tcunis@ifr.uni-stuttgart.de>
+# SPDX-FileContributor: For a full list of contributors, see <https://github.com/casos-opti/casos>
+#
+# SPDX-License-Identifier: GPL-3.0-only
+
+name: 'Solvers setup'
+description: 'Steps shared across jobs for installing and configuring solvers (MOSEK and SeDuMi)'
+runs:
+  using: "composite"
+  steps:
+    # ============================================================
+    # MOSEK INSTALLATION
+    # ============================================================
+
+    # Install system dependencies required for MOSEK download and extraction
+    - name: Install system dependencies
+      shell: bash
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y curl bzip2 tar
+
+    # Download and extract MOSEK solver from official repository
+    - name: Download and extract MOSEK
+      shell: bash
+      run: |
+        # Create MOSEK installation directory at the specified location
+        mkdir -p ${{ env.MOSEK_INSTALL_DIR }}
+
+        # Download MOSEK for Linux x86_64 architecture
+        echo "Downloading MOSEK ${{ env.MOSEK_VERSION }} for Linux x86..."
+        curl -L "https://download.mosek.com/stable/${{ env.MOSEK_VERSION }}/mosektoolslinux64x86.tar.bz2" -o mosek.tar.bz2
+
+        # Extract the archive directly to target directory, stripping top-level folder
+        echo "Extracting MOSEK to ${{ env.MOSEK_INSTALL_DIR }}..."
+        tar -xjf mosek.tar.bz2 -C ${{ env.MOSEK_INSTALL_DIR }} --strip-components=1
+
+        # Clean up downloaded archive to save space
+        rm -f mosek.tar.bz2
+
+        # Verify installation by listing extracted contents
+        echo "MOSEK installed to: ${{ env.MOSEK_INSTALL_DIR }}"
+        ls -la ${{ env.MOSEK_INSTALL_DIR }}/
+
+    # Configure MOSEK license for solver activation
+    - name: Set up MOSEK license
+      shell: bash
+      run: |
+        # Create MOSEK configuration directory in user's home
+        mkdir -p ~/mosek
+
+        # Create license file from environment variable (typically from GitHub secret)
+        if [ -n "${{ env.MOSEKLM_LICENSE_FILE }}" ]; then
+          echo "Creating license file from secret..."
+          echo "${{ env.MOSEKLM_LICENSE_FILE }}" > ~/mosek/mosek.lic
+          chmod 600 ~/mosek/mosek.lic
+          echo "MOSEK license file created at ~/mosek/mosek.lic"
+        else
+          echo "Warning: No MOSEK license secret found. Set MSK_LICENSE secret with your license content."
+        fi
+
+    # Debug: List generated files for verification
+    - name: List files generated
+      shell: bash
+      run: |
+        echo "=== FILES IN ROOT DIRECTORY ==="
+        echo "Contents in the root folder:"
+        ls -la
+
+    # Configure MATLAB path and verify MOSEK installation
+    - name: Configure MATLAB MOSEK path
+      uses: matlab-actions/run-command@v2
+      with:
+        command: |
+          % Add all project folders and subfolders to MATLAB search path
+          addpath(genpath(pwd));
+
+          % Run MOSEK diagnostic tool to verify installation
+          fprintf('\n--- Verifying MOSEK installation ---\n');
+          try
+              % mosekdiag performs comprehensive installation check
+              mosekdiag
+              fprintf('MOSEK verification completed successfully.\n');
+          catch ME
+              % Capture and display any verification errors
+              fprintf('MOSEK verification failed: %s\n', ME.message);
+          end
+
+          % Display MOSEK-related paths for debugging
+          fprintf('\n--- Current MATLAB path (MOSEK related) ---\n');
+          pathCell = regexp(path, pathsep, 'split');
+          mosekPaths = pathCell(contains(pathCell, 'mosek', 'IgnoreCase', true));
+
+          if isempty(mosekPaths)
+              fprintf('No MOSEK paths found in MATLAB path\n');
+          else
+              for i = 1:length(mosekPaths)
+                  fprintf('%d: %s\n', i, mosekPaths{i});
+              end
+          end      
+
+    # ============================================================
+    # SeDuMi INSTALLATION
+    # ============================================================
+
+    # Clone SeDuMi repository from GitHub
+    - name: Checkout tools repo
+      uses: actions/checkout@v3
+      with:
+        repository: sqlp/sedumi   # Official SeDuMi repository
+        path: sedumi              # Local directory name
+
+    # Install and compile SeDuMi in MATLAB
+    - uses: matlab-actions/run-command@v2
+      with:
+        command: |
+          % Navigate to SeDuMi directory
+          cd('sedumi'); 
+
+          % Install SeDuMi with rebuild flag (compiles MEX files)
+          try
+            % Use evalc to capture installation output silently
+            evalc('install_sedumi -rebuild');
+            fprintf('SeDuMi installed successfully\n');
+          catch ME
+            % Display error details if installation fails
+            fprintf('Error installing SeDuMi: %s\n', ME.message);
+            rethrow(ME);
+          end
+
+    # ============================================================
+    # SCS INSTALLATION
+    # ============================================================
+
+    # Clone SCS repository from GitHub
+    - name: Get SCS from GitHub
+      if: false
+      shell: bash
+      run: |
+          # install SCS in Matlab from source
+          git clone --recursive https://github.com/bodono/scs-matlab.git
+
+    # Install and compile SeDuMi in MATLAB
+    - uses: matlab-actions/run-command@v2
+      if: false
+      with:
+        command: |
+          % Navigate to SCS directory
+          cd('scs-matlab'); 
+          
+          % Install SCS 
+          try
+            % Use evalc to capture installation output silently
+            evalc('make_scs');
+            fprintf('SCS installed successfully\n');
+          catch ME
+            % Display error details if installation fails
+            fprintf('Error installing SCS: %s\n', ME.message);
+            rethrow(ME);
+          end
+
+    # ============================================================
+    # Clarabel INSTALLATION
+    # ============================================================
+
+    # Clone Clarabel repository from GitHub
+    - name: Get Clarabel from GitHub
+      if: false
+      shell: bash
+      run: |
+          # dependencies
+          sudo apt-get update
+          sudo apt-get install -y libeigen3-dev cmake build-essential curl unzip
+
+          # Install Rust
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+          source $HOME/.cargo/env
+          
+          # Set Eigen path
+          export EIGEN_PATH=/usr/include/eigen3
+          echo "EIGEN_PATH=$EIGEN_PATH" >> $GITHUB_ENV
+          
+          # Install vcpkg
+          git clone https://github.com/Microsoft/vcpkg.git
+          cd vcpkg
+          ./bootstrap-vcpkg.sh
+          export VCPKG_ROOT=$(pwd)
+          cd ..
+
+          # Interface from Matlab to rust
+          git clone https://github.com/iFR-OFC/Clarabel.m.git
+
+          cd Clarabel.m/
+
+          # install Clarabel in Matlab from source
+          git clone https://github.com/oxfordcontrol/Clarabel.cpp.git Clarabel
+
+          cd Clarabel/
+          git submodule update --init --recursive
+
+          mkdir build
+          cd build
+          # USE THE CORRECT VCPKG PATH
+          cmake .. -DCMAKE_TOOLCHAIN_FILE=$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake \
+                  -DVCPKG_TARGET_TRIPLET=x64-linux \
+                  -DCMAKE_BUILD_TYPE=Release \
+                  -DCLARABEL_FEATURE_FAER_SPARSE=true
+          cmake --build .
+
+
+    # Install and compile Clarabel in MATLAB
+    - uses: matlab-actions/run-command@v2
+      if: false
+      with:
+        command: |
+          % Set Eigen path for MATLAB
+          setenv('EIGEN_PATH', '/usr/include/eigen3');
+          
+          % Get absolute path to Clarabel include directory
+          current_dir = pwd;
+          clarabel_root = fullfile(pwd, 'Clarabel.m', 'Clarabel');
+          clarabel_include = fullfile(clarabel_root, 'include');
+          clarabel_lib_path = fullfile(current_dir, 'Clarabel.m', 'Clarabel', 'rust_wrapper', 'target', 'release');
+              
+          % Set library path for runtime
+          setenv('LD_LIBRARY_PATH', [clarabel_lib_path ':' getenv('LD_LIBRARY_PATH')]);
+
+          setenv('CLARABEL_INCLUDE_PATH', clarabel_include);
+          setenv('CLARABEL_LIB_PATH', clarabel_lib_path);
+
+          % Add Clarabel.m to path and run its make script
+          addpath('Clarabel.m');
+          cd('Clarabel.m');
+
+          % Display current directory for debugging
+          fprintf('Current directory: %s\n', pwd);
+          fprintf('Clarabel include path: %s\n', clarabel_include);
+
+          % Check if include directory exists and what's in it
+          if exist(clarabel_include, 'dir')
+              fprintf('Files in include directory:\n');
+              dir(clarabel_include);
+              
+              % CREATE THE EXPECTED HEADER FILE
+              % The mex file expects <Clarabel> but we have clarabel.h and clarabel.hpp
+              % Let's check which header exists and create a symlink or copy
+              
+              expected_header = fullfile(clarabel_include, 'Clarabel');
+              
+              % Check for clarabel.hpp (C++ header)
+              source_header_hpp = fullfile(clarabel_include, 'clarabel.hpp');
+              % Check for clarabel.h (C header)  
+              source_header_h = fullfile(clarabel_include, 'clarabel.h');
+              % Check for C API header in c subdirectory
+              source_header_c_api = fullfile(clarabel_include, 'c', 'ClarabelTypes.h');
+              
+              if ~exist(expected_header, 'file')
+                  % Choose which header to use - prefer clarabel.hpp if it exists
+                  if exist(source_header_hpp, 'file')
+                      fprintf('Creating symlink from clarabel.hpp to Clarabel\n');
+                      cmd = sprintf('ln -sf "%s" "%s"', source_header_hpp, expected_header);
+                      [status, output] = system(cmd);
+                      if status == 0
+                          fprintf('✓ Symlink created successfully\n');
+                      else
+                          fprintf('Symlink failed, trying to copy instead\n');
+                          copyfile(source_header_hpp, expected_header);
+                          fprintf('✓ Header copied\n');
+                      end
+                  elseif exist(source_header_h, 'file')
+                      fprintf('Creating symlink from clarabel.h to Clarabel\n');
+                      cmd = sprintf('ln -sf "%s" "%s"', source_header_h, expected_header);
+                      [status, output] = system(cmd);
+                      if status == 0
+                          fprintf('✓ Symlink created successfully\n');
+                      else
+                          fprintf('Symlink failed, trying to copy instead\n');
+                          copyfile(source_header_h, expected_header);
+                          fprintf('✓ Header copied\n');
+                      end
+                  elseif exist(source_header_c_api, 'file')
+                      fprintf('Creating symlink from ClarabelTypes.h to Clarabel\n');
+                      cmd = sprintf('ln -sf "%s" "%s"', source_header_c_api, expected_header);
+                      [status, output] = system(cmd);
+                      if status == 0
+                          fprintf('✓ Symlink created successfully\n');
+                      else
+                          fprintf('Symlink failed, trying to copy instead\n');
+                          copyfile(source_header_c_api, expected_header);
+                          fprintf('✓ Header copied\n');
+                      end
+                  else
+                      error('Could not find any clarabel header file to use');
+                  end
+              else
+                  fprintf('✓ Header "Clarabel" already exists\n');
+              end
+              
+              % Verify the header now exists
+              if exist(expected_header, 'file')
+                  fprintf('✓ Expected header file exists at: %s\n', expected_header);
+                  fprintf('Content of header:\n');
+                  % Show first few lines to confirm it's valid
+                  system(sprintf('head -n 5 "%s"', expected_header));
+              else
+                  error('Failed to create expected header file');
+              end
+              
+              % Also check what's in the c subdirectory
+              c_dir = fullfile(clarabel_include, 'c');
+              if exist(c_dir, 'dir')
+                  fprintf('\nFiles in c subdirectory:\n');
+                  dir(c_dir);
+              end
+              
+          else
+              error('Clarabel include directory not found at: %s', clarabel_include);
+          end
+
+          % Now compile with the fixed header
+          mex_cmd = sprintf([...
+              'mex -v clarabel_mex.cpp ' ...
+              '-DFEATURE_SDP ' ...
+              '-DFEATURE_FAER_SPARSE ' ...
+              '-I"/usr/include/eigen3" ' ...
+              '-I"%s" ' ...
+              '-L"%s" ' ...
+              '-lclarabel_c'], ...
+              clarabel_include, clarabel_lib_path);
+          
+          fprintf('\nMEX command: %s\n', mex_cmd);
+          
+          % Try compilation
+          try
+              eval(mex_cmd);
+              fprintf(' MEX compilation successful!\n');
+          catch ME
+              fprintf(' MEX compilation failed: %s\n', ME.message);
+              rethrow(ME);
+          end
+          
+          cd('..');
+

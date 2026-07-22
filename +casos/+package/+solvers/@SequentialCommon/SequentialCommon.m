@@ -35,6 +35,9 @@ classdef (Abstract) SequentialCommon < casos.package.solvers.SosoptCommon
         solver_conVio;
         solver_soc;
 
+        % evaluation of linear cone constraints
+        linvio;
+
         % Lagrangian and derivative
         eval_L;
         eval_dLdx;
@@ -166,8 +169,6 @@ classdef (Abstract) SequentialCommon < casos.package.solvers.SosoptCommon
                 % display debug messages
                 obj.log = casos.package.Logger.Debug;
             end
-
-            assert(is_empty(obj.get_cones,obj.opts.Kc,'lin'), 'Nonlinear (in)equality constraints are currently not supported.')
 
             % Initialize solvers
             buildproblem(obj,nlsos);

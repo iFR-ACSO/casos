@@ -39,8 +39,6 @@ function buildproblem(obj)
 % Lorentz cone, rotated Lorentz cone, and PSD cone can be shifted by a
 % lower bound (cb).
 
-if ~isfield(obj.opts,'cholesky_method'), obj.opts.cholesky_method = 'numerical'; end
-
 opts = obj.opts;
 
 % retrieve MOSEK symbolic constants
@@ -192,61 +190,74 @@ prob.bux = [ubx; +inf(Nx_acc,1)];
 % arguments to problem
 args_in = obj.args_in;
 
+% options for Casadi functions
+% NOTE: As per Casadi v3.6.5, functions' input and output names 
+% must be mutually exclusive unless explicity permitted.
+fopt = struct('allow_duplicate_io_names',true);
+
 % handle quadratic cost function
 % MOSEK cannot solve conic problems with quadratic cost
-
 if nnz(h) > 0
-    
-    % use casadi to compute cholesky
-    if strcmp(obj.opts.cholesky_method,'analytical') 
+    % inverse permutation matrix for Cholesky decomposition
+    Pinv = obj.opts.hessian_permute;
+    P = Pinv'/(Pinv*Pinv');
 
+    % permute Hessian
+    hPerm = P'*h*P;
+
+    % number of variables after permutation
+    nP = length(hPerm);
+
+    % rewrite quadratic cost
+    %
+    %   min_x 1/2 x'*Q*x + c'*x
+    %
+    % into 
+    %
+    %   min_{x,y} c'*x + y, s.t. 1 + y >= ||(sqrt(2)*U*x, 1 - y)||
+    %
+    % with additional variable y and Cholesky decomposition U'*U = Q
+
+    %NOTE: symbolic Cholesky decomposition via SX is temporarily disabled
+    if (false)
         % only SX supports Cholesky decomposition
-        H = casadi.SX.sym('H',sparsity(h));
-        %Performs an LDL transformation [L,D] = ldl(A) and returns 
-        % diag(sqrt(D))*L'
+        H = casadi.SX.sym('H',sparsity(hPerm)); %#ok<UNRCH>
+        % performs a Cholesky decomposition R'*R = (P'*H*P)
         chol_f = casadi.Function('chol',{H},{chol(H)});
-    
-        % ldl_f = casadi.Function('ldl',{H},{ldl(H)});
-        % rewrite quadratic cost
-        %
-        %   min_x 1/2 x'*Q*x + c'*x
-        %
-        % into 
-        %
-        %   min_{x,y} c'*x + y, s.t. 1 + y >= ||(sqrt(2)*U*x, 1 - y)||
-        %
-        % with additional variable y and Cholesky decomposition U'*U = Q
-        U = chol_f(h);
-    
-    else % parameterize solver with cholesky sparsity pattern and compute numerically online
+        % apply Cholesky decomposition symbolically
+        U = chol_f(hPerm);
 
-        % get sparisty pattern from h
-        H = sparsity(h);
-        [rr,~] = get_triplet(H);
+    else
+        % workaround to compute Cholesky decomposition online
+        [rows,~] = get_triplet(sparsity(hPerm));
+        % identify nonzero blocks of (permuted) Hessian
+        min_row = min(rows);
+        max_row = max(rows);
+        % upper triangular sparsity pattern
+        spU = casadi.Sparsity.upper(max_row - min_row + 1);
+        % enlarge to size of (permuted) Hessian
+        spU.enlarge(nP, nP, min_row:max_row, min_row:max_row);
         
-        i = min(rr); j = max(rr); % row numbers are sorted
-        
-        spU = casadi.Sparsity.upper(j - i + 1);
-        
-        spU.enlarge(size(H,1), size(H,2), i:j, i:j);
-        
-        U = casadi.MX.sym('U', spU); %+casadi.Sparsity.diag(length(H)));
+        % symbolic variable for Cholesky decomposition
+        U = casadi.MX.sym('U',spU);
 
-       % evaluate Cholesky decomposition in situ
-       args_in.h = U;
-   
+        % evaluate decomposition online
+        args_pre = setfield(args_in,'h',hPerm); %#ok<SFLD>
+        % return permuted Hessian for decomposition
+        obj.fhan_pre = casadi.Function('f_pre',struct2cell(args_in),struct2cell(args_pre),fieldnames(args_in),fieldnames(args_pre),fopt);
+        % use symbolic variable in lieu of Hessian
+        args_in.h = U;
     end
 
     % build affine cone constraint 
-    % L(y,x) + k = (1+y, sqrt(2)*U*x, 1-y) in SOC
+    % L(y,x) + k = (1+y, sqrt(2)*U/P*x, 1-y) in SOC
     % note: additional variable y is first decision variable
-    L = [1 casadi.DM(1,n); casadi.DM(n,1) sqrt(2)*U; -1 casadi.DM(1,n)];
-    k = [1; casadi.DM(n,1); 1];
-
+    L = [1 casadi.DM(1,n); casadi.DM(nP,1) sqrt(2)*U*Pinv; -1 casadi.DM(1,n)];
+    k = [1; casadi.DM(nP,1); 1];
 
     % number of additional variables and constraints
     Nx_cost = 1;
-    Na_cost = n + 2;
+    Na_cost = nP + 2;
     % separate ACC for vector, matrix, and analytic variables
     [Llin,Lbar,Lpoly] = separate(L,Na_cost,[Nx_v+1 sum(Nx.psd.^2) Nx_p]);
     % get nonzero elements and subindices (i,j,k,l) for Lbar
@@ -258,11 +269,11 @@ if nnz(h) > 0
     % add to regular affine cone constraints
     prob.f = [casadi.DM(Na_C+Nx_acc,1) prob.f; Llin Lpoly];
     prob.g = [prob.g; k];
-    barv.f = [barv.f barv_l];
-    barf.subi = [barf.subi (Na_C+Nx_acc)+barl.subi];
-    barf.subj = [barf.subj barl.subj];
-    barf.subk = [barf.subk barl.subk];
-    barf.subl = [barf.subl barl.subl];
+    barv.f = [barv.f; barv_l];
+    barf.subi = [barf.subi; (Na_C+Nx_acc)+barl.subi];
+    barf.subj = [barf.subj; barl.subj];
+    barf.subk = [barf.subk; barl.subk];
+    barf.subl = [barf.subl; barl.subl];
     % add to regular decision variables (y >= 0)
     prob.blx = [  0; prob.blx];
     prob.bux = [inf; prob.bux];
@@ -275,10 +286,6 @@ else
     acc_cost = [];
 end
 
-% options for Casadi functions
-% NOTE: As per Casadi v3.6.5, functions' input and output names 
-% must be mutually exclusive unless explicity permitted.
-fopt = struct('allow_duplicate_io_names',true);
 % return MOSEK prob structure
 obj.fhan = casadi.Function('f',struct2cell(args_in),struct2cell(prob),fieldnames(args_in),fieldnames(prob),fopt);
 % return bar values
@@ -324,7 +331,7 @@ sol.bars = casadi.MX.sym('bars',[sum(Nx_S) 1]);
 [~,Slx,~] = separate(sol.slx,[Nx_cost Nx.lin Nx_q Nx_p],1);
 [~,Slu,~] = separate(sol.sux,[Nx_cost Nx.lin Nx_q Nx_p],1);
 % dual variables corresponding to affine conic constraints
-[Yaq,Yas,Yap,Yxq,Yxp,Ycost] = separate(sol.doty,[Na_q sum(Na_S) Na_p Nx_q Nx_p Na_cost],1);
+[Yaq,Yas,Yap,Yxq,Yxp,Ycost] = separate(sol.doty,[Na_q sum(Na_S) Na_p Nx_q Nx_p Na_cost],1); %#ok<ASGLU>
 % de-vectorize SDP primal and dual variables (no scaling)
 Xc_s = obj.sdp_mat(sol.barx,Nx.psd,1) + cbx_s;
 Sc_s = obj.sdp_mat(sol.bars,Nx.psd,1);

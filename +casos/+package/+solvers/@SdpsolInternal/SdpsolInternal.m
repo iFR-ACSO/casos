@@ -139,8 +139,14 @@ methods
         else
             p = [];
         end
+
         % constraint function (vectorized)
         sdp_g = sdp.g(:);
+
+        if isfield(opts,'hessian_permute')
+            % map Hessian permutation matrix to extended variable space
+            opts.hessian_permute = opts.hessian_permute*primal_x_map;
+        end
 
         % use pre-computed derivatives (undocumented)
         if isfield(sdp,'derivatives')

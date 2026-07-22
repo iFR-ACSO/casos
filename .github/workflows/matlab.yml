@@ -1,0 +1,502 @@
+# SPDX-FileCopyrightText: 2026 Institute of Flight Mechanics and Controls, University of Stuttgart
+# SPDX-FileCopyrightText: Author(s): Torbjørn Cunis and Renato Loureiro <tcunis@ifr.uni-stuttgart.de>
+# SPDX-FileContributor: For a full list of contributors, see <https://github.com/casos-opti/casos>
+#
+# SPDX-License-Identifier: GPL-3.0-only
+
+name: Complete integration test
+
+# WORKFLOW PURPOSE:
+# This workflow performs a complete integration test of the codebase, including:
+# 1. Code quality analysis for MATLAB files
+# 2. Testing polynomial operations against reference implementation
+# 3. Testing SDP solver interfaces (Mosek, SeDuMi)
+# 4. Verifying all demo scripts execute without errors
+
+on:
+  # TRIGGERS:
+  pull_request:
+    branches: [main]
+  workflow_dispatch: {}   # Allow manual triggering from GitHub UI
+
+# ENVIRONMENT VARIABLES:
+# These are available to all jobs in the workflow
+env:
+  # License tokens for MATLAB and Mosek solvers
+  MLM_LICENSE_TOKEN: ${{ secrets.MLM_LICENSE_TOKEN }}
+  MOSEKLM_LICENSE_FILE: ${{ secrets.MSK_LICENSE }}
+
+  # MOSEK solver configuration - fixed version for consistency across all jobs
+  MOSEK_VERSION: "10.1.17"
+  MOSEK_INSTALL_DIR: ${{ github.workspace }}/mosek
+
+jobs:
+  # =============================================================================
+  # JOB 1: code-analysis
+  # PURPOSE: Run MATLAB code analysis to ensure compliance with coding standards
+  # This job checks code quality and generates reports before running tests
+  # =============================================================================
+  code-analysis:
+    name: MATLAB Code Analysis
+    runs-on: ubuntu-latest
+
+    # Grant necessary permissions for GitHub integrations
+    permissions:
+      checks: write
+      contents: read
+      pull-requests: write
+      statuses: write
+
+    steps:
+      # STEP 1: Checkout the main repository code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # STEP 2: Checkout coding guidelines repository
+      # This contains the configuration for code analysis (rules, patterns, etc.)
+      - name: Checkout coding guidelines
+        uses: actions/checkout@v4
+        with:
+          repository: casos-opti/casos-coding-guidelines
+          path: casos-coding-guidelines
+
+      # STEP 3: Debug - List files for verification
+      # Useful for troubleshooting path issues
+      - name: List files generated
+        run: |
+          echo "=== FILES IN ROOT DIRECTORY ==="
+          echo ""
+          echo "Contents in the root folder:"
+          ls -la
+          echo ""
+          cd casos-coding-guidelines
+          echo "Contents in the casos-guidelines:"
+          ls -la
+
+      # STEP 4: Setup MATLAB environment
+      # Uses reusable action from .github/actions
+      - name: Run common steps
+        uses: ./.github/actions/MATLAB-setup
+        with:
+          message: "Setup MATLAB"
+
+      # STEP 5: Run code compliance analysis
+      # Analyzes all .m files against coding guidelines
+      - name: Check code compliance
+        uses: ./.github/actions/code-analyser
+        with:
+          message: "Analysing .m files"
+
+      # STEP 6: Display report in GitHub Actions Summary
+      # Makes results visible in the GitHub UI
+      - name: Add Report to GitHub Summary
+        if: ${{ !env.ACT }}   # Skip when testing locally with 'act' (avoid upload errors)
+        run: |
+          cat code-analysis-report.md >> $GITHUB_STEP_SUMMARY
+
+      # STEP 7: Upload code analysis reports as artifacts
+      # Preserves reports for 30 days for later reference
+      - name: Upload Code Analysis Reports
+        if: ${{ !env.ACT }}   # Skip when testing locally with 'act' 
+        uses: actions/upload-artifact@v4
+        with:
+          name: matlab-code-analysis
+          path: |
+            code-analysis-report.md     # Human-readable markdown report
+            code-analysis-report.json   # Machine-readable JSON report
+          if-no-files-found: warn       # Warn but don't fail if reports missing
+          retention-days: 30
+
+  # =============================================================================
+  # JOB 2: poly-tools
+  # PURPOSE: Test polynomial operations by comparing against reference implementation
+  # =============================================================================
+  poly-tools:
+    name: Polynomial Operations
+    runs-on: ubuntu-latest
+
+    permissions:
+      checks: write
+      contents: write
+      pull-requests: write
+      statuses: write 
+    
+    steps:
+      # STEP 1: Checkout the main repository code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # STEP 2: Setup MATLAB environment
+      - name: Setup MATLAB
+        uses: ./.github/actions/MATLAB-setup
+        with:
+          message: "Setup MATLAB"
+
+      # STEP 3: Setup CasADi
+      - name: Setup CasADi
+        uses: ./.github/actions/CasADi-setup
+        with:
+          message: "Setup CasADi"
+
+      # STEP 4: Get reference values
+      - name: Get reference values
+        run: |
+          # download from release assets the .mat file containing the references
+          wget -O tests/references/reference_values.mat  \
+            https://github.com/casos-opti/casos/releases/download/v1.0.1-pre.2/reference_values.mat
+
+      # STEP 5: Run core polynomial operations tests
+      - name: Run tests
+        uses: matlab-actions/run-command@v2
+        with:
+          command: |
+            % Get the root directory
+            rootDir = pwd;
+            
+            % Add the scripts directory from .github
+            addpath(fullfile(rootDir, '.github', 'scripts'));
+
+            % Also add test directories as before
+            addpath(genpath(fullfile(rootDir, 'tests')));
+            addpath(genpath(rootDir));
+
+            % Now run the test script
+            core_tests;
+
+            % Exit with the test result code
+            exit(exitCode);
+      
+      # STEP 6: Store test result for later use
+      - name: Store test result
+        if: always()
+        run: |
+          if [ -f test_status.txt ]; then
+            status=$(head -n 1 test_status.txt)
+            if [ "$status" = "FAILED" ]; then
+              echo "CORE_TESTS_FAILED=true" >> $GITHUB_ENV
+              echo "CORE_TESTS_FAILED=true" >> $GITHUB_OUTPUT
+            else
+              echo "CORE_TESTS_FAILED=false" >> $GITHUB_ENV
+              echo "CORE_TESTS_FAILED=false" >> $GITHUB_OUTPUT
+            fi
+          else
+            # If step failed before creating test_status.txt
+            if [ "${{ steps.core_tests.outcome }}" = "failure" ]; then
+              echo "CORE_TESTS_FAILED=true" >> $GITHUB_ENV
+              echo "CORE_TESTS_FAILED=true" >> $GITHUB_OUTPUT
+            else
+              echo "CORE_TESTS_FAILED=false" >> $GITHUB_ENV
+              echo "CORE_TESTS_FAILED=false" >> $GITHUB_OUTPUT
+            fi
+          fi
+
+      # STEP 7: Fail the job if tests failed (after capturing results)
+      - name: Fail if tests failed
+        if: env.CORE_TESTS_FAILED == 'true'
+        run: exit 1
+          
+  # =============================================================================
+  # JOB 3: sdp-tools
+  # PURPOSE: Test SDP solver interfaces (Mosek, SeDuMi, Clarabel, SCS)
+  # =============================================================================
+  sdp-tools:
+    name: SDP solvers
+    runs-on: ubuntu-latest
+
+    permissions:
+      checks: write
+      contents: write
+      pull-requests: write
+      statuses: write 
+    
+    steps:
+      # STEP 1: Checkout the main repository code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # STEP 2: Setup MATLAB environment
+      - name: Setup MATLAB
+        uses: ./.github/actions/MATLAB-setup
+        with:
+          message: "Setup MATLAB"
+
+      # STEP 3: Setup CasADi 
+      - name: Setup CasADi
+        uses: ./.github/actions/CasADi-setup
+        with:
+          message: "Setup CasADi"
+
+      # STEP 4: Setup optimization solvers
+      # Installs and configures Mosek and SeDuMi solvers
+      - name: Setup Solvers
+        uses: ./.github/actions/solvers-setup
+        with:
+          message: "Setup solvers (Mosek, sedumi)"
+
+      # STEP 5: Get reference values
+      - name: Get reference values
+        run: |
+          # download from release assets the .mat file containing the references
+          wget -O tests/references/reference_values.mat  \
+            https://github.com/iFR-OFC/casos/releases/download/v1.0.1-pre.2/reference_values.mat
+
+      # STEP 6: Test solver interfaces
+      # Validates that all solvers work correctly with our code
+      - name: Run tests
+        uses: matlab-actions/run-command@v2
+        with:
+          command: |
+            % Get the root directory
+            rootDir = pwd;
+            
+            % Add the scripts directory from .github
+            addpath(fullfile(rootDir, '.github', 'scripts'));
+
+            % Also add test directories as before
+            addpath(genpath(fullfile(rootDir, 'tests')));
+            addpath(genpath(rootDir));
+
+            % Now run the test script
+            solvers_test;
+
+            % Exit with the test result code
+            exit(exitCode);
+
+      # STEP 7: Store test result
+      - name: Store test result
+        if: always()
+        run: |
+          if [ -f test_status.txt ]; then
+            status=$(head -n 1 test_status.txt)
+            if [ "$status" = "FAILED" ]; then
+              echo "SOLVERS_TESTS_FAILED=true" >> $GITHUB_ENV
+            else
+              echo "SOLVERS_TESTS_FAILED=false" >> $GITHUB_ENV
+            fi
+          else
+            if [ "${{ steps.solvers_tests.outcome }}" = "failure" ]; then
+              echo "SOLVERS_TESTS_FAILED=true" >> $GITHUB_ENV
+            else
+              echo "SOLVERS_TESTS_FAILED=false" >> $GITHUB_ENV
+            fi
+          fi
+
+      # STEP 8: Fail if tests failed
+      - name: Fail if tests failed
+        if: env.SOLVERS_TESTS_FAILED == 'true'
+        run: exit 1
+   
+  # =============================================================================
+  # JOB 4: demo-check
+  # PURPOSE: Verify that all demo scripts execute without errors
+  # DEPENDENCIES: Requires successful solver tests (sdp-tools)
+  # =============================================================================
+  demo-check:
+    name: Demos analysis
+    needs: sdp-tools      # Only run if solver tests pass
+    runs-on: ubuntu-latest
+  
+    permissions:
+      checks: write
+      contents: write
+      pull-requests: write
+      statuses: write 
+
+    steps:
+      # STEP 1: Checkout the main repository code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # STEP 2: Setup MATLAB environment
+      - name: Setup MATLAB
+        uses: ./.github/actions/MATLAB-setup
+        with:
+          message: "Setup MATLAB"
+
+      # STEP 3: Setup CasADi
+      - name: Setup CasADi
+        uses: ./.github/actions/CasADi-setup
+        with:
+          message: "Setup CasADi"
+
+      # STEP 4: Setup optimization solvers
+      - name: Setup Solvers
+        uses: ./.github/actions/solvers-setup
+        with:
+          message: "Setup solvers"
+
+      # STEP 5: Execute all demo scripts
+      # Runs each .m file in the demo directory, capturing errors without failing the job
+      # This allows us to see which demos fail vs. stopping at first failure
+      - name: Run tests with test_runner
+        uses: matlab-actions/run-command@v2
+        with:
+          command: |
+            % Get the root directory
+            rootDir = pwd;
+            
+            % Add the scripts directory from .github
+            addpath(fullfile(rootDir, '.github', 'scripts'));
+
+            addpath(genpath(rootDir));
+
+            % Now run the test script
+            demo_tests;
+
+            % Exit with the test result code
+            exit(exitCode);
+
+      # STEP 6: Store test result
+      - name: Store test result
+        if: always()
+        run: |
+          if [ -f test_status.txt ]; then
+            status=$(head -n 1 test_status.txt)
+            if [ "$status" = "FAILED" ]; then
+              echo "DEMO_TESTS_FAILED=true" >> $GITHUB_ENV
+            else
+              echo "DEMO_TESTS_FAILED=false" >> $GITHUB_ENV
+            fi
+          else
+            if [ "${{ steps.demo_tests.outcome }}" = "failure" ]; then
+              echo "DEMO_TESTS_FAILED=true" >> $GITHUB_ENV
+            else
+              echo "DEMO_TESTS_FAILED=false" >> $GITHUB_ENV
+            fi
+          fi
+
+      # STEP 7: Fail if tests failed
+      - name: Fail if tests failed
+        if: env.DEMO_TESTS_FAILED == 'true'
+        run: exit 1
+           
+  # =============================================================================
+  # JOB 5: notify-failures
+  # PURPOSE: Comment on PR if any test jobs failed
+  # DEPENDENCIES: Runs after all test jobs complete
+  # =============================================================================
+  notify-failures:
+    name: Notify Test Failures
+    needs: [poly-tools, sdp-tools, demo-check]
+    if: always() && github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    
+    permissions:
+      pull-requests: write
+      contents: read
+      
+    steps:
+      - name: Check test statuses
+        id: check_status
+        run: |
+          # Check if any of the jobs failed
+          if [[ "${{ needs.poly-tools.result }}" == "failure" || \
+                "${{ needs.poly-tools.result }}" == "cancelled" || \
+                "${{ needs.sdp-tools.result }}" == "failure" || \
+                "${{ needs.sdp-tools.result }}" == "cancelled" || \
+                "${{ needs.demo-check.result }}" == "failure" || \
+                "${{ needs.demo-check.result }}" == "cancelled" ]]; then
+            echo "tests_failed=true" >> $GITHUB_OUTPUT
+            echo "Some tests failed!" 
+          else
+            echo "tests_failed=false" >> $GITHUB_OUTPUT
+            echo "All tests passed!" 
+          fi
+
+      - name: Comment PR about failures
+        if: steps.check_status.outputs.tests_failed == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const runId = '${{ github.run_id }}';
+            const repo = '${{ github.repository }}';
+            const serverUrl = '${{ github.server_url }}';
+            const workflowName = '${{ github.workflow }}';
+            
+            // Collect which jobs failed
+            const jobStatuses = {
+              'Polynomial Operations': '${{ needs.poly-tools.result }}',
+              'SDP Solvers': '${{ needs.sdp-tools.result }}',
+              'Demos Analysis': '${{ needs.demo-check.result }}'
+            };
+            
+            let failedJobs = [];
+            let jobList = '';
+            for (const [job, status] of Object.entries(jobStatuses)) {
+              if (status === 'failure' || status === 'cancelled') {
+                failedJobs.push(job);
+                jobList += `- ❌ **${job}**: Failed\n`;
+              } else if (status === 'success') {
+                jobList += `- ✅ **${job}**: Passed\n`;
+              } else {
+                jobList += `- ⏳ **${job}**: ${status}\n`;
+              }
+            }
+            
+            const commentBody = `## ❌ Test Failures Detected in ${workflowName}
+
+            The following test suite(s) have failed:
+
+            ${jobList}
+
+            For detailed results, check the [complete test report](${serverUrl}/${repo}/actions/runs/${runId}).
+
+            ---
+            *This comment updates automatically.*`;
+
+            // Find and update existing comment, or create new one
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(comment => 
+              comment.user.type === 'Bot' && 
+              comment.body.includes('Test Failures Detected')
+            );
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: commentBody,
+              });
+              console.log('Updated existing failure comment');
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: commentBody,
+              });
+              console.log('Created new failure comment');
+            }
+
+      - name: Remove failure comment if all passed
+        if: steps.check_status.outputs.tests_failed == 'false'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Remove existing failure comments if tests are now passing
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComments = comments.filter(comment => 
+              comment.user.type === 'Bot' && 
+              comment.body.includes('Test Failures Detected')
+            );
+
+            for (const comment of botComments) {
+              await github.rest.issues.deleteComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: comment.id,
+              });
+              console.log('Removed old failure comment');
+            }
+

@@ -1,0 +1,254 @@
+# SPDX-FileCopyrightText: 2026 Institute of Flight Mechanics and Controls, University of Stuttgart
+# SPDX-FileCopyrightText: Author(s): Torbjørn Cunis and Renato Loureiro <tcunis@ifr.uni-stuttgart.de>
+# SPDX-FileContributor: For a full list of contributors, see <https://github.com/casos-opti/casos>
+#
+# SPDX-License-Identifier: GPL-3.0-only
+
+name: REUSE Compliance Check
+
+on: 
+  pull_request:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pull-requests: write # Added to allow commenting on PRs
+  issues: write # Added for issue/PR comments
+
+jobs:
+  reuse-compliance-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install REUSE
+        run: pip install reuse
+
+      - name: Check all files
+        id: check
+        run: |
+          # Run the check and capture both stdout and stderr
+          set +e  # Temporarily disable exit on error
+          reuse lint 2>&1 | tee reuse-lint-output.txt
+
+          # Run REUSE check and capture output
+          echo "# REUSE Compliance Check Results" > reuse-report.md
+          echo "" >> reuse-report.md
+
+          # Capture exit code
+          EXIT_CODE=${PIPESTATUS[0]}
+          set -e  # Re-enable exit on error
+
+          # Get total files 
+          total_files=$(git ls-files | wc -l)
+          echo "DEBUG: Total files: $total_files"
+
+          # Check if any .m files have issues by looking at the output
+          non_compliant_count=0
+
+          # Create a list of all non-compliant files
+          declare -a non_compliant_files=()
+
+          # Check MISSING COPYRIGHT section
+          in_copyright_section=0
+          while IFS= read -r line; do
+            if [[ $line == *"MISSING COPYRIGHT"* ]]; then
+              in_copyright_section=1
+              continue
+            fi
+            if [[ $line == *"MISSING LICENSES"* ]] || [[ $line == *"SUMMARY"* ]]; then
+              in_copyright_section=0
+            fi
+            if [[ $in_copyright_section -eq 1 ]] && [[ $line == "* "* ]]; then
+              # Extract filename (skip the "* " prefix)
+              file=$(echo "$line" | sed 's/^\* //' | xargs)
+              if [[ -n "$file" ]]; then
+                echo "DEBUG: Found non-compliant file in copyright section: $file"
+                non_compliant_files+=("$file")
+                non_compliant_count=$((non_compliant_count + 1))
+              fi
+            fi
+          done < reuse-lint-output.txt
+
+          # Check MISSING LICENSES section
+          in_licenses_section=0
+          while IFS= read -r line; do
+            if [[ $line == *"MISSING LICENSES"* ]]; then
+              in_licenses_section=1
+              continue
+            fi
+            if [[ $line == *"MISSING COPYRIGHT"* ]] || [[ $line == *"SUMMARY"* ]]; then
+              in_licenses_section=0
+            fi
+            if [[ $in_licenses_section -eq 1 ]] && [[ $line == "* "* ]]; then
+              # Extract filename (skip the "* " prefix)
+              file=$(echo "$line" | sed 's/^\* //' | xargs)
+              if [[ -n "$file" ]]; then
+                echo "DEBUG: Found non-compliant file in licenses section: $file"
+                non_compliant_files+=("$file")
+                non_compliant_count=$((non_compliant_count + 1))
+              fi
+            fi
+          done < reuse-lint-output.txt
+
+          # Remove duplicates from non_compliant_files
+          non_compliant_files=($(printf "%s\n" "${non_compliant_files[@]}" | sort -u))
+          non_compliant_count=${#non_compliant_files[@]}
+
+          echo "DEBUG: Total non-compliant files: $non_compliant_count"
+
+          if [ $non_compliant_count -gt 0 ]; then
+            echo "DEBUG: Found non-compliant files, entering FAILED branch"
+            # There are issues with files
+            echo "## Files Checked" >> reuse-report.md
+            echo "" >> reuse-report.md
+            echo "| File | Status |" >> reuse-report.md
+            echo "|------|--------|" >> reuse-report.md
+
+            # Process all non-compliant files
+            in_copyright_section=0
+            in_licenses_section=0
+
+            for file in "${non_compliant_files[@]}"; do
+              # Determine the issue type by scanning the output
+              if grep -q "MISSING COPYRIGHT.*$file" reuse-lint-output.txt; then
+                echo "| $file |  Missing copyright/license |" >> reuse-report.md
+              elif grep -q "MISSING LICENSES.*$file" reuse-lint-output.txt; then
+                echo "| $file |  Missing license file |" >> reuse-report.md
+              else
+                echo "| $file |  Non-compliant |" >> reuse-report.md
+              fi
+            done
+
+            # Count compliant files
+            compliant_count=$((total_files - non_compliant_count))
+
+            if [ $compliant_count -gt 0 ]; then
+              echo "| $compliant_count other file(s) |  Compliant |" >> reuse-report.md
+            fi
+
+            echo "" >> reuse-report.md
+            echo "## Final Status:  FAILED" >> reuse-report.md
+            echo "" >> reuse-report.md
+            echo "**Non-compliant files found. Please add license identifiers and copyright notices.**" >> reuse-report.md
+
+            # Set output
+            echo "non_compliant=true" >> $GITHUB_OUTPUT
+            echo "exit_code=1" >> $GITHUB_OUTPUT
+            exit 1
+          else
+            echo "DEBUG: No non-compliant files found, entering PASSED branch"
+            # All files are compliant
+            echo "## Files Checked" >> reuse-report.md
+            echo "" >> reuse-report.md
+            echo "| File | Status |" >> reuse-report.md
+            echo "|------|--------|" >> reuse-report.md
+            echo "| All $total_files files |  Compliant |" >> reuse-report.md
+            echo "" >> reuse-report.md
+            echo "## Final Status:  PASSED" >> reuse-report.md
+            echo "" >> reuse-report.md
+            echo "**All files are compliant!**" >> reuse-report.md
+
+            # Set output
+            echo "non_compliant=false" >> $GITHUB_OUTPUT
+            echo "exit_code=0" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+      - name: Upload REUSE report as artifact
+        if: always() # Always upload even if previous step failed
+        uses: actions/upload-artifact@v4
+        with:
+          name: reuse-compliance-report
+          path: reuse-report.md
+          retention-days: 30
+
+      - name: Display report in job summary
+        if: always() # Always display even if previous step failed
+        run: cat reuse-report.md >> $GITHUB_STEP_SUMMARY
+
+      - name: Simple PR comment for non-compliant files
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const nonCompliant = '${{ steps.check.outputs.non_compliant }}' === 'true';
+            
+            console.log('Non-compliant files detected:', nonCompliant);
+
+            // Check if we have any non-compliant files
+            if (!nonCompliant) {
+              console.log('No non-compliant files found - checking for existing comments to remove');
+              
+              // Find and remove any existing REUSE compliance comments
+              const { data: comments } = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+              });
+
+              const botComments = comments.filter(comment => 
+                comment.user.type === 'Bot' && 
+                comment.body.includes('REUSE Compliance Issues Detected')
+              );
+
+              for (const comment of botComments) {
+                await github.rest.issues.deleteComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: comment.id,
+                });
+                console.log(`Removed existing REUSE compliance comment ${comment.id}`);
+              }
+              return;
+            }
+
+            // Build the comment body with detailed information
+            const runId = '${{ github.run_id }}';
+            const repo = '${{ github.repository }}';
+            const serverUrl = '${{ github.server_url }}';
+            const workflowName = '${{ github.workflow }}';
+            
+            // Optional: Get list of non-compliant files from your check step
+            const nonCompliantFiles = '${{ steps.check.outputs.non_compliant_files }}' || 'Check the workflow run for details';
+            
+            const commentBody = `#### REUSE Compliance Issues Detected
+            Non-compliant files were found in this pull request. Please add the required license identifiers and copyright notices. For detailed results, check the [REUSE compliance report](${serverUrl}/${repo}/actions/runs/${runId}).
+      
+            ---
+            *This comment updates automatically.*`;
+
+            console.log('Creating/updating REUSE compliance comment');
+
+            // Find existing comment or create new one (similar to your notification system)
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(comment => 
+              comment.user.type === 'Bot' && 
+              comment.body.includes('REUSE Compliance Issues Detected')
+            );
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: commentBody,
+              });
+              console.log('Updated existing REUSE compliance comment');
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: commentBody,
+              });
+              console.log('Created new REUSE compliance comment');
+            }
+
