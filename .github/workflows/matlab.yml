@@ -57,7 +57,7 @@ jobs:
       - name: Checkout coding guidelines
         uses: actions/checkout@v4
         with:
-          repository: iFR-OFC/casos-coding-guidelines
+          repository: casos-opti/casos-coding-guidelines
           path: casos-coding-guidelines
 
       # STEP 3: Debug - List files for verification
@@ -143,7 +143,7 @@ jobs:
         run: |
           # download from release assets the .mat file containing the references
           wget -O tests/references/reference_values.mat  \
-            https://github.com/iFR-OFC/casos/releases/download/v1.0.1-pre.2/reference_values.mat
+            https://github.com/casos-opti/casos/releases/download/v1.0.1-pre.2/reference_values.mat
 
       # STEP 5: Run core polynomial operations tests
       - name: Run tests
