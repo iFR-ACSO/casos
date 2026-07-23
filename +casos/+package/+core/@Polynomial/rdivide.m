@@ -17,7 +17,7 @@ szb = size(b);
 I0 = (szp == 0) | (szb == 0);
 
 % dimensions are compatible if equal or one summand is row/column
-if ~check_sz_comptbl(p,b)
+if ~check_sz_basic(p,b)
     throw(casos.package.core.IncompatibleSizesError.basic(p,b));
 end
 

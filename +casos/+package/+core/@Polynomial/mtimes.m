@@ -12,7 +12,7 @@ if isscalar(a) || isscalar(b)
     c = times(a,b);
     return
 
-elseif ~check_sz_mtimes(a,b)
+elseif ~check_sz_matrix(a,b)
     % dimensions are compatible if size(a,2) == size(b,1)
     throw(casos.package.core.IncompatibleSizesError.matrix(a,b));
 

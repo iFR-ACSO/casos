@@ -31,8 +31,17 @@ switch (dim)
     otherwise
         if (isempty(a) && isempty(b))
             % concatenation of empty polynomials
-            sz = size(a) + size(b);
-            sz(dim) = 0;        % result is empty along dimension
+            sza = size(a);
+            szb = size(b);
+
+            if (sza(3-dim) == 0 && szb(3-dim) == 0)
+                % concatenate along non-empty dimension
+                sz = sza + szb;
+            else
+                % result is empty along dimension
+                sz(dim) = min(sza(dim), szb(dim));
+                sz(3-dim) = max(sza(3-dim), szb(3-dim));
+            end
             c = a.empty(sz);
             return
 
