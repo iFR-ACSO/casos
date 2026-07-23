@@ -13,7 +13,8 @@ if nargin < 2
     S = sparsity(obj);
     coeffs = obj.coeffs;
 
-elseif ~isscalar(obj) && ~islogical(S) && ~check_sz_equal(obj,S)
+elseif ~isscalar(obj) && ~islogical(S) ...
+         && ~(isempty(obj) && isempty(S)) && ~check_sz_equal(obj,S)
     % dimension mismatch
     throw(casos.package.core.IncompatibleSizesError.other(obj,S));
 
