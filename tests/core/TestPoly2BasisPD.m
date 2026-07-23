@@ -82,7 +82,7 @@ end
 methods
     function evaluate_poly2basis(test_case, value, basis, reference)
         % Evaluate poly2basis operation.
-        if ~isscalar(value) && ~isequal(size(value),size(basis))
+        if ~isscalar(value) && ~(isequal(size(value),[0 0]) && isempty(basis)) && ~isequal(size(value),size(basis))
             % size mismatch
             diagtext = sprintf('Dimension mismatch expected: %s vs. %s.',mat2str(size(value)),mat2str(size(basis)));
             test_case.verifyError(@() poly2basis(value,basis),?casos.package.core.IncompatibleSizesError,diagtext);

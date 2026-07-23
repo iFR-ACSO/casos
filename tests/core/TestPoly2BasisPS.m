@@ -86,7 +86,7 @@ methods
         % symbolic polynomial
         [p,symbol,argument] = test_case.get_operand(true,value);
 
-        if ~isscalar(value) && ~isequal(size(value),size(basis))
+        if ~isscalar(value) && ~(isequal(size(value),[0 0]) && isempty(basis)) && ~isequal(size(value),size(basis))
             % size mismatch
             diagtext = sprintf('Dimension mismatch expected: %s vs. %s.',mat2str(size(value)),mat2str(size(basis)));
             test_case.verifyError(@() poly2basis(p,basis),?casos.package.core.IncompatibleSizesError,diagtext);
