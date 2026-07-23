@@ -9,7 +9,16 @@ function res = eval_horzcat(arg1,arg2)
 
 % detect empty polynomials
 if (isempty(arg1) && isempty(arg2))
-    res = polynomial(zeros(size(arg1,1)+size(arg2,1),0));
+    if (size(arg1,1) == 0 && size(arg2,1) == 0)
+        sz = size(arg1) + size(arg2);
+    else
+        sz = [
+            max(size(arg1,1),size(arg2,1))
+            min(size(arg1,2),size(arg2,2))
+        ]';
+    end
+    
+    res = polynomial(zeros(sz));
     return
 
 elseif isempty(arg1)
