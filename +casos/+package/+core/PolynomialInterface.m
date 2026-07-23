@@ -48,16 +48,18 @@ end
 
 methods (Access=protected)
     %% Utilities
-    function tf = check_sz_assign(a,b)
+    function [tf,sz] = check_sz_assign(a,b)
         % Check if sizes are compatible for matrix assignment.
         sza = size(a);
         szb = size(b);
 
         % dimensions are compatible if equal or right side is row/column
         tf = all(sza == szb | szb == 1);
+        % size of left side does not change
+        sz = sza;
     end
 
-    function tf = check_sz_basic(a,b)
+    function [tf,sz] = check_sz_basic(a,b)
         % Check if sizes are compatible for basic (array) operations.
         % input dimensions
         sza = size(a);
@@ -65,26 +67,36 @@ methods (Access=protected)
         
         % compare dimensions
         I = (sza == szb);
+        % find zero dimension
+        I0 = (sza == 0) | (szb == 0);
         % find one dimension
         I1 = (sza == 1) | (szb == 1);
         
         % dimensions are compatible if equal or one summand is row/column
         tf = all(I | I1);
+
+        % dimensions of result
+        sz = max(sza,szb);
+        % operation with empty operands is empty
+        sz(I0) = 0;
     end
 
-    function tf = check_sz_equal(a,b)
+    function [tf,sz] = check_sz_equal(a,b)
         % Check if two objects have same size.
-        tf = isequal(size(a),size(b));
+        sz = size(a);
+        tf = isequal(sz,size(b));
     end
 
-    function tf = check_sz_matrix(a,b)
+    function [tf,sz] = check_sz_matrix(a,b)
         % Check if sizes are compatible for matrix multiplication.
         tf = size(a,2) == size(b,1);
+        sz = [size(a,1) size(b,2)];
     end
 
-    function tf = check_sz_square(a)
+    function [tf,sz] = check_sz_square(a)
         % Check if matrix is square.
-        tf = isequal(size(a,1),size(a,2));
+        sz = size(a);
+        tf = isequal(sz(1),sz(2));
     end
 end
 

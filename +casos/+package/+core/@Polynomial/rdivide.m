@@ -13,22 +13,16 @@ assert(is_zerodegree(b),'Only division by constant or symbolic matrix possible.'
 szp = size(p);
 szb = size(b);
 
-% find zero dimension
-I0 = (szp == 0) | (szb == 0);
-
 % dimensions are compatible if equal or one summand is row/column
-if ~check_sz_basic(p,b)
+[tf,sz] = check_sz_basic(p,b);
+
+if (~tf)
     throw(casos.package.core.IncompatibleSizesError.basic(p,b));
 end
-
-% dimensions of element-wise product
-sz = max(szp,szb);
 
 % handle simple case(s) for speed up
 if isempty(p) || isempty(b)
     % element-wise multiplication with empty polynomial is empty
-    sz(I0) = 0;
-
     c = p.empty(sz);
     return
 end

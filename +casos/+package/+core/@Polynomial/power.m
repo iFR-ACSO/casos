@@ -11,22 +11,16 @@ function b = power(a,n)
 sza = size(a);
 szn = size(n);
 
-% find zero dimension
-I0 = (sza == 0) | (szn == 0);
-
 % dimensions are compatible if equal or one summand is row/column
-if ~check_sz_basic(a,n)
+[tf,sz] = check_sz_basic(a,n);
+
+if (~tf)
     throw(casos.package.core.IncompatibleSizesError.basic(a,n));
 end
-
-% dimensions of sum
-sz = max(sza,szn);
 
 % handle simple case(s) for speed up
 if isempty(a) || isempty(n)
     % element-wise power with empty polynomial/exponent is empty
-    sz(I0) = 0;
-
     b = a.zeros(sz);
     return
 

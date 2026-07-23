@@ -11,22 +11,16 @@ function c = plus(a,b)
 sza = size(a);
 szb = size(b);
 
-% find zero dimension
-I0 = (sza == 0) | (szb == 0);
-
 % dimensions are compatible if equal or one summand is row/column
-if ~check_sz_basic(a,b)
+[tf,sz] = check_sz_basic(a,b);
+
+if (~tf)
     throw(casos.package.core.IncompatibleSizesError.basic(a,b));
 end
-
-% dimensions of sum
-sz = max(sza,szb);
 
 % handle simple case(s) for speed up
 if isempty(a) || isempty(b)
     % addition with empty polynomial is empty
-    sz(I0) = 0;
-
     c = a.empty(sz);
     return
 end
