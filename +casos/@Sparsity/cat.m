@@ -19,24 +19,28 @@ end
 a = casos.Sparsity(varargin{1});
 b = casos.Sparsity(varargin{2});
 
-% concatenation with empty polynomial
-if (isempty(a) && isempty(b))
-    sz = size(a) + size(b);
-    sz(dim) = 0;            % result is empty along dimension
+[tf,sz] = check_sz_concat(dim,a,b);
+
+if (~tf)
+    % dimensions are consistent if size(a,~dim) == size(b,~dim)
+    throw(casos.package.core.IncompatibleSizesError.concat(a,b));
+
+elseif (isempty(a) && isempty(b))
+    % concatenation of empty polynomials
     c = casos.Sparsity(sz);
     return
 
 elseif isempty(a)
+    % concatenation of b with empty polynomial
     c = b;
     return
 
 elseif isempty(b)
+    % concatenation of a with empty polynomial
     c = a;
     return
 
-elseif (size(a,3-dim) ~= size(b,3-dim))
-    % dimensions are consistent if size(a,~dim) == size(b,~dim)
-    throw(casos.package.core.IncompatibleSizesError.concat(a,b));
+else
 end
 
 % concatenate coefficient matrices

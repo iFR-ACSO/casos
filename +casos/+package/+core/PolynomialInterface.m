@@ -61,7 +61,6 @@ methods (Access=protected)
 
     function [tf,sz] = check_sz_basic(a,b)
         % Check if sizes are compatible for basic (array) operations.
-        % input dimensions
         sza = size(a);
         szb = size(b);
         
@@ -79,6 +78,38 @@ methods (Access=protected)
         sz = max(sza,szb);
         % operation with empty operands is empty
         sz(I0) = 0;
+    end
+
+    function [tf,sz] = check_sz_concat(dim,a,b)
+        % Check if sizes are compatible for concatenation.
+        sza = size(a);
+        szb = size(b);
+
+        % find zero dimension
+        I0 = (sza == 0) | (szb == 0);
+
+        % dimensions are consistent if size(a,~dim) == size(b,~dim)
+        % unless either operand is empty or diagonal concatenation
+        tf = (dim == 0) || any(I0) || (sza(3-dim) == (szb(3-dim)));
+
+        if (dim == 0) || (sza(3-dim) == 0 && szb(3-dim) == 0)
+            % concatenate both (non-empty) dimensions
+            sz = sza + szb;
+        elseif any(sza == 0) && any(szb == 0)
+            % concatenation of empty polynomials
+            sz(dim) = min(sza(dim), szb(dim));
+            sz(3-dim) = max(sza(3-dim), szb(3-dim));
+        elseif any(sza == 0)
+            % concatenation of b with empty polynomial
+            sz = szb;
+        elseif any(szb == 0)
+            % concatenation of a with empty polynomial
+            sz = sza;
+        else
+            % concatenate along dimension
+            sz(dim) = sza(dim) + szb(dim);
+            sz(3-dim) = sza(3-dim);
+        end
     end
 
     function [tf,sz] = check_sz_equal(a,b)

@@ -29,19 +29,14 @@ switch (dim)
         c = blockcat(a,ul,rl,b);
 
     otherwise
-        if (isempty(a) && isempty(b))
-            % concatenation of empty polynomials
-            sza = size(a);
-            szb = size(b);
+        [tf,sz] = check_sz_concat(dim,a,b);
 
-            if (sza(3-dim) == 0 && szb(3-dim) == 0)
-                % concatenate along non-empty dimension
-                sz = sza + szb;
-            else
-                % result is empty along dimension
-                sz(dim) = min(sza(dim), szb(dim));
-                sz(3-dim) = max(sza(3-dim), szb(3-dim));
-            end
+        if (~tf)
+            % dimensions are consistent if size(a,~dim) == size(b,~dim)
+            throw(casos.package.core.IncompatibleSizesError.concat(a,b));
+
+        elseif (isempty(a) && isempty(b))
+            % concatenation of empty polynomials
             c = a.empty(sz);
             return
 
@@ -54,10 +49,6 @@ switch (dim)
             % concatenation of a with empty polynomial
             c = a;
             return
-
-        elseif (size(a,3-dim) ~= size(b,3-dim))
-            % dimensions are consistent if size(a,~dim) == size(b,~dim)
-            throw(casos.package.core.IncompatibleSizesError.concat(a,b));
         end
 
         % generic concatenation
