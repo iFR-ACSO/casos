@@ -15,6 +15,14 @@ if nargin < 2
     warning('Deprecated: Use sparsity() instead.')
     S = sparsity(p);
 
+elseif (numel(p) ~= length(I))
+    % dimension mismatch
+    error('Dimension mismatch.')
+
+elseif isempty(p) || all(~I)
+    % return empty basis
+    S = casos.Sparsity(0,1);
+
 else
     % return sparsity of subindex
     S = sub(p.get_sparsity,find(I),casos.Sparsity(nnz(I),1));
