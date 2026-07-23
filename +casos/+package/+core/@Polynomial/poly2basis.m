@@ -14,7 +14,7 @@ if nargin < 2
     coeffs = obj.coeffs;
 
 elseif ~isscalar(obj) && ~islogical(S) ...
-         && ~(isempty(obj) && isempty(S)) && ~check_sz_equal(obj,S)
+         && ~(all(size(obj) == 0) && isempty(S)) && ~check_sz_equal(obj,S)
     % dimension mismatch
     throw(casos.package.core.IncompatibleSizesError.other(obj,S));
 
