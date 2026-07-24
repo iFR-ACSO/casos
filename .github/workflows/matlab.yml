@@ -9,8 +9,8 @@ name: Complete integration test
 # WORKFLOW PURPOSE:
 # This workflow performs a complete integration test of the codebase, including:
 # 1. Code quality analysis for MATLAB files
-# 2. Testing polynomial operations against reference implementation
-# 3. Testing SDP solver interfaces (Mosek, SeDuMi)
+# 2. Testing polynomial operations against reference implementation (core tests)
+# 3. Testing convex solver interfaces (Mosek, SeDuMi)
 # 4. Verifying all demo scripts execute without errors
 
 on:
@@ -37,7 +37,7 @@ jobs:
   # This job checks code quality and generates reports before running tests
   # =============================================================================
   code-analysis:
-    name: MATLAB Code Analysis
+    name: MATLAB code analysis
     runs-on: ubuntu-latest
 
     # Grant necessary permissions for GitHub integrations
@@ -112,7 +112,7 @@ jobs:
   # PURPOSE: Test polynomial operations by comparing against reference implementation
   # =============================================================================
   poly-tools:
-    name: Polynomial Operations
+    name: Core tests
     runs-on: ubuntu-latest
 
     permissions:
@@ -203,7 +203,7 @@ jobs:
   # PURPOSE: Test SDP solver interfaces (Mosek, SeDuMi, Clarabel, SCS)
   # =============================================================================
   sdp-tools:
-    name: SDP solvers
+    name: Convex solvers
     runs-on: ubuntu-latest
 
     permissions:
@@ -418,9 +418,9 @@ jobs:
             
             // Collect which jobs failed
             const jobStatuses = {
-              'Polynomial Operations': '${{ needs.poly-tools.result }}',
-              'SDP Solvers': '${{ needs.sdp-tools.result }}',
-              'Demos Analysis': '${{ needs.demo-check.result }}'
+              'Core tests': '${{ needs.poly-tools.result }}',
+              'Convex solvers': '${{ needs.sdp-tools.result }}',
+              'Demos analysis': '${{ needs.demo-check.result }}'
             };
             
             let failedJobs = [];
