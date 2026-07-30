@@ -30,7 +30,7 @@ lhs = I.(idx);
 
 % dimensions are compatible if equal or right side is row/column
 if ~check_sz_assign(lhs,q)
-    throw(casos.package.core.IncompatibleSizesError.other(lhs,q))
+    throw(casos.package.core.IncompatibleSizesError.assign(lhs,q))
 end
 
 % reshape coefficients to referenced size

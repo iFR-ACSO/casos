@@ -8,10 +8,12 @@ function spy(obj)
 % Visualize polynomial sparsity pattern.
 
 [degree,L] = get_degree(obj);
+% repeat degree vector to match logical matrix
+degree = repmat(degree,numel(obj),1);
 
 % degrees of each term
 degrees = spalloc(size(L,1),size(L,2),nnz(L));
-degrees(L) = degree;
+degrees(L) = degree(L);
 
 % element-wise max degree
 maxdeg = max(degrees,[],2);
@@ -25,7 +27,8 @@ out = cell(size(obj));
 % set per-element output (sparse zero = ., constant = *, degree = k)
 out(~Lnz) = {'.'};
 out(Lnz & maxdeg == 0) = {'*'};
-out(maxdeg > 0) = compose('%d',full(maxdeg(maxdeg > 0)));
+out(Lnz & maxdeg > 9) = {'x'};
+out(maxdeg > 0 & maxdeg < 10) = compose('%d',full(maxdeg(maxdeg > 0 & maxdeg < 10)));
 
 % print output to command line
 disp(cell2mat(out))

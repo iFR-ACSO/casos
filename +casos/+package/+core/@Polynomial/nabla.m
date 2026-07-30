@@ -9,6 +9,12 @@ function g = nabla(f,x)
 
 assert(is_indet(x), 'Second argument must be vector of indeterminates.')
 
+if (isempty(f) || isempty(x))
+    % empty Jacobian matrix
+    g = f.empty(numel(f),length(x));
+    return
+end
+
 g = f.new_poly;
 
 % compute coefficient matrix of Jacobian

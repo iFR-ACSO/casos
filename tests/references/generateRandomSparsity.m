@@ -4,7 +4,7 @@
 %
 % SPDX-License-Identifier: GPL-3.0-only
 
-function sp = generateRandomSparsity(sz,variables,degmax)
+function sp = generateRandomSparsity(sz,variables,degmax,density,monomial)
 % Generate a random sparsity pattern.
 
 select_variables = (randn(length(variables),1) > 0);
@@ -15,30 +15,50 @@ x = variables(select_variables);
 % number of variables
 n = length(x);
 
-% create indices (0-index)
+% create subindices (0-index)
 I = 0:sz(1)-1;
 J = 0:sz(2)-1;
 
-% create degree vector
-D = cell(1,n);
-D(:) = {0:degmax};
+% permute subindices
+[I,J] = ndgrid(I,J);
 
-% permute indices and degrees
-[I,J,D{:}] = ndgrid(I,J,D{:});
+% create linear indices
+idx = 1:numel(I);
 
-% select random indices and degrees
-select_entries = (randn(numel(I),1) > 0);
+if (nargin > 3 && density < 1)
+    % generate matrix sparsity
+    idx(rand(size(idx)) > density) = 0;
+end
 
-i = squeeze(I(select_entries));
-j = squeeze(J(select_entries));
+if (nargin > 4 && monomial)
+    % create matrix of monomials
+    D = arrayfun(@(~) randi(degmax,[length(idx) 1]), 1:n, 'UniformOutput', false);
+    % select all nonzero indices
+    select_entries = (idx(:) ~= 0);
+
+else
+    % create degree vector
+    D = cell(1,n);
+    D(:) = {0:degmax};
+    
+    % permute linear indices and degrees
+    [idx,D{:}] = ndgrid(idx,D{:});
+    
+    % select random indices and degrees
+    select_entries = (idx(:) ~= 0 & randn(numel(idx),1) > 0);
+end
+
+idx = squeeze(idx(select_entries));
+i = squeeze(I(idx));
+j = squeeze(J(idx));
 degree_vectors = cellfun(@(d) squeeze(d(select_entries)), D, 'UniformOutput', false);
 
 if isempty(degree_vectors)
     % empty degrees
-    degrees = zeros(length(i),0);
+    degrees = zeros(length(i),length(x));
 else
     % concatenate
-    degrees = [degree_vectors{:}];
+    degrees = reshape([degree_vectors{:}],length(i),length(x));
 end
 
 % create sparsity pattern

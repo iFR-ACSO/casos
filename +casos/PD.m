@@ -27,12 +27,12 @@ classdef (InferiorClasses = {?casadi.DM, ?casos.Indeterminates}) ...
 % create from list of monomials 
 % (all non-sparse coefficients equate to 1).
 %
-%   PX(Sparsity,scalar double | DM)
+%   PD(Sparsity,scalar double | DM)
 %
 % create polynomial with constant coefficients 
 % (all non-sparse coefficients equate to the given value).
 %
-%   PX(Sparsity,vector double | DM)
+%   PD(Sparsity,vector double | DM)
 %
 % create polynomial with constant coefficients from vector of nonzeros.
 %

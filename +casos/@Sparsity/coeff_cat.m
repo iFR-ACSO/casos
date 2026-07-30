@@ -9,19 +9,6 @@ function [S,coeffs] = coeff_cat(S1,S2,coeff1,coeff2,dim)
 
 assert(any(dim==[1 2]),'Operating dimension must be either 1 or 2.')
 
-% detect empty polynomials
-if isempty(S1)
-    S = S2;
-    coeffs = coeff2;
-    return
-
-elseif isempty(S2)
-    S = S1;
-    coeffs = coeff1;
-    return
-end
-
-% else
 S = casos.Sparsity;
 
 sza = size(S1);

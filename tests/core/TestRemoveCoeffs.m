@@ -80,7 +80,7 @@ end
 methods
     function evaluate_remove_coeffs(test_case, decade, value1, value2, reference)
         % Evaluate remove_coeffs operation.
-        tol = prctile([0; full(poly2basis(value2))],10*decade);
+        tol = prctile([0; full(poly2basis(densify(value2)))],10*decade); % project onto dense basis
         actual = remove_coeffs(value1,tol);
 
         % perform assertion

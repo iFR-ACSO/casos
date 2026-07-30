@@ -31,21 +31,21 @@ classdef (InferiorClasses = {?casadi.DM, ?casadi.SX, ?casos.PD, ?casos.Indetermi
 % create from list of monomials 
 % (all non-sparse coefficients equate to 1).
 %
-%   PX(Sparsity,scalar double | DM)
+%   PS(Sparsity,scalar double | DM)
 %
 % create polynomial with constant coefficients 
 % (all non-sparse coefficients equate to the given value).
 %
-%   PX(Sparsity,scalar SX)
+%   PS(Sparsity,scalar SX)
 %
 % create polynomial with symbolic coefficients
 % (all non-sparse coefficients equate to the given expression).
 %
-%   PX(Sparsity,vector double | DM)
+%   PS(Sparsity,vector double | DM)
 %
 % create polynomial with constant coefficients from vector of nonzeros.
 %
-%   PX(Sparsity,vector SX)
+%   PS(Sparsity,vector SX)
 %
 % create polynomial with symbolic coefficients from vector of nonzeros.
 %

@@ -5,13 +5,18 @@
 % SPDX-License-Identifier: GPL-3.0-only
 
 function b = power(a,n)
-% Add (join) two polynomial sparsity patterns.
+% Element-wise power of polynomial sparsity pattern.
 
 a = casos.Sparsity(a);
 
 % sparsity pattern and exponent must be of same size
 if ~check_sz_equal(a,n)
     throw(casos.package.core.IncompatibleSizesError.other(a,n));
+
+elseif all(n==0)
+    % power of zero is dense
+    b = casos.Sparsity.dense(size(a));
+    return
 end
 
 % power of coefficient matrix

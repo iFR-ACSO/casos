@@ -13,6 +13,11 @@ if nargin < 2
     S = sparsity(obj);
     coeffs = obj.coeffs;
 
+elseif ~isscalar(obj) && ~islogical(S) ...
+         && ~(all(size(obj) == 0) && isempty(S)) && ~check_sz_equal(obj,S)
+    % dimension mismatch
+    throw(casos.package.core.IncompatibleSizesError.other(obj,S));
+
 elseif isempty(obj) || (isscalar(obj) && isempty(S)) || (islogical(S) && all(~S))
     % empty polynomial, selection, or projection
     assert(~isempty(obj) || isempty(S),'Cannot project empty polynomial.')

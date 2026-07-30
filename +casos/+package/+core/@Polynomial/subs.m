@@ -18,8 +18,9 @@ elseif (size(x,1) == size(b,1) && iscolumn(x) && size(b,2) > 1)
     % repeated substitution -- not supported
     error('Repeated substitution not supported, use to_function(a) instead.')
 
-else
-    assert(numel(x) == numel(b),'Second and third argument have incompatible sizes.')
+elseif ~isequal(numel(x), numel(b))
+    % number of elements to be substituted is incompatible
+    throw(casos.package.core.IncompatibleSizesError.substitute(x,b));
 end
 
 c = a.new_poly;

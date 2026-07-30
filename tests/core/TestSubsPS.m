@@ -42,6 +42,10 @@ methods (Test, ParameterCombination="pairwise", TestTags="scalar")
         value1 = test_case.values.scalar{1,arg};
         value2 = test_case.values.scalar{2,arg};
 
+        % reduce order of polynomials
+        value1 = project(value1,restrict_terms(sparsity(value1),0:4));
+        value2 = project(value2,restrict_terms(sparsity(value2),0:4));
+
         reference = test_case.references.scalar.single{arg,ivar};
 
         test_case.evaluate_subs_single(symb1,symb2,ivar,value1,value2,reference);
@@ -51,6 +55,10 @@ methods (Test, ParameterCombination="pairwise", TestTags="scalar")
         % Test substitution of multiple variables.
         value1 = test_case.values.scalar{2,arg};
         value2 = test_case.values.vector{2,value1.nvars+1};
+
+        % reduce order of polynomials
+        value1 = project(value1,restrict_terms(sparsity(value1),0:4));
+        value2 = project(value2,restrict_terms(sparsity(value2),0:4));
 
         reference = test_case.references.scalar.multiple{arg,ivar};
 
@@ -64,6 +72,10 @@ methods (Test, ParameterCombination="pairwise", TestTags=["vector" "column"])
         value1 = test_case.values.vector{1,dim};
         value2 = test_case.values.scalar{1,dim};
 
+        % reduce order of polynomials
+        value1 = project(value1,restrict_terms(sparsity(value1),0:4));
+        value2 = project(value2,restrict_terms(sparsity(value2),0:4));
+
         reference = test_case.references.column.single{dim,ivar};
 
         test_case.evaluate_subs_single(symb1,symb2,ivar,value1,value2,reference);
@@ -73,6 +85,10 @@ methods (Test, ParameterCombination="pairwise", TestTags=["vector" "column"])
         % Test substitution of multiple variables in a column vector.
         value1 = test_case.values.vector{2,dim};
         value2 = test_case.values.vector{1,value1.nvars+1};
+
+        % reduce order of polynomials
+        value1 = project(value1,restrict_terms(sparsity(value1),0:4));
+        value2 = project(value2,restrict_terms(sparsity(value2),0:4));
 
         reference = test_case.references.column.multiple{dim,ivar};
 
@@ -86,6 +102,10 @@ methods (Test, ParameterCombination="pairwise", TestTags=["vector" "row"])
         value1 = test_case.values.vector{2,dim}';
         value2 = test_case.values.scalar{2,dim};
 
+        % reduce order of polynomials
+        value1 = project(value1,restrict_terms(sparsity(value1),0:4));
+        value2 = project(value2,restrict_terms(sparsity(value2),0:4));
+
         reference = test_case.references.row.single{dim,ivar};
 
         test_case.evaluate_subs_single(symb1,symb2,ivar,value1,value2,reference);
@@ -95,6 +115,10 @@ methods (Test, ParameterCombination="pairwise", TestTags=["vector" "row"])
         % Test substitution of multiple variables in a row vector.
         value1 = test_case.values.vector{1,dim}';
         value2 = test_case.values.vector{2,value1.nvars+1};
+
+        % reduce order of polynomials
+        value1 = project(value1,restrict_terms(sparsity(value1),0:4));
+        value2 = project(value2,restrict_terms(sparsity(value2),0:4));
 
         reference = test_case.references.row.multiple{dim,ivar};
 
@@ -108,6 +132,10 @@ methods (Test, ParameterCombination="pairwise", TestTags="matrix")
         value1 = test_case.values.matrix{2,dim};
         value2 = test_case.values.scalar{1,dim};
 
+        % reduce order of polynomials
+        value1 = project(value1,restrict_terms(sparsity(value1),0:4));
+        value2 = project(value2,restrict_terms(sparsity(value2),0:4));
+
         reference = test_case.references.matrix.single{dim,ivar};
 
         test_case.evaluate_subs_single(symb1,symb2,ivar,value1,value2,reference);
@@ -117,6 +145,10 @@ methods (Test, ParameterCombination="pairwise", TestTags="matrix")
         % Test substitution of multiple variables in a column vector.
         value1 = test_case.values.matrix{1,dim};
         value2 = test_case.values.vector{1,value1.nvars+1};
+
+        % reduce order of polynomials
+        value1 = project(value1,restrict_terms(sparsity(value1),0:4));
+        value2 = project(value2,restrict_terms(sparsity(value2),0:4));
 
         reference = test_case.references.matrix.multiple{dim,ivar};
 

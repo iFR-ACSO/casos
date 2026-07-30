@@ -4,38 +4,60 @@
 %
 % SPDX-License-Identifier: GPL-3.0-only
 
-function p = cat(dim,varargin)
+function c = cat(dim,varargin)
 % Concatenate polynomials along specified dimension.
 %
 % Overwriting matlab.mixin.indexing.RedefinesParen.cat
 
 if nargin ~= 3
     % handle non-binary concatenation
-    p = cat@casos.package.core.PolynomialInterface(dim,varargin{:});
+    c = cat@casos.package.core.PolynomialInterface(dim,varargin{:});
     return
 end
 
 % else: two polynomials given
-p1 = varargin{1};
-p2 = varargin{2};
+a = varargin{1};
+b = varargin{2};
 
 switch (dim)
     case 0
         % block diagonal
-        ul = p1.zeros(size(p1,1),size(p2,2));
-        rl = p1.zeros(size(p2,1),size(p1,2));
+        ul = a.zeros(size(a,1),size(b,2));
+        rl = a.zeros(size(b,1),size(a,2));
 
         % concatenate all blocks
-        p = blockcat(p1,ul,rl,p2);
+        c = blockcat(a,ul,rl,b);
 
     otherwise
+        [tf,sz] = check_sz_concat(dim,a,b);
+
+        if (~tf)
+            % dimensions are consistent if size(a,~dim) == size(b,~dim)
+            throw(casos.package.core.IncompatibleSizesError.concat(a,b));
+
+        elseif (isempty(a) && isempty(b))
+            % concatenation of empty polynomials
+            c = a.empty(sz);
+            return
+
+        elseif isempty(a)
+            % concatenation of b with empty polynomial
+            c = b;
+            return
+        
+        elseif isempty(b)
+            % concatenation of a with empty polynomial
+            c = a;
+            return
+        end
+
         % generic concatenation
-        p = p1.new_poly;
+        c = a.new_poly;
 
         % concatenate coefficient matrices
-        [S,p.coeffs] = coeff_cat(p1.get_sparsity,p2.get_sparsity,p1.coeffs,p2.coeffs,dim);
+        [S,c.coeffs] = coeff_cat(a.get_sparsity,b.get_sparsity,a.coeffs,b.coeffs,dim);
         % set sparsity
-        p = set_sparsity(p,S);
+        c = set_sparsity(c,S);
 end
 
 end

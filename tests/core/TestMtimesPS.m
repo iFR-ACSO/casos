@@ -53,14 +53,14 @@ methods (Test, ParameterCombination="pairwise", TestTags="scalar")
             case {"mldivide"}
                 % matrix left-divide
                 vars = value1.indeterminates;
-                value1_deg0 = subs(value1,vars,ones(length(vars),1));
+                value1_deg0 = 1+subs(value1,vars,ones(length(vars),1));
         
                 test_case.evaluate_mtimes(op,symb1,symb2,value1_deg0,value2,reference);
 
             case {"mrdivide"}
                 % matrix right-divide
                 vars = value2.indeterminates;
-                value2_deg0 = subs(value2,vars,ones(length(vars),1));
+                value2_deg0 = 1+subs(value2,vars,ones(length(vars),1));
         
                 test_case.evaluate_mtimes(op,symb1,symb2,value1,value2_deg0,reference);
         end
@@ -160,10 +160,14 @@ methods
         [p1,symbol1,argument1] = test_case.get_operand(symb1,value1);
         [p2,symbol2,argument2] = test_case.get_operand(symb2,value2);
 
-        if strcmp(op,"mtimes") && (size(value1,2) ~= size(value2,1))
+        if strcmp(op,"mtimes") && ~any([
+                isscalar(value1)
+                isscalar(value2)
+                size(value1,2) == size(value2,1)
+            ])
             % inner dimension mismatch for matrix multiplication
             diagtext = sprintf('Inner dimension mismatch expected: %d vs. %d.',size(value1,2),size(value2,1));
-            test_case.verifyError(@() feval(op,p1,p2),?MException,diagtext);
+            test_case.verifyError(@() feval(op,p1,p2),?casos.package.core.IncompatibleSizesError,diagtext);
             return
         end
 

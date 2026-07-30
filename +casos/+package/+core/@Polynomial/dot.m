@@ -4,15 +4,18 @@
 %
 % SPDX-License-Identifier: GPL-3.0-only
 
-function r = dot(p,q)
+function c = dot(a,b)
 % Scalar dot product of two polynomials.
 
-assert(numel(p) == numel(q),'Inputs must be of compatible size.')
+if ~check_sz_equal(a,b)
+    % dimension mismatch
+    throw(casos.package.core.IncompatibleSizesError.other(a,b));
+end
 
 % expand coefficient matrices to match
-[cf1,cf2] = coeff_expand(p.get_sparsity,q.get_sparsity,p.coeffs,q.coeffs);
+[cf1,cf2] = coeff_expand(a.get_sparsity,b.get_sparsity,a.coeffs,b.coeffs);
 
 % return dot product of coefficients
-r = dot(cf1,cf2);
+c = dot(cf1,cf2);
 
 end

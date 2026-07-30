@@ -44,6 +44,11 @@ switch (op)
         arg2_double = 1+double(subs(arg2,vars,ones(size(vars))));
         res = rdivide(arg1,arg2_double);
 
+    case "power"
+        % binary power
+        degs = ceil(2*double(cleanpoly(arg2,[],0)));
+        res = power(arg1,degs);
+
     otherwise
         error('Not implemented: %s.', op)
 end

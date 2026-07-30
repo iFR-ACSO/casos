@@ -61,7 +61,7 @@ methods
         if ~isequal(size(value1), size(value2))
             % size mismatch
             diagtext = sprintf('Dimension mismatch expected: %s vs. %s.',mat2str(size(value1)),mat2str(size(value2)));
-            test_case.verifyError(@() dot(value1,value2),?MException,diagtext);
+            test_case.verifyError(@() dot(value1,value2),?casos.package.core.IncompatibleSizesError,diagtext);
             return
         end
 

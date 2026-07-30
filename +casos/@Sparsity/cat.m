@@ -4,22 +4,46 @@
 %
 % SPDX-License-Identifier: GPL-3.0-only
 
-function S = cat(dim,varargin)
+function c = cat(dim,varargin)
 % Concatenate polynomial sparsity patterns along specified dimension.
 %
 % Overwriting matlab.mixin.indexing.RedefinesParen.cat
 
 if nargin ~= 3
     % handle non-binary concatenation
-    S = cat@casos.package.core.PolynomialInterface(dim,varargin{:});
+    c = cat@casos.package.core.PolynomialInterface(dim,varargin{:});
     return
 end
 
 % two patterns given
-S1 = casos.Sparsity(varargin{1});
-S2 = casos.Sparsity(varargin{2});
+a = casos.Sparsity(varargin{1});
+b = casos.Sparsity(varargin{2});
+
+[tf,sz] = check_sz_concat(dim,a,b);
+
+if (~tf)
+    % dimensions are consistent if size(a,~dim) == size(b,~dim)
+    throw(casos.package.core.IncompatibleSizesError.concat(a,b));
+
+elseif (isempty(a) && isempty(b))
+    % concatenation of empty polynomials
+    c = casos.Sparsity(sz);
+    return
+
+elseif isempty(a)
+    % concatenation of b with empty polynomial
+    c = b;
+    return
+
+elseif isempty(b)
+    % concatenation of a with empty polynomial
+    c = a;
+    return
+
+else
+end
 
 % concatenate coefficient matrices
-S = coeff_cat(S1,S2,S1.coeffs,S2.coeffs,dim);
+c = coeff_cat(a,b,a.coeffs,b.coeffs,dim);
 
 end

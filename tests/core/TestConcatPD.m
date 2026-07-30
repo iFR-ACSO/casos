@@ -159,8 +159,8 @@ methods
         if ~isempty(value1) && ~isempty(value2) && size(value1,1) ~= size(value2,1)
             % first dimension mismatch
             diagtext = sprintf('First dimension mismatch expected: %d vs. %d.',size(value1,1),size(value2,1));
-            test_case.verifyError(@() horzcat(value1,value2),?MException,diagtext);
-            test_case.verifyError(@() cat(2,value1,value2),?MException,diagtext);
+            test_case.verifyError(@() horzcat(value1,value2),?casos.package.core.IncompatibleSizesError,diagtext);
+            test_case.verifyError(@() cat(2,value1,value2),?casos.package.core.IncompatibleSizesError,diagtext);
             return
         end
 
@@ -177,8 +177,8 @@ methods
         if ~isempty(value1) && ~isempty(value2) && size(value1,2) ~= size(value2,2)
             % second dimension mismatch
             diagtext = sprintf('Second dimension mismatch expected: %d vs. %d.',size(value1,2),size(value2,2));
-            test_case.verifyError(@() vertcat(value1,value2),?MException,diagtext);
-            test_case.verifyError(@() cat(1,value1,value2),?MException,diagtext);
+            test_case.verifyError(@() vertcat(value1,value2),?casos.package.core.IncompatibleSizesError,diagtext);
+            test_case.verifyError(@() cat(1,value1,value2),?casos.package.core.IncompatibleSizesError,diagtext);
             return
         end
 

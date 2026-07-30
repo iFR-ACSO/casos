@@ -8,28 +8,64 @@ classdef IncompatibleSizesError < MException
 % Error thrown if inputs have compatible sizes for an operation.
 
 methods (Access=protected)
-    function err = IncompatibleSizesError(id,a,b)
+    function err = IncompatibleSizesError(id,msg,a,b)
         % New error with identifier.
-        errsz = 'Polynomials have incompatible sizes for this operation ([%s] vs. [%s]).';
-        
-        err@MException(id,errsz,size2str(a),size2str(b));
+        err@MException(id,msg,size2str(a),size2str(b));
+    end
+end
+
+methods
+    function msgtext = getReport(err,varargin)
+        % Return formatted error message text.
+        if nargin < 2, varargin = {'basic'}; end % omit stack from report
+
+        msgtext = getReport@MException(err,varargin{:});
     end
 end
 
 methods (Static)
+    function err = assign(a,b)
+        % New error for assignment operation.
+        err = casos.package.core.IncompatibleSizesError('MATLAB:subsassigndimmismatch', ...
+                ['Unable to perform assignment because the size of the left polynomial is [%s]' ...
+                ' and the size of the right polynomial is [%s].'],a,b);
+    end
+
     function err = basic(a,b)
         % New error for basic operation.
-        err = casos.package.core.IncompatibleSizesError('MATLAB:sizeDimensionsMustMatch',a,b);
+        err = casos.package.core.IncompatibleSizesError('MATLAB:sizeDimensionsMustMatch', ...
+                'Polynomials have incompatible sizes for this operation: [%s] vs. [%s].',a,b);
+    end
+
+    function err = concat(a,b)
+        % New error for concatenation.
+        err = casos.package.core.IncompatibleSizesError('MATLAB:catenate:dimensionMismatch', ...
+                'Dimensions of polynomials being concatenated are not consistent: [%s] vs. [%s].',a,b);
     end
 
     function err = matrix(a,b)
         % New error for matrix operation.
-        err = casos.package.core.IncompatibleSizesError('MATLAB:innerdim',a,b);
+        err = casos.package.core.IncompatibleSizesError('MATLAB:innerdim', ...
+                'Incorrect dimensions for polynomial matrix multiplication: [%s] vs. [%s].',a,b);
+    end
+
+    function err = mpower(a,b)
+        % New error for matrix power.
+        err = casos.package.core.IncompatibleSizesError('MATLAB:mpower:notScalarAndSquareMatrix', ...
+                'Incorrect dimensions for raising a polynomial matrix to a power: [%s] and [%s].',a,b);
+    end
+
+    function err = substitute(a,b)
+        % New error for substitution.
+        err = casos.package.core.IncompatibleSizesError('', ...
+                ['Unable to perform substitution because the size of the indeterminate variables is [%s]' ...
+                ' and the size of the polynomial to be substituted into is [%s].'],a,b);
     end
 
     function err = other(a,b)
         % New error for other operations.
-        err = casos.package.core.IncompatibleSizesError('',a,b);
+        err = casos.package.core.IncompatibleSizesError('', ...
+                'Polynomial dimension mismatch: [%s] vs. [%s].',a,b);
     end
 end
 

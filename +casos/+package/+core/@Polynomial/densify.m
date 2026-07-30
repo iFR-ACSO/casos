@@ -4,22 +4,18 @@
 %
 % SPDX-License-Identifier: GPL-3.0-only
 
-function res = eval_repmat(arg,m,n)
-% Evaluate repmat operation.
+function b = densify(a)
+% Densify polynomial expressions.
 
-if (nargin < 3)
-    % single dimension or size array given
-    n = m(end);
-    m = m(1);
-end
+b = a.new_poly;
 
-if (m == 0 || n == 0)
-    % return empty polynomial
-    res = polynomial(zeros(size(arg).*[m n]));
+% sparsify coefficients
+coeffs = densify(a.coeffs);
 
-else
-    % invoke multipoly repmat
-    res = repmat(arg,m,n);
-end
+% remove zero terms
+[S,b.coeffs] = coeff_update(a.get_sparsity,coeffs);
+
+% set sparsity
+b = set_sparsity(b,S);
 
 end

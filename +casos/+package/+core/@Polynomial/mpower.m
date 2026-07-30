@@ -7,10 +7,11 @@
 function b = mpower(a,n)
 % Power of polynomial matrix.
 
-assert(size(a,1) == size(a,2), 'Matrix must be square.')
-assert(isscalar(n), 'Exponent must be scalar.')
+if ~check_sz_square(a) || ~isscalar(n)
+    % dimensions are compatible if a is square and n is scalar
+    throw(casos.package.core.IncompatibleSizesError.mpower(a,n));
 
-if isscalar(a)
+elseif isscalar(a)
     % fall back to scalar power.
     b = power(a,n);
     return

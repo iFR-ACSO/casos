@@ -20,6 +20,7 @@ variables = casos.Indeterminates('x',5);
 noPoly = 10;
 maxdim = 6;
 maxdeg = 3;
+density = 0.7;
 
 % generate scalar values
 test_values_struct.scalar = cell(2,noPoly);
@@ -28,7 +29,7 @@ reference_values.scalar = cell(2,noPoly);
 for k = 1:numel(test_values_struct.scalar)
     % create scalars
     [test_values_struct.scalar(k),reference_values.scalar(k)] = ...
-                        generateTestPolynomials([1 1],variables,maxdeg);
+                        generateTestPolynomials([1 1],variables,maxdeg,density);
 end
 
 % generate (column) vector values
@@ -38,24 +39,27 @@ reference_values.vector = cell(2,maxdim);
 for dim = 1:maxdim
     % create vectors of same dimensions
     [test_values_struct.vector(1,dim),reference_values.vector(1,dim)] = ...
-                    generateTestPolynomials([dim-1 1],variables,maxdeg);
+                    generateTestPolynomials([dim-1 1],variables,maxdeg,density);
     [test_values_struct.vector(2,dim),reference_values.vector(2,dim)] = ...
-                    generateTestPolynomials([dim-1 1],variables,maxdeg);
+                    generateTestPolynomials([dim-1 1],variables,maxdeg,density);
 end
 
 % generate matrix values
-test_values_struct.matrix = cell(3,maxdim);
-reference_values.matrix = cell(3,maxdim);
+test_values_struct.matrix = cell(4,maxdim);
+reference_values.matrix = cell(4,maxdim);
 
 for dim = 1:maxdim
     % generate matrices of same dimensions
     [test_values_struct.matrix(1,dim),reference_values.matrix(1,dim)] = ...
-        generateTestPolynomials([dim-1 maxdim-dim],variables,maxdeg);
+        generateTestPolynomials([dim-1 maxdim-dim],variables,maxdeg,density);
     [test_values_struct.matrix(2,dim),reference_values.matrix(2,dim)] = ...
-        generateTestPolynomials([dim-1 maxdim-dim],variables,maxdeg);
+        generateTestPolynomials([dim-1 maxdim-dim],variables,maxdeg,density);
     % generate matrices of different dimensions
     [test_values_struct.matrix(3,dim),reference_values.matrix(3,dim)] = ...
-        generateTestPolynomials([dim maxdim-dim],variables,maxdeg);
+        generateTestPolynomials([dim maxdim-dim],variables,maxdeg,density);
+    % generate matrices of monomials
+    [test_values_struct.matrix(4,dim),reference_values.matrix(4,dim)] = ...
+        generateTestPolynomials([dim-1 maxdim-dim],variables,maxdeg,density,true);
 end
 
 save("reference_values.mat","test_values_struct");
@@ -115,12 +119,13 @@ disp("========================================")
 reference_binary = struct('scalar',struct, ...
                              'inner',struct, ...
                              'outer',struct, ...
-                             'matrix',struct ...
+                             'matrix',struct, ...
+                             'monomials',struct ...
 );
 
 % element-wise addition, subtraction, and multiplication
 % as well as left-side (B.\A) and right-side (A./B) division
-for op = ["plus" "minus" "times" "ldivide" "rdivide"]
+for op = ["plus" "minus" "times" "ldivide" "rdivide" "power"]
     % on scalar values
     reference_binary.scalar.(op) = cell(noPoly,noPoly);
     for k1 = 1:noPoly
@@ -169,6 +174,23 @@ for op = ["plus" "minus" "times" "ldivide" "rdivide"]
             reference_binary.matrix.(op){d1,d2} = multipoly2struct(eval_binary(op,arg1,arg2));
         end
     end    
+
+    % on matrix of monomials
+    reference_binary.monomials.(op) = cell(maxdim,maxdim);
+    for d1 = 1:maxdim
+        for d2 = 1:maxdim
+            arg1 = reference_values.matrix{4,d1};
+            arg2 = reference_values.matrix{2,d2};
+
+            if (~isrow(arg1) && ~isrow(arg2) && size(arg1,1) ~= size(arg2,1)) ...
+                    || (~iscolumn(arg1) && ~iscolumn(arg2) && size(arg1,2) ~= size(arg2,2))
+                % dimension mismatch
+                continue
+            end
+
+            reference_binary.monomials.(op){d1,d2} = multipoly2struct(eval_binary(op,arg1,arg2));
+        end
+    end 
 end
 
 save("reference_values.mat","reference_binary","-append")
@@ -250,7 +272,7 @@ for op = ["mtimes" "kron"]
             arg1 = reference_values.vector{1,d1}';
             arg2 = reference_values.vector{2,d2};
 
-            if ~isequal(op,"kron") && (size(arg1,2) ~= size(arg2,1))
+            if ~isequal(op,"kron") && (~isscalar(arg1) && ~isscalar(arg2) && size(arg1,2) ~= size(arg2,1))
                 % dimension mismatch
                 continue
             end
@@ -277,7 +299,7 @@ for op = ["mtimes" "kron"]
             arg1 = reference_values.matrix{1,d1};
             arg2 = reference_values.matrix{3,d2};
 
-            if ~isequal(op,"kron") && (size(arg1,2) ~= size(arg2,1))
+            if ~isequal(op,"kron") && (~isscalar(arg1) && ~isscalar(arg2) && size(arg1,2) ~= size(arg2,1))
                 % dimension mismatch
                 continue
             end
@@ -293,7 +315,7 @@ for k1 = 1:noPoly
     arg1 = reference_values.scalar{1,k1};
 
     vars = arg1.varname;
-    reference_value_double = double(subs(arg1,vars,ones(size(vars))));
+    reference_value_double = 1+double(subs(arg1,vars,ones(size(vars))));
 
     for k2 = 1:noPoly
         arg2 = reference_values.scalar{2,k2};
@@ -307,7 +329,7 @@ for k2 = 1:noPoly
     arg2 = reference_values.scalar{2,k2};
 
     vars = arg2.varname;
-    reference_value_double = double(subs(arg2,vars,ones(size(vars))));
+    reference_value_double = 1+double(subs(arg2,vars,ones(size(vars))));
 
     for k1 = 1:noPoly
         arg1 = reference_values.scalar{1,k1};
@@ -497,7 +519,11 @@ for d1 = 1:maxdim
         arg1 = reference_values.vector{1,d1};
         arg2 = reference_values.vector{2,d2};
 
-        if ~isequal(size(arg1),size(arg2))
+        if isscalar(arg1)
+            % repeat scalar argument
+            arg1 = eval_repmat(arg1,size(arg2));
+
+        elseif ~isequal(size(arg1),size(arg2))
             % size mismatch
             continue;
         end
@@ -513,7 +539,11 @@ for d1 = 1:maxdim
         arg1 = reference_values.vector{1,d1}';
         arg2 = reference_values.vector{2,d2}';
 
-        if ~isequal(size(arg1),size(arg2))
+        if isscalar(arg1)
+            % repeat scalar argument
+            arg1 = eval_repmat(arg1,size(arg2));
+
+        elseif ~isequal(size(arg1),size(arg2))
             % size mismatch
             continue;
         end
@@ -529,7 +559,11 @@ for d1 = 1:maxdim
         arg1 = reference_values.matrix{1,d1};
         arg2 = reference_values.matrix{2,d2};
 
-        if ~isequal(size(arg1),size(arg2))
+        if isscalar(arg1)
+            % repeat scalar argument
+            arg1 = eval_repmat(arg1,size(arg2));
+
+        elseif ~isequal(size(arg1),size(arg2))
             % size mismatch
             continue;
         end
@@ -691,6 +725,10 @@ for ivar = 1:4
         arg = reference_values.scalar{1,k};
         new = reference_values.scalar{2,k};
 
+        % reduce order of polynomials
+        arg = cleanpoly(arg,[],0:4);
+        new = cleanpoly(new,[],0:4);
+
         reference_subs.scalar.single{k,ivar} = multipoly2struct(eval_subs("single",arg,ivar,new));
     end
 
@@ -698,6 +736,10 @@ for ivar = 1:4
     for d = 1:maxdim
         arg = reference_values.vector{1,d};
         new = reference_values.scalar{1,d};
+
+        % reduce order of polynomials
+        arg = cleanpoly(arg,[],0:4);
+        new = cleanpoly(new,[],0:4);
 
         reference_subs.column.single{d,ivar} = multipoly2struct(eval_subs("single",arg,ivar,new));
     end
@@ -707,6 +749,10 @@ for ivar = 1:4
         arg = reference_values.vector{2,d}';
         new = reference_values.scalar{2,d};
 
+        % reduce order of polynomials
+        arg = cleanpoly(arg,[],0:4);
+        new = cleanpoly(new,[],0:4);
+
         reference_subs.row.single{d,ivar} = multipoly2struct(eval_subs("single",arg,ivar,new));
     end
 
@@ -714,6 +760,10 @@ for ivar = 1:4
     for d = 1:maxdim
         arg = reference_values.matrix{2,d};
         new = reference_values.scalar{1,d};
+
+        % reduce order of polynomials
+        arg = cleanpoly(arg,[],0:4);
+        new = cleanpoly(new,[],0:4);
 
         reference_subs.matrix.single{d,ivar} = multipoly2struct(eval_subs("single",arg,ivar,new));
     end
@@ -731,6 +781,10 @@ for ivar = 1:4
         arg = reference_values.scalar{2,k};
         new = reference_values.vector{2,arg.nvars+1};
 
+        % reduce order of polynomials
+        arg = cleanpoly(arg,[],0:4);
+        new = cleanpoly(new,[],0:4);
+
         reference_subs.scalar.multiple{k,ivar} = multipoly2struct(eval_subs("multiple",arg,ivar,new));
     end
 
@@ -738,6 +792,10 @@ for ivar = 1:4
     for d = 1:maxdim
         arg = reference_values.vector{2,d};
         new = reference_values.vector{1,arg.nvars+1};
+
+        % reduce order of polynomials
+        arg = cleanpoly(arg,[],0:4);
+        new = cleanpoly(new,[],0:4);
 
         reference_subs.column.multiple{d,ivar} = multipoly2struct(eval_subs("multiple",arg,ivar,new));
     end
@@ -747,6 +805,10 @@ for ivar = 1:4
         arg = reference_values.vector{1,d}';
         new = reference_values.vector{2,arg.nvars+1};
 
+        % reduce order of polynomials
+        arg = cleanpoly(arg,[],0:4);
+        new = cleanpoly(new,[],0:4);
+
         reference_subs.row.multiple{d,ivar} = multipoly2struct(eval_subs("multiple",arg,ivar,new));
     end
 
@@ -754,6 +816,10 @@ for ivar = 1:4
     for d = 1:maxdim
         arg = reference_values.matrix{1,d};
         new = reference_values.vector{1,arg.nvars+1};
+
+        % reduce order of polynomials
+        arg = cleanpoly(arg,[],0:4);
+        new = cleanpoly(new,[],0:4);
 
         reference_subs.matrix.multiple{d,ivar} = multipoly2struct(eval_subs("multiple",arg,ivar,new));
     end
@@ -802,11 +868,11 @@ for d1 = 1:maxdim
         reference_concat.column.diagcat{d1,d2} = multipoly2struct(blkdiag(arg1,arg2));
         % horizontal concatenation
         if isempty(arg1) || isempty(arg2) || size(arg1,1) == size(arg2,1)
-            reference_concat.column.horzcat{d1,d2} = multipoly2struct(horzcat(arg1,arg2));
+            reference_concat.column.horzcat{d1,d2} = multipoly2struct(eval_horzcat(arg1,arg2));
         end
         % vertical concatenation 
         if isempty(arg1) || isempty(arg2) || size(arg1,2) == size(arg2,2)
-            reference_concat.column.vertcat{d1,d2} = multipoly2struct(vertcat(arg1,arg2));
+            reference_concat.column.vertcat{d1,d2} = multipoly2struct(eval_vertcat(arg1,arg2));
         end
     end
 end
@@ -825,11 +891,11 @@ for d1 = 1:maxdim
         reference_concat.row.diagcat{d1,d2} = multipoly2struct(blkdiag(arg1,arg2));
         % horizontal concatenation
         if isempty(arg1) || isempty(arg2) || size(arg1,1) == size(arg2,1)
-            reference_concat.row.horzcat{d1,d2} = multipoly2struct(horzcat(arg1,arg2));
+            reference_concat.row.horzcat{d1,d2} = multipoly2struct(eval_horzcat(arg1,arg2));
         end
         % vertical concatenation 
         if isempty(arg1) || isempty(arg2) || size(arg1,2) == size(arg2,2)
-            reference_concat.row.vertcat{d1,d2} = multipoly2struct(vertcat(arg1,arg2));
+            reference_concat.row.vertcat{d1,d2} = multipoly2struct(eval_vertcat(arg1,arg2));
         end
     end
 end
@@ -846,19 +912,13 @@ for d1 = 1:maxdim
 
         % diagonal concatenation
         reference_concat.matrix.diagcat{d1,d2} = multipoly2struct(blkdiag(arg1,arg2));
-        if isempty(arg1) && isempty(arg2)
-            % empty concatenation
-            reference_concat.matrix.horzcat{d1,d2} = multipoly2struct(polynomial);
-            reference_concat.matrix.vertcat{d1,d2} = multipoly2struct(polynomial);
-            continue
-        end
         % horizontal concatenation
         if isempty(arg1) || isempty(arg2) || size(arg1,1) == size(arg2,1)
-            reference_concat.matrix.horzcat{d1,d2} = multipoly2struct(horzcat(arg1,arg2));
+            reference_concat.matrix.horzcat{d1,d2} = multipoly2struct(eval_horzcat(arg1,arg2));
         end
         % vertical concatenation 
         if isempty(arg1) || isempty(arg2) || size(arg1,2) == size(arg2,2)
-            reference_concat.matrix.vertcat{d1,d2} = multipoly2struct(vertcat(arg1,arg2));
+            reference_concat.matrix.vertcat{d1,d2} = multipoly2struct(eval_vertcat(arg1,arg2));
         end
     end
 end

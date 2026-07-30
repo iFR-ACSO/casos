@@ -18,8 +18,8 @@ if isempty(poly)
     return
 
 else
-    % ensure polynomial
-    poly = polynomial(poly);
+    % ensure polynomial without zero terms
+    poly = polynomial(poly + 0);
 end
 
 coeffs = poly.coefficient;

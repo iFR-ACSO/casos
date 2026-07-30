@@ -7,8 +7,20 @@
 function [coeffs,degmat,indets] = removeZero(coeffs,degmat,indets)
 % Remove degrees with zero coefficient, update degree matrix, 
 % and remove unused variable.
-
-nel = size(coeffs,2);
+%
+% Arguments:
+%
+%   coeffs                         matrix of which the rows are vec(c_a)
+%   degmat                         matrix of which the rows are [a1 ... aN]
+%   indets                         variables {x1,...,xN} 
+%
+% The number of rows in coeffs and degmat equals the number of terms; after
+% evaluation, this equals the number of terms with nonzero coefficients.
+% The number of columns in coeffs equals the number of elements and remains
+% unchanged.
+% The number of columns in degmat equals the number of indeterminate
+% variables (N); if the indets argument is given, indeterminates with
+% all-zero degrees are removed; otherwise, this remains unchanged.
 
 % remove degrees with zero coefficient
 [coeffs,degmat] = removeCoeffs(coeffs,degmat);
@@ -18,10 +30,9 @@ if nargin > 2
 [degmat, indets] = removeDegVar(degmat, indets);
 end
 
-if isempty(degmat) || length(coeffs) < 1
+if isempty(degmat) || size(coeffs,1) < 1
     % constant polynomial
     coeffs = sum1(coeffs);
-    degmat = sparse(1,0);
 end
 
 end
@@ -35,6 +46,7 @@ function [coeffs,degmat] = removeCoeffs(coeffs,degmat)
 
         % sparsity pattern without all-sparse rows
         [coeffs,nr] = nonzeroPattern(size(coeffs),ii,jj);
+        
     else
         % sparsity pattern of coefficients
         S1 = sparsity(coeffs);
@@ -60,8 +72,10 @@ function [coeffs,degmat] = removeCoeffs(coeffs,degmat)
     end
 
     if isempty(ii)
-        % only zero coefficients
+        % all-sparse coefficients
+        % return row vectors for single (constant) monomial term
         degmat = sparse(1,size(degmat,2));
+
     else
         % remove corresponding degree matrix entries
         degmat = degmat(nr,:);

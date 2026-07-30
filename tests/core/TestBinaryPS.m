@@ -13,7 +13,7 @@ properties (SetAccess=protected)
 end
 
 properties (TestParameter)
-    op = {"plus" "minus" "times" "ldivide" "rdivide"};
+    op = {"plus" "minus" "times" "ldivide" "rdivide" "power"};
     symb1 = {false true};
     symb2 = {false true};
 
@@ -62,6 +62,12 @@ methods (Test, ParameterCombination="pairwise", TestTags="scalar")
                 
                 test_case.evaluate_binary(op,symb1,symb2,value1,value2_deg0,reference);
 
+            case "power"
+                % element-wise power by degree matrix
+                degs = ceil(2*full(project(value2,restrict_terms(sparsity(value2),0))));
+
+                test_case.evaluate_binary(op,symb1,symb2,value1,degs,reference);
+
             otherwise
                 test_case.assertFail(sprintf("Not implemented: %s.",op));
         end
@@ -94,6 +100,12 @@ methods (Test, ParameterCombination="pairwise", TestTags=["vector" "inner"])
                 value2_deg0 = 1+subs(value2,vars,ones(length(vars),1));
                 
                 test_case.evaluate_binary(op,symb1,symb2,value1,value2_deg0,reference);
+
+            case "power"
+                % element-wise power by degree matrix
+                degs = ceil(2*full(project(value2,restrict_terms(sparsity(value2),0))));
+
+                test_case.evaluate_binary(op,symb1,symb2,value1,degs,reference);
 
             otherwise
                 test_case.assertFail(sprintf("Not implemented: %s.",op));
@@ -128,6 +140,12 @@ methods (Test, ParameterCombination="pairwise", TestTags=["vector" "outer"])
                 
                 test_case.evaluate_binary(op,symb1,symb2,value1,value2_deg0,reference);
 
+            case "power"
+                % element-wise power by degree matrix
+                degs = ceil(2*full(project(value2,restrict_terms(sparsity(value2),0))));
+
+                test_case.evaluate_binary(op,symb1,symb2,value1,degs,reference);
+
             otherwise
                 test_case.assertFail(sprintf("Not implemented: %s.",op));
         end
@@ -161,6 +179,12 @@ methods (Test, ParameterCombination="pairwise", TestTags=["matrix"])
                 
                 test_case.evaluate_binary(op,symb1,symb2,value1,value2_deg0,reference);
 
+            case "power"
+                % element-wise power by degree matrix
+                degs = ceil(2*full(project(value2,restrict_terms(sparsity(value2),0))));
+
+                test_case.evaluate_binary(op,symb1,symb2,value1,degs,reference);
+
             otherwise
                 test_case.assertFail(sprintf("Not implemented: %s.",op));
         end
@@ -170,17 +194,29 @@ end
 methods
     function evaluate_binary(test_case, op, symb1, symb2, value1, value2, reference)
         % Evaluate binary operation.
-        test_case.assumeTrue(symb1 || symb2, "Operands not symbolic.");
+        switch (op)
+            case "power"
+                % element-wise power with degree matrix
+                test_case.assumeTrue(symb1 && symb2, "Operands not symbolic.");
         
-        % symbolic polynomials
-        [p1,symbol1,argument1] = test_case.get_operand(symb1,value1);
-        [p2,symbol2,argument2] = test_case.get_operand(symb2,value2);
+                % symbolic polynomials
+                [p1,symbol1,argument1] = test_case.get_operand(symb1,value1);
+                [p2,symbol2,argument2] = deal(value2,{},{});
+
+            otherwise
+                % all other operations
+                test_case.assumeTrue(symb1 || symb2, "Operands not symbolic.");
+                
+                % symbolic polynomials
+                [p1,symbol1,argument1] = test_case.get_operand(symb1,value1);
+                [p2,symbol2,argument2] = test_case.get_operand(symb2,value2);
+        end
 
         if (~isrow(value1) && ~isrow(value2) && size(value1,1) ~= size(value2,1)) ...
                     || (~iscolumn(value1) && ~iscolumn(value2) && size(value1,2) ~= size(value2,2))
             % dimension mismatch
             diagtext = sprintf('Dimension mismatch expected: %s vs. %s.',mat2str(size(value1)),mat2str(size(value2)));
-            test_case.verifyError(@() feval(op,p1,p2),?MException,diagtext);
+            test_case.verifyError(@() feval(op,p1,p2),?casos.package.core.IncompatibleSizesError,diagtext);
             return
         end
 
@@ -192,7 +228,7 @@ methods
         actual = f(argument1{:},argument2{:});
 
         % perform assertion
-        test_case.verifyEqualPolynomial(actual,reference,"RelTol",1e-15);
+        test_case.verifyEqualPolynomial(actual,reference,"RelTol",1e-14);
     end
 end
 

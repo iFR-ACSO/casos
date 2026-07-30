@@ -15,7 +15,7 @@ if isscalar(S1) || isscalar(S2)
     S = predict_times(S1,S2);
     return
 
-elseif ~check_sz_mtimes(S1,S2)
+elseif ~check_sz_matrix(S1,S2)
     % dimensions are compatible if size(a,2) == size(b,1)
     throw(casos.package.core.IncompatibleSizesError.matrix(S1,S2));
 end

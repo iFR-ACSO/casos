@@ -9,8 +9,8 @@ function res = eval_poly2basis(arg1,arg2)
 
 assert(isequal(size(arg1),size(arg2)), 'Size mismatch.')
 
-if isempty(arg1)
-    % handle empty polynomial
+if isempty(arg1) || isempty(arg2)
+    % handle empty polynomial or basis
     res = zeros(0,1);
     return
 end

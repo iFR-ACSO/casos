@@ -159,7 +159,7 @@ methods
         % perform assertions
         test_case.verifyReturnsTrue(actual1);
 
-        if (~symb1) && ~isempty(q)
+        if (~symb1) && (nnz(p) > 0)
             diagtext = "Expected exception for nonsymbolic variable.";
             test_case.verifyError(actual2,?MException,diagtext);
         else
@@ -190,10 +190,10 @@ methods
 
         test_case.verifyReturnsTrue(actual1);
 
-        if (~symb1) && ~isempty(p)
+        if (~symb1) && (nnz(p) > 0)
             diagtext = "Expected exception for nonsymbolic variable.";
             test_case.verifyError(actual2,?MException,diagtext);
-        elseif isempty(p) || ismember(op2,["plus" "minus"])
+        elseif isempty(r) || (nnz(p) == 0) || ismember(op2,["plus" "minus"])
             test_case.verifyReturnsTrue(actual2);
         else
             test_case.verifyReturnsTrue(actual3);
@@ -223,13 +223,13 @@ methods
         % perform assertions
         test_case.verifyReturnsTrue(actual1);
 
-        if (~symb1) && ~isempty(p)
+        if (~symb1) && (nnz(p) > 0)
             diagtext = "Expected exception for nonsymbolic variable.";
             test_case.verifyError(actual2,?MException,diagtext);
         else
             test_case.verifyReturnsTrue(actual2);
         end
-        if (~symb2) && ~isempty(q)
+        if (~symb2) && (nnz(q) > 0)
             diagtext = "Expected exception for nonsymbolic variable.";
             test_case.verifyError(actual3,?MException,diagtext);
         else

@@ -4,10 +4,10 @@
 %
 % SPDX-License-Identifier: GPL-3.0-only
 
-function [test_value,reference_value] = generateTestPolynomials(sz,variables,degmax)
+function [test_value,reference_value] = generateTestPolynomials(sz,variables,degmax,varargin)
 % Generate test polynomials from CaΣoS and Multipoly
 
-sp1 = generateRandomSparsity(sz,variables,degmax);
+sp1 = generateRandomSparsity(sz,variables,degmax,varargin{:});
 
 % generate random coefficients
 coeffs1 = rand(1,sp1.nnz);

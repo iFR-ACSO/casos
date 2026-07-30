@@ -19,11 +19,18 @@ deg = reshape(deg,1,neb);
 
 if nva == 0 ... % base polynomial is a constant
     || (nta == 1 && nen == 1) % a^n = c*(x^d)^n
+    % find zero degrees
+    in = find(deg == 0); % 1-index
+
     if ~isa(coeffs,'casadi.Sparsity')
         coeffs = coeffs.^deg;
+        % set zero powers to one
+        if ~isempty(in), coeffs(:,in) = 1; end
     else
         % copy pattern
-        coeffs = casadi.Sparsity(coeffs);
+        [ii,jj] = get_triplet(coeffs);
+        % add zero powers (always dense)
+        coeffs = casadi.Sparsity.triplet(nta,neb,[ii zeros(size(in))],[jj in-1]); % 0-index
     end
     if nva > 0
         S.degmat = n.*S.degmat;
@@ -34,28 +41,31 @@ if nva == 0 ... % base polynomial is a constant
 
 elseif is_monom(S)
     % base polynomial is matrix of monomials
-    % match exponents to unique degrees
-    [dd,~,Ideg] = unique(deg);
-    % repeat coefficient sparsity to match exponents
-    S_cfa  = repmat(S.coeffs,nen,1);
-    % match coefficients to corresponding monomials
-    [ia,ja] = get_triplet(S_cfa); % CasADi interface has 0-index
-    is_deg = ceil((ia(:)+1)./nta) == Ideg(ja(:)+1);
-    % select matching coefficients
-    S_cfb = casadi.Sparsity.triplet(size(S_cfa,1),size(S_cfa,2),ia(is_deg),ja(is_deg));
+    % find zero degrees
+    in = find(deg == 0); % 1-index
+    
+    % reorder coefficients to match powers
+    [ii,jj] = get_triplet(S.coeffs); % 0-index
+    % add zero powers (always dense)
+    S_coeffs = casadi.Sparsity.triplet(neb,neb,[jj in-1],[jj in-1]); % 0-index
+
     if ~isa(coeffs,'casadi.Sparsity')
-        % repeat coefficients to match exponents
-        cfa = repmat(coeffs,nen,1);
-        % project onto new sparsity pattern
-        coeffs = project(cfa,S_cfb).^repmat(deg,nta*nen,1);
+        % take power of nonzero coefficients
+        cfa = sum1(coeffs).^deg;
+        % set zero powers to one
+        if ~isempty(in), cfa(in) = 1; end
+        % cast onto reordered sparsity pattern
+        coeffs = sparsity_cast(cfa,S_coeffs);
     else
-        % use new sparsity pattern
-        coeffs = S_cfb;
+        % use coefficient sparsity pattern
+        coeffs = S_coeffs;
     end
-    % repeat degrees to match exponents
-    dga = repmat(S.degmat,nen,1);
-    % multiply degree matrix with (unique) exponents
-    degmat = dga.*reshape(repmat(dd,nta,1),nen*nta,1);
+
+    % reorder degrees to match powers
+    dga = sparse(neb,nva);
+    dga(jj+1,:) = S.degmat(ii+1,:); % 1-index
+    % multiply degree matrix with exponents
+    degmat = dga.*reshape(deg,neb,1);
 
 else
     % compute all (element-wise) powers
