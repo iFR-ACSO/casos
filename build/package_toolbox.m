@@ -21,9 +21,9 @@ version = string(version);
 %   casos/ temp/
 %   |-- +casos/
 %   |       :
-%   |-- doc/
-%   |       GettingStarted.mlx
 %   |-- demo/
+%   |       :
+%   |-- LICENSES/
 %   |       :
 
 if exist("temp","dir")
@@ -33,17 +33,15 @@ end
 
 mkdir("temp")
 mkdir("temp/+casos")
-% mkdir("temp/doc")
 mkdir("temp/demo")
+mkdir("temp/LICENSES")
 
 % copy source folder
 copyMfiles("+casos","temp/+casos")
 % copy examples from demo folder
 copyMfiles("demo","temp/demo")
-% copy Getting Started guide
-% copyfile("build/GettingStarted.mlx","temp/doc/")
 % copy license
-copyfile("LICENSES/GPL-3.0-only.txt","temp")
+copyfile("LICENSES","temp/LICENSES")
 
 %% Generate meta data
 % populate CasosMeta class folder
@@ -54,8 +52,7 @@ generate_metadata("temp",version);
 zip(join(["build/casos" version "matlab.zip"],"-"), [
     "+casos"
     "demo"
-    % "doc"
-    "GPL-3.0-only.txt"
+    "LICENSES"
 ], "temp")
 
 end
