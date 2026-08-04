@@ -1,3 +1,9 @@
+% SPDX-FileCopyrightText: 2026 Institute of Flight Mechanics and Controls, University of Stuttgart
+% SPDX-FileCopyrightText: Author(s): Torbjørn Cunis <tcunis@ifr.uni-stuttgart.de>
+% SPDX-FileContributor: For a full list of contributors, see <https://github.com/ifr-ofc/casos>
+%
+% SPDX-License-Identifier: GPL-3.0-only
+
 function package_toolbox(version)
 % Create a zip file.
 %
@@ -51,3 +57,5 @@ zip(join(["build/casos" version "matlab.zip"],"-"), [
     % "doc"
     "GPL-3.0-only.txt"
 ], "temp")
+
+end
