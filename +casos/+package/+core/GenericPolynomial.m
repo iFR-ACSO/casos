@@ -178,6 +178,57 @@ methods
         f = to_sxfunction(obj,varargin{:});
     end
 
+    % new functions, to ensure backward compatibility
+    function f = to_function_vec(obj,varargin)
+        % Return casadi.Function object.
+        % Overload for default behaviour.
+        f = to_sxfunction_vec(obj,varargin{:});
+    end
+
+
+    function f = to_sxfunction_vec(obj,varargin)
+        % Return casadi.Function object using SX.
+        X = casadi.SX.sym('x',obj.nvars,1);
+        p = subs(obj,indeterminates(obj),casos.package.polynomial(X));
+       
+        % get casadi SX expression
+        p = casadi.substitute(casadi.SX(p), X, X);
+
+        % extract the indeterminate strings
+        indet_str = str(obj.indeterminates);
+
+        % normalize to string array
+        s = string(indet_str(:));
+
+        % remove trailing underscore+digits (e.g. "y_1" -> "y");
+        basesOnly = regexprep(s, '(_\d+)$', '');
+
+        % get unique names and counts
+        [bases, ~, ic] = unique(basesOnly, 'stable');
+        counts = accumarray(ic, 1);
+        
+        % for each indeterminate generate a) a string for vecotr b) and
+        % input variable
+        % create one SX symbol per base (column vectors) and keep names
+        vars = cell(numel(bases),1);
+        inputNames = cell(numel(bases),1);
+        for i = 1:numel(bases)
+            % casadi requires char names
+            nameChar = char(bases(i));
+            % create a column vector of length counts(i)
+            vars{i} = casadi.SX.sym(nameChar, counts(i), 1);
+            inputNames{i} = nameChar;
+        end
+
+        % concatenate all base vectors into one stacked vector X
+        inputs = vertcat(vars{:});
+        
+        p = casadi.substitute(p, X, inputs);
+
+        % create function with the base-named inputs
+        f = casadi.Function('f', vars, {p}, inputNames, {'poly'});
+    end
+
     %% Concatenation
     function p = cat(dim,varargin)
         % Generic concatenation.
