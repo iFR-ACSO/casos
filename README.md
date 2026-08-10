@@ -21,10 +21,9 @@ SPDX-License-Identifier: GPL-3.0-only
 
 ### Downloads
 
-- All platforms: Stable [version 1.0.0](https://github.com/casos-opti/casos/releases/tag/v1.0.0) ([zip](https://github.com/casos-opti/casos/archive/refs/tags/v1.0.0.zip) | [tar.gz](https://github.com/casos-opti/casos/archive/refs/tags/v1.0.0.tar.gz))
-- Unstable: [version 1.0.1 Preview](https://github.com/casos-opti/casos/releases/tag/v1.0.1-pre) ([zip](https://github.com/casos-opti/casos/archive/refs/tags/v1.0.1-pre.zip) | [tar.gz](https://github.com/casos-opti/casos/archive/refs/tags/v1.0.1-pre.tar.gz))
-- CaΣoS [example package](https://github.com/casos-opti/casos-example-package) ([zip](https://github.com/casos-opti/casos-example-package/archive/refs/heads/main.zip))
-- [Reference values](https://github.com/casos-opti/casos/releases/download/v1.0.1-pre/reference_values.mat) for unit tests
+- All platforms: Stable [version 1.0.1](https://github.com/casos-opti/casos/releases/tag/v1.0.1)
+- CaΣoS [example package](https://github.com/casos-opti/casos-example-package)
+- [Reference values](https://github.com/casos-opti/casos/releases/download/latest/reference_values.mat) for unit tests
 
 ### Quick links
 
@@ -80,6 +79,8 @@ We provide the source code for our benchmarks and comparisons:
 
 
 Further applications of CaΣoS include:
+
+- F. Geyer, F. Tuttas, W. Fichter, and T. Cunis, ‘Sum-of-Squares Stability Verification on Manifolds with Applications in Spacecraft Attitude Control’, European Journal of Control, 2026, In press. [doi: 10.1016/j.ejcon.2026.101587](https://doi.org/10.1016/j.ejcon.2026.101587), [Source code](https://doi.org/10.18419/DARUS-5526)
 
 - R. Loureiro and T. Cunis, ‘Nonlinear Observer Synthesis for Stochastic Polynomial Dynamical Systems’, in 2025 American Control Conference, (Denver, CO), 2025, pp. 2509–2514. [doi: 10.23919/ACC63710.2025.11107965](https://doi.org/10.23919/ACC63710.2025.11107965)
 - R. Loureiro and T. Cunis, ‘Estimating Robust Regions of Attraction with Uncertain Equilibrium Points’, in 2025 American Control Conference, (Denver, CO), 2025, pp. 1045–1050. [doi: 10.23919/ACC63710.2025.11107427](https://doi.org/10.23919/ACC63710.2025.11107427)
