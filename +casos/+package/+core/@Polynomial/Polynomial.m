@@ -179,6 +179,13 @@ methods
         M = full(reshape(obj.coeffs,size(obj)));
     end
 
+    function f = to_function(obj,varargin)
+        % Return casadi.Function object using SX.
+        X = casadi.SX.sym('x',obj.nvars,1);
+        p = subs(obj,indeterminates(obj),casos.package.polynomial(X));
+        f = casadi.Function('f',num2cell(X),{casadi.SX(p)},str(obj.indeterminates),{'poly'},varargin{:});
+    end
+
     %% Unary operators
     function p = uplus(p)
         % Unary plus.

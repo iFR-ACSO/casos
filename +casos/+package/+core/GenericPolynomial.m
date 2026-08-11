@@ -153,29 +153,14 @@ methods
     end
 
     %% Conversion
-    function v = casos.Indeterminates(obj) %#ok<STOUT,MANU>
+    function v = casos.Indeterminates(obj) %#ok<MANU,STOUT>
         % Convert to indeterminates.
         error('Notify the developers.')
     end
 
-    function f = to_sxfunction(obj,varargin)
-        % Return casadi.Function object using SX.
-        X = casadi.SX.sym('x',obj.nvars,1);
-        p = subs(obj,indeterminates(obj),casos.package.polynomial(X));
-        f = casadi.Function('f',num2cell(X),{casadi.SX(p)},str(obj.indeterminates),{'poly'},varargin{:});
-    end
-
-    function f = to_mxfunction(obj,varargin)
-        % Return casadi.Function object using MX.
-        X = casadi.MX.sym('x',obj.nvars,1);
-        p = subs(obj,indeterminates(obj),casos.package.polynomial(X));
-        f = casadi.Function('f',num2cell(X),{casadi.MX(p)},str(obj.indeterminates),{'poly'},varargin{:});
-    end
-
-    function f = to_function(obj,varargin)
+    function f = to_function(obj,varargin) %#ok<STOUT,INUSD>
         % Return casadi.Function object.
-        % Overload for default behaviour.
-        f = to_sxfunction(obj,varargin{:});
+        error('Notify the developers.');
     end
 
     %% Concatenation
