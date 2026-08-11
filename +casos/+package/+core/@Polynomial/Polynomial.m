@@ -125,6 +125,9 @@ methods
     % public RedefinesParen interface
     p = cat(dim,varargin);
 
+    % convert to Casadi function
+    f = to_function(obj,variables,opts);
+
     function obj = reshape(obj,varargin)
         % Reshape polynomial matrix.
         assert(length(varargin{1}) <= 2, 'Size vector must not exceed two elements.')
@@ -177,13 +180,6 @@ methods
         assert(is_zerodegree(obj), 'Can only convert polynomial of degree zero.')
 
         M = full(reshape(obj.coeffs,size(obj)));
-    end
-
-    function f = to_function(obj,varargin)
-        % Return casadi.Function object using SX.
-        X = casadi.SX.sym('x',obj.nvars,1);
-        p = subs(obj,indeterminates(obj),casos.package.polynomial(X));
-        f = casadi.Function('f',num2cell(X),{casadi.SX(p)},str(obj.indeterminates),{'poly'},varargin{:});
     end
 
     %% Unary operators
