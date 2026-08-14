@@ -173,9 +173,16 @@ methods
         % Return sum of variables.
         z = sum(casos.package.polynomial(obj));
     end
+
     function obj = transpose(obj)
         % Toggle transpose flag.
         obj.transp = ~obj.transp;
+    end
+
+    % Convert to cell of single variables
+    function cell_of_indets = tuple2cell(obj)
+        % Return a cell array of individual indeterminate variables.
+        cell_of_indets = cellfun(@(var) casos.Indeterminates(var), obj.variables, 'UniformOutput', false);
     end
 
     % Display
@@ -196,12 +203,6 @@ methods (Access=protected)
     obj = parenAssign(obj,idx,varargin);
     obj = parenDelete(obj,idx);
     varargout = parenReference(obj,index);
-
-    % Convert to cell of single variables
-    function cell_of_indets = tuple2cell(obj)
-        % Return a cell array of individual indeterminate variables.
-        cell_of_indets = cellfun(@(var) casos.Indeterminates(var), obj.variables, 'UniformOutput', false);
-    end
 end
 
 methods (Access={?casos.package.core.PolynomialInterface})

@@ -125,6 +125,9 @@ methods
     % public RedefinesParen interface
     p = cat(dim,varargin);
 
+    % convert to Casadi function
+    f = to_function(obj,variables,opts);
+
     function obj = reshape(obj,varargin)
         % Reshape polynomial matrix.
         assert(length(varargin{1}) <= 2, 'Size vector must not exceed two elements.')
