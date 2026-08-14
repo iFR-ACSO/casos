@@ -24,21 +24,29 @@ elseif (nargin < 3)
 end
 
 % create symbolic variables
-in = cellfun(@to_symbolic, variables, 'UniformOutput', false);
+[in,names] = cellfun(@to_symbolic, variables, 'UniformOutput', false);
 
 % substitute symbolic variables
 p = subs(obj,[variables{:}],casos.package.polynomial(vertcat(in{:})));
 
-f = casadi.Function('f',in,{casadi.SX(p)},opts);
+f = casadi.Function('f',in,{casadi.SX(p)},names,{'poly'},opts);
 
 end
 
-function var = to_symbolic(x)
+function [var,dstr] = to_symbolic(x)
 % Convert indeterminate variable(s) into SX symbol.
 
-names = str(x);
+varnames = str(x);
+
+if isscalar(varnames)
+    % use variable name
+    dstr = varnames{1};
+else
+    % use first character
+    dstr = varnames{1}(1);
+end
 
 % use first character as name
-var = casadi.SX.sym(names{1}(1), length(x), 1);
+var = casadi.SX.sym(dstr, length(x), 1);
 
 end
